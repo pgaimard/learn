@@ -1,0 +1,70 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="form-row">
+    <div class="field field-short">
+      <label for="ue-code">Code</label>
+      <input
+        id="ue-code"
+        type="text"
+        formControlName="code"
+        autocapitalize="characters"
+        spellcheck="false"
+        placeholder="UTC502"
+        [attr.aria-invalid]="isInvalid('code')"
+        [attr.aria-describedby]="isInvalid('code') ? 'ue-code-error' : null"
+      />
+      @if (isInvalid('code')) {
+        <p id="ue-code-error" class="field-error">De 3 à 10 lettres ou chiffres, sans espace.</p>
+      }
+    </div>
+
+    <div class="field field-grow">
+      <label for="ue-title">Intitulé</label>
+      <input
+        id="ue-title"
+        type="text"
+        formControlName="title"
+        [attr.aria-invalid]="isInvalid('title')"
+        [attr.aria-describedby]="isInvalid('title') ? 'ue-title-error' : null"
+      />
+      @if (isInvalid('title')) {
+        <p id="ue-title-error" class="field-error">
+          L’intitulé est requis (200 caractères au plus).
+        </p>
+      }
+    </div>
+
+    <div class="field field-short">
+      <label for="ue-position">Ordre</label>
+      <input
+        id="ue-position"
+        type="number"
+        min="0"
+        formControlName="position"
+        [attr.aria-invalid]="isInvalid('position')"
+        aria-describedby="ue-position-hint"
+      />
+      <p id="ue-position-hint" class="field-hint">Vide : à la suite.</p>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="ue-description">Description</label>
+    <textarea
+      id="ue-description"
+      rows="2"
+      formControlName="description"
+      [attr.aria-invalid]="isInvalid('description')"
+    ></textarea>
+  </div>
+
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button button-primary" [disabled]="isSaving()">Enregistrer</button>
+    <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

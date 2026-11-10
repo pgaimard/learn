@@ -8,7 +8,7 @@
       @if (user(); as currentUser) {
         <span class="username">{{ currentUser.username }}</span>
       }
-      <button type="button" class="logout" [disabled]="isLoggingOut()" (click)="logout()">
+      <button type="button" class="button logout" [disabled]="isLoggingOut()" (click)="logout()">
         Se déconnecter
       </button>
     </div>
