@@ -1,0 +1,77 @@
+.reading {
+  display: grid;
+  gap: 1.5rem 2.5rem;
+}
+
+.article {
+  min-width: 0;
+  max-width: var(--reading-width);
+}
+
+.article h1 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+.outline summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.outline ol {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outline button {
+  display: block;
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.outline button:hover {
+  background: var(--color-border-soft);
+}
+
+.outline .level-3 button {
+  padding-left: 1.5rem;
+  color: var(--color-text-muted);
+}
+
+.outline .level-4 button {
+  padding-left: 2.5rem;
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 60rem) {
+  .reading {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .outline {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+
+  .outline summary {
+    pointer-events: none;
+    list-style: none;
+  }
+
+  .outline summary::-webkit-details-marker {
+    display: none;
+  }
+}

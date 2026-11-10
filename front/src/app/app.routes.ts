@@ -14,8 +14,12 @@ export const routes: Routes = [
     canActivate: [authenticatedGuard],
     children: [
       {
+        path: 'ue/:code/cours',
+        loadChildren: () =>
+          import('./features/cours/cours.routes').then((module) => module.coursRoutes),
+      },
+      {
         path: '',
-        pathMatch: 'full',
         loadChildren: () => import('./features/ue/ue.routes').then((module) => module.ueRoutes),
       },
     ],

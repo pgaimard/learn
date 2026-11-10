@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
 import { UeForm } from './ue-form';
 import { Ue, UeInput, UeService } from './ue.service';
 
 @Component({
   selector: 'app-ue-list-page',
-  imports: [UeForm],
+  imports: [RouterLink, UeForm],
   templateUrl: './ue-list-page.html',
   styleUrl: './ue-list-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -42,7 +42,9 @@
           <div class="ue">
             <div class="ue-text">
               <h2>
-                <span class="ue-code">{{ ue.code }}</span> {{ ue.title }}
+                <a [routerLink]="['/ue', ue.code]">
+                  <span class="ue-code">{{ ue.code }}</span> {{ ue.title }}
+                </a>
               </h2>
               @if (ue.description) {
                 <p class="ue-description">{{ ue.description }}</p>
