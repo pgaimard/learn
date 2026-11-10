@@ -22,9 +22,22 @@ describe('Authentification', () => {
     await app.close();
   });
 
-  // Le reverse proxy termine HTTPS : les tests se présentent comme lui.
+  let lastClient = 0;
+  let clientAddress = '';
+
+  // Chaque test vient d'une adresse différente : le compteur de tentatives de l'un
+  // ne bloque pas les autres.
+  beforeEach(() => {
+    lastClient += 1;
+    clientAddress = `203.0.113.${lastClient}`;
+  });
+
+  // Le reverse proxy termine HTTPS et transmet l'adresse du client : les tests se
+  // présentent comme lui.
   function viaProxy(test: Test): Test {
-    return test.set('X-Forwarded-Proto', 'https');
+    return test
+      .set('X-Forwarded-Proto', 'https')
+      .set('X-Forwarded-For', clientAddress);
   }
 
   function login(body: object): Test {
@@ -133,6 +146,34 @@ describe('Authentification', () => {
     );
 
     expect(response.status).toBe(401);
+  });
+
+  it('bloque une adresse après cinq tentatives, sans gêner les autres', async () => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const failed = await login({ username: USERNAME, password: 'mauvais' });
+      expect(failed.status).toBe(401);
+    }
+
+    const blocked = await login({ username: USERNAME, password: PASSWORD });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body).toEqual({
+      statusCode: 429,
+      error: 'Trop de requêtes',
+      messages: [
+        'Trop de tentatives de connexion. Réessayez dans quelques minutes.',
+      ],
+    });
+    expect(readSessionCookie(blocked)).toBe('');
+
+    clientAddress = '198.51.100.7';
+    const other = await login({ username: USERNAME, password: PASSWORD });
+    expect(other.status).toBe(200);
+  });
+
+  it('ne révèle pas la technologie du serveur', async () => {
+    const response = await getMe();
+
+    expect(response.get('X-Powered-By')).toBeUndefined();
   });
 
   it('ne pose pas de cookie de session hors HTTPS', async () => {
