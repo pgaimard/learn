@@ -1,0 +1,7 @@
+.git
+.env
+.claude
+**/node_modules
+**/dist
+**/.angular
+**/coverage
