@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { ContentNode } from './content-node.js';
 import { validateContent } from './validate-content.js';
 
@@ -10,6 +11,20 @@ function paragraph(text: string, marks?: ContentNode['marks']): ContentNode {
 }
 
 describe('validateContent', () => {
+  it('accepte le cours d’exemple partagé avec le front', () => {
+    const example: unknown = JSON.parse(
+      readFileSync(
+        new URL(
+          '../../../../contracts/course-content.example.json',
+          import.meta.url,
+        ),
+        'utf8',
+      ),
+    );
+
+    expect(validateContent(example)).toEqual([]);
+  });
+
   it('accepte un document utilisant tous les blocs autorisés', () => {
     const document = doc(
       {

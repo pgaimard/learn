@@ -22,6 +22,11 @@ const isIntegerBetween =
     (value as number) >= min &&
     (value as number) <= max;
 
+const isOneOf =
+  (values: readonly string[]): AttributeCheck =>
+  (value) =>
+    typeof value === 'string' && values.includes(value);
+
 const isShortString: AttributeCheck = (value) =>
   typeof value === 'string' && value.length <= 100;
 
@@ -50,6 +55,7 @@ const cellAttrs: Record<string, AttributeCheck> = {
   colspan: isIntegerBetween(1, 50),
   rowspan: isIntegerBetween(1, 500),
   colwidth: isNullable(isColumnWidths),
+  align: isNullable(isOneOf(['left', 'center', 'right'])),
 };
 
 export const NODE_RULES: Record<string, NodeRule> = {
@@ -94,5 +100,6 @@ export const MARK_RULES: Record<string, Record<string, AttributeCheck>> = {
     target: isNullable((value) => value === '_blank'),
     rel: isNullable(isShortString),
     class: (value) => value === null,
+    title: isNullable(isShortString),
   },
 };

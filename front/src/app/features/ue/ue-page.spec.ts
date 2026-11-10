@@ -68,7 +68,7 @@ describe('UePage', () => {
     expect(element().querySelector('a.course')?.getAttribute('href')).toBe('/ue/UTC502/cours/7');
   });
 
-  it('crée un cours puis l’ouvre', () => {
+  it('crée un cours puis l’ouvre en édition', () => {
     courseService.create.mockReturnValue(of({ id: 8 } as Course));
     setup();
     click('Nouveau cours');
@@ -76,7 +76,7 @@ describe('UePage', () => {
     submitTitle(' Mémoire ');
 
     expect(courseService.create).toHaveBeenCalledWith('UTC502', { title: 'Mémoire' });
-    expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502', 'cours', 8]);
+    expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502', 'cours', 8, 'edition']);
   });
 
   it('affiche le refus de l’API sans quitter la page', () => {
