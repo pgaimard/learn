@@ -43,7 +43,12 @@ describe('Migrations', () => {
   it('crée les tables sur une base vide', async () => {
     await dataSource.runMigrations();
 
-    expect(await readTableNames()).toEqual(['migrations', 'sessions', 'users']);
+    expect(await readTableNames()).toEqual([
+      'migrations',
+      'sessions',
+      'ues',
+      'users',
+    ]);
     expect(await readUserColumns()).toEqual([
       { column_name: 'id', data_type: 'integer', is_nullable: 'NO' },
       { column_name: 'username', data_type: 'text', is_nullable: 'NO' },
