@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module.js';
 import { HttpErrorFilter } from './common/http-error.filter.js';
+import { CoursesModule } from './courses/courses.module.js';
 import { validateEnvironment } from './config/environment.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -21,6 +22,7 @@ import { UsersModule } from './users/users.module.js';
     HealthModule,
     UsersModule,
     UeModule,
+    CoursesModule,
   ],
   providers: [
     {

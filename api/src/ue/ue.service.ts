@@ -10,6 +10,9 @@ import { UpdateUeDto } from './dto/update-ue.dto.js';
 import { Ue } from './ue.entity.js';
 
 const UNIQUE_VIOLATION = '23505';
+// PostgreSQL signale une suppression bloquée par ON DELETE RESTRICT avec 23001,
+// et les autres violations de clé étrangère avec 23503.
+const REFERENCED_ROW_CODES = ['23001', '23503'];
 
 @Injectable()
 export class UeService {
@@ -38,7 +41,17 @@ export class UeService {
   }
 
   async remove(code: string): Promise<void> {
-    await this.ues.remove(await this.findByCode(code));
+    const ue = await this.findByCode(code);
+    try {
+      await this.ues.remove(ue);
+    } catch (error) {
+      if (REFERENCED_ROW_CODES.some((code) => hasErrorCode(error, code))) {
+        throw new ConflictException(
+          `L’UE ${ue.code} contient des cours : supprimez-les d’abord.`,
+        );
+      }
+      throw error;
+    }
   }
 
   private async nextPosition(): Promise<number> {
@@ -50,7 +63,7 @@ export class UeService {
     try {
       return await this.ues.save(ue);
     } catch (error) {
-      if (isUniqueViolation(error)) {
+      if (hasErrorCode(error, UNIQUE_VIOLATION)) {
         throw new ConflictException(`Une UE porte déjà le code ${code}.`);
       }
       throw error;
@@ -58,9 +71,9 @@ export class UeService {
   }
 }
 
-function isUniqueViolation(error: unknown): boolean {
+function hasErrorCode(error: unknown, code: string): boolean {
   return (
     error instanceof QueryFailedError &&
-    (error.driverError as { code?: string }).code === UNIQUE_VIOLATION
+    (error.driverError as { code?: string }).code === code
   );
 }
