@@ -24,6 +24,21 @@ docs/     décisions et procédures (sauvegarde, restauration, déploiement)
 
 À compléter en tranche 0, puis à tenir à jour : installation, lancement local (Docker Compose), tests, lint, build, création et exécution des migrations.
 
+Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.example` en `.env` à la racine.
+
+### API (dans `api/`)
+
+| Action | Commande |
+|---|---|
+| Installation | `npm ci` |
+| Lancement local avec rechargement | `npm run start:dev` |
+| Lint | `npm run lint` |
+| Vérification du formatage | `npm run format:check` |
+| Formatage | `npm run format` |
+| Tests unitaires | `npm test` |
+| Tests d'intégration | `npm run test:e2e` |
+| Build | `npm run build` |
+
 ## Langue et nommage
 
 - Code, identifiants, noms de fichiers, tables et colonnes : anglais.
