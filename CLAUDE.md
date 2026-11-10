@@ -35,6 +35,8 @@ Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.exampl
 | Journaux | `docker compose logs -f` |
 | Arrêter | `docker compose down` |
 | Arrêter et effacer les données locales | `docker compose down -v` |
+| Appliquer les migrations | `docker compose exec api npm run migration:run` |
+| Publier la base sur l'hôte (développement) | `docker compose -f compose.yaml -f compose.dev.yaml up -d db` |
 
 L'application est servie sur https://localhost. En local, le certificat vient de l'autorité interne de Caddy : le navigateur affiche un avertissement à accepter.
 
@@ -50,6 +52,12 @@ L'application est servie sur https://localhost. En local, le certificat vient de
 | Tests unitaires | `npm test` |
 | Tests d'intégration | `npm run test:e2e` |
 | Build | `npm run build` |
+| Créer une migration | ajouter `src/database/migrations/<horodatage>-<sujet>.ts` et l'inscrire dans `migrations/index.ts` |
+| Appliquer les migrations | `npm run build && npm run migration:run` |
+| Annuler la dernière migration | `npm run build && npm run migration:revert` |
+| État des migrations | `npm run build && npm run migration:show` |
+
+Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la base publiée sur l'hôte (complément `compose.dev.yaml`). Les tests d'intégration recréent à chaque exécution une base `<DATABASE_NAME>_test`.
 
 ### Front (dans `front/`)
 

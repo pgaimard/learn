@@ -7,7 +7,6 @@ export default defineConfig({
   test: {
     globals: true,
     root: './',
-    env: { NODE_ENV: 'test', PORT: '3000' },
     include: ['**/*.spec.ts'],
   },
 });
