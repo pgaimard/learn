@@ -1,0 +1,66 @@
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
+import { CreateUeDto } from './dto/create-ue.dto.js';
+import { UpdateUeDto } from './dto/update-ue.dto.js';
+import { Ue } from './ue.entity.js';
+
+const UNIQUE_VIOLATION = '23505';
+
+@Injectable()
+export class UeService {
+  constructor(@InjectRepository(Ue) private readonly ues: Repository<Ue>) {}
+
+  findAll(): Promise<Ue[]> {
+    return this.ues.find({ order: { position: 'ASC', code: 'ASC' } });
+  }
+
+  async findByCode(code: string): Promise<Ue> {
+    const ue = await this.ues.findOneBy({ code: code.toUpperCase() });
+    if (!ue) {
+      throw new NotFoundException(`L’UE ${code} n’existe pas.`);
+    }
+    return ue;
+  }
+
+  async create(input: CreateUeDto): Promise<Ue> {
+    const position = input.position ?? (await this.nextPosition());
+    return this.save(this.ues.create({ ...input, position }), input.code);
+  }
+
+  async update(code: string, changes: UpdateUeDto): Promise<Ue> {
+    const ue = await this.findByCode(code);
+    return this.save(this.ues.merge(ue, changes), changes.code ?? ue.code);
+  }
+
+  async remove(code: string): Promise<void> {
+    await this.ues.remove(await this.findByCode(code));
+  }
+
+  private async nextPosition(): Promise<number> {
+    const last = await this.ues.maximum('position');
+    return (last ?? 0) + 1;
+  }
+
+  private async save(ue: Ue, code: string): Promise<Ue> {
+    try {
+      return await this.ues.save(ue);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException(`Une UE porte déjà le code ${code}.`);
+      }
+      throw error;
+    }
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    error instanceof QueryFailedError &&
+    (error.driverError as { code?: string }).code === UNIQUE_VIOLATION
+  );
+}

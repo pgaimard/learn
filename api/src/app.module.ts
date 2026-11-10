@@ -6,6 +6,7 @@ import { HttpErrorFilter } from './common/http-error.filter.js';
 import { validateEnvironment } from './config/environment.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
+import { UeModule } from './ue/ue.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module.js';
     AuthModule,
     HealthModule,
     UsersModule,
+    UeModule,
   ],
   providers: [
     {
