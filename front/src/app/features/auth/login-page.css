@@ -1,0 +1,64 @@
+.login {
+  box-sizing: border-box;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: 15vh 1rem 2rem;
+}
+
+h1 {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.field-error,
+.form-error {
+  margin: 0.375rem 0 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+.form-error {
+  margin: 0 0 1rem;
+}
+
+button {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

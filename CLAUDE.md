@@ -24,6 +24,54 @@ docs/     décisions et procédures (sauvegarde, restauration, déploiement)
 
 À compléter en tranche 0, puis à tenir à jour : installation, lancement local (Docker Compose), tests, lint, build, création et exécution des migrations.
 
+Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.example` en `.env` à la racine.
+
+### Pile complète (à la racine, Docker Compose)
+
+| Action | Commande |
+|---|---|
+| Construire et démarrer | `docker compose up --build -d` |
+| État des conteneurs | `docker compose ps` |
+| Journaux | `docker compose logs -f` |
+| Arrêter | `docker compose down` |
+| Arrêter et effacer les données locales | `docker compose down -v` |
+| Appliquer les migrations | `docker compose exec api npm run migration:run` |
+| Publier la base sur l'hôte (développement) | décommenter `COMPOSE_FILE` dans `.env` |
+| Créer le compte (une seule fois) | `docker compose exec api npm run user:create` |
+
+L'application est servie sur https://localhost. En local, le certificat vient de l'autorité interne de Caddy : le navigateur affiche un avertissement à accepter.
+
+### API (dans `api/`)
+
+| Action | Commande |
+|---|---|
+| Installation | `npm ci` |
+| Lancement local avec rechargement | `npm run start:dev` |
+| Lint | `npm run lint` |
+| Vérification du formatage | `npm run format:check` |
+| Formatage | `npm run format` |
+| Tests unitaires | `npm test` |
+| Tests d'intégration | `npm run test:e2e` |
+| Build | `npm run build` |
+| Créer une migration | ajouter `src/database/migrations/<horodatage>-<sujet>.ts` et l'inscrire dans `migrations/index.ts` |
+| Appliquer les migrations | `npm run build && npm run migration:run` |
+| Annuler la dernière migration | `npm run build && npm run migration:revert` |
+| État des migrations | `npm run build && npm run migration:show` |
+
+Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la base publiée sur l'hôte (complément `compose.dev.yaml`). Les tests d'intégration recréent à chaque exécution une base `<DATABASE_NAME>_test`.
+
+### Front (dans `front/`)
+
+| Action | Commande |
+|---|---|
+| Installation | `npm ci` |
+| Lancement local avec rechargement | `npm start` (http://localhost:4200), avec l'API lancée par `npm run start:dev` : `/api` lui est relayé par `proxy.conf.json` |
+| Lint | `npm run lint` |
+| Vérification du formatage | `npm run format:check` |
+| Formatage | `npm run format` |
+| Tests | `npm test` |
+| Build | `npm run build` |
+
 ## Langue et nommage
 
 - Code, identifiants, noms de fichiers, tables et colonnes : anglais.
@@ -104,11 +152,12 @@ Appliquer la section 6 de `CADRAGE.md` sans exception : l'application est expos�
 - Une PR par sujet, de taille relisible. Au-delà d'environ 400 lignes modifiées, découper.
 - Description obligatoire : objectif, ce qui change, comment tester, points d'attention, dépendances ajoutées.
 - Avant d'ouvrir : lint, tests et build passent ; migrations incluses ; `CLAUDE.md` et `docs/` mis à jour si une commande ou une procédure change.
-- Claude Code ouvre la PR et s'arrête. La relecture et la fusion sont faites par Pierre.
+- Claude Code ouvre la PR puis la fusionne en squash dans `develop` une fois lint, tests et build passés. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
 
 ## Interdits
 
 - Modifier `CADRAGE.md` sans demande explicite.
 - Désactiver un test, une règle de lint ou une vérification de sécurité pour faire passer un build.
 - Committer des secrets, des données personnelles ou des fichiers de cours réels.
-- Fusionner une PR ou pousser sur `main` et `develop`.
+- Pousser directement sur `main` ou `develop`.
+- Fusionner vers `main` sans validation de Pierre.
