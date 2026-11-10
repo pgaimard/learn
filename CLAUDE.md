@@ -39,6 +39,18 @@ Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.exampl
 | Tests d'intégration | `npm run test:e2e` |
 | Build | `npm run build` |
 
+### Front (dans `front/`)
+
+| Action | Commande |
+|---|---|
+| Installation | `npm ci` |
+| Lancement local avec rechargement | `npm start` (http://localhost:4200) |
+| Lint | `npm run lint` |
+| Vérification du formatage | `npm run format:check` |
+| Formatage | `npm run format` |
+| Tests | `npm test` |
+| Build | `npm run build` |
+
 ## Langue et nommage
 
 - Code, identifiants, noms de fichiers, tables et colonnes : anglais.
