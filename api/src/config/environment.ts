@@ -7,6 +7,7 @@ import {
   IsString,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 
@@ -41,6 +42,10 @@ export class Environment {
   @IsString()
   @IsNotEmpty()
   DATABASE_PASSWORD!: string;
+
+  @IsString()
+  @MinLength(32)
+  SESSION_SECRET!: string;
 }
 
 export function validateEnvironment(raw: Record<string, unknown>): Environment {

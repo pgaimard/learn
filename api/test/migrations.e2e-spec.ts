@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { createTestApp } from './create-test-app.js';
 
@@ -9,7 +9,7 @@ interface ColumnRow {
 }
 
 describe('Migrations', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let dataSource: DataSource;
 
   beforeAll(async () => {
@@ -32,9 +32,18 @@ describe('Migrations', () => {
     );
   }
 
-  it('crée la table users sur une base vide', async () => {
+  async function readTableNames(): Promise<string[]> {
+    const rows = await dataSource.query<{ table_name: string }[]>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'public' ORDER BY table_name`,
+    );
+    return rows.map((row) => row.table_name);
+  }
+
+  it('crée les tables sur une base vide', async () => {
     await dataSource.runMigrations();
 
+    expect(await readTableNames()).toEqual(['migrations', 'sessions', 'users']);
     expect(await readUserColumns()).toEqual([
       { column_name: 'id', data_type: 'integer', is_nullable: 'NO' },
       { column_name: 'username', data_type: 'text', is_nullable: 'NO' },
@@ -64,6 +73,6 @@ describe('Migrations', () => {
       await dataSource.undoLastMigration();
     }
 
-    expect(await readUserColumns()).toEqual([]);
+    expect(await readTableNames()).toEqual(['migrations']);
   });
 });

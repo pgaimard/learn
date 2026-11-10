@@ -1,6 +1,7 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module.js';
 import { HttpErrorFilter } from './common/http-error.filter.js';
 import { validateEnvironment } from './config/environment.js';
 import { DatabaseModule } from './database/database.module.js';
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module.js';
       validate: validateEnvironment,
     }),
     DatabaseModule,
+    AuthModule,
     HealthModule,
     UsersModule,
   ],

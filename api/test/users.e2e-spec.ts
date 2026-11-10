@@ -1,11 +1,12 @@
-import { ConflictException, INestApplication } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { UsersService } from '../src/users/users.service.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
 
 describe('UsersService', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let users: UsersService;
 
   beforeAll(async () => {

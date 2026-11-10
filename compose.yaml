@@ -37,6 +37,7 @@ services:
       DATABASE_NAME: ${DATABASE_NAME:?}
       DATABASE_USER: ${DATABASE_USER:?}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
+      SESSION_SECRET: ${SESSION_SECRET:?}
     depends_on:
       db:
         condition: service_healthy
