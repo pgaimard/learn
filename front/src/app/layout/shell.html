@@ -1,0 +1,20 @@
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" routerLink="/">Espace d’études</a>
+
+    <div class="account">
+      @if (user(); as currentUser) {
+        <span class="username">{{ currentUser.username }}</span>
+      }
+      <button type="button" class="logout" [disabled]="isLoggingOut()" (click)="logout()">
+        Se déconnecter
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="contenu" class="content" tabindex="-1">
+  <router-outlet />
+</main>
