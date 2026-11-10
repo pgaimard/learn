@@ -10,4 +10,6 @@ export function configureApp(app: NestExpressApplication): void {
   // des tentatives de connexion).
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+  // Un cours complet dépasse la limite par défaut de 100 ko.
+  app.useBodyParser('json', { limit: '2mb' });
 }
