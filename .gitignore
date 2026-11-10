@@ -1,0 +1,46 @@
+# Dépendances
+node_modules/
+
+# Sorties de build
+dist/
+build/
+out-tsc/
+*.tsbuildinfo
+
+# Angular
+.angular/
+
+# Tests et couverture
+coverage/
+playwright-report/
+test-results/
+
+# Variables d'environnement et secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Données locales (fichiers envoyés, exports de base, sauvegardes)
+data/
+uploads/
+backups/
+*.dump
+*.sql.gz
+
+# Journaux
+logs/
+*.log
+npm-debug.log*
+
+# Systèmes et éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Claude Code (réglages locaux)
+.claude/settings.local.json
