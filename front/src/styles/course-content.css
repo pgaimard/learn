@@ -157,3 +157,17 @@
 .course-content .hljs-deletion {
   color: #953800;
 }
+
+/* Édition */
+
+.course-content.is-editable .ProseMirror {
+  min-height: 60vh;
+}
+
+.course-content .selectedCell {
+  background: var(--color-accent-soft);
+}
+
+.course-content.is-editable a {
+  cursor: text;
+}

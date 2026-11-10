@@ -8,9 +8,18 @@
   max-width: var(--reading-width);
 }
 
-.article h1 {
+.article .page-header {
+  align-items: flex-start;
   margin-bottom: 1.5rem;
+}
+
+.article h1 {
+  flex: 1 1 16rem;
   font-size: 2rem;
+}
+
+.article a.button {
+  text-decoration: none;
 }
 
 .outline summary {

@@ -1,0 +1,151 @@
+<div class="toolbar" role="toolbar" aria-label="Mise en forme">
+  <div class="group">
+    <select aria-label="Style du bloc" [value]="blockStyle()" (change)="setBlockStyle($event)">
+      <option value="paragraph">Paragraphe</option>
+      <option value="h2">Section</option>
+      <option value="h3">Sous-section</option>
+      <option value="h4">Sous-sous-section</option>
+    </select>
+  </div>
+
+  <div class="group">
+    <button
+      type="button"
+      class="tool bold"
+      title="Gras (Ctrl+B)"
+      aria-label="Gras"
+      [attr.aria-pressed]="isActive('bold')"
+      (click)="run(toggleBold)"
+    >
+      G
+    </button>
+    <button
+      type="button"
+      class="tool italic"
+      title="Italique (Ctrl+I)"
+      aria-label="Italique"
+      [attr.aria-pressed]="isActive('italic')"
+      (click)="run(toggleItalic)"
+    >
+      I
+    </button>
+    <button
+      type="button"
+      class="tool underline"
+      title="Souligné (Ctrl+U)"
+      aria-label="Souligné"
+      [attr.aria-pressed]="isActive('underline')"
+      (click)="run(toggleUnderline)"
+    >
+      S
+    </button>
+    <button
+      type="button"
+      class="tool strike"
+      title="Barré"
+      aria-label="Barré"
+      [attr.aria-pressed]="isActive('strike')"
+      (click)="run(toggleStrike)"
+    >
+      B
+    </button>
+    <button
+      type="button"
+      class="tool mono"
+      title="Code dans le texte"
+      aria-label="Code dans le texte"
+      [attr.aria-pressed]="isActive('code')"
+      (click)="run(toggleCode)"
+    >
+      &lt;/&gt;
+    </button>
+    <button
+      type="button"
+      class="tool"
+      title="Lien"
+      [attr.aria-pressed]="isActive('link')"
+      (click)="editLink()"
+    >
+      Lien
+    </button>
+  </div>
+
+  <div class="group">
+    <button
+      type="button"
+      class="tool"
+      title="Liste à puces"
+      [attr.aria-pressed]="isActive('bulletList')"
+      (click)="run(toggleBulletList)"
+    >
+      • Liste
+    </button>
+    <button
+      type="button"
+      class="tool"
+      title="Liste numérotée"
+      [attr.aria-pressed]="isActive('orderedList')"
+      (click)="run(toggleOrderedList)"
+    >
+      1. Liste
+    </button>
+    <button
+      type="button"
+      class="tool"
+      title="Citation"
+      [attr.aria-pressed]="isActive('blockquote')"
+      (click)="run(toggleBlockquote)"
+    >
+      Citation
+    </button>
+    <button
+      type="button"
+      class="tool"
+      title="Bloc de code"
+      [attr.aria-pressed]="isActive('codeBlock')"
+      (click)="run(toggleCodeBlock)"
+    >
+      Bloc de code
+    </button>
+    <button type="button" class="tool" title="Insérer un tableau" (click)="insertTable()">
+      Tableau
+    </button>
+    <button type="button" class="tool" title="Ligne de séparation" (click)="run(insertRule)">
+      Séparateur
+    </button>
+  </div>
+
+  <div class="group">
+    <button type="button" class="tool" title="Annuler (Ctrl+Z)" (click)="run(undo)">Annuler</button>
+    <button type="button" class="tool" title="Rétablir (Ctrl+Maj+Z)" (click)="run(redo)">
+      Rétablir
+    </button>
+  </div>
+
+  @if (isActive('codeBlock')) {
+    <div class="group context">
+      <label>
+        Langage
+        <select [value]="codeLanguage()" (change)="setCodeLanguage($event)">
+          <option value="">Détection automatique</option>
+          @for (language of languages; track language) {
+            <option [value]="language">{{ language }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  @if (isActive('table')) {
+    <div class="group context" role="group" aria-label="Tableau">
+      <button type="button" class="tool" (click)="run(addRow)">+ Ligne</button>
+      <button type="button" class="tool" (click)="run(deleteRow)">− Ligne</button>
+      <button type="button" class="tool" (click)="run(addColumn)">+ Colonne</button>
+      <button type="button" class="tool" (click)="run(deleteColumn)">− Colonne</button>
+      <button type="button" class="tool" (click)="run(toggleHeaderRow)">Ligne d’en-tête</button>
+      <button type="button" class="tool danger" (click)="run(deleteTable)">
+        Supprimer le tableau
+      </button>
+    </div>
+  }
+</div>

@@ -33,7 +33,7 @@ export class UePage {
   protected readonly formErrors = signal<string[]>([]);
 
   protected readonly form = this.formBuilder.group({
-    title: ['', [Validators.required, Validators.maxLength(200)]],
+    title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
     position: this.formBuilder.control<number | null>(null, Validators.min(0)),
   });
 
@@ -61,7 +61,8 @@ export class UePage {
     this.courseService
       .create(this.code(), { title: title.trim(), ...(position === null ? {} : { position }) })
       .subscribe({
-        next: (course) => void this.router.navigate(['/ue', this.code(), 'cours', course.id]),
+        next: (course) =>
+          void this.router.navigate(['/ue', this.code(), 'cours', course.id, 'edition']),
         error: (error: ApiError) => {
           this.isSaving.set(false);
           this.formErrors.set(error.messages);

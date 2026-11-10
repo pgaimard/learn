@@ -20,7 +20,7 @@ export class UeForm implements OnInit {
 
   protected readonly form = this.formBuilder.group({
     code: ['', [Validators.required, Validators.pattern(/^\s*[A-Za-z0-9]{3,10}\s*$/)]],
-    title: ['', [Validators.required, Validators.maxLength(200)]],
+    title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
     description: ['', Validators.maxLength(2000)],
     position: this.formBuilder.control<number | null>(null, Validators.min(0)),
   });
