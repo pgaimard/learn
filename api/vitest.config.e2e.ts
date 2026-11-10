@@ -16,6 +16,7 @@ export default defineConfig({
       ...rootEnv,
       NODE_ENV: 'test',
       PORT: '3000',
+      SESSION_SECRET: 'secret-de-session-reserve-aux-tests-0123456789',
       DATABASE_NAME: `${rootEnv.DATABASE_NAME}_test`,
     },
   },

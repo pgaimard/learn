@@ -1,10 +1,9 @@
-import { INestApplication } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { App } from 'supertest/types.js';
 import { createTestApp } from './create-test-app.js';
 
 describe('Socle de l’API', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
 
   beforeAll(async () => {
     app = await createTestApp();

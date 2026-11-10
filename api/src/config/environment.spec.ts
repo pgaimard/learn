@@ -8,6 +8,7 @@ const validEnvironment = {
   DATABASE_NAME: 'learn',
   DATABASE_USER: 'learn',
   DATABASE_PASSWORD: 'secret',
+  SESSION_SECRET: 'x'.repeat(32),
 };
 
 describe('validateEnvironment', () => {
@@ -40,6 +41,12 @@ describe('validateEnvironment', () => {
     expect(() =>
       validateEnvironment({ ...validEnvironment, PORT: '70000' }),
     ).toThrow(/Configuration invalide[\s\S]*PORT/);
+  });
+
+  it('refuse un secret de session trop court', () => {
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, SESSION_SECRET: 'court' }),
+    ).toThrow(/Configuration invalide[\s\S]*SESSION_SECRET/);
   });
 
   it('n’affiche jamais la valeur d’une variable invalide', () => {
