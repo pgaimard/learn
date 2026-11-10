@@ -3,6 +3,21 @@
 }
 
 {$SITE_ADDRESS} {
+	# HSTS seulement hors développement : sur « localhost », il forcerait HTTPS pour
+	# tous les autres serveurs locaux du poste (ng serve, par exemple).
+	@public not host localhost
+	header @public Strict-Transport-Security "max-age=31536000"
+
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
 	handle /api/* {
 		reverse_proxy api:3000
 	}
