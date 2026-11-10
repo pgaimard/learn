@@ -25,6 +25,10 @@ export class UeService {
     return this.http.get<Ue[]>('/api/ues');
   }
 
+  get(code: string): Observable<Ue> {
+    return this.http.get<Ue>(`/api/ues/${encodeURIComponent(code)}`);
+  }
+
   create(input: UeInput): Observable<Ue> {
     return this.http.post<Ue>('/api/ues', input);
   }

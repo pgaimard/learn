@@ -1,0 +1,159 @@
+/* Mise en page du contenu d'un cours. Le HTML est produit par l'éditeur, hors des
+   composants Angular : ces règles sont donc globales, limitées à .course-content. */
+
+.course-content {
+  display: block;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.course-content .ProseMirror {
+  outline: none;
+}
+
+.course-content .ProseMirror > :first-child {
+  margin-top: 0;
+}
+
+.course-content h2,
+.course-content h3,
+.course-content h4 {
+  margin: 2em 0 0.5em;
+  line-height: 1.25;
+  scroll-margin-top: 1rem;
+}
+
+.course-content h2 {
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1.5rem;
+}
+
+.course-content h3 {
+  font-size: 1.25rem;
+}
+
+.course-content h4 {
+  font-size: 1.0625rem;
+}
+
+.course-content p {
+  margin: 0 0 1em;
+}
+
+.course-content ul,
+.course-content ol {
+  margin: 0 0 1em;
+  padding-left: 1.5rem;
+}
+
+.course-content li > p {
+  margin-bottom: 0.25em;
+}
+
+.course-content blockquote {
+  margin: 0 0 1em;
+  padding: 0.25rem 0 0.25rem 1rem;
+  border-left: 4px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.course-content hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.course-content code {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--color-code-background);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.course-content pre {
+  margin: 0 0 1em;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-code-background);
+  line-height: 1.5;
+}
+
+.course-content pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.875rem;
+}
+
+.course-content .tableWrapper {
+  margin: 0 0 1em;
+  overflow-x: auto;
+}
+
+.course-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.course-content th,
+.course-content td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.course-content th {
+  background: var(--color-border-soft);
+}
+
+.course-content th > p,
+.course-content td > p {
+  margin: 0;
+}
+
+/* Coloration du code (classes posées par lowlight / highlight.js). */
+
+.course-content .hljs-comment,
+.course-content .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.course-content .hljs-keyword,
+.course-content .hljs-selector-tag,
+.course-content .hljs-meta,
+.course-content .hljs-doctag {
+  color: #cf222e;
+}
+
+.course-content .hljs-string,
+.course-content .hljs-regexp,
+.course-content .hljs-addition {
+  color: #0a3069;
+}
+
+.course-content .hljs-number,
+.course-content .hljs-literal,
+.course-content .hljs-built_in,
+.course-content .hljs-type {
+  color: #0550ae;
+}
+
+.course-content .hljs-title,
+.course-content .hljs-section,
+.course-content .hljs-attr,
+.course-content .hljs-name {
+  color: #8250df;
+}
+
+.course-content .hljs-variable,
+.course-content .hljs-template-variable,
+.course-content .hljs-deletion {
+  color: #953800;
+}

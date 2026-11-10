@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { UeListPage } from './ue-list-page';
@@ -18,7 +19,9 @@ describe('UeListPage', () => {
   function setup(ues: Ue[]): void {
     vi.resetAllMocks();
     service.list.mockReturnValue(of(ues));
-    TestBed.configureTestingModule({ providers: [{ provide: UeService, useValue: service }] });
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: UeService, useValue: service }],
+    });
     fixture = TestBed.createComponent(UeListPage);
     fixture.detectChanges();
   }
