@@ -26,6 +26,18 @@ docs/     décisions et procédures (sauvegarde, restauration, déploiement)
 
 Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.example` en `.env` à la racine.
 
+### Pile complète (à la racine, Docker Compose)
+
+| Action | Commande |
+|---|---|
+| Construire et démarrer | `docker compose up --build -d` |
+| État des conteneurs | `docker compose ps` |
+| Journaux | `docker compose logs -f` |
+| Arrêter | `docker compose down` |
+| Arrêter et effacer les données locales | `docker compose down -v` |
+
+L'application est servie sur https://localhost. En local, le certificat vient de l'autorité interne de Caddy : le navigateur affiche un avertissement à accepter.
+
 ### API (dans `api/`)
 
 | Action | Commande |
@@ -131,11 +143,12 @@ Appliquer la section 6 de `CADRAGE.md` sans exception : l'application est expos�
 - Une PR par sujet, de taille relisible. Au-delà d'environ 400 lignes modifiées, découper.
 - Description obligatoire : objectif, ce qui change, comment tester, points d'attention, dépendances ajoutées.
 - Avant d'ouvrir : lint, tests et build passent ; migrations incluses ; `CLAUDE.md` et `docs/` mis à jour si une commande ou une procédure change.
-- Claude Code ouvre la PR et s'arrête. La relecture et la fusion sont faites par Pierre.
+- Claude Code ouvre la PR puis la fusionne en squash dans `develop` une fois lint, tests et build passés. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
 
 ## Interdits
 
 - Modifier `CADRAGE.md` sans demande explicite.
 - Désactiver un test, une règle de lint ou une vérification de sécurité pour faire passer un build.
 - Committer des secrets, des données personnelles ou des fichiers de cours réels.
-- Fusionner une PR ou pousser sur `main` et `develop`.
+- Pousser directement sur `main` ou `develop`.
+- Fusionner vers `main` sans validation de Pierre.
