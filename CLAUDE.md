@@ -36,7 +36,8 @@ Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.exampl
 | Arrêter | `docker compose down` |
 | Arrêter et effacer les données locales | `docker compose down -v` |
 | Appliquer les migrations | `docker compose exec api npm run migration:run` |
-| Publier la base sur l'hôte (développement) | `docker compose -f compose.yaml -f compose.dev.yaml up -d db` |
+| Publier la base sur l'hôte (développement) | décommenter `COMPOSE_FILE` dans `.env` |
+| Créer le compte (une seule fois) | `docker compose exec api npm run user:create` |
 
 L'application est servie sur https://localhost. En local, le certificat vient de l'autorité interne de Caddy : le navigateur affiche un avertissement à accepter.
 

@@ -15,6 +15,7 @@ describe('Migrations', () => {
   beforeAll(async () => {
     app = await createTestApp();
     dataSource = app.get(DataSource);
+    await dataSource.dropDatabase();
   });
 
   afterAll(async () => {
@@ -59,7 +60,9 @@ describe('Migrations', () => {
   });
 
   it('s’annule proprement', async () => {
-    await dataSource.undoLastMigration();
+    for (let done = 0; done < dataSource.migrations.length; done++) {
+      await dataSource.undoLastMigration();
+    }
 
     expect(await readUserColumns()).toEqual([]);
   });
