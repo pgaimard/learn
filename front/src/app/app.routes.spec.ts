@@ -1,6 +1,8 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
@@ -14,7 +16,10 @@ function setup(isAuthenticated: boolean): void {
   TestBed.configureTestingModule({
     providers: [
       provideRouter(routes),
-      { provide: SessionService, useValue: { restore: () => of(isAuthenticated) } },
+      {
+        provide: SessionService,
+        useValue: { restore: () => of(isAuthenticated), user: signal(null) },
+      },
     ],
   });
 }
@@ -24,9 +29,9 @@ describe('routes', () => {
     setup(true);
     const harness = await RouterTestingHarness.create();
 
-    const page = await harness.navigateByUrl('/', UeListPage);
+    await harness.navigateByUrl('/');
 
-    expect(page).toBeInstanceOf(UeListPage);
+    expect(harness.routeDebugElement?.query(By.directive(UeListPage))).toBeTruthy();
   });
 
   it('redirige une adresse inconnue vers la page d’accueil', async () => {

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { anonymousGuard, authenticatedGuard } from './core/auth/auth.guards';
+import { Shell } from './layout/shell';
 
 export const routes: Routes = [
   {
@@ -9,9 +10,15 @@ export const routes: Routes = [
   },
   {
     path: '',
-    pathMatch: 'full',
+    component: Shell,
     canActivate: [authenticatedGuard],
-    loadChildren: () => import('./features/ue/ue.routes').then((module) => module.ueRoutes),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadChildren: () => import('./features/ue/ue.routes').then((module) => module.ueRoutes),
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];
