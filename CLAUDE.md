@@ -65,7 +65,7 @@ Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la 
 | Action | Commande |
 |---|---|
 | Installation | `npm ci` |
-| Lancement local avec rechargement | `npm start` (http://localhost:4200) |
+| Lancement local avec rechargement | `npm start` (http://localhost:4200), avec l'API lancée par `npm run start:dev` : `/api` lui est relayé par `proxy.conf.json` |
 | Lint | `npm run lint` |
 | Vérification du formatage | `npm run format:check` |
 | Formatage | `npm run format` |
