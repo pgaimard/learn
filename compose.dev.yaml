@@ -1,0 +1,7 @@
+# Complément de développement : publie la base sur l'hôte, en boucle locale uniquement,
+# pour lancer l'API, les tests et les migrations hors Docker.
+# Usage : docker compose -f compose.yaml -f compose.dev.yaml up -d db
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DATABASE_PORT:-5432}:5432"

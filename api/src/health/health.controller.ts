@@ -1,13 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-
-export interface HealthStatus {
-  status: 'ok';
-}
+import { HealthService, HealthStatus } from './health.service.js';
 
 @Controller('health')
 export class HealthController {
+  constructor(private readonly healthService: HealthService) {}
+
   @Get()
-  check(): HealthStatus {
-    return { status: 'ok' };
+  check(): Promise<HealthStatus> {
+    return this.healthService.check();
   }
 }

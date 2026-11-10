@@ -1,6 +1,14 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
-import { IsIn, IsInt, Max, Min, validateSync } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator';
 
 const NODE_ENVIRONMENTS = ['development', 'test', 'production'] as const;
 
@@ -12,6 +20,27 @@ export class Environment {
   @Min(1)
   @Max(65535)
   PORT!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  DATABASE_HOST!: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  DATABASE_PORT!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  DATABASE_NAME!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  DATABASE_USER!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  DATABASE_PASSWORD!: string;
 }
 
 export function validateEnvironment(raw: Record<string, unknown>): Environment {

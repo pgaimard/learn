@@ -32,6 +32,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:?}
+      DATABASE_USER: ${DATABASE_USER:?}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
     depends_on:
       db:
         condition: service_healthy
@@ -40,9 +45,9 @@ services:
     image: postgres:18.6-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?}
-      POSTGRES_USER: ${POSTGRES_USER:?}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${DATABASE_NAME:?}
+      POSTGRES_USER: ${DATABASE_USER:?}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale-provider=icu --icu-locale=fr-FR"
     volumes:
       - db_data:/var/lib/postgresql

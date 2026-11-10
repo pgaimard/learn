@@ -23,6 +23,7 @@ const ERROR_LABELS: Partial<Record<number, string>> = {
   [HttpStatus.PAYLOAD_TOO_LARGE]: 'Contenu trop volumineux',
   [HttpStatus.TOO_MANY_REQUESTS]: 'Trop de requêtes',
   [HttpStatus.INTERNAL_SERVER_ERROR]: 'Erreur interne',
+  [HttpStatus.SERVICE_UNAVAILABLE]: 'Service indisponible',
 };
 
 const INTERNAL_ERROR_MESSAGE = 'Une erreur interne est survenue.';

@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { HttpErrorFilter } from './common/http-error.filter.js';
 import { validateEnvironment } from './config/environment.js';
+import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
 
 @Module({
@@ -12,6 +13,7 @@ import { HealthModule } from './health/health.module.js';
       envFilePath: '../.env',
       validate: validateEnvironment,
     }),
+    DatabaseModule,
     HealthModule,
   ],
   providers: [
