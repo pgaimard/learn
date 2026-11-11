@@ -1,0 +1,45 @@
+<!-- (close) : fermeture par Échap, traitée comme une annulation. -->
+<dialog
+  #dialog
+  aria-labelledby="dialog-title"
+  [attr.aria-describedby]="request()?.kind === 'confirm' ? 'dialog-message' : null"
+  (close)="cancel()"
+>
+  @if (request(); as request) {
+    <h2 id="dialog-title">{{ request.title }}</h2>
+    @if (request.kind === 'confirm') {
+      <p id="dialog-message">{{ request.message }}</p>
+      <div class="actions">
+        <button #initialFocus type="button" class="button" (click)="cancel()">Annuler</button>
+        <button
+          type="button"
+          class="button confirm"
+          [class.is-destructive]="request.isDestructive"
+          (click)="confirm()"
+        >
+          {{ request.confirmLabel }}
+        </button>
+      </div>
+    } @else {
+      <form (submit)="submit($event, field.value)">
+        <label for="dialog-field">{{ request.label }}</label>
+        <input
+          #initialFocus
+          #field
+          id="dialog-field"
+          type="text"
+          autocomplete="off"
+          [value]="request.initialValue"
+          [attr.aria-describedby]="request.hint ? 'dialog-hint' : null"
+        />
+        @if (request.hint) {
+          <p id="dialog-hint" class="hint">{{ request.hint }}</p>
+        }
+        <div class="actions">
+          <button type="button" class="button" (click)="cancel()">Annuler</button>
+          <button type="submit" class="button confirm">Valider</button>
+        </div>
+      </form>
+    }
+  }
+</dialog>

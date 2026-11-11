@@ -21,7 +21,12 @@ Un paquet de cours est une archive `.zip` qui contient :
 Règles de `cours.md` :
 
 - un en-tête entre deux lignes `---`, avec `ue` (code de l'UE), `titre` et `ordre` ;
-- des titres de niveau 2 à 4 (`##` à `####`) ; le niveau 1 est réservé au titre du chapitre ;
+- le chapitre est reconnu par son `titre` dans l'UE, sans tenir compte de la casse : réimporter
+  un paquet de même titre propose de remplacer le chapitre, qui garde sa place ;
+- `ordre` ne sert qu'à placer un nouveau chapitre : il prend ce rang parmi ceux de l'UE (la fin
+  si le rang dépasse leur nombre) et les suivants reculent. L'ordre se change ensuite en faisant
+  glisser les cours dans la liste ;
+- des titres de niveau 2 à 5 (`##` à `#####`) ; le niveau 1 est réservé au titre du chapitre ;
 - un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]` ou `[!attention]` ;
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { UeService } from '../ue/ue.service';
 import { TermEditPage } from './term-edit-page';
@@ -33,6 +34,16 @@ describe('TermEditPage', () => {
     remove: vi.fn<TermService['remove']>(),
     uploadImage: vi.fn<TermService['uploadImage']>(),
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   async function setup(term: Term = PID): Promise<void> {
     vi.resetAllMocks();
@@ -40,6 +51,7 @@ describe('TermEditPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: DialogService, useValue: dialog },
         { provide: TermService, useValue: service },
         { provide: UeService, useValue: { list: () => of(UES) } },
       ],
@@ -168,12 +180,27 @@ describe('TermEditPage', () => {
     );
   });
 
+  it('demande confirmation avant de quitter avec des modifications en attente', async () => {
+    await setup();
+    dialog.confirm.mockResolvedValue(false);
+
+    expect(fixture.componentInstance.canLeave()).toBe(true);
+    expect(dialog.confirm).not.toHaveBeenCalled();
+
+    fill('edit-label', 'Modifié');
+    expect(await fixture.componentInstance.canLeave()).toBe(false);
+    expect(dialog.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ confirmLabel: 'Quitter sans enregistrer' }),
+    );
+  });
+
   it('supprime le terme après confirmation et revient au glossaire', async () => {
     await setup();
     service.remove.mockReturnValue(of(undefined));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
 
     click('Supprimer');
+    await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
     expect(navigate).toHaveBeenCalledWith(['/glossaire']);

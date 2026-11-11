@@ -1,0 +1,57 @@
+:host {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 15%);
+  white-space: nowrap;
+  /* Centrée au-dessus de la sélection, avec un petit écart. */
+  transform: translate(-50%, calc(-100% - 0.5rem));
+}
+
+button {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--color-border-soft);
+}
+
+button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+.strike {
+  text-decoration: line-through;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

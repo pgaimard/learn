@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { UeService } from '../ue/ue.service';
 import { Task, TaskService } from './task.service';
@@ -25,11 +26,22 @@ describe('TasksPage', () => {
     remove: vi.fn<TaskService['remove']>(),
     revision: signal(0),
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   function setup(tasks: Task[]): void {
     service.list.mockReturnValue(of(tasks));
     TestBed.configureTestingModule({
       providers: [
+        { provide: DialogService, useValue: dialog },
         { provide: TaskService, useValue: service },
         { provide: UeService, useValue: { list: () => of(UES) } },
       ],
@@ -186,16 +198,19 @@ describe('TasksPage', () => {
     });
   });
 
-  it('supprime une tâche après confirmation seulement', () => {
+  it('supprime une tâche après confirmation seulement', async () => {
     setup([task(1, 'Réviser')]);
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirmDeletion.mockResolvedValue(false);
     service.remove.mockReturnValue(of(undefined));
 
     click('Supprimer la tâche Réviser');
+    await settle();
+    expect(dialog.confirmDeletion).toHaveBeenCalledOnce();
     expect(service.remove).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     click('Supprimer la tâche Réviser');
+    await settle();
     expect(service.remove).toHaveBeenCalledWith(1);
   });
 });

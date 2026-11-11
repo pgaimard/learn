@@ -138,7 +138,8 @@ describe('Import d’un paquet de cours', () => {
     const course = response.body as Course;
     expect(course).toMatchObject({
       title: 'Les processus : notions de base',
-      position: 3,
+      // « ordre: 3 » dans une UE vide : le chapitre est le premier.
+      position: 1,
       ue: { code: 'UTC502' },
     });
     const figure = course.content.content?.find(
@@ -202,7 +203,7 @@ describe('Import d’un paquet de cours', () => {
       },
     ]);
     const zip = validPackage({
-      'cours.md': MARKDOWN.replace('ordre: 3', 'ordre: 7'),
+      'cours.md': MARKDOWN.replace('notions de base', 'deuxième partie'),
       'termes.json': terms,
     });
 
@@ -252,21 +253,27 @@ describe('Import d’un paquet de cours', () => {
     });
     expect(refused.status).toBe(409);
     expect((refused.body as ErrorResponse).messages).toEqual([
-      'Un chapitre occupe déjà l’ordre 3 dans UTC502 : confirmez son remplacement.',
+      'Le chapitre « Les processus : notions de base » existe déjà dans UTC502 : confirmez son remplacement.',
     ]);
   });
 
   it('remplace le chapitre et ses images quand c’est confirmé', async () => {
+    // Même titre, à la casse près, et un autre « ordre » : c'est le titre qui désigne le chapitre.
     const replaced = await importPackage(
       createZip({
-        'cours.md': MARKDOWN.replace('notions de base', 'version 2'),
+        'cours.md': MARKDOWN.replace('notions de base', 'NOTIONS DE BASE')
+          .replace('ordre: 3', 'ordre: 9')
+          .replace('## 2. Ordonnancement', '## 2. Ordonnancement revu'),
         'images/fig-01.svg': SVG,
       }),
       true,
     );
 
     expect(replaced.status).toBe(201);
-    expect((replaced.body as Course).title).toBe('Les processus : version 2');
+    const course = replaced.body as Course;
+    expect(course.title).toBe('Les processus : NOTIONS DE BASE');
+    expect(course.position).toBe(1);
+    expect(JSON.stringify(course.content)).toContain('Ordonnancement revu');
     expect(await countCourses()).toBe(1);
     expect(storedFiles()).toHaveLength(1);
   });
@@ -304,7 +311,30 @@ describe('Import d’un paquet de cours', () => {
       imageCount: 0,
     });
     expect(imported.status).toBe(201);
-    expect((imported.body as Course).position).toBe(4);
+    // « ordre: 4 » dépasse le nombre de chapitres : le nouveau se place à la fin.
+    expect((imported.body as Course).position).toBe(2);
+  });
+
+  it('place un nouveau chapitre au rang demandé et décale les suivants', async () => {
+    const markdown =
+      '---\nue: UTC502\ntitre: Introduction\nordre: 1\n---\n\n## 1. Plan\n\nTexte.\n';
+
+    const imported = await client('post', '/api/course-imports/markdown').send({
+      markdown,
+    });
+
+    expect(imported.status).toBe(201);
+    const listed = await client('get', '/api/ues/UTC502/courses');
+    expect(
+      (listed.body as Course[]).map((course) => [
+        course.position,
+        course.title,
+      ]),
+    ).toEqual([
+      [1, 'Introduction'],
+      [2, 'Les processus : NOTIONS DE BASE'],
+      [3, 'Mémoire'],
+    ]);
   });
 
   it.each([

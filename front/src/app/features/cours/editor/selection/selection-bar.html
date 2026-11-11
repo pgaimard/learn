@@ -1,0 +1,58 @@
+<button
+  type="button"
+  class="bold"
+  title="Gras (Ctrl+B)"
+  aria-label="Gras"
+  [attr.aria-pressed]="isActive('bold')"
+  (click)="toggle('bold')"
+>
+  G
+</button>
+<button
+  type="button"
+  class="italic"
+  title="Italique (Ctrl+I)"
+  aria-label="Italique"
+  [attr.aria-pressed]="isActive('italic')"
+  (click)="toggle('italic')"
+>
+  I
+</button>
+<button
+  type="button"
+  class="underline"
+  title="Souligné (Ctrl+U)"
+  aria-label="Souligné"
+  [attr.aria-pressed]="isActive('underline')"
+  (click)="toggle('underline')"
+>
+  S
+</button>
+<button
+  type="button"
+  class="strike"
+  title="Barré"
+  aria-label="Barré"
+  [attr.aria-pressed]="isActive('strike')"
+  (click)="toggle('strike')"
+>
+  B
+</button>
+<button
+  type="button"
+  class="mono"
+  title="Code dans le texte"
+  aria-label="Code dans le texte"
+  [attr.aria-pressed]="isActive('code')"
+  (click)="toggle('code')"
+>
+  &lt;/&gt;
+</button>
+<button
+  type="button"
+  title="Lien (Ctrl+Maj+K)"
+  [attr.aria-pressed]="isActive('link')"
+  (click)="link()"
+>
+  Lien
+</button>

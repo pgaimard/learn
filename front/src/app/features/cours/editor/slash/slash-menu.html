@@ -1,0 +1,14 @@
+@for (command of commands(); track command.label) {
+  <button
+    type="button"
+    role="option"
+    tabindex="-1"
+    [attr.aria-selected]="$index === activeIndex()"
+    [class.is-active]="$index === activeIndex()"
+    (click)="picked.emit($index)"
+  >
+    {{ command.label }}
+  </button>
+} @empty {
+  <p class="empty">Aucun bloc ne correspond.</p>
+}

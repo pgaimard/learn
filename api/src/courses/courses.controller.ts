@@ -10,10 +10,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { Course } from './course.entity.js';
 import { CourseSummary, CoursesService } from './courses.service.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
+import { ReorderCoursesDto } from './dto/reorder-courses.dto.js';
 import { UpdateCourseDto } from './dto/update-course.dto.js';
 
 // Un identifiant non numérique désigne un cours qui n'existe pas.
@@ -36,6 +38,14 @@ export class CoursesController {
     @Body() input: CreateCourseDto,
   ): Promise<Course> {
     return this.coursesService.create(code, input);
+  }
+
+  @Put('ues/:code/courses/order')
+  reorder(
+    @Param('code') code: string,
+    @Body() input: ReorderCoursesDto,
+  ): Promise<CourseSummary[]> {
+    return this.coursesService.reorder(code, input.ids);
   }
 
   @Get('courses/:id')

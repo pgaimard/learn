@@ -18,12 +18,12 @@
 
 .course-content h2,
 .course-content h3,
-.course-content h4 {
+.course-content h4,
+.course-content h5 {
   /* Un titre atteint par le sommaire ne passe pas sous l'en-tête. */
   scroll-margin-top: calc(var(--sticky-top) + 1rem);
   margin: 2em 0 0.5em;
   line-height: 1.25;
-  scroll-margin-top: 1rem;
 }
 
 .course-content h2 {
@@ -38,6 +38,12 @@
 
 .course-content h4 {
   font-size: 1.0625rem;
+}
+
+.course-content h5 {
+  margin-top: 1.5em;
+  color: var(--color-text-muted);
+  font-size: 1rem;
 }
 
 .course-content p {
@@ -257,4 +263,143 @@
 .course-content:not(.is-editable) figcaption:empty,
 .course-content:not(.is-editable) figcaption:has(> br.ProseMirror-trailingBreak:only-child) {
   display: none;
+}
+
+/* Poignée de bloc : à gauche du bloc survolé, dans la marge de la feuille. */
+
+.course-content.is-editable {
+  position: relative;
+}
+
+.course-content .block-handle {
+  position: absolute;
+  /* Collée au texte : aucun vide à traverser pour l'atteindre. */
+  left: -1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.2em;
+  line-height: 1.75rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.course-content .block-handle:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .block-handle:active {
+  cursor: grabbing;
+}
+
+/* Bloc en cours de déplacement. */
+.course-content .is-dragged {
+  opacity: 0.4;
+}
+
+.course-content.is-editable .ProseMirror-selectednode:not(figure) {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  .course-content .block-handle {
+    left: -1rem;
+    width: 1rem;
+  }
+}
+
+/* Tableaux : poignées de la ligne et de la colonne survolées, à cheval sur le bord. */
+
+.course-content .table-grip {
+  position: absolute;
+  z-index: 1;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  transform: translate(-50%, -50%);
+}
+
+.course-content .table-grip-column {
+  width: 1.75rem;
+  height: 0.875rem;
+}
+
+.course-content .table-grip-row {
+  width: 0.875rem;
+  height: 1.75rem;
+}
+
+.course-content .table-grip:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.course-content .table-grip:active {
+  cursor: grabbing;
+}
+
+/* Trait qui montre où la ligne ou la colonne sera déposée. */
+.course-content .table-drop-indicator {
+  position: absolute;
+  z-index: 1;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
+/* Chapitres : chevron de pliage devant chaque titre, contenu replié caché. */
+
+.course-content .fold-toggle {
+  width: 1.25em;
+  margin-right: 0.125em;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.75em;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+}
+
+.course-content .fold-toggle::before {
+  content: '▾';
+}
+
+.course-content .fold-toggle[aria-expanded='false']::before {
+  content: '▸';
+}
+
+.course-content .fold-toggle:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .is-folded-away {
+  display: none;
+}
+
+.course-content .is-folded::after {
+  margin-left: 0.5em;
+  color: var(--color-text-muted);
+  font-size: 0.75em;
+  font-weight: 400;
+  content: '…';
 }

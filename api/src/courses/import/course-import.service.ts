@@ -14,6 +14,7 @@ import { ContentNode, EMPTY_CONTENT } from '../content/content-node.js';
 import { extractPlainText } from '../content/extract-plain-text.js';
 import { validateContent } from '../content/validate-content.js';
 import { Course } from '../course.entity.js';
+import { CoursesService } from '../courses.service.js';
 import { CourseImage } from '../images/course-image.entity.js';
 import {
   CourseImagesService,
@@ -40,7 +41,7 @@ export interface ImportPreview {
   // Termes de termes.json que l'import créera, et ceux déjà présents qu'il laissera tels quels.
   newTerms: TermReference[];
   duplicateTerms: TermReference[];
-  // Chapitre déjà présent à cet ordre dans l'UE : l'import le remplacerait.
+  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
 
@@ -59,12 +60,13 @@ export class CourseImportService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly ueService: UeService,
     private readonly imagesService: CourseImagesService,
+    private readonly coursesService: CoursesService,
   ) {}
 
   async preview(files: PackageFiles): Promise<ImportPreview> {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
-    const existing = await this.findExisting(ue, analysed.metadata.position);
+    const existing = await this.findExisting(ue, analysed.metadata.title);
     const terms = await sortTerms(this.dataSource.manager, analysed.terms);
     return {
       ...analysed.metadata,
@@ -82,10 +84,10 @@ export class CourseImportService {
   async import(files: PackageFiles, replace: boolean): Promise<Course> {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
-    const existing = await this.findExisting(ue, analysed.metadata.position);
+    const existing = await this.findExisting(ue, analysed.metadata.title);
     if (existing && !replace) {
       throw new ConflictException(
-        `Un chapitre occupe déjà l’ordre ${existing.position} dans ${ue.code} : confirmez son remplacement.`,
+        `Le chapitre « ${existing.title} » existe déjà dans ${ue.code} : confirmez son remplacement.`,
       );
     }
     const written: CourseImage[] = [];
@@ -113,17 +115,7 @@ export class CourseImportService {
     written: CourseImage[],
   ): Promise<{ courseId: number; obsolete: CourseImage[] }> {
     const { metadata } = analysed;
-    const course =
-      existing ??
-      (await manager.save(
-        manager.create(Course, {
-          ueId: ue.id,
-          title: metadata.title,
-          position: metadata.position,
-          content: EMPTY_CONTENT,
-          plainText: '',
-        }),
-      ));
+    const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
     const obsolete = await manager.findBy(CourseImage, { courseId: course.id });
     await manager.delete(CourseImage, { courseId: course.id });
     const sources = new Map<string, string>();
@@ -151,6 +143,37 @@ export class CourseImportService {
     return { courseId: course.id, obsolete };
   }
 
+  // Crée le chapitre et le place au rang demandé par « ordre » parmi ceux de l'UE
+  // (à la fin si le rang dépasse leur nombre) ; les suivants reculent d'un rang.
+  private async insertAtRank(
+    manager: EntityManager,
+    ue: Ue,
+    metadata: CourseMetadata,
+  ): Promise<Course> {
+    const siblings = await manager.find(Course, {
+      select: { id: true, position: true },
+      where: { ueId: ue.id },
+      order: { position: 'ASC' },
+    });
+    const course = await manager.save(
+      manager.create(Course, {
+        ueId: ue.id,
+        title: metadata.title,
+        // Rang provisoire, après tous les autres : il ne croise aucun rang existant.
+        position: (siblings.at(-1)?.position ?? 0) + 1,
+        content: EMPTY_CONTENT,
+        plainText: '',
+      }),
+    );
+    const ids = siblings.map((sibling) => sibling.id);
+    const rank = Math.min(Math.max(metadata.position, 1), ids.length + 1);
+    ids.splice(rank - 1, 0, course.id);
+    await this.coursesService.renumber(manager, ue.id, ids);
+    // L'objet en mémoire suit : il est enregistré de nouveau avec le contenu.
+    course.position = rank;
+    return course;
+  }
+
   private async findUe(code: string): Promise<Ue> {
     try {
       return await this.ueService.findByCode(code);
@@ -164,8 +187,15 @@ export class CourseImportService {
     }
   }
 
-  private findExisting(ue: Ue, position: number): Promise<Course | null> {
-    return this.courses.findOneBy({ ueId: ue.id, position });
+  // Un chapitre est reconnu par son titre dans l'UE, sans tenir compte de la casse :
+  // son rang est libre, il se change en faisant glisser les cours dans la liste.
+  private findExisting(ue: Ue, title: string): Promise<Course | null> {
+    return this.courses
+      .createQueryBuilder('course')
+      .where('course.ue_id = :ueId', { ueId: ue.id })
+      .andWhere('lower(course.title) = lower(:title)', { title })
+      .orderBy('course.position', 'ASC')
+      .getOne();
   }
 }
 

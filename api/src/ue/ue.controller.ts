@@ -8,8 +8,10 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { CreateUeDto } from './dto/create-ue.dto.js';
+import { ReorderUesDto } from './dto/reorder-ues.dto.js';
 import { UpdateUeDto } from './dto/update-ue.dto.js';
 import { Ue } from './ue.entity.js';
 import { UeService } from './ue.service.js';
@@ -21,6 +23,11 @@ export class UeController {
   @Get()
   findAll(): Promise<Ue[]> {
     return this.ueService.findAll();
+  }
+
+  @Put('order')
+  reorder(@Body() input: ReorderUesDto): Promise<Ue[]> {
+    return this.ueService.reorder(input.codes);
   }
 
   @Get(':code')

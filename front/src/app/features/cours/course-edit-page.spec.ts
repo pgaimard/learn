@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { CourseContent } from './content/course-content';
 import { CourseEditPage } from './course-edit-page';
 import { Course, CourseService } from './course.service';
 
@@ -26,10 +29,25 @@ describe('CourseEditPage', () => {
     remove: vi.fn<CourseService['remove']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+    prompt: vi.fn<DialogService['prompt']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   async function setup(): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: CourseService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: DialogService, useValue: dialog },
+        { provide: CourseService, useValue: service },
+      ],
     });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture = TestBed.createComponent(CourseEditPage);
@@ -74,7 +92,7 @@ describe('CourseEditPage', () => {
     expect(editor?.textContent).toContain('Un programme.');
   });
 
-  it('enregistre le titre, l’ordre et le contenu de l’éditeur', async () => {
+  it('enregistre le titre et le contenu de l’éditeur', async () => {
     service.update.mockReturnValue(of(COURSE));
     await setup();
     typeTitle(' Les processus ');
@@ -83,7 +101,6 @@ describe('CourseEditPage', () => {
 
     expect(service.update).toHaveBeenCalledWith(7, {
       title: 'Les processus',
-      position: 3,
       content: COURSE.content,
     });
     expect(element().textContent).toContain('Enregistré à');
@@ -91,14 +108,14 @@ describe('CourseEditPage', () => {
 
   it('affiche le refus de l’API et garde les modifications en attente', async () => {
     service.update.mockReturnValue(
-      throwError(() => new ApiError(409, ['Un cours occupe déjà l’ordre 3 dans cette UE.'])),
+      throwError(() => new ApiError(400, ['Le titre ne doit pas dépasser 200 caractères.'])),
     );
     await setup();
     typeTitle('Autre titre');
 
     click('Enregistrer');
 
-    expect(element().textContent).toContain('Un cours occupe déjà l’ordre 3 dans cette UE.');
+    expect(element().textContent).toContain('Le titre ne doit pas dépasser 200 caractères.');
     expect(element().textContent).toContain('Modifications non enregistrées');
   });
 
@@ -113,22 +130,69 @@ describe('CourseEditPage', () => {
 
   it('demande confirmation avant de quitter avec des modifications en attente', async () => {
     await setup();
-    const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirm.mockResolvedValue(false);
 
     expect(fixture.componentInstance.canLeave()).toBe(true);
-    expect(confirmation).not.toHaveBeenCalled();
+    expect(dialog.confirm).not.toHaveBeenCalled();
 
     typeTitle('Modifié');
-    expect(fixture.componentInstance.canLeave()).toBe(false);
-    expect(confirmation).toHaveBeenCalled();
+    expect(await fixture.componentInstance.canLeave()).toBe(false);
+    expect(dialog.confirm).toHaveBeenCalledWith({
+      title: 'Modifications non enregistrées',
+      message: 'Quitter cette page fera perdre les modifications en cours.',
+      confirmLabel: 'Quitter sans enregistrer',
+      isDestructive: true,
+    });
+  });
+
+  // jsdom ne transmet pas une sélection du document à l'éditeur : on la pose par son API.
+  function selectAllText(): void {
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    content.editor()?.commands.selectAll();
+    // La barre de mise en forme apparaît avec la sélection.
+    fixture.detectChanges();
+  }
+
+  it('pose un lien avec l’adresse saisie dans la modale', async () => {
+    await setup();
+    dialog.prompt.mockResolvedValue(' https://www.cnam.fr ');
+    selectAllText();
+
+    click('Lien');
+    await settle();
+
+    expect(dialog.prompt).toHaveBeenCalledWith({
+      title: 'Lien',
+      label: 'Adresse du lien',
+      initialValue: 'https://',
+      hint: 'Laisser vide pour retirer le lien.',
+    });
+    expect(element().querySelector('.ProseMirror a')?.getAttribute('href')).toBe(
+      'https://www.cnam.fr',
+    );
+  });
+
+  it('ne touche pas au texte quand la saisie du lien est annulée', async () => {
+    await setup();
+    dialog.prompt.mockResolvedValue(null);
+    selectAllText();
+
+    click('Lien');
+    await settle();
+
+    expect(dialog.prompt).toHaveBeenCalledOnce();
+    expect(element().querySelector('.ProseMirror a')).toBeNull();
+    expect(element().textContent).not.toContain('Modifications non enregistrées');
   });
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
     service.remove.mockReturnValue(of(undefined));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     await setup();
 
     click('Supprimer le cours');
+    await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);

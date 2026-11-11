@@ -1,0 +1,49 @@
+<p class="title" id="table-menu-row">Ligne</p>
+<div role="group" aria-labelledby="table-menu-row">
+  <button type="button" role="menuitem" (click)="run(addRowBefore)">Insérer au-dessus</button>
+  <button type="button" role="menuitem" (click)="run(addRowAfter)">Insérer en dessous</button>
+  <button type="button" role="menuitem" [disabled]="!canMove('row', -1)" (click)="move('row', -1)">
+    Déplacer vers le haut
+  </button>
+  <button type="button" role="menuitem" [disabled]="!canMove('row', 1)" (click)="move('row', 1)">
+    Déplacer vers le bas
+  </button>
+  <button type="button" role="menuitem" class="danger" (click)="run(deleteRow)">
+    Supprimer la ligne
+  </button>
+</div>
+
+<p class="title" id="table-menu-column">Colonne</p>
+<div role="group" aria-labelledby="table-menu-column">
+  <button type="button" role="menuitem" (click)="run(addColumnBefore)">Insérer à gauche</button>
+  <button type="button" role="menuitem" (click)="run(addColumnAfter)">Insérer à droite</button>
+  <button
+    type="button"
+    role="menuitem"
+    [disabled]="!canMove('column', -1)"
+    (click)="move('column', -1)"
+  >
+    Déplacer à gauche
+  </button>
+  <button
+    type="button"
+    role="menuitem"
+    [disabled]="!canMove('column', 1)"
+    (click)="move('column', 1)"
+  >
+    Déplacer à droite
+  </button>
+  <button type="button" role="menuitem" class="danger" (click)="run(deleteColumn)">
+    Supprimer la colonne
+  </button>
+</div>
+
+<p class="title" id="table-menu-table">Tableau</p>
+<div role="group" aria-labelledby="table-menu-table">
+  <button type="button" role="menuitem" (click)="run(toggleHeaderRow)">
+    Ligne d’en-tête : oui / non
+  </button>
+  <button type="button" role="menuitem" class="danger" (click)="run(deleteTable)">
+    Supprimer le tableau
+  </button>
+</div>

@@ -11,11 +11,10 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
-
-const UNSAVED_MESSAGE = 'Des modifications ne sont pas enregistrées. Quitter quand même ?';
 
 @Component({
   selector: 'app-course-edit-page',
@@ -35,6 +34,7 @@ export class CourseEditPage {
   readonly id = input.required<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly formBuilder = inject(NonNullableFormBuilder);
@@ -48,7 +48,6 @@ export class CourseEditPage {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
-    position: [0, [Validators.required, Validators.min(0)]],
   });
 
   constructor() {
@@ -56,8 +55,16 @@ export class CourseEditPage {
   }
 
   // Appelé par la garde de sortie de la route.
-  canLeave(): boolean {
-    return !this.isDirty() || confirm(UNSAVED_MESSAGE);
+  canLeave(): boolean | Promise<boolean> {
+    return (
+      !this.isDirty() ||
+      this.dialog.confirm({
+        title: 'Modifications non enregistrées',
+        message: 'Quitter cette page fera perdre les modifications en cours.',
+        confirmLabel: 'Quitter sans enregistrer',
+        isDestructive: true,
+      })
+    );
   }
 
   protected markDirty(): void {
@@ -70,23 +77,21 @@ export class CourseEditPage {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, position } = this.form.getRawValue();
+    const { title } = this.form.getRawValue();
     this.isSaving.set(true);
     this.errors.set([]);
-    this.courseService
-      .update(Number(this.id()), { title: title.trim(), position, content })
-      .subscribe({
-        next: (course) => {
-          this.isSaving.set(false);
-          this.isDirty.set(false);
-          this.savedAt.set(new Date());
-          this.title.setTitle(`Édition – ${course.title}`);
-        },
-        error: (error: ApiError) => {
-          this.isSaving.set(false);
-          this.errors.set(error.messages);
-        },
-      });
+    this.courseService.update(Number(this.id()), { title: title.trim(), content }).subscribe({
+      next: (course) => {
+        this.isSaving.set(false);
+        this.isDirty.set(false);
+        this.savedAt.set(new Date());
+        this.title.setTitle(`Édition – ${course.title}`);
+      },
+      error: (error: ApiError) => {
+        this.isSaving.set(false);
+        this.errors.set(error.messages);
+      },
+    });
   }
 
   // Envoie une image collée, déposée ou choisie, puis l'insère à l'endroit du curseur.
@@ -98,9 +103,15 @@ export class CourseEditPage {
     });
   }
 
-  protected remove(): void {
+  protected async remove(): Promise<void> {
     const course = this.course();
-    if (!course || !confirm(`Supprimer définitivement le cours « ${course.title} » ?`)) {
+    if (
+      !course ||
+      !(await this.dialog.confirmDeletion(
+        'Supprimer le cours',
+        `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
+      ))
+    ) {
       return;
     }
     this.courseService.remove(course.id).subscribe({
@@ -127,7 +138,7 @@ export class CourseEditPage {
     this.courseService.get(id).subscribe({
       next: (course) => {
         this.course.set(course);
-        this.form.setValue({ title: course.title, position: course.position });
+        this.form.setValue({ title: course.title });
         this.isDirty.set(false);
         this.title.setTitle(`Édition – ${course.title}`);
       },

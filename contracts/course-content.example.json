@@ -181,6 +181,18 @@
       ]
     },
     {
+      "type": "heading",
+      "attrs": {
+        "level": 5
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Point de détail"
+        }
+      ]
+    },
+    {
       "type": "blockquote",
       "content": [
         {

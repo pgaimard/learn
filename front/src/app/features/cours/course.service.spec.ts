@@ -23,6 +23,14 @@ describe('CourseService', () => {
     expect(http.expectOne('/api/ues/UTC502/courses').request.method).toBe('GET');
   });
 
+  it('enregistre l’ordre des cours d’une UE', () => {
+    service.reorder('UTC502', [9, 7]).subscribe();
+
+    const request = http.expectOne('/api/ues/UTC502/courses/order').request;
+    expect(request.method).toBe('PUT');
+    expect(request.body).toEqual({ ids: [9, 7] });
+  });
+
   it('crée un cours dans une UE', () => {
     service.create('UTC502', { title: 'Processus' }).subscribe();
 

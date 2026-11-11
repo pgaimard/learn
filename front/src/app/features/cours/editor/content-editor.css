@@ -11,6 +11,8 @@
 }
 
 .sheet {
+  /* Repère du menu de bloc. */
+  position: relative;
   padding: 1.5rem 2rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);

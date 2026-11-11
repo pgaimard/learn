@@ -22,7 +22,6 @@ export class UeForm implements OnInit {
     code: ['', [Validators.required, Validators.pattern(/^\s*[A-Za-z0-9]{3,10}\s*$/)]],
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
     description: ['', Validators.maxLength(2000)],
-    position: this.formBuilder.control<number | null>(null, Validators.min(0)),
   });
 
   ngOnInit(): void {
@@ -32,7 +31,6 @@ export class UeForm implements OnInit {
         code: ue.code,
         title: ue.title,
         description: ue.description,
-        position: ue.position,
       });
     }
   }
@@ -42,16 +40,15 @@ export class UeForm implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const { code, title, description, position } = this.form.getRawValue();
+    const { code, title, description } = this.form.getRawValue();
     this.saved.emit({
       code: code.trim().toUpperCase(),
       title: title.trim(),
       description: description.trim(),
-      ...(position === null ? {} : { position }),
     });
   }
 
-  protected isInvalid(name: 'code' | 'title' | 'description' | 'position'): boolean {
+  protected isInvalid(name: 'code' | 'title' | 'description'): boolean {
     const control = this.form.controls[name];
     return control.touched && control.invalid;
   }

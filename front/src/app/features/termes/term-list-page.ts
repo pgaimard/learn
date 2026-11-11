@@ -7,6 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { filterTerms } from './filter-terms';
 import { TermForm } from './term-form';
@@ -26,6 +27,7 @@ export class TermListPage {
   readonly type = input.required<TermType>();
 
   private readonly termService = inject(TermService);
+  private readonly dialog = inject(DialogService);
 
   protected readonly screen = computed(() => TERM_SCREENS[this.type()]);
   protected readonly terms = signal<TermSummary[]>([]);
@@ -68,6 +70,20 @@ export class TermListPage {
         this.isSaving.set(false);
         this.formErrors.set(error.messages);
       },
+    });
+  }
+
+  protected async remove(term: TermSummary): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le terme',
+      `« ${term.label} » et sa définition seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.termService.remove(term.id).subscribe({
+      next: () => this.load(this.type()),
+      error: (error: ApiError) => this.pageErrors.set(error.messages),
     });
   }
 

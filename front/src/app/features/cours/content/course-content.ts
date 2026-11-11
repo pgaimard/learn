@@ -13,6 +13,8 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { ContentNode } from './content-node';
+import { revealPosition } from '../editor/sections/section-folding';
+import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -36,6 +38,20 @@ export class CourseContent {
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
+  // Bloc dont le menu est ouvert : sa position dans le document et la hauteur où
+  // afficher le menu, en pixels depuis le haut du conteneur de ce composant.
+  readonly blockMenu = signal<{ pos: number; top: number } | null>(null);
+  // Menu de tableau ouvert par un clic droit : où l'afficher, dans le même repère.
+  readonly tableMenu = signal<{ top: number; left: number } | null>(null);
+  // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
+  readonly selectionBar = signal<{ top: number; left: number } | null>(null);
+  // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
+  readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
+  // Menu « / » d'insertion de bloc.
+  readonly slash = new SlashMenuState(
+    () => this.editor(),
+    () => this.pickImages(),
+  );
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -44,7 +60,33 @@ export class CourseContent {
       this.editor.set(
         new Editor({
           element: this.host.nativeElement,
-          extensions: createCourseExtensions(),
+          extensions: createCourseExtensions({
+            blockHandle: {
+              onOpenMenu: ({ pos, top }) =>
+                this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+            },
+            tableTools: {
+              onOpenMenu: ({ top, left }) =>
+                this.tableMenu.set({
+                  top: top + this.host.nativeElement.offsetTop,
+                  left: left + this.host.nativeElement.offsetLeft,
+                }),
+            },
+            selection: {
+              onChange: (target) => this.selectionBar.set(this.offset(target)),
+              onCodeBlock: (target) => {
+                const place = this.offset(target);
+                this.codeBlockBar.set(target && place ? { pos: target.pos, ...place } : null);
+              },
+            },
+            slash: {
+              onChange: (trigger) => {
+                const place = this.offset(trigger);
+                this.slash.show(trigger && place ? { ...trigger, ...place } : null);
+              },
+              onKey: (key) => this.slash.handleKey(key),
+            },
+          }),
           content: untracked(this.content),
           editable: untracked(this.editable),
           editorProps: {
@@ -58,7 +100,11 @@ export class CourseContent {
               return this.receiveImages(event.dataTransfer);
             },
           },
-          onUpdate: () => this.edited.emit(),
+          onUpdate: () => {
+            this.blockMenu.set(null);
+            this.tableMenu.set(null);
+            this.edited.emit();
+          },
         }),
       );
     });
@@ -72,6 +118,31 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  // Ouvre le choix de fichiers du navigateur ; les images choisies suivent le même
+  // chemin que celles collées ou déposées.
+  private pickImages(): void {
+    const field = document.createElement('input');
+    field.type = 'file';
+    field.accept = 'image/png,image/jpeg,image/svg+xml';
+    field.multiple = true;
+    field.addEventListener('change', () => {
+      for (const file of Array.from(field.files ?? [])) {
+        this.imageReceived.emit(file);
+      }
+    });
+    field.click();
+  }
+
+  // Passe du repère de ce composant à celui de son conteneur.
+  private offset(target: { top: number; left: number } | null): typeof target {
+    return (
+      target && {
+        top: target.top + this.host.nativeElement.offsetTop,
+        left: target.left + this.host.nativeElement.offsetLeft,
+      }
+    );
   }
 
   getContent(): ContentNode {
@@ -108,8 +179,13 @@ export class CourseContent {
   }
 
   scrollToHeading(index: number): void {
-    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4');
+    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
     const heading = headings.item(index) as HTMLElement | null;
+    const view = this.editor()?.view;
+    if (heading && view) {
+      // Le titre visé peut se trouver dans un chapitre replié.
+      revealPosition(view, view.posAtDOM(heading, 0));
+    }
     if (heading) {
       heading.tabIndex = -1;
       heading.scrollIntoView({ behavior: 'smooth', block: 'start' });

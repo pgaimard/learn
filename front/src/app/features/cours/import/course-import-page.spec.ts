@@ -104,7 +104,7 @@ describe('CourseImportPage', () => {
     setup();
     pickPackage();
 
-    expect(element().textContent).toContain('« Ancienne version » occupe déjà l’ordre 3');
+    expect(element().textContent).toContain('« Ancienne version » existe déjà dans UTC502');
     click('Remplacer le chapitre');
 
     expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, true);

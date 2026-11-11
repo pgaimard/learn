@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, concatMap, forkJoin, from, map, Observable, of, toArray } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { FileService, Folder, MAX_FILE_SIZE, StoredFile } from './file.service';
 import { FolderPicker } from './folder-picker';
@@ -51,6 +52,7 @@ export class FileBrowser {
   readonly folderId = input<number | null>(null);
 
   private readonly fileService = inject(FileService);
+  private readonly dialog = inject(DialogService);
 
   protected readonly folders = signal<Folder[]>([]);
   protected readonly files = signal<StoredFile[]>([]);
@@ -135,8 +137,12 @@ export class FileBrowser {
     });
   }
 
-  protected removeFile(file: StoredFile): void {
-    if (!confirm(`Supprimer définitivement « ${file.name} » ?`)) {
+  protected async removeFile(file: StoredFile): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le fichier',
+      `« ${file.name} » sera supprimé définitivement.`,
+    );
+    if (!confirmed) {
       return;
     }
     this.fileService.removeFile(file.id).subscribe({
@@ -153,8 +159,12 @@ export class FileBrowser {
     this.save(this.fileService.renameFolder(folder.id, name));
   }
 
-  protected removeFolder(folder: Folder): void {
-    if (!confirm(`Supprimer le dossier « ${folder.name} » ?`)) {
+  protected async removeFolder(folder: Folder): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le dossier',
+      `Le dossier « ${folder.name} » sera supprimé. Il doit être vide.`,
+    );
+    if (!confirmed) {
       return;
     }
     this.fileService.removeFolder(folder.id).subscribe({

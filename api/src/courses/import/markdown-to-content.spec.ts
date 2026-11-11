@@ -169,7 +169,7 @@ describe('markdownToContent', () => {
 
   it.each([
     ['# Titre de niveau 1', 'ligne 1 : titre de niveau 1 non pris en charge'],
-    ['##### Trop profond', 'titre de niveau 5 non pris en charge'],
+    ['###### Trop profond', 'titre de niveau 6 non pris en charge'],
     ['Texte\n\n> [!note]\n> x', 'ligne 3 : type d’encadré inconnu « note »'],
     ['> [!retenir]', 'encadré vide'],
     [

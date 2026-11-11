@@ -1,7 +1,7 @@
 import { CanDeactivateFn } from '@angular/router';
 
 export interface LeaveAware {
-  canLeave(): boolean;
+  canLeave(): boolean | Promise<boolean>;
 }
 
 // Demande confirmation avant de quitter une page dont les modifications ne sont pas enregistrées.

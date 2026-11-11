@@ -68,7 +68,8 @@ export class CoursesService {
     const course = this.courses.create({
       ueId: ue.id,
       title: input.title,
-      position: input.position ?? (await this.nextPosition(ue.id)),
+      // Un nouveau cours se place à la suite ; l'ordre se change ensuite par reorder.
+      position: await this.nextPosition(ue.id),
       content,
       plainText: extractPlainText(content),
     });
@@ -79,7 +80,6 @@ export class CoursesService {
   async update(id: number, changes: UpdateCourseDto): Promise<Course> {
     const course = await this.findById(id);
     course.title = changes.title ?? course.title;
-    course.position = changes.position ?? course.position;
     if (changes.content === undefined) {
       await this.save(this.courses.manager, course);
       return this.findById(id);
@@ -95,6 +95,45 @@ export class CoursesService {
     });
     await this.imagesService.removeFiles(unused);
     return this.findById(id);
+  }
+
+  // Réordonne tous les cours d'une UE : la liste doit les contenir tous, une fois chacun.
+  async reorder(ueCode: string, ids: number[]): Promise<CourseSummary[]> {
+    const ue = await this.ueService.findByCode(ueCode);
+    const existing = await this.courses.find({
+      select: { id: true },
+      where: { ueId: ue.id },
+    });
+    const known = new Set(existing.map((course) => course.id));
+    if (
+      ids.length !== known.size ||
+      new Set(ids).size !== ids.length ||
+      ids.some((id) => !known.has(id))
+    ) {
+      throw new BadRequestException(
+        'L’ordre doit contenir tous les cours de l’UE, une fois chacun.',
+      );
+    }
+    await this.dataSource.transaction((manager) =>
+      this.renumber(manager, ue.id, ids),
+    );
+    return this.findAllByUe(ueCode);
+  }
+
+  // Donne aux cours les rangs 1 à n dans l'ordre de la liste. Deux cours d'une UE ne
+  // peuvent pas partager un rang, même un instant : ils passent d'abord par des rangs
+  // négatifs, qui ne croisent ni les anciens ni les nouveaux.
+  async renumber(
+    manager: EntityManager,
+    ueId: number,
+    ids: number[],
+  ): Promise<void> {
+    await manager.query('UPDATE courses SET position = -id WHERE ue_id = $1', [
+      ueId,
+    ]);
+    for (const [index, id] of ids.entries()) {
+      await manager.update(Course, { id, ueId }, { position: index + 1 });
+    }
   }
 
   async remove(id: number): Promise<void> {

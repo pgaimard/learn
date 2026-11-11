@@ -57,8 +57,8 @@ describe('UeForm', () => {
 
     submit();
 
-    expect(saved).toEqual([
-      { code: 'NFE108', title: 'Méthodologies', description: 'Merise', position: 4 },
-    ]);
+    expect(saved).toEqual([{ code: 'NFE108', title: 'Méthodologies', description: 'Merise' }]);
+    // L'ordre ne se saisit plus : il se règle en faisant glisser les UE dans la liste.
+    expect(element().querySelector('#ue-position')).toBeNull();
   });
 });

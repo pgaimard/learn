@@ -1,12 +1,10 @@
 import { Transform } from 'class-transformer';
 import {
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
-  Min,
 } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }): unknown =>
@@ -39,9 +37,4 @@ export class CreateUeDto {
     message: 'La description ne doit pas dépasser 2000 caractères.',
   })
   description?: string;
-
-  @IsOptional()
-  @IsInt({ message: 'L’ordre doit être un nombre entier.' })
-  @Min(0, { message: 'L’ordre doit être positif.' })
-  position?: number;
 }

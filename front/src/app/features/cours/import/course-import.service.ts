@@ -18,7 +18,7 @@ export interface ImportPreview {
   // Termes que l'import créera, et ceux déjà présents qu'il laissera tels quels.
   newTerms: ImportedTerm[];
   duplicateTerms: ImportedTerm[];
-  // Chapitre déjà présent à cet ordre dans l'UE : l'import le remplacerait.
+  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
 

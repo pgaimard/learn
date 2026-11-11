@@ -14,7 +14,6 @@ export interface UeInput {
   code: string;
   title: string;
   description: string;
-  position?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +34,11 @@ export class UeService {
 
   update(code: string, input: UeInput): Observable<Ue> {
     return this.http.patch<Ue>(`/api/ues/${encodeURIComponent(code)}`, input);
+  }
+
+  // Enregistre l'ordre des UE : tous leurs codes, dans l'ordre voulu.
+  reorder(codes: string[]): Observable<Ue[]> {
+    return this.http.put<Ue[]>('/api/ues/order', { codes });
   }
 
   remove(code: string): Observable<void> {

@@ -123,25 +123,67 @@ describe('Cours', () => {
     );
   });
 
-  it('refuse un ordre déjà occupé dans la même UE', async () => {
-    const response = await client('post', '/api/ues/UTC502/courses').send({
+  it('ne laisse plus fixer l’ordre à la création ni à la modification', async () => {
+    const created = await client('post', '/api/ues/UTC502/courses').send({
       title: 'Doublon',
       position: 1,
     });
+    const updated = await client('patch', `/api/courses/${courseId}`).send({
+      position: 5,
+    });
 
-    expect(response.status).toBe(409);
-    expect((response.body as ErrorResponse).messages).toEqual([
-      'Un cours occupe déjà l’ordre 1 dans cette UE.',
-    ]);
+    expect(created.status).toBe(400);
+    expect(updated.status).toBe(400);
   });
 
-  it('accepte le même ordre dans une autre UE', async () => {
+  it('numérote les cours de chaque UE séparément', async () => {
     const response = await client('post', '/api/ues/NFE108/courses').send({
       title: 'Merise',
-      position: 1,
     });
 
     expect(response.status).toBe(201);
+    expect((response.body as Course).position).toBe(1);
+  });
+
+  it('réordonne les cours d’une UE selon la liste reçue', async () => {
+    const before = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const reversed = before.map((course) => course.id).reverse();
+
+    const response = await client('put', '/api/ues/UTC502/courses/order').send({
+      ids: reversed,
+    });
+
+    expect(response.status).toBe(200);
+    expect((response.body as Course[]).map((course) => course.id)).toEqual(
+      reversed,
+    );
+    expect(
+      (response.body as Course[]).map((course) => course.position),
+    ).toEqual(reversed.map((_id, index) => index + 1));
+
+    await client('put', '/api/ues/UTC502/courses/order').send({
+      ids: before.map((course) => course.id),
+    });
+  });
+
+  it('refuse un ordre incomplet, en double, ou avec le cours d’une autre UE', async () => {
+    const mine = (
+      (await client('get', '/api/ues/UTC502/courses')).body as Course[]
+    ).map((course) => course.id);
+    const [foreign] = (await client('get', '/api/ues/NFE108/courses'))
+      .body as Course[];
+    const reorder = (ids: unknown): request.Test =>
+      client('put', '/api/ues/UTC502/courses/order').send({ ids });
+
+    expect((await reorder(mine.slice(1))).status).toBe(400);
+    expect((await reorder([...mine, mine[0]])).status).toBe(400);
+    expect((await reorder([...mine.slice(1), foreign.id])).status).toBe(400);
+    expect((await reorder(['un', 'deux'])).status).toBe(400);
+    expect(
+      (await client('put', '/api/ues/ABC123/courses/order').send({ ids: [] }))
+        .status,
+    ).toBe(404);
   });
 
   it('répond 404 pour une UE inconnue', async () => {

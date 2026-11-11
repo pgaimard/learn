@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TERM_SCREENS } from './term-screens';
 import { TermSummary } from './term.service';
@@ -13,6 +13,11 @@ import { TermSummary } from './term.service';
 })
 export class TermList {
   readonly terms = input.required<TermSummary[]>();
+  // Affiche « Modifier » et « Supprimer » sur chaque terme.
+  readonly showActions = input(false);
+
+  // Suppression demandée ; la confirmation et l'appel sont faits par la page.
+  readonly removed = output<TermSummary>();
 
   protected readonly screens = TERM_SCREENS;
 }
