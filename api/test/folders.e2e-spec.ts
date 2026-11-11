@@ -160,7 +160,7 @@ describe('Dossiers', () => {
 
     expect(response.status).toBe(409);
     expect(messages(response)).toEqual([
-      'Le dossier « Travaux dirigés » n’est pas vide : il contient 2 sous-dossier(s).',
+      'Le dossier « Travaux dirigés » n’est pas vide : il contient 2 sous-dossier(s) et 0 fichier(s).',
     ]);
   });
 

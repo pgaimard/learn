@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { UeService } from '../../ue/ue.service.js';
+import { StoredFile } from '../stored-file.entity.js';
 import { CreateFolderDto } from './folder.dto.js';
 import { Folder } from './folder.entity.js';
 
@@ -18,6 +19,8 @@ export type FolderSummary = Pick<Folder, 'id' | 'parentId' | 'name'>;
 export class FoldersService {
   constructor(
     @InjectRepository(Folder) private readonly folders: Repository<Folder>,
+    @InjectRepository(StoredFile)
+    private readonly files: Repository<StoredFile>,
     private readonly ueService: UeService,
   ) {}
 
@@ -69,9 +72,10 @@ export class FoldersService {
   async remove(id: number): Promise<void> {
     const folder = await this.findById(id);
     const subfolders = await this.folders.countBy({ parentId: id });
-    if (subfolders > 0) {
+    const files = await this.files.countBy({ folderId: id });
+    if (subfolders + files > 0) {
       throw new ConflictException(
-        `Le dossier « ${folder.name} » n’est pas vide : il contient ${subfolders} sous-dossier(s).`,
+        `Le dossier « ${folder.name} » n’est pas vide : il contient ${subfolders} sous-dossier(s) et ${files} fichier(s).`,
       );
     }
     await this.folders.delete({ id });
