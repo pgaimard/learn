@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Ue, UeService } from '../ue/ue.service';
 import { formatDateTime, isOverdue, isReminderDue } from './task-dates';
@@ -26,6 +27,7 @@ const WITHOUT_UE = '-';
 })
 export class TasksPage implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly dialog = inject(DialogService);
   private readonly ueService = inject(UeService);
 
   protected readonly withoutUe = WITHOUT_UE;
@@ -107,8 +109,12 @@ export class TasksPage implements OnInit {
     });
   }
 
-  protected remove(task: Task): void {
-    if (!confirm(`Supprimer la tâche « ${task.title} » ?`)) {
+  protected async remove(task: Task): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer la tâche',
+      `La tâche « ${task.title} » sera supprimée.`,
+    );
+    if (!confirmed) {
       return;
     }
     this.taskService.remove(task.id).subscribe({

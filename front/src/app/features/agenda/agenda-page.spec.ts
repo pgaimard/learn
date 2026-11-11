@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Task, TaskService } from '../taches/task.service';
 import { UeService } from '../ue/ue.service';
@@ -42,6 +43,16 @@ describe('AgendaPage', () => {
     remove: vi.fn<EventService['remove']>(),
   };
   const taskService = { list: vi.fn<TaskService['list']>() };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   function setup(week = '2026-11-16'): void {
     eventService.list.mockReturnValue(of([COURSE, DEADLINE]));
@@ -49,6 +60,7 @@ describe('AgendaPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: DialogService, useValue: dialog },
         { provide: EventService, useValue: eventService },
         { provide: TaskService, useValue: taskService },
         { provide: UeService, useValue: { list: () => of(UES) } },
@@ -228,16 +240,22 @@ describe('AgendaPage', () => {
     expect(element().querySelector('form')).not.toBeNull();
   });
 
-  it('supprime un événement après confirmation seulement', () => {
+  it('supprime un événement après confirmation seulement', async () => {
     setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirmDeletion.mockResolvedValue(false);
     eventService.remove.mockReturnValue(of(undefined));
 
     click('Supprimer Cours systèmes');
+    await settle();
+    expect(dialog.confirmDeletion).toHaveBeenCalledWith(
+      'Supprimer l’événement',
+      '« Cours systèmes » du mardi 17 novembre sera supprimé.',
+    );
     expect(eventService.remove).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     click('Supprimer Cours systèmes');
+    await settle();
     expect(eventService.remove).toHaveBeenCalledWith(4);
   });
 });

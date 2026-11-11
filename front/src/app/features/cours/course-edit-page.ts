@@ -11,11 +11,10 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
-
-const UNSAVED_MESSAGE = 'Des modifications ne sont pas enregistrées. Quitter quand même ?';
 
 @Component({
   selector: 'app-course-edit-page',
@@ -35,6 +34,7 @@ export class CourseEditPage {
   readonly id = input.required<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly formBuilder = inject(NonNullableFormBuilder);
@@ -56,8 +56,16 @@ export class CourseEditPage {
   }
 
   // Appelé par la garde de sortie de la route.
-  canLeave(): boolean {
-    return !this.isDirty() || confirm(UNSAVED_MESSAGE);
+  canLeave(): boolean | Promise<boolean> {
+    return (
+      !this.isDirty() ||
+      this.dialog.confirm({
+        title: 'Modifications non enregistrées',
+        message: 'Quitter cette page fera perdre les modifications en cours.',
+        confirmLabel: 'Quitter sans enregistrer',
+        isDestructive: true,
+      })
+    );
   }
 
   protected markDirty(): void {
@@ -98,9 +106,15 @@ export class CourseEditPage {
     });
   }
 
-  protected remove(): void {
+  protected async remove(): Promise<void> {
     const course = this.course();
-    if (!course || !confirm(`Supprimer définitivement le cours « ${course.title} » ?`)) {
+    if (
+      !course ||
+      !(await this.dialog.confirmDeletion(
+        'Supprimer le cours',
+        `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
+      ))
+    ) {
       return;
     }
     this.courseService.remove(course.id).subscribe({

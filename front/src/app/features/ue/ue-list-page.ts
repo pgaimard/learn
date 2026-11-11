@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { UeForm } from './ue-form';
 import { Ue, UeInput, UeService } from './ue.service';
@@ -13,6 +14,7 @@ import { Ue, UeInput, UeService } from './ue.service';
 })
 export class UeListPage implements OnInit {
   private readonly ueService = inject(UeService);
+  private readonly dialog = inject(DialogService);
 
   protected readonly ues = signal<Ue[]>([]);
   protected readonly isLoading = signal(true);
@@ -56,8 +58,12 @@ export class UeListPage implements OnInit {
     });
   }
 
-  protected remove(ue: Ue): void {
-    if (!confirm(`Supprimer l’UE ${ue.code} ?`)) {
+  protected async remove(ue: Ue): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer l’UE',
+      `L’UE ${ue.code} sera supprimée. Elle doit être vide.`,
+    );
+    if (!confirmed) {
       return;
     }
     this.ueService.remove(ue.code).subscribe({

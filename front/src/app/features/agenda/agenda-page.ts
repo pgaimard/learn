@@ -10,6 +10,7 @@ import {
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { forkJoin, map, Observable } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Task, TaskService } from '../taches/task.service';
 import { Ue, UeService } from '../ue/ue.service';
@@ -47,6 +48,7 @@ export class AgendaPage {
   readonly semaine = input<string>();
 
   private readonly eventService = inject(EventService);
+  private readonly dialog = inject(DialogService);
   private readonly taskService = inject(TaskService);
   private readonly ueService = inject(UeService);
   private readonly title = inject(Title);
@@ -144,8 +146,12 @@ export class AgendaPage {
     });
   }
 
-  protected remove(event: AgendaEvent): void {
-    if (!confirm(`Supprimer « ${event.title} » du ${formatDay(new Date(event.startsAt))} ?`)) {
+  protected async remove(event: AgendaEvent): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer l’événement',
+      `« ${event.title} » du ${formatDay(new Date(event.startsAt))} sera supprimé.`,
+    );
+    if (!confirmed) {
       return;
     }
     this.eventService.remove(event.id).subscribe({

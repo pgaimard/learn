@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { CourseEditPage } from './course-edit-page';
 import { Course, CourseService } from './course.service';
@@ -26,10 +27,24 @@ describe('CourseEditPage', () => {
     remove: vi.fn<CourseService['remove']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   async function setup(): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: CourseService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: DialogService, useValue: dialog },
+        { provide: CourseService, useValue: service },
+      ],
     });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture = TestBed.createComponent(CourseEditPage);
@@ -113,22 +128,28 @@ describe('CourseEditPage', () => {
 
   it('demande confirmation avant de quitter avec des modifications en attente', async () => {
     await setup();
-    const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirm.mockResolvedValue(false);
 
     expect(fixture.componentInstance.canLeave()).toBe(true);
-    expect(confirmation).not.toHaveBeenCalled();
+    expect(dialog.confirm).not.toHaveBeenCalled();
 
     typeTitle('Modifié');
-    expect(fixture.componentInstance.canLeave()).toBe(false);
-    expect(confirmation).toHaveBeenCalled();
+    expect(await fixture.componentInstance.canLeave()).toBe(false);
+    expect(dialog.confirm).toHaveBeenCalledWith({
+      title: 'Modifications non enregistrées',
+      message: 'Quitter cette page fera perdre les modifications en cours.',
+      confirmLabel: 'Quitter sans enregistrer',
+      isDestructive: true,
+    });
   });
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
     service.remove.mockReturnValue(of(undefined));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     await setup();
 
     click('Supprimer le cours');
+    await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
