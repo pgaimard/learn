@@ -83,6 +83,15 @@ describe('Recherche', () => {
       Buffer.from('x'),
       'annales.zip',
     );
+    await createCourse(
+      'Rappels',
+      doc('Quelques notions utiles avant de commencer.'),
+    );
+    await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Carnet',
+      content: doc('Prendre des notes pendant la séance.'),
+    });
     await client('post', '/api/terms').send({
       type: 'definition',
       label: 'Pagination',
@@ -157,6 +166,31 @@ describe('Recherche', () => {
       'Les processus',
       'La mémoire virtuelle',
     ]);
+  });
+
+  it('ne confond pas un mot entier avec les mots de même racine', async () => {
+    const results = await search('notes');
+
+    expect(results.definitions.items.map((term) => term.label)).toEqual([
+      'Carnet',
+    ]);
+    expect(highlighted(results.definitions.items[0].excerpt)).toEqual([
+      'notes',
+    ]);
+    expect(results.courses.total).toBe(0);
+  });
+
+  it('trouve le singulier par le pluriel et inversement', async () => {
+    expect((await search('note')).definitions.total).toBe(1);
+    expect((await search('notion')).courses.total).toBe(1);
+  });
+
+  it('complète un mot en cours de frappe, où qu’il soit coupé', async () => {
+    expect((await search('notio')).courses.items[0].title).toBe('Rappels');
+    expect((await search('pagina')).definitions.items[0].label).toBe(
+      'Pagination',
+    );
+    expect((await search('mémoire virtu')).courses.total).toBe(1);
   });
 
   it('exige tous les mots', async () => {
