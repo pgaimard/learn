@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prépare un serveur Ubuntu vierge à recevoir l'application : Docker, pare-feu,
-# utilisateur de déploiement, fichier .env, accès SSH par clé uniquement.
+# utilisateur de déploiement, fichier .env, sauvegarde quotidienne, accès SSH par clé uniquement.
 # Peut être relancé sans risque : chaque étape ne fait que ce qui manque.
 #
 # Usage : sudo ./deploy/setup-server.sh <nom-de-domaine> ['<clé publique du pipeline>']
@@ -9,6 +9,7 @@ set -euo pipefail
 readonly DEPLOY_USER=deploy
 readonly SWAP_FILE=/swapfile
 readonly SSH_CONFIG=/etc/ssh/sshd_config.d/00-learn.conf
+readonly BACKUP_CRON=/etc/cron.d/learn-backup
 
 APP_DIR=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
 readonly APP_DIR
@@ -33,7 +34,8 @@ install_packages() {
   apt-get update -q
   apt-get upgrade -y -q
   # Paquets d'Ubuntu : leurs correctifs de sécurité arrivent par les mises à jour automatiques.
-  apt-get install -y -q docker.io docker-compose-v2 docker-buildx git ufw openssl unattended-upgrades
+  apt-get install -y -q docker.io docker-compose-v2 docker-buildx git ufw openssl unattended-upgrades \
+    cron rclone
   systemctl enable --now docker
 }
 
@@ -85,6 +87,14 @@ ENV
   chown "$DEPLOY_USER:$DEPLOY_USER" "$env_file"
 }
 
+# Chaque nuit ; le résultat va dans le journal du système (journalctl -t learn-backup).
+schedule_backup() {
+  cat >"$BACKUP_CRON" <<CRON
+15 3 * * * $DEPLOY_USER $APP_DIR/deploy/backup.sh 2>&1 | logger -t learn-backup
+CRON
+  chmod 644 "$BACKUP_CRON"
+}
+
 # La clé du pipeline ne peut lancer que le script de déploiement : ni terminal, ni tunnel.
 authorize_pipeline() {
   if [[ -z $PIPELINE_KEY ]]; then
@@ -123,6 +133,7 @@ main() {
   create_swap
   create_deploy_user
   create_env_file
+  schedule_backup
   authorize_pipeline
   harden_ssh
   echo "Serveur prêt. Premier déploiement : sudo -u $DEPLOY_USER $APP_DIR/deploy/deploy.sh <tag>"

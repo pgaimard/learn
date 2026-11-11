@@ -12,6 +12,7 @@ Dans ce document, `learn.example.org` remplace le vrai nom de domaine, qui n'est
 | `/srv/learn/.env` | Nom de domaine et secrets, générés sur place, lisibles par `deploy` seul |
 | Utilisateur `deploy` | Propriétaire du dépôt, lance Docker. Sans mot de passe |
 | Pare-feu `ufw` | Ports 22, 80 et 443 uniquement |
+| Tâche `cron` | Sauvegarde quotidienne (voir `sauvegarde.md`) |
 | SSH | Connexion par clé uniquement |
 | Volumes Docker | Base (`learn_db_data`), fichiers envoyés (`learn_uploads`), certificats (`learn_proxy_data`) |
 
@@ -35,7 +36,7 @@ sudo git clone https://github.com/pgaimard/learn.git /srv/learn
 sudo /srv/learn/deploy/setup-server.sh learn.example.org
 ```
 
-Le script installe Docker, ferme le pare-feu, crée l'utilisateur `deploy`, génère le fichier `.env` et coupe la connexion SSH par mot de passe. Il peut être relancé sans risque : il ne refait que ce qui manque, et ne touche jamais à un `.env` existant.
+Le script installe Docker, ferme le pare-feu, crée l'utilisateur `deploy`, génère le fichier `.env`, planifie la sauvegarde quotidienne et coupe la connexion SSH par mot de passe. Il peut être relancé sans risque : il ne refait que ce qui manque, et ne touche jamais à un `.env` existant.
 
 S'il affiche « aucune clé SSH », la connexion par mot de passe est restée ouverte : ajoutez votre clé publique au compte d'administration, puis relancez-le.
 
