@@ -14,7 +14,7 @@ export function createCourseExtensions(): Extensions {
   return [
     StarterKit.configure({
       // Le niveau 1 est réservé au titre du cours.
-      heading: { levels: [2, 3, 4] },
+      heading: { levels: [2, 3, 4, 5] },
       codeBlock: false,
       link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] },
     }),

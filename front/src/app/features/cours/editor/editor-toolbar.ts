@@ -12,7 +12,7 @@ import { Editor } from '@tiptap/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 
-type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4';
+type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4' | 'h5';
 type Chain = ReturnType<Editor['chain']>;
 type Command = (chain: Chain) => Chain;
 
@@ -89,7 +89,7 @@ export class EditorToolbar {
   }
 
   protected blockStyle(): BlockStyle {
-    for (const level of [2, 3, 4] as const) {
+    for (const level of [2, 3, 4, 5] as const) {
       if (this.isActive('heading', { level })) {
         return `h${level}`;
       }
@@ -103,7 +103,7 @@ export class EditorToolbar {
     if (style === 'paragraph') {
       chain.setParagraph().run();
     } else {
-      chain.setHeading({ level: Number(style.slice(1)) as 2 | 3 | 4 }).run();
+      chain.setHeading({ level: Number(style.slice(1)) as 2 | 3 | 4 | 5 }).run();
     }
   }
 

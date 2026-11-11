@@ -92,10 +92,10 @@ class Converter {
 
   private parseHeading(token: Token): ContentNode {
     const level = Number(token.tag.slice(1));
-    if (level < 2 || level > 4) {
+    if (level < 2 || level > 5) {
       this.fail(
         token,
-        `titre de niveau ${level} non pris en charge : utilisez les niveaux 2 à 4.`,
+        `titre de niveau ${level} non pris en charge : utilisez les niveaux 2 à 5.`,
       );
     }
     if (level === 2) {
