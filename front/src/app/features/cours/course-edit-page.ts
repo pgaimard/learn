@@ -90,6 +90,15 @@ export class CourseEditPage {
       });
   }
 
+  // Envoie une image collée, déposée ou choisie, puis l'insère à l'endroit du curseur.
+  protected addImage(file: File): void {
+    this.errors.set([]);
+    this.courseService.uploadImage(Number(this.id()), file).subscribe({
+      next: (image) => this.contentView()?.insertFigure(image.src, image.altText),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
+
   protected remove(): void {
     const course = this.course();
     if (!course || !confirm(`Supprimer définitivement le cours « ${course.title} » ?`)) {

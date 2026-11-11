@@ -5,9 +5,11 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 
 type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4';
 type Chain = ReturnType<Editor['chain']>;
@@ -37,6 +39,12 @@ const CODE_LANGUAGES = [
 export class EditorToolbar {
   readonly editor = input.required<Editor>();
 
+  // Image choisie par le bouton « Image » ; l'envoi est fait par la page.
+  readonly imagePicked = output<File>();
+
+  protected readonly calloutKinds = CALLOUT_KINDS;
+  protected readonly calloutLabels = CALLOUT_LABELS;
+
   protected readonly languages = CODE_LANGUAGES;
 
   protected readonly toggleBold: Command = (chain) => chain.toggleBold();
@@ -57,6 +65,7 @@ export class EditorToolbar {
   protected readonly deleteColumn: Command = (chain) => chain.deleteColumn();
   protected readonly toggleHeaderRow: Command = (chain) => chain.toggleHeaderRow();
   protected readonly deleteTable: Command = (chain) => chain.deleteTable();
+  protected readonly deleteFigure: Command = (chain) => chain.deleteNode('figure');
   // Incrémenté à chaque transaction de l'éditeur : force le recalcul de l'état des boutons.
   private readonly revision = signal(0);
 
@@ -124,6 +133,37 @@ export class EditorToolbar {
       chain.unsetLink().run();
     } else {
       chain.setLink({ href: href.trim() }).run();
+    }
+  }
+
+  protected pickImage(event: Event): void {
+    const field = event.target as HTMLInputElement;
+    for (const file of Array.from(field.files ?? [])) {
+      this.imagePicked.emit(file);
+    }
+    field.value = '';
+  }
+
+  protected editAlternativeText(): void {
+    const current: unknown = this.editor().getAttributes('figure')['alt'];
+    const alt = prompt(
+      'Texte alternatif : ce que montre l’image, pour qui ne la voit pas',
+      typeof current === 'string' ? current : '',
+    );
+    if (alt !== null) {
+      this.editor().chain().focus().updateAttributes('figure', { alt: alt.trim() }).run();
+    }
+  }
+
+  // Pose l'encadré, change son type, ou le retire si ce type est déjà actif.
+  protected toggleCallout(kind: CalloutKind): void {
+    const chain = this.editor().chain().focus();
+    if (this.isActive('callout', { kind })) {
+      chain.lift('callout').run();
+    } else if (this.isActive('callout')) {
+      chain.updateAttributes('callout', { kind }).run();
+    } else {
+      chain.wrapIn('callout', { kind }).run();
     }
   }
 

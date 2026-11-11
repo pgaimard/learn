@@ -29,6 +29,8 @@ export class CourseContent {
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
+  // Émis pour chaque image collée ou déposée ; l'envoi est fait par la page.
+  readonly imageReceived = output<File>();
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
@@ -43,7 +45,17 @@ export class CourseContent {
           extensions: createCourseExtensions(),
           content: untracked(this.content),
           editable: untracked(this.editable),
-          editorProps: { attributes: { 'aria-label': 'Contenu du cours' } },
+          editorProps: {
+            attributes: { 'aria-label': 'Contenu du cours' },
+            handlePaste: (_view, event) => this.receiveImages(event.clipboardData),
+            handleDrop: (view, event) => {
+              const position = view.posAtCoords({ left: event.clientX, top: event.clientY });
+              if (position && hasImages(event.dataTransfer)) {
+                this.editor()?.commands.setTextSelection(position.pos);
+              }
+              return this.receiveImages(event.dataTransfer);
+            },
+          },
           onUpdate: () => this.edited.emit(),
         }),
       );
@@ -64,6 +76,35 @@ export class CourseContent {
     return (this.editor()?.getJSON() ?? this.content()) as ContentNode;
   }
 
+  insertFigure(src: string, alt: string): void {
+    const editor = this.editor();
+    if (!editor) {
+      return;
+    }
+    const figure = { type: 'figure', attrs: { src, alt } };
+    if (!editor.isActive('figure')) {
+      editor.chain().focus().insertContent(figure).run();
+      return;
+    }
+    // Curseur déjà sur une image (ou dans sa légende) : la nouvelle se place après,
+    // au lieu de la remplacer.
+    const { $to, to } = editor.state.selection;
+    const position = $to.parent.type.name === 'figure' ? $to.after() : to;
+    editor.chain().focus().insertContentAt(position, figure).run();
+  }
+
+  // Renvoie true quand des images ont été prises en charge, pour bloquer le traitement
+  // par défaut (qui insérerait l'image encodée dans le contenu).
+  private receiveImages(transfer: DataTransfer | null): boolean {
+    if (!this.editable() || !hasImages(transfer)) {
+      return false;
+    }
+    for (const file of imagesOf(transfer)) {
+      this.imageReceived.emit(file);
+    }
+    return true;
+  }
+
   scrollToHeading(index: number): void {
     const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4');
     const heading = headings.item(index) as HTMLElement | null;
@@ -73,4 +114,12 @@ export class CourseContent {
       heading.focus({ preventScroll: true });
     }
   }
+}
+
+function imagesOf(transfer: DataTransfer | null): File[] {
+  return Array.from(transfer?.files ?? []).filter((file) => file.type.startsWith('image/'));
+}
+
+function hasImages(transfer: DataTransfer | null): boolean {
+  return imagesOf(transfer).length > 0;
 }

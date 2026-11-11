@@ -167,6 +167,20 @@ describe('validateContent', () => {
     ]);
   });
 
+  it('refuse un type d’encadré inconnu', () => {
+    const errors = validateContent(
+      doc({
+        type: 'callout',
+        attrs: { kind: 'publicité' },
+        content: [paragraph('x')],
+      }),
+    );
+
+    expect(errors).toEqual([
+      'Valeur non autorisée pour « kind » sur « callout ».',
+    ]);
+  });
+
   it('refuse une liste vide', () => {
     expect(validateContent(doc({ type: 'bulletList' }))).toEqual([
       'Le bloc « bulletList » ne peut pas être vide.',

@@ -113,6 +113,30 @@
     <button type="button" class="tool" title="Ligne de séparation" (click)="run(insertRule)">
       Séparateur
     </button>
+    <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">
+      Image
+      <input
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml"
+        multiple
+        class="visually-hidden"
+        (change)="pickImage($event)"
+      />
+    </label>
+  </div>
+
+  <div class="group" role="group" aria-label="Encadré">
+    @for (kind of calloutKinds; track kind) {
+      <button
+        type="button"
+        class="tool"
+        [title]="'Encadré « ' + calloutLabels[kind] + ' »'"
+        [attr.aria-pressed]="isActive('callout', { kind })"
+        (click)="toggleCallout(kind)"
+      >
+        {{ calloutLabels[kind] }}
+      </button>
+    }
   </div>
 
   <div class="group">
@@ -133,6 +157,15 @@
           }
         </select>
       </label>
+    </div>
+  }
+
+  @if (isActive('figure')) {
+    <div class="group context" role="group" aria-label="Image">
+      <button type="button" class="tool" (click)="editAlternativeText()">Texte alternatif</button>
+      <button type="button" class="tool danger" (click)="run(deleteFigure)">
+        Supprimer l’image
+      </button>
     </div>
   }
 

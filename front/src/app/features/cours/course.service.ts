@@ -15,6 +15,12 @@ export interface Course extends CourseSummary {
   ue: { code: string; title: string };
 }
 
+export interface UploadedImage {
+  id: number;
+  src: string;
+  altText: string;
+}
+
 export interface CourseInput {
   title?: string;
   position?: number;
@@ -39,6 +45,12 @@ export class CourseService {
 
   update(id: number, changes: CourseInput): Observable<Course> {
     return this.http.patch<Course>(`/api/courses/${id}`, changes);
+  }
+
+  uploadImage(courseId: number, file: File): Observable<UploadedImage> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedImage>(`/api/courses/${courseId}/images`, form);
   }
 
   remove(id: number): Observable<void> {

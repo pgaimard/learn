@@ -24,6 +24,7 @@ describe('CourseEditPage', () => {
     get: vi.fn<CourseService['get']>(),
     update: vi.fn<CourseService['update']>(),
     remove: vi.fn<CourseService['remove']>(),
+    uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
 
   async function setup(): Promise<void> {
@@ -131,5 +132,60 @@ describe('CourseEditPage', () => {
 
     expect(service.remove).toHaveBeenCalledWith(7);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
+  });
+
+  function pickImage(): void {
+    const field = element().querySelector<HTMLInputElement>('input[type="file"]');
+    const file = new File(['x'], 'capture.png', { type: 'image/png' });
+    Object.defineProperty(field, 'files', { value: [file], configurable: true });
+    field?.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  it('envoie l’image choisie puis l’insère comme figure dans le cours', async () => {
+    service.uploadImage.mockReturnValue(of({ id: 4, src: '/api/courses/7/images/4', altText: '' }));
+    service.update.mockReturnValue(of(COURSE));
+    await setup();
+
+    pickImage();
+    click('Enregistrer');
+
+    expect(service.uploadImage).toHaveBeenCalledWith(7, expect.any(File));
+    expect(element().querySelector('figure img')?.getAttribute('src')).toBe(
+      '/api/courses/7/images/4',
+    );
+    const saved = JSON.stringify(service.update.mock.calls[0][1].content);
+    expect(saved).toContain('"type":"figure"');
+    expect(saved).not.toContain('data:');
+  });
+
+  it('ajoute une seconde image après la première au lieu de la remplacer', async () => {
+    service.uploadImage
+      .mockReturnValueOnce(of({ id: 4, src: '/api/courses/7/images/4', altText: '' }))
+      .mockReturnValueOnce(of({ id: 5, src: '/api/courses/7/images/5', altText: '' }));
+    await setup();
+
+    pickImage();
+    pickImage();
+
+    const sources = Array.from(element().querySelectorAll('figure img')).map((image) =>
+      image.getAttribute('src'),
+    );
+    expect(sources).toEqual(['/api/courses/7/images/4', '/api/courses/7/images/5']);
+  });
+
+  it('affiche le refus de l’API quand l’image n’est pas acceptée', async () => {
+    service.uploadImage.mockReturnValue(
+      throwError(
+        () =>
+          new ApiError(400, ['Format non pris en charge : seuls PNG, JPEG et SVG sont acceptés.']),
+      ),
+    );
+    await setup();
+
+    pickImage();
+
+    expect(element().textContent).toContain('Format non pris en charge');
+    expect(element().querySelector('figure')).toBeNull();
   });
 });
