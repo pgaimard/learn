@@ -49,10 +49,16 @@
       </div>
     </dl>
 
-    @if (preview.termCount > 0) {
-      <p class="note">
-        Les termes sont détectés mais pas encore importés : le glossaire arrive avec une prochaine
-        version.
+    @if (preview.newTerms.length > 0) {
+      <p class="terms">
+        <strong>{{ preview.newTerms.length }} à ajouter au dictionnaire et au glossaire :</strong>
+        {{ labelsOf(preview.newTerms) }}
+      </p>
+    }
+    @if (preview.duplicateTerms.length > 0) {
+      <p class="terms" role="status">
+        <strong>{{ preview.duplicateTerms.length }} déjà présents, laissés tels quels :</strong>
+        {{ labelsOf(preview.duplicateTerms) }}
       </p>
     }
     @if (preview.existingCourse; as existing) {

@@ -29,6 +29,7 @@ class Converter {
   constructor(
     private readonly tokens: Token[],
     private readonly lineOffset: number,
+    private readonly source: string,
   ) {}
 
   // Lit les blocs jusqu'au jeton de fermeture indiqué (ou la fin du document).
@@ -268,7 +269,7 @@ class Converter {
       const line = token.map
         ? `ligne ${token.map[0] + 1 + this.lineOffset} : `
         : '';
-      this.errors.push(`cours.md, ${line}${message}`);
+      this.errors.push(`${this.source}, ${line}${message}`);
     }
   }
 }
@@ -338,8 +339,14 @@ function stripMarker(
 export function markdownToContent(
   markdown: string,
   lineOffset = 0,
+  // Nom donné au contenu dans les messages d'erreur.
+  source = 'cours.md',
 ): ConvertedMarkdown {
-  const converter = new Converter(parser.parse(markdown, {}), lineOffset);
+  const converter = new Converter(
+    parser.parse(markdown, {}),
+    lineOffset,
+    source,
+  );
   const content = converter.parseBlocks(null);
   return {
     document: {

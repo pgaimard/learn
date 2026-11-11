@@ -26,5 +26,18 @@ Règles de `cours.md` :
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
 
+Règles de `termes.json`, dont `termes.example.json` montre les trois formes d'entrée :
+
+- une liste de 500 entrées au plus, chacune avec `type` (`definition` ou `acronyme`) et `libelle` ;
+- `forme_developpee` est obligatoire pour un acronyme et interdite pour une définition ;
+- `definition` est du Markdown, avec les mêmes constructions que `cours.md` sauf les images ;
+  elle est obligatoire pour une définition, facultative pour un acronyme ;
+- toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
+- un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
+  est signalé à l'aperçu et laissé tel quel à l'import.
+
+`termes.example.json` est lu par les tests de l'API (`parse-terms.spec.ts`,
+`course-imports.e2e-spec.ts`).
+
 `cours.example.md` est importé par les tests de l'API (`markdown-to-content.spec.ts`,
 `course-imports.e2e-spec.ts`).

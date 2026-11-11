@@ -21,7 +21,14 @@ import {
 } from '../images/course-images.service.js';
 import { markdownToContent } from './markdown-to-content.js';
 import { CourseMetadata, parseFrontMatter } from './parse-front-matter.js';
+import { ParsedTerm, parseTerms } from './parse-terms.js';
 import { PackageFiles } from './read-package.js';
+import {
+  insertTerms,
+  sortTerms,
+  TermReference,
+  toReference,
+} from './term-import.js';
 
 export interface ImportPreview {
   ueCode: string;
@@ -30,6 +37,9 @@ export interface ImportPreview {
   sectionCount: number;
   imageCount: number;
   termCount: number;
+  // Termes de termes.json que l'import créera, et ceux déjà présents qu'il laissera tels quels.
+  newTerms: TermReference[];
+  duplicateTerms: TermReference[];
   // Chapitre déjà présent à cet ordre dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
@@ -39,7 +49,7 @@ interface AnalysedPackage {
   document: ContentNode;
   images: Map<string, Buffer>;
   sectionCount: number;
-  termCount: number;
+  terms: ParsedTerm[];
 }
 
 @Injectable()
@@ -55,11 +65,14 @@ export class CourseImportService {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
     const existing = await this.findExisting(ue, analysed.metadata.position);
+    const terms = await sortTerms(this.dataSource.manager, analysed.terms);
     return {
       ...analysed.metadata,
       sectionCount: analysed.sectionCount,
       imageCount: analysed.images.size,
-      termCount: analysed.termCount,
+      termCount: analysed.terms.length,
+      newTerms: terms.fresh.map(toReference),
+      duplicateTerms: terms.duplicates.map(toReference),
       existingCourse: existing
         ? { id: existing.id, title: existing.title }
         : null,
@@ -77,7 +90,7 @@ export class CourseImportService {
     }
     const written: CourseImage[] = [];
     try {
-      // Cours, images et contenu sont enregistrés ensemble ou pas du tout.
+      // Cours, images, contenu et termes sont enregistrés ensemble ou pas du tout.
       const { courseId, obsolete } = await this.dataSource.transaction(
         (manager) => this.write(manager, ue, existing, analysed, written),
       );
@@ -130,6 +143,11 @@ export class CourseImportService {
     course.content = content;
     course.plainText = extractPlainText(content);
     await manager.save(course);
+    const terms = await sortTerms(manager, analysed.terms);
+    await insertTerms(manager, terms.fresh, {
+      ueId: ue.id,
+      courseId: course.id,
+    });
     return { courseId: course.id, obsolete };
   }
 
@@ -172,7 +190,8 @@ function analyse(files: PackageFiles): AnalysedPackage {
       errors.push(...checkImage(path, data));
     }
   }
-  const terms = countTerms(files.terms, errors);
+  const terms = parseTerms(files.terms);
+  errors.push(...terms.errors);
   if (!header.metadata || errors.length > 0) {
     throw new BadRequestException(errors.slice(0, 10));
   }
@@ -181,7 +200,7 @@ function analyse(files: PackageFiles): AnalysedPackage {
     document: converted.document,
     images,
     sectionCount: converted.sectionCount,
-    termCount: terms,
+    terms: terms.terms,
   };
 }
 
@@ -194,22 +213,6 @@ function checkImage(path: string, data: Buffer): string[] {
       error instanceof HttpException ? error.message : 'fichier illisible.';
     return [`${path} : ${reason}`];
   }
-}
-
-function countTerms(terms: string | null, errors: string[]): number {
-  if (terms === null) {
-    return 0;
-  }
-  try {
-    const parsed: unknown = JSON.parse(terms);
-    if (Array.isArray(parsed)) {
-      return parsed.length;
-    }
-  } catch {
-    // Signalé ci-dessous, comme un contenu qui n'est pas une liste.
-  }
-  errors.push('termes.json doit contenir une liste d’entrées au format JSON.');
-  return 0;
 }
 
 function findAltText(node: ContentNode, path: string): string {
