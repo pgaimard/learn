@@ -6,6 +6,7 @@ import { HttpErrorFilter } from './common/http-error.filter.js';
 import { CoursesModule } from './courses/courses.module.js';
 import { validateEnvironment } from './config/environment.js';
 import { DatabaseModule } from './database/database.module.js';
+import { EventsModule } from './events/events.module.js';
 import { FilesModule } from './files/files.module.js';
 import { HealthModule } from './health/health.module.js';
 import { SearchModule } from './search/search.module.js';
@@ -31,6 +32,7 @@ import { UsersModule } from './users/users.module.js';
     SearchModule,
     FilesModule,
     TasksModule,
+    EventsModule,
   ],
   providers: [
     {
