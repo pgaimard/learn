@@ -4,6 +4,7 @@ import { TableKit } from '@tiptap/extension-table';
 import { StarterKit } from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
 import { BlockHandle, BlockHandleOptions } from '../editor/blocks/block-handle';
+import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { Callout } from './callout';
 import { Figure } from './figure';
 
@@ -11,8 +12,14 @@ const lowlight = createLowlight(common);
 
 // Blocs et marques d'un cours. Cette liste doit rester alignée sur la liste blanche
 // de l'API (api/src/courses/content/content-schema.ts).
-// blockHandle : branche la poignée de bloc sur l'interface (édition seulement).
-export function createCourseExtensions(blockHandle?: BlockHandleOptions): Extensions {
+// Outils d'édition qui ouvrent un menu de l'interface.
+export interface EditingTools {
+  blockHandle: BlockHandleOptions;
+  tableTools: TableToolsOptions;
+}
+
+// tools : branche la poignée de bloc et les outils de tableau sur l'interface (édition).
+export function createCourseExtensions(tools?: EditingTools): Extensions {
   return [
     StarterKit.configure({
       // Le niveau 1 est réservé au titre du cours.
@@ -24,6 +31,8 @@ export function createCourseExtensions(blockHandle?: BlockHandleOptions): Extens
     TableKit.configure({ table: { resizable: false } }),
     Figure,
     Callout,
-    ...(blockHandle ? [BlockHandle.configure(blockHandle)] : []),
+    ...(tools
+      ? [BlockHandle.configure(tools.blockHandle), TableTools.configure(tools.tableTools)]
+      : []),
   ];
 }
