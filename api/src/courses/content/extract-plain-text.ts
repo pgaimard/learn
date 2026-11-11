@@ -1,6 +1,11 @@
 import { ContentNode } from './content-node.js';
 
-const INLINE_CONTAINERS = new Set(['paragraph', 'heading', 'codeBlock']);
+const INLINE_CONTAINERS = new Set([
+  'paragraph',
+  'heading',
+  'codeBlock',
+  'figure',
+]);
 
 function inlineText(node: ContentNode): string {
   return (node.content ?? [])

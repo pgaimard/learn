@@ -44,6 +44,7 @@ describe('Migrations', () => {
     await dataSource.runMigrations();
 
     expect(await readTableNames()).toEqual([
+      'course_images',
       'courses',
       'migrations',
       'sessions',

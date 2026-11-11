@@ -9,6 +9,7 @@ const validEnvironment = {
   DATABASE_USER: 'learn',
   DATABASE_PASSWORD: 'secret',
   SESSION_SECRET: 'x'.repeat(32),
+  UPLOADS_DIR: '/data/uploads',
 };
 
 describe('validateEnvironment', () => {
