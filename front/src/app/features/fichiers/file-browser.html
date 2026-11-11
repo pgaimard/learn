@@ -1,0 +1,133 @@
+<div class="page-header">
+  <nav class="path" aria-label="Dossier affiché">
+    <a
+      [routerLink]="[]"
+      [queryParams]="queryFor(null)"
+      [attr.aria-current]="folderId() === null ? 'page' : null"
+    >
+      Fichiers
+    </a>
+    @for (folder of path() ?? []; track folder.id; let last = $last) {
+      <span aria-hidden="true">›</span>
+      <a
+        [routerLink]="[]"
+        [queryParams]="queryFor(folder.id)"
+        [attr.aria-current]="last ? 'page' : null"
+      >
+        {{ folder.name }}
+      </a>
+    }
+  </nav>
+
+  @if (path() !== null) {
+    <div class="header-actions">
+      <button type="button" class="button" (click)="open({ kind: 'new-folder' })">
+        Nouveau dossier
+      </button>
+      <label class="button button-primary upload" [class.is-disabled]="isUploading()">
+        Envoyer des fichiers
+        <input
+          class="visually-hidden"
+          type="file"
+          multiple
+          [disabled]="isUploading()"
+          (change)="pickFiles($event)"
+        />
+      </label>
+    </div>
+  }
+</div>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+  @if (path() === null && !isLoading()) {
+    <p class="form-error">Ce dossier n’existe pas ou plus dans cette UE.</p>
+  }
+</div>
+
+<div aria-live="polite">
+  @if (isUploading()) {
+    <p class="status">Envoi en cours…</p>
+  }
+  @if (reports().length > 0) {
+    <ul class="reports">
+      @for (report of reports(); track $index) {
+        <li [class.is-error]="!report.succeeded">
+          <span class="report-name">{{ report.name }}</span> : {{ report.message }}
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+@if (editing()?.kind === 'new-folder') {
+  <section class="card new-folder" aria-label="Nouveau dossier">
+    <app-name-form
+      label="Nom du nouveau dossier"
+      submitLabel="Créer"
+      [errors]="formErrors()"
+      [isSaving]="isSaving()"
+      (saved)="createFolder($event)"
+      (cancelled)="open(null)"
+    />
+  </section>
+}
+
+@if (isLoading()) {
+  <p>Chargement…</p>
+} @else if (path() !== null) {
+  @if (isEmpty()) {
+    <p class="empty">
+      Ce dossier est vide. Envoyez des fichiers avec le bouton ci-dessus ou en les déposant ici.
+    </p>
+  } @else {
+    <ul class="entries">
+      @for (folder of subfolders(); track folder.id) {
+        <li class="card entry">
+          @if (isRenaming(folder)) {
+            <app-name-form
+              label="Nouveau nom du dossier"
+              [initialName]="folder.name"
+              [errors]="formErrors()"
+              [isSaving]="isSaving()"
+              (saved)="renameFolder(folder, $event)"
+              (cancelled)="open(null)"
+            />
+          } @else {
+            <a class="entry-name folder" [routerLink]="[]" [queryParams]="queryFor(folder.id)">
+              <span class="kind">Dossier</span> {{ folder.name }}
+            </a>
+            <div class="entry-actions">
+              <button
+                type="button"
+                class="button"
+                [attr.aria-label]="'Renommer le dossier ' + folder.name"
+                (click)="open({ kind: 'rename-folder', id: folder.id })"
+              >
+                Renommer
+              </button>
+              <button
+                type="button"
+                class="button button-danger"
+                [attr.aria-label]="'Supprimer le dossier ' + folder.name"
+                (click)="removeFolder(folder)"
+              >
+                Supprimer
+              </button>
+            </div>
+          }
+        </li>
+      }
+      @for (file of files(); track file.id) {
+        <li class="card entry">
+          <a class="entry-name" [href]="downloadUrl(file)" download>{{ file.name }}</a>
+          <span class="entry-detail">
+            {{ formatSize(file.size) }} · {{ file.updatedAt | date: 'dd/MM/yyyy' }}
+          </span>
+        </li>
+      }
+    </ul>
+  }
+}
