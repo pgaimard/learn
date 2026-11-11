@@ -39,6 +39,8 @@ export class CourseContent {
   // Bloc dont le menu est ouvert : sa position dans le document et la hauteur où
   // afficher le menu, en pixels depuis le haut du conteneur de ce composant.
   readonly blockMenu = signal<{ pos: number; top: number } | null>(null);
+  // Menu de tableau ouvert par un clic droit : où l'afficher, dans le même repère.
+  readonly tableMenu = signal<{ top: number; left: number } | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -48,8 +50,17 @@ export class CourseContent {
         new Editor({
           element: this.host.nativeElement,
           extensions: createCourseExtensions({
-            onOpenMenu: ({ pos, top }) =>
-              this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+            blockHandle: {
+              onOpenMenu: ({ pos, top }) =>
+                this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+            },
+            tableTools: {
+              onOpenMenu: ({ top, left }) =>
+                this.tableMenu.set({
+                  top: top + this.host.nativeElement.offsetTop,
+                  left: left + this.host.nativeElement.offsetLeft,
+                }),
+            },
           }),
           content: untracked(this.content),
           editable: untracked(this.editable),
@@ -66,6 +77,7 @@ export class CourseContent {
           },
           onUpdate: () => {
             this.blockMenu.set(null);
+            this.tableMenu.set(null);
             this.edited.emit();
           },
         }),

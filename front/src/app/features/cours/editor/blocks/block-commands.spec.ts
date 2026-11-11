@@ -183,7 +183,10 @@ describe('commandes de bloc', () => {
 
   it('monte le bloc du curseur avec Alt+Maj+↑', () => {
     editor = new Editor({
-      extensions: createCourseExtensions({ onOpenMenu: () => undefined }),
+      extensions: createCourseExtensions({
+        blockHandle: { onOpenMenu: () => undefined },
+        tableTools: { onOpenMenu: () => undefined },
+      }),
       content: { type: 'doc', content: [paragraph('un'), paragraph('deux')] },
     });
     editor.commands.setTextSelection(posOf(1) + 1);

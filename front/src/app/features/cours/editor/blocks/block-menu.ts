@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { CALLOUT_KINDS, CALLOUT_LABELS } from '../../content/callout';
+import { focusMenuItem, menuItems } from '../menu-keys';
 import {
   BlockTransform,
   canMoveBlock,
@@ -73,7 +74,7 @@ export class BlockMenu {
   );
 
   constructor() {
-    afterNextRender(() => this.items()[0]?.focus());
+    afterNextRender(() => menuItems(this.host.nativeElement)[0]?.focus());
   }
 
   protected moveUp(): void {
@@ -98,9 +99,7 @@ export class BlockMenu {
 
   protected focusNext(event: Event, step: -1 | 1): void {
     event.preventDefault();
-    const items = this.items();
-    const current = items.indexOf(document.activeElement as HTMLButtonElement);
-    items[(current + step + items.length) % items.length]?.focus();
+    focusMenuItem(this.host.nativeElement, step);
   }
 
   protected closeIfOutside(event: Event): void {
@@ -113,11 +112,5 @@ export class BlockMenu {
     command();
     this.closed.emit();
     this.editor().commands.focus();
-  }
-
-  private items(): HTMLButtonElement[] {
-    return Array.from(
-      this.host.nativeElement.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
-    );
   }
 }

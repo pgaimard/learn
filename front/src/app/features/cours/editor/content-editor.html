@@ -24,4 +24,14 @@
       />
     }
   }
+  @if (view.tableMenu(); as target) {
+    @if (view.editor(); as editor) {
+      <app-table-menu
+        [editor]="editor"
+        [style.top.px]="target.top"
+        [style.left.px]="target.left"
+        (closed)="view.tableMenu.set(null)"
+      />
+    }
+  }
 </div>

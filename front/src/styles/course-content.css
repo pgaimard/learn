@@ -315,3 +315,48 @@
     width: 1rem;
   }
 }
+
+/* Tableaux : poignées de la ligne et de la colonne survolées, à cheval sur le bord. */
+
+.course-content .table-grip {
+  position: absolute;
+  z-index: 1;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  transform: translate(-50%, -50%);
+}
+
+.course-content .table-grip-column {
+  width: 1.75rem;
+  height: 0.875rem;
+}
+
+.course-content .table-grip-row {
+  width: 0.875rem;
+  height: 1.75rem;
+}
+
+.course-content .table-grip:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.course-content .table-grip:active {
+  cursor: grabbing;
+}
+
+/* Trait qui montre où la ligne ou la colonne sera déposée. */
+.course-content .table-drop-indicator {
+  position: absolute;
+  z-index: 1;
+  background: var(--color-accent);
+  pointer-events: none;
+}

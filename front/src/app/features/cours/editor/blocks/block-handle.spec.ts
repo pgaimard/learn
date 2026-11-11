@@ -13,7 +13,10 @@ describe('poignée de bloc', () => {
     opened = [];
     editor = new Editor({
       element: container,
-      extensions: createCourseExtensions({ onOpenMenu: (target) => opened.push(target) }),
+      extensions: createCourseExtensions({
+        blockHandle: { onOpenMenu: (target) => opened.push(target) },
+        tableTools: { onOpenMenu: () => undefined },
+      }),
       content: {
         type: 'doc',
         content: [
