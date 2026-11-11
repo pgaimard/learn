@@ -57,16 +57,27 @@ describe('liste réordonnable', () => {
     return items().map((item) => (item.textContent ?? '').trim());
   }
 
-  // Événement de glisser à une hauteur donnée de l'élément (0 en haut, 1 en bas).
-  function drag(type: string, index: number, ratio = 0): DragEvent {
+  // Chaque élément occupe 10 px de haut, l'un sous l'autre, sans espace.
+  function layOut(): void {
+    items().forEach((element, index) => {
+      element.getBoundingClientRect = () => ({ top: index * 10, height: 10 }) as DOMRect;
+    });
+  }
+
+  // Événement de glisser émis par un élément (début, fin) ou reçu à une hauteur donnée
+  // de la page (survol, dépôt), où qu'elle se trouve.
+  function drag(type: string, target: number | { y: number }): DragEvent {
+    layOut();
     const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent;
     Object.defineProperty(event, 'dataTransfer', {
       value: { effectAllowed: '', setData: () => undefined },
     });
-    Object.defineProperty(event, 'clientY', { value: ratio * 10 });
-    const element = items()[index];
-    element.getBoundingClientRect = () => ({ top: 0, height: 10 }) as DOMRect;
-    element.dispatchEvent(event);
+    if (typeof target === 'number') {
+      items()[target].dispatchEvent(event);
+    } else {
+      Object.defineProperty(event, 'clientY', { value: target.y });
+      document.body.dispatchEvent(event);
+    }
     fixture.detectChanges();
     return event;
   }
@@ -90,35 +101,67 @@ describe('liste réordonnable', () => {
   it('déplace l’élément glissé là où il est déposé', () => {
     arm(0);
     drag('dragstart', 0);
-    const over = drag('dragover', 2, 0.9);
+    const over = drag('dragover', { y: 29 });
     expect(over.defaultPrevented).toBe(true);
     expect(items()[2].classList.contains('drop-after')).toBe(true);
 
-    drag('drop', 2, 0.9);
+    drag('drop', { y: 29 });
 
     expect(fixture.componentInstance.changes).toEqual([{ from: 0, to: 2 }]);
     expect(order()).toEqual(['b', 'c', 'a']);
   });
 
+  it('place en dernier un élément déposé sous la liste', () => {
+    arm(0);
+    drag('dragstart', 0);
+    drag('dragover', { y: 400 });
+    expect(items()[2].classList.contains('drop-after')).toBe(true);
+
+    drag('drop', { y: 400 });
+
+    expect(order()).toEqual(['b', 'c', 'a']);
+  });
+
+  it('place en premier un élément déposé au-dessus de la liste', () => {
+    arm(2);
+    drag('dragstart', 2);
+    drag('dragover', { y: -50 });
+
+    drag('drop', { y: -50 });
+
+    expect(order()).toEqual(['c', 'a', 'b']);
+  });
+
+  it('accepte un dépôt entre deux éléments', () => {
+    arm(0);
+    drag('dragstart', 0);
+    // Juste sous le milieu du deuxième élément : entre le deuxième et le troisième.
+    drag('dragover', { y: 16 });
+
+    drag('drop', { y: 16 });
+
+    expect(order()).toEqual(['b', 'a', 'c']);
+  });
+
   it('montre le dépôt avant l’élément survolé dans sa moitié haute', () => {
     arm(2);
     drag('dragstart', 2);
-    drag('dragover', 0, 0.1);
+    drag('dragover', { y: 1 });
 
     expect(items()[0].classList.contains('drop-before')).toBe(true);
     expect(items()[2].classList.contains('is-dragged')).toBe(true);
 
-    drag('drop', 0, 0.1);
+    drag('drop', { y: 1 });
     expect(order()).toEqual(['c', 'a', 'b']);
   });
 
   it('ne signale ni n’applique un dépôt qui ne change rien', () => {
     arm(1);
     drag('dragstart', 1);
-    drag('dragover', 1, 0.9);
-    expect(items()[1].classList.contains('drop-before')).toBe(false);
+    drag('dragover', { y: 19 });
+    expect(items().some((item) => item.className.includes('drop-'))).toBe(false);
 
-    drag('drop', 1, 0.9);
+    drag('drop', { y: 19 });
 
     expect(fixture.componentInstance.changes).toEqual([]);
   });
@@ -126,17 +169,19 @@ describe('liste réordonnable', () => {
   it('abandonne proprement un glisser sans dépôt', () => {
     arm(0);
     drag('dragstart', 0);
-    drag('dragover', 2, 0.9);
+    drag('dragover', { y: 29 });
 
     drag('dragend', 0);
 
     expect(items().some((item) => item.className !== '')).toBe(false);
     expect(items()[0].getAttribute('draggable')).toBeNull();
+    // La page ne retient plus les dépôts : un fichier glissé ailleurs garde son comportement.
+    expect(drag('dragover', { y: 29 }).defaultPrevented).toBe(false);
   });
 
   it('ignore un glisser qui ne part pas de la poignée', () => {
     drag('dragstart', 0);
-    const over = drag('dragover', 2, 0.9);
+    const over = drag('dragover', { y: 29 });
 
     expect(over.defaultPrevented).toBe(false);
   });

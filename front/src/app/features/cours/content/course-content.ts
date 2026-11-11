@@ -44,7 +44,7 @@ export class CourseContent {
   readonly tableMenu = signal<{ top: number; left: number } | null>(null);
   // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
-  // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut droit.
+  // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
   readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);

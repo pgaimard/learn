@@ -8,7 +8,7 @@ export interface SelectionWatcherOptions {
   // null : plus de sélection à mettre en forme.
   onChange: (target: { top: number; left: number } | null) => void;
   // Bloc de code où se trouve le curseur : sa position dans le document et son coin
-  // haut droit, dans le même repère. null : le curseur n'est pas dans un bloc de code.
+  // haut gauche, dans le même repère. null : le curseur n'est pas dans un bloc de code.
   onCodeBlock: (target: { pos: number; top: number; left: number } | null) => void;
 }
 
@@ -53,7 +53,7 @@ function locateCodeBlock(view: EditorView): { pos: number; top: number; left: nu
   }
   const box = element.getBoundingClientRect();
   const origin = (view.dom.parentElement ?? view.dom).getBoundingClientRect();
-  return { pos, top: box.top - origin.top, left: box.right - origin.left };
+  return { pos, top: box.top - origin.top, left: box.left - origin.left };
 }
 
 // Surveille la sélection : signale où afficher la barre de mise en forme, une fois la
