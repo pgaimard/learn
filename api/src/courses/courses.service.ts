@@ -4,15 +4,22 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import {
+  DataSource,
+  EntityManager,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { UeService } from '../ue/ue.service.js';
+import { collectFigures } from './content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from './content/content-node.js';
 import { extractPlainText } from './content/extract-plain-text.js';
 import { validateContent } from './content/validate-content.js';
 import { Course } from './course.entity.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
 import { UpdateCourseDto } from './dto/update-course.dto.js';
+import { CourseImagesService } from './images/course-images.service.js';
 
 const UNIQUE_VIOLATION = '23505';
 
@@ -25,7 +32,9 @@ export type CourseSummary = Pick<
 export class CoursesService {
   constructor(
     @InjectRepository(Course) private readonly courses: Repository<Course>,
+    @InjectDataSource() private readonly dataSource: DataSource,
     private readonly ueService: UeService,
+    private readonly imagesService: CourseImagesService,
   ) {}
 
   async findAllByUe(ueCode: string): Promise<CourseSummary[]> {
@@ -51,6 +60,11 @@ export class CoursesService {
   async create(ueCode: string, input: CreateCourseDto): Promise<Course> {
     const ue = await this.ueService.findByCode(ueCode);
     const content = checkContent(input.content ?? EMPTY_CONTENT);
+    if (collectFigures(content).length > 0) {
+      throw new BadRequestException(
+        'Les images s’ajoutent une fois le cours créé.',
+      );
+    }
     const course = this.courses.create({
       ueId: ue.id,
       title: input.title,
@@ -58,22 +72,36 @@ export class CoursesService {
       content,
       plainText: extractPlainText(content),
     });
-    return this.save(course);
+    const saved = await this.save(this.courses.manager, course);
+    return this.findById(saved.id);
   }
 
   async update(id: number, changes: UpdateCourseDto): Promise<Course> {
     const course = await this.findById(id);
     course.title = changes.title ?? course.title;
     course.position = changes.position ?? course.position;
-    if (changes.content !== undefined) {
-      course.content = checkContent(changes.content);
-      course.plainText = extractPlainText(course.content);
+    if (changes.content === undefined) {
+      await this.save(this.courses.manager, course);
+      return this.findById(id);
     }
-    return this.save(course);
+    course.content = checkContent(changes.content);
+    course.plainText = extractPlainText(course.content);
+    const figures = collectFigures(course.content);
+    await this.imagesService.assertFiguresExist(id, figures);
+    // Le cours et ses images changent ensemble ou pas du tout.
+    const unused = await this.dataSource.transaction(async (manager) => {
+      await this.save(manager, course);
+      return this.imagesService.reconcile(manager, id, figures);
+    });
+    await this.imagesService.removeFiles(unused);
+    return this.findById(id);
   }
 
   async remove(id: number): Promise<void> {
-    await this.courses.remove(await this.findById(id));
+    const course = await this.findById(id);
+    const images = await this.imagesService.findByCourse(id);
+    await this.courses.remove(course);
+    await this.imagesService.removeFiles(images);
   }
 
   private async nextPosition(ueId: number): Promise<number> {
@@ -81,10 +109,9 @@ export class CoursesService {
     return (last ?? 0) + 1;
   }
 
-  private async save(course: Course): Promise<Course> {
+  private async save(manager: EntityManager, course: Course): Promise<Course> {
     try {
-      const saved = await this.courses.save(course);
-      return await this.findById(saved.id);
+      return await manager.save(course);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ConflictException(

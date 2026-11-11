@@ -11,6 +11,8 @@ WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# Le volume des fichiers envoyés hérite de ce dossier et de son propriétaire.
+RUN mkdir -p /data/uploads && chown node:node /data/uploads
 USER node
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

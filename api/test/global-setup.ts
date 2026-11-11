@@ -1,3 +1,4 @@
+import { rm } from 'node:fs/promises';
 import { DataSource } from 'typeorm';
 import type { TestProject } from 'vitest/node';
 
@@ -9,10 +10,15 @@ export default async function setup(project: TestProject): Promise<void> {
     DATABASE_NAME,
     DATABASE_USER,
     DATABASE_PASSWORD,
+    UPLOADS_DIR,
   } = project.config.env;
   if (!DATABASE_NAME?.endsWith('_test')) {
     throw new Error('La base de test doit avoir un nom terminé par « _test ».');
   }
+  if (!UPLOADS_DIR?.includes('learn-test-uploads')) {
+    throw new Error('Le dossier de fichiers de test est mal configuré.');
+  }
+  await rm(UPLOADS_DIR, { recursive: true, force: true });
   const maintenance = new DataSource({
     type: 'postgres',
     host: DATABASE_HOST,

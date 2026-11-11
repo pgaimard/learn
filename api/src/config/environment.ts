@@ -46,6 +46,11 @@ export class Environment {
   @IsString()
   @MinLength(32)
   SESSION_SECRET!: string;
+
+  // Dossier des fichiers envoyés, hors de tout répertoire servi.
+  @IsString()
+  @IsNotEmpty()
+  UPLOADS_DIR!: string;
 }
 
 export function validateEnvironment(raw: Record<string, unknown>): Environment {

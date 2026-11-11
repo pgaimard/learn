@@ -1,3 +1,5 @@
+import { isImageSource } from './collect-figures.js';
+
 // Liste blanche du contenu d'un cours. Tout ce qui n'y figure pas est refusé :
 // le contenu reçu est traité comme hostile, même s'il vient de notre éditeur.
 
@@ -47,6 +49,7 @@ export const BLOCK_TYPES = [
   'codeBlock',
   'table',
   'horizontalRule',
+  'figure',
 ] as const;
 
 export const INLINE_TYPES = ['text', 'hardBreak'] as const;
@@ -86,6 +89,14 @@ export const NODE_RULES: Record<string, NodeRule> = {
   tableCell: { children: 'block', minChildren: 1, attrs: cellAttrs },
   tableHeader: { children: 'block', minChildren: 1, attrs: cellAttrs },
   horizontalRule: { children: 'none' },
+  // Image du cours avec sa légende ; la source désigne toujours une image interne.
+  figure: {
+    children: 'inline',
+    attrs: {
+      src: isImageSource,
+      alt: (value) => typeof value === 'string' && value.length <= 500,
+    },
+  },
   hardBreak: { children: 'none' },
 };
 
