@@ -11,8 +11,8 @@
   box-shadow: 0 6px 20px rgb(0 0 0 / 15%);
   font-size: 0.875rem;
   white-space: nowrap;
-  /* Posée juste au-dessus du bloc, alignée sur son bord droit. */
-  transform: translate(-100%, calc(-100% - 0.25rem));
+  /* Posée juste au-dessus du bloc, alignée sur son bord gauche. */
+  transform: translateY(calc(-100% - 0.25rem));
 }
 
 label {

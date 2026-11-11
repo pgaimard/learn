@@ -1,4 +1,5 @@
-import { Directive, ElementRef, inject, input, output, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { DestroyRef, Directive, ElementRef, inject, input, output, signal } from '@angular/core';
 
 export interface SortChange {
   // Rang de l'élément déplacé, et rang où il arrive.
@@ -29,7 +30,37 @@ export class SortableList {
   // Frontière visée : 0 avant le premier élément, n après le dernier.
   readonly boundary = signal<number | null>(null);
 
-  complete(): void {
+  private readonly document = inject(DOCUMENT);
+  private readonly items = new Set<SortableItem>();
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.stopListening());
+  }
+
+  register(item: SortableItem): void {
+    this.items.add(item);
+  }
+
+  unregister(item: SortableItem): void {
+    this.items.delete(item);
+  }
+
+  // Début d'un glisser. La cible se suit dans toute la page et non sur les seuls
+  // éléments : on peut ainsi déposer dans l'espace entre deux éléments, ou sous la
+  // liste pour placer l'élément en dernier.
+  begin(index: number): void {
+    this.dragged.set(index);
+    this.document.addEventListener('dragover', this.aim);
+    this.document.addEventListener('drop', this.drop);
+  }
+
+  cancel(): void {
+    this.stopListening();
+    this.dragged.set(null);
+    this.boundary.set(null);
+  }
+
+  private complete(): void {
     const from = this.dragged();
     const boundary = this.boundary();
     this.cancel();
@@ -42,9 +73,27 @@ export class SortableList {
     }
   }
 
-  cancel(): void {
-    this.dragged.set(null);
-    this.boundary.set(null);
+  // La frontière visée est celle qui suit les éléments dont le milieu est au-dessus
+  // de la souris : au-dessus de la liste c'est la première, en dessous la dernière.
+  private readonly aim = (event: DragEvent): void => {
+    event.preventDefault();
+    let boundary = 0;
+    for (const item of this.items) {
+      if (event.clientY > item.middle()) {
+        boundary += 1;
+      }
+    }
+    this.boundary.set(boundary);
+  };
+
+  private readonly drop = (event: DragEvent): void => {
+    event.preventDefault();
+    this.complete();
+  };
+
+  private stopListening(): void {
+    this.document.removeEventListener('dragover', this.aim);
+    this.document.removeEventListener('drop', this.drop);
   }
 }
 
@@ -56,8 +105,6 @@ export class SortableList {
     '[class.drop-before]': 'isTarget(0)',
     '[class.drop-after]': 'appSortableLast() && isTarget(1)',
     '(dragstart)': 'start($event)',
-    '(dragover)': 'aim($event)',
-    '(drop)': 'drop($event)',
     '(dragend)': 'end()',
   },
 })
@@ -72,6 +119,11 @@ export class SortableItem {
   // ses liens restent utilisables normalement.
   protected readonly isArmed = signal(false);
 
+  constructor() {
+    this.list.register(this);
+    inject(DestroyRef).onDestroy(() => this.list.unregister(this));
+  }
+
   arm(): void {
     this.isArmed.set(true);
   }
@@ -82,6 +134,12 @@ export class SortableItem {
 
   move(step: -1 | 1): void {
     this.list.sorted.emit({ from: this.index(), to: this.index() + step });
+  }
+
+  // Hauteur du milieu de l'élément dans la fenêtre.
+  middle(): number {
+    const box = this.element.nativeElement.getBoundingClientRect();
+    return box.top + box.height / 2;
   }
 
   protected isTarget(offset: 0 | 1): boolean {
@@ -102,24 +160,7 @@ export class SortableItem {
     }
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', '');
-    this.list.dragged.set(this.index());
-  }
-
-  protected aim(event: DragEvent): void {
-    if (this.list.dragged() === null) {
-      return;
-    }
-    event.preventDefault();
-    const box = this.element.nativeElement.getBoundingClientRect();
-    const isLowerHalf = event.clientY > box.top + box.height / 2;
-    this.list.boundary.set(this.index() + (isLowerHalf ? 1 : 0));
-  }
-
-  protected drop(event: DragEvent): void {
-    if (this.list.dragged() !== null) {
-      event.preventDefault();
-      this.list.complete();
-    }
+    this.list.begin(this.index());
   }
 
   protected end(): void {
