@@ -14,13 +14,14 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { CourseService, CourseSummary } from '../cours/course.service';
+import { FileBrowser } from '../fichiers/file-browser';
 import { TermList } from '../termes/term-list';
 import { TermService, TermSummary } from '../termes/term.service';
 import { Ue, UeService } from './ue.service';
 
 @Component({
   selector: 'app-ue-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, TermList],
+  imports: [DatePipe, FileBrowser, ReactiveFormsModule, RouterLink, TermList],
   templateUrl: './ue-page.html',
   styleUrl: './ue-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,8 +29,10 @@ import { Ue, UeService } from './ue.service';
 export class UePage {
   // Paramètre de la route /ue/:code.
   readonly code = input.required<string>();
-  // Paramètre de requête ?onglet=termes ; l'onglet des cours est celui par défaut.
+  // Paramètre de requête ?onglet=termes ou ?onglet=fichiers ; l'onglet des cours est celui par défaut.
   readonly onglet = input<string>();
+  // Paramètre de requête ?dossier=12 : dossier affiché dans l'onglet des fichiers.
+  readonly dossier = input<string>();
 
   private readonly ueService = inject(UeService);
   private readonly courseService = inject(CourseService);
@@ -41,7 +44,14 @@ export class UePage {
   protected readonly ue = signal<Ue | null>(null);
   protected readonly courses = signal<CourseSummary[]>([]);
   protected readonly terms = signal<TermSummary[]>([]);
-  protected readonly tab = computed(() => (this.onglet() === 'termes' ? 'termes' : 'cours'));
+  protected readonly tab = computed(() => {
+    const tab = this.onglet();
+    return tab === 'termes' || tab === 'fichiers' ? tab : 'cours';
+  });
+  protected readonly folderId = computed(() => {
+    const id = Number(this.dossier());
+    return Number.isInteger(id) && id > 0 ? id : null;
+  });
   protected readonly pageErrors = signal<string[]>([]);
   protected readonly isCreating = signal(false);
   protected readonly isSaving = signal(false);

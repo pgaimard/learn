@@ -5,7 +5,9 @@ const EMPTY = { total: 0, items: [] };
 
 describe('toDisplayedGroups', () => {
   it('ne garde que les groupes qui ont des résultats', () => {
-    expect(toDisplayedGroups({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY })).toEqual([]);
+    expect(
+      toDisplayedGroups({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY }),
+    ).toEqual([]);
   });
 
   it('donne à chaque résultat son lien et sa précision', () => {
@@ -22,6 +24,7 @@ describe('toDisplayedGroups', () => {
         total: 1,
         items: [{ id: 3, label: 'MMU', expandedForm: 'Memory Management Unit', excerpt: [] }],
       },
+      files: EMPTY,
     };
 
     expect(toDisplayedGroups(results)).toEqual([
@@ -48,6 +51,41 @@ describe('toDisplayedGroups', () => {
         results: [
           { link: ['/glossaire', 3], title: 'MMU', detail: 'Memory Management Unit', excerpt: [] },
         ],
+      },
+    ]);
+  });
+
+  it('mène un fichier à son dossier dans l’onglet des fichiers', () => {
+    const file = { id: 9, name: 'TD3.pdf', ueCode: 'UTC502', excerpt: [] };
+
+    const [group] = toDisplayedGroups({
+      courses: EMPTY,
+      definitions: EMPTY,
+      acronyms: EMPTY,
+      files: {
+        total: 2,
+        items: [
+          { ...file, folderId: 4, folderName: 'TD' },
+          { ...file, id: 10, folderId: null, folderName: null },
+        ],
+      },
+    });
+
+    expect(group.title).toBe('Fichiers');
+    expect(group.results).toEqual([
+      {
+        link: ['/ue', 'UTC502'],
+        queryParams: { onglet: 'fichiers', dossier: 4 },
+        title: 'TD3.pdf',
+        detail: 'UTC502 › TD',
+        excerpt: [],
+      },
+      {
+        link: ['/ue', 'UTC502'],
+        queryParams: { onglet: 'fichiers' },
+        title: 'TD3.pdf',
+        detail: 'UTC502',
+        excerpt: [],
       },
     ]);
   });

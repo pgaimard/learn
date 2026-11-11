@@ -33,10 +33,22 @@ export interface TermResult {
   excerpt: ExcerptSegment[];
 }
 
+export interface FileResult {
+  id: number;
+  name: string;
+  ueCode: string;
+  // Dossier qui contient le fichier ; null à la racine de l'UE.
+  folderId: number | null;
+  folderName: string | null;
+  // Toujours vide : un fichier n'est cherché que par son nom.
+  excerpt: ExcerptSegment[];
+}
+
 export interface SearchResults {
   courses: SearchGroup<CourseResult>;
   definitions: SearchGroup<TermResult>;
   acronyms: SearchGroup<TermResult>;
+  files: SearchGroup<FileResult>;
 }
 
 type Row<Item> = Omit<Item, 'excerpt'> & { excerpt: string; total: string };
@@ -62,6 +74,20 @@ const TERMS_SQL = `
    ORDER BY ts_rank(term.search_vector, query) DESC, term.label, term.id
    LIMIT $3`;
 
+// Un fichier n'est cherché que par son nom : pas d'extrait.
+const FILES_SQL = `
+  SELECT file.id, file.name, ue.code AS "ueCode",
+         file.folder_id AS "folderId", folder.name AS "folderName",
+         ''::text AS excerpt,
+         count(*) OVER () AS total
+    FROM files file
+    JOIN ues ue ON ue.id = file.ue_id
+    LEFT JOIN folders folder ON folder.id = file.folder_id,
+         to_tsquery('french_unaccent', $1) query
+   WHERE file.search_vector @@ query
+   ORDER BY ts_rank(file.search_vector, query) DESC, file.name, file.id
+   LIMIT $2`;
+
 @Injectable()
 export class SearchService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
@@ -70,34 +96,43 @@ export class SearchService {
     const query = buildSearchQuery(input);
     if (query === null) {
       const empty = { total: 0, items: [] };
-      return { courses: empty, definitions: empty, acronyms: empty };
+      return {
+        courses: empty,
+        definitions: empty,
+        acronyms: empty,
+        files: empty,
+      };
     }
-    const [courses, definitions, acronyms] = await Promise.all([
-      this.run<CourseResult>(COURSES_SQL, query),
+    const [courses, definitions, acronyms, files] = await Promise.all([
+      this.run<CourseResult>(COURSES_SQL, [
+        query,
+        HEADLINE_OPTIONS,
+        GROUP_LIMIT,
+      ]),
       this.searchTerms(query, 'definition'),
       this.searchTerms(query, 'acronym'),
+      this.run<FileResult>(FILES_SQL, [query, GROUP_LIMIT]),
     ]);
-    return { courses, definitions, acronyms };
+    return { courses, definitions, acronyms, files };
   }
 
   private searchTerms(
     query: string,
     type: TermType,
   ): Promise<SearchGroup<TermResult>> {
-    return this.run<TermResult>(TERMS_SQL, query, type);
+    return this.run<TermResult>(TERMS_SQL, [
+      query,
+      HEADLINE_OPTIONS,
+      GROUP_LIMIT,
+      type,
+    ]);
   }
 
   private async run<Item>(
     sql: string,
-    query: string,
-    ...extra: string[]
+    parameters: (string | number)[],
   ): Promise<SearchGroup<Item>> {
-    const rows = await this.dataSource.query<Row<Item>[]>(sql, [
-      query,
-      HEADLINE_OPTIONS,
-      GROUP_LIMIT,
-      ...extra,
-    ]);
+    const rows = await this.dataSource.query<Row<Item>[]>(sql, parameters);
     return {
       total: rows.length > 0 ? Number(rows[0].total) : 0,
       items: rows.map((row) => toItem<Item>(row)),

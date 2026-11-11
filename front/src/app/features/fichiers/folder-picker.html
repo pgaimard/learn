@@ -1,0 +1,50 @@
+<dialog #dialog aria-labelledby="folder-picker-title" (close)="closed.emit()">
+  <h2 id="folder-picker-title">Déplacer « {{ fileName() }} » vers…</h2>
+
+  <ul class="choices">
+    <li>
+      <label class="choice" [class.is-current]="currentFolderId() === null">
+        <input
+          type="radio"
+          name="destination"
+          [disabled]="currentFolderId() === null"
+          [checked]="choice() === null"
+          (change)="choice.set(null)"
+        />
+        Racine de l’UE
+        @if (currentFolderId() === null) {
+          <span class="here">(emplacement actuel)</span>
+        }
+      </label>
+    </li>
+    @for (entry of tree(); track entry.folder.id) {
+      <li [style.padding-left.rem]="1.5 * (entry.depth + 1)">
+        <label class="choice" [class.is-current]="currentFolderId() === entry.folder.id">
+          <input
+            type="radio"
+            name="destination"
+            [disabled]="currentFolderId() === entry.folder.id"
+            [checked]="choice() === entry.folder.id"
+            (change)="choice.set(entry.folder.id)"
+          />
+          {{ entry.folder.name }}
+          @if (currentFolderId() === entry.folder.id) {
+            <span class="here">(emplacement actuel)</span>
+          }
+        </label>
+      </li>
+    }
+  </ul>
+
+  <div class="form-actions">
+    <button
+      type="button"
+      class="button button-primary"
+      [disabled]="choice() === undefined"
+      (click)="confirm()"
+    >
+      Déplacer
+    </button>
+    <button type="button" class="button" (click)="close()">Annuler</button>
+  </div>
+</dialog>
