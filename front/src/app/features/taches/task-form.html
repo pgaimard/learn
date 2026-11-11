@@ -1,0 +1,58 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="form-row">
+    <div class="field field-grow">
+      <label for="task-title">Tâche</label>
+      <input
+        id="task-title"
+        type="text"
+        formControlName="title"
+        [attr.aria-invalid]="isTitleInvalid()"
+        [attr.aria-describedby]="isTitleInvalid() ? 'task-title-error' : null"
+      />
+      @if (isTitleInvalid()) {
+        <p id="task-title-error" class="field-error">
+          Le titre est requis (200 caractères au plus).
+        </p>
+      }
+    </div>
+    <div class="field field-grow">
+      <label for="task-ue">UE</label>
+      <select id="task-ue" formControlName="ueCode">
+        <option value="">Aucune</option>
+        @for (ue of ues(); track ue.id) {
+          <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field field-grow">
+      <label for="task-due">Échéance</label>
+      <input id="task-due" type="datetime-local" formControlName="dueAt" />
+    </div>
+    <div class="field field-grow">
+      <label for="task-remind">Rappel</label>
+      <input
+        id="task-remind"
+        type="datetime-local"
+        formControlName="remindAt"
+        aria-describedby="task-remind-hint"
+      />
+      <p id="task-remind-hint" class="field-hint">
+        À partir de ce moment, la tâche est signalée dans l’application.
+      </p>
+    </div>
+  </div>
+
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button button-primary" [disabled]="isSaving()">Enregistrer</button>
+    <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

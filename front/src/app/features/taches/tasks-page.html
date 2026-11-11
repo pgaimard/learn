@@ -1,0 +1,147 @@
+<div class="page-header">
+  <h1>Tâches</h1>
+  @if (editing() !== 'new') {
+    <button type="button" class="button button-primary" (click)="open('new')">
+      Nouvelle tâche
+    </button>
+  }
+</div>
+
+<div role="alert">
+  @for (error of pageErrors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (editing() === 'new') {
+  <section class="card new-task" aria-label="Nouvelle tâche">
+    <app-task-form
+      [ues]="ues()"
+      [defaultUeCode]="defaultUeCode()"
+      [errors]="formErrors()"
+      [isSaving]="isSaving()"
+      (saved)="save($event)"
+      (cancelled)="close()"
+    />
+  </section>
+}
+
+<ng-template #taskRow let-task>
+  @if (editing() === task) {
+    <app-task-form
+      [task]="task"
+      [ues]="ues()"
+      [errors]="formErrors()"
+      [isSaving]="isSaving()"
+      (saved)="save($event)"
+      (cancelled)="close()"
+    />
+  } @else {
+    <label class="task-main">
+      <input type="checkbox" [checked]="task.done" (change)="toggle(task)" />
+      <span class="task-title">{{ task.title }}</span>
+    </label>
+    <span class="task-detail">
+      @if (task.ue; as ue) {
+        <span class="task-ue">{{ ue.code }}</span>
+      }
+      @if (task.dueAt; as dueAt) {
+        <span [class.overdue]="isOverdue(task)">
+          {{ isOverdue(task) ? 'En retard :' : 'Pour le' }} {{ formatDateTime(dueAt) }}
+        </span>
+      }
+    </span>
+    <div class="task-actions">
+      <button
+        type="button"
+        class="button"
+        [attr.aria-label]="'Modifier la tâche ' + task.title"
+        (click)="open(task)"
+      >
+        Modifier
+      </button>
+      <button
+        type="button"
+        class="button button-danger"
+        [attr.aria-label]="'Supprimer la tâche ' + task.title"
+        (click)="remove(task)"
+      >
+        Supprimer
+      </button>
+    </div>
+  }
+</ng-template>
+
+@if (isLoading()) {
+  <p>Chargement…</p>
+} @else {
+  <div class="filters">
+    <label for="task-ue-filter">UE</label>
+    <select
+      #ueField
+      id="task-ue-filter"
+      [value]="ueFilter()"
+      (change)="ueFilter.set(ueField.value)"
+    >
+      <option value="">Toutes</option>
+      @for (ue of ues(); track ue.id) {
+        <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
+      }
+      <option [value]="withoutUe">Sans UE</option>
+    </select>
+  </div>
+
+  @if (reminders().length > 0) {
+    <section class="card reminders" aria-labelledby="reminders-title">
+      <h2 id="reminders-title">À faire maintenant</h2>
+      <ul>
+        @for (task of reminders(); track task.id) {
+          <li>
+            {{ task.title }}
+            @if (task.dueAt; as dueAt) {
+              <span class="reminder-due">– pour le {{ formatDateTime(dueAt) }}</span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (todo().length === 0) {
+    <p class="empty">Aucune tâche à faire.</p>
+  } @else {
+    <ul class="tasks" aria-label="Tâches à faire">
+      @for (task of todo(); track task.id) {
+        <li class="card task">
+          <ng-container
+            [ngTemplateOutlet]="taskRow"
+            [ngTemplateOutletContext]="{ $implicit: task }"
+          />
+        </li>
+      }
+    </ul>
+  }
+
+  @if (done().length > 0) {
+    <button
+      type="button"
+      class="button toggle-done"
+      [attr.aria-expanded]="showDone()"
+      (click)="showDone.set(!showDone())"
+    >
+      {{ showDone() ? 'Masquer' : 'Afficher' }} les tâches faites ({{ done().length }})
+    </button>
+    @if (showDone()) {
+      <ul class="tasks is-done" aria-label="Tâches faites">
+        @for (task of done(); track task.id) {
+          <li class="card task">
+            <ng-container
+              [ngTemplateOutlet]="taskRow"
+              [ngTemplateOutletContext]="{ $implicit: task }"
+            />
+          </li>
+        }
+      </ul>
+    }
+  }
+}
