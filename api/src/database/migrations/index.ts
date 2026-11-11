@@ -5,6 +5,7 @@ import { CreateCourses1794410000000 } from './1794410000000-create-courses.js';
 import { CreateCourseImages1794420000000 } from './1794420000000-create-course-images.js';
 import { CreateTerms1794500000000 } from './1794500000000-create-terms.js';
 import { CreateTermImages1794510000000 } from './1794510000000-create-term-images.js';
+import { CreateSearch1794600000000 } from './1794600000000-create-search.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -14,4 +15,5 @@ export const migrations = [
   CreateCourseImages1794420000000,
   CreateTerms1794500000000,
   CreateTermImages1794510000000,
+  CreateSearch1794600000000,
 ];

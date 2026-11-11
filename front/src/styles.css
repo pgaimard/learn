@@ -13,12 +13,21 @@
   --color-accent-soft: #e8eefc;
   --color-on-accent: #ffffff;
   --color-danger: #b42318;
+  --color-highlight: #fff1a8;
   --color-callout-retenir: #1a7f37;
   --color-callout-change: #1d4ed8;
   --color-callout-attention: #b45309;
   --radius: 6px;
   --page-width: 68rem;
   --reading-width: 46rem;
+  /* Hauteur occupée en haut de la fenêtre par l'en-tête quand il reste affiché. */
+  --sticky-top: 0px;
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --sticky-top: 3.5rem;
+  }
 }
 
 body {

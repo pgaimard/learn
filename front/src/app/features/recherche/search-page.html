@@ -1,0 +1,77 @@
+<div class="page-header">
+  <h1>Recherche</h1>
+  <button type="button" class="button" (click)="goBack()">Revenir où j’étais</button>
+</div>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+<div aria-live="polite">
+  @switch (state().kind) {
+    @case ('loading') {
+      <p class="summary">Recherche en cours…</p>
+    }
+    @case ('idle') {
+      @if (errors().length === 0) {
+        <p class="summary">
+          Saisissez au moins deux caractères dans la barre de recherche, en haut de page.
+        </p>
+      }
+    }
+  }
+  @if (state(); as state) {
+    @if (state.kind === 'done') {
+      @if (total() === 0) {
+        <p class="summary">Aucun résultat pour « {{ state.query }} ».</p>
+      } @else {
+        <p class="summary">
+          {{ total() }} {{ total() === 1 ? 'résultat' : 'résultats' }} pour « {{ state.query }} »
+        </p>
+      }
+    }
+  }
+</div>
+
+@if (state(); as state) {
+  @if (state.kind === 'done') {
+    @for (group of state.groups; track group.title) {
+      <section [attr.aria-label]="group.title">
+        <h2>
+          {{ group.title }} <span class="count">({{ group.total }})</span>
+        </h2>
+        <ul class="results">
+          @for (result of group.results; track result.link.join('/')) {
+            <li>
+              <a class="card result" [routerLink]="result.link">
+                <span class="result-title">{{ result.title }}</span>
+                @if (result.detail) {
+                  <span class="result-detail">{{ result.detail }}</span>
+                }
+                @if (result.excerpt.length > 0) {
+                  <span class="result-excerpt">
+                    @for (segment of result.excerpt; track $index) {
+                      @if (segment.highlighted) {
+                        <mark>{{ segment.text }}</mark>
+                      } @else {
+                        {{ segment.text }}
+                      }
+                    }
+                  </span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+        @if (group.total > group.results.length) {
+          <p class="more">
+            Les {{ group.results.length }} résultats les plus pertinents sur {{ group.total }}.
+            Précisez la recherche pour voir les autres.
+          </p>
+        }
+      </section>
+    }
+  }
+}

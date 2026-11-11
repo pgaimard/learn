@@ -116,7 +116,7 @@
 
 .main-nav {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   gap: 0.25rem;
 }
 
@@ -135,4 +135,20 @@
   background: var(--color-accent-soft);
   color: var(--color-accent);
   font-weight: 600;
+}
+
+/* Sur grand écran l'en-tête reste affiché : la recherche est toujours à portée,
+   et y placer le curseur ne fait pas perdre la position de lecture. */
+@media (min-width: 64rem) {
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .header-inner {
+    flex-wrap: nowrap;
+    height: var(--sticky-top);
+    min-height: 0;
+  }
 }

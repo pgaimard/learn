@@ -1,6 +1,7 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
 import { createTestApp } from './create-test-app.js';
+import { dropSchema } from './reset-database.js';
 
 interface ColumnRow {
   column_name: string;
@@ -15,7 +16,7 @@ describe('Migrations', () => {
   beforeAll(async () => {
     app = await createTestApp();
     dataSource = app.get(DataSource);
-    await dataSource.dropDatabase();
+    await dropSchema(dataSource);
   });
 
   afterAll(async () => {
