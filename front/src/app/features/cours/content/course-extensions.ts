@@ -3,6 +3,8 @@ import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { TableKit } from '@tiptap/extension-table';
 import { StarterKit } from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
+import { Callout } from './callout';
+import { Figure } from './figure';
 
 const lowlight = createLowlight(common);
 
@@ -18,5 +20,7 @@ export function createCourseExtensions(): Extensions {
     }),
     CodeBlockLowlight.configure({ lowlight }),
     TableKit.configure({ table: { resizable: false } }),
+    Figure,
+    Callout,
   ];
 }

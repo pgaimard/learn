@@ -265,6 +265,80 @@
       "type": "horizontalRule"
     },
     {
+      "type": "figure",
+      "attrs": {
+        "src": "/api/courses/1/images/1",
+        "alt": "Schéma des états d'un processus"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Figure 1 : états d'un processus"
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "attrs": {
+        "kind": "retenir"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "À retenir : un processus a son propre espace d'adressage."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "attrs": {
+        "kind": "change"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Ce qui a changé."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "attrs": {
+        "kind": "attention"
+      },
+      "content": [
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Attention."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "type": "paragraph",
       "content": [
         {

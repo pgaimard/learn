@@ -39,4 +39,14 @@ describe('CourseService', () => {
     const methods = http.match('/api/courses/7').map((match) => match.request.method);
     expect(methods).toEqual(['GET', 'PATCH', 'DELETE']);
   });
+
+  it('envoie une image en multipart', () => {
+    const file = new File(['x'], 'capture.png', { type: 'image/png' });
+
+    service.uploadImage(7, file).subscribe();
+
+    const request = http.expectOne('/api/courses/7/images').request;
+    expect(request.method).toBe('POST');
+    expect((request.body as FormData).get('file')).toBe(file);
+  });
 });

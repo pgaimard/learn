@@ -50,6 +50,7 @@ export const BLOCK_TYPES = [
   'table',
   'horizontalRule',
   'figure',
+  'callout',
 ] as const;
 
 export const INLINE_TYPES = ['text', 'hardBreak'] as const;
@@ -96,6 +97,12 @@ export const NODE_RULES: Record<string, NodeRule> = {
       src: isImageSource,
       alt: (value) => typeof value === 'string' && value.length <= 500,
     },
+  },
+  // Encadré typé : « À retenir », « Ce qui a changé », « Attention ».
+  callout: {
+    children: 'block',
+    minChildren: 1,
+    attrs: { kind: isOneOf(['retenir', 'change', 'attention']) },
   },
   hardBreak: { children: 'none' },
 };

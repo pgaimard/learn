@@ -117,6 +117,70 @@
   margin: 0;
 }
 
+/* Images et légendes */
+
+.course-content figure {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.course-content figure img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.course-content figcaption {
+  margin-top: 0.5em;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+/* Encadrés typés : le libellé vient du type, pas du texte du cours. */
+
+.course-content .callout {
+  --callout-color: var(--color-callout-retenir);
+  margin: 0 0 1em;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--callout-color);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.course-content .callout::before {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--callout-color);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  content: 'À retenir';
+}
+
+.course-content .callout[data-kind='change'] {
+  --callout-color: var(--color-callout-change);
+}
+
+.course-content .callout[data-kind='change']::before {
+  content: 'Ce qui a changé';
+}
+
+.course-content .callout[data-kind='attention'] {
+  --callout-color: var(--color-callout-attention);
+}
+
+.course-content .callout[data-kind='attention']::before {
+  content: 'Attention';
+}
+
+.course-content .callout > :last-child {
+  margin-bottom: 0;
+}
+
 /* Coloration du code (classes posées par lowlight / highlight.js). */
 
 .course-content .hljs-comment,
@@ -170,4 +234,25 @@
 
 .course-content.is-editable a {
   cursor: text;
+}
+
+.course-content.is-editable figure.ProseMirror-selectednode img {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.course-content.is-editable figcaption:has(> br.ProseMirror-trailingBreak:only-child)::before {
+  float: left;
+  width: 100%;
+  height: 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+  content: 'Légende de l’image';
+  pointer-events: none;
+}
+
+/* En lecture, une légende vide ne laisse pas de blanc sous l'image. */
+.course-content:not(.is-editable) figcaption:empty,
+.course-content:not(.is-editable) figcaption:has(> br.ProseMirror-trailingBreak:only-child) {
+  display: none;
 }
