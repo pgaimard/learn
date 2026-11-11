@@ -83,11 +83,17 @@ describe('poignée de bloc', () => {
     expect(handle().hidden).toBe(true);
   });
 
-  it('ouvre le menu du bloc survolé au clic', () => {
+  it('ouvre le menu du bloc survolé au clic droit, pas au clic gauche', () => {
     hover();
 
     handle().click();
+    expect(opened).toEqual([]);
+
+    const rightClick = new MouseEvent('contextmenu', { cancelable: true });
+    handle().dispatchEvent(rightClick);
 
     expect(opened).toEqual([{ pos: 4, top: 0 }]);
+    // Le menu du navigateur ne s'ouvre pas par-dessus.
+    expect(rightClick.defaultPrevented).toBe(true);
   });
 });
