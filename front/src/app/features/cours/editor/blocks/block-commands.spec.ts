@@ -186,6 +186,7 @@ describe('commandes de bloc', () => {
       extensions: createCourseExtensions({
         blockHandle: { onOpenMenu: () => undefined },
         tableTools: { onOpenMenu: () => undefined },
+        selection: { onChange: () => undefined },
       }),
       content: { type: 'doc', content: [paragraph('un'), paragraph('deux')] },
     });

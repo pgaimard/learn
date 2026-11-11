@@ -50,11 +50,6 @@ export class EditorToolbar {
 
   protected readonly languages = CODE_LANGUAGES;
 
-  protected readonly toggleBold: Command = (chain) => chain.toggleBold();
-  protected readonly toggleItalic: Command = (chain) => chain.toggleItalic();
-  protected readonly toggleUnderline: Command = (chain) => chain.toggleUnderline();
-  protected readonly toggleStrike: Command = (chain) => chain.toggleStrike();
-  protected readonly toggleCode: Command = (chain) => chain.toggleCode();
   protected readonly toggleBulletList: Command = (chain) => chain.toggleBulletList();
   protected readonly toggleOrderedList: Command = (chain) => chain.toggleOrderedList();
   protected readonly toggleBlockquote: Command = (chain) => chain.toggleBlockquote();
@@ -62,12 +57,6 @@ export class EditorToolbar {
   protected readonly insertRule: Command = (chain) => chain.setHorizontalRule();
   protected readonly undo: Command = (chain) => chain.undo();
   protected readonly redo: Command = (chain) => chain.redo();
-  protected readonly addRow: Command = (chain) => chain.addRowAfter();
-  protected readonly deleteRow: Command = (chain) => chain.deleteRow();
-  protected readonly addColumn: Command = (chain) => chain.addColumnAfter();
-  protected readonly deleteColumn: Command = (chain) => chain.deleteColumn();
-  protected readonly toggleHeaderRow: Command = (chain) => chain.toggleHeaderRow();
-  protected readonly deleteTable: Command = (chain) => chain.deleteTable();
   protected readonly deleteFigure: Command = (chain) => chain.deleteNode('figure');
   // Incrémenté à chaque transaction de l'éditeur : force le recalcul de l'état des boutons.
   private readonly revision = signal(0);
@@ -120,25 +109,6 @@ export class EditorToolbar {
       .focus()
       .updateAttributes('codeBlock', { language: language === '' ? null : language })
       .run();
-  }
-
-  protected async editLink(): Promise<void> {
-    const current: unknown = this.editor().getAttributes('link')['href'];
-    const href = await this.dialog.prompt({
-      title: 'Lien',
-      label: 'Adresse du lien',
-      initialValue: typeof current === 'string' ? current : 'https://',
-      hint: 'Laisser vide pour retirer le lien.',
-    });
-    if (href === null) {
-      return;
-    }
-    const chain = this.editor().chain().focus().extendMarkRange('link');
-    if (href.trim() === '') {
-      chain.unsetLink().run();
-    } else {
-      chain.setLink({ href: href.trim() }).run();
-    }
   }
 
   protected pickImage(event: Event): void {

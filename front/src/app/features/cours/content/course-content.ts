@@ -42,6 +42,8 @@ export class CourseContent {
   readonly blockMenu = signal<{ pos: number; top: number } | null>(null);
   // Menu de tableau ouvert par un clic droit : où l'afficher, dans le même repère.
   readonly tableMenu = signal<{ top: number; left: number } | null>(null);
+  // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
+  readonly selectionBar = signal<{ top: number; left: number } | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -62,6 +64,7 @@ export class CourseContent {
                   left: left + this.host.nativeElement.offsetLeft,
                 }),
             },
+            selection: { onChange: (target) => this.selectionBar.set(this.offset(target)) },
           }),
           content: untracked(this.content),
           editable: untracked(this.editable),
@@ -94,6 +97,16 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  // Passe du repère de ce composant à celui de son conteneur.
+  private offset(target: { top: number; left: number } | null): typeof target {
+    return (
+      target && {
+        top: target.top + this.host.nativeElement.offsetTop,
+        left: target.left + this.host.nativeElement.offsetLeft,
+      }
+    );
   }
 
   getContent(): ContentNode {

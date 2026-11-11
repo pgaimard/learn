@@ -5,6 +5,7 @@ import { StarterKit } from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
 import { BlockHandle, BlockHandleOptions } from '../editor/blocks/block-handle';
 import { SectionFolding } from '../editor/sections/section-folding';
+import { SelectionWatcher, SelectionWatcherOptions } from '../editor/selection/selection-watcher';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { Callout } from './callout';
 import { Figure } from './figure';
@@ -17,9 +18,11 @@ const lowlight = createLowlight(common);
 export interface EditingTools {
   blockHandle: BlockHandleOptions;
   tableTools: TableToolsOptions;
+  selection: SelectionWatcherOptions;
 }
 
-// tools : branche la poignée de bloc et les outils de tableau sur l'interface (édition).
+// tools : branche la poignée de bloc, les outils de tableau et la barre de sélection
+// sur l'interface (édition).
 export function createCourseExtensions(tools?: EditingTools): Extensions {
   return [
     StarterKit.configure({
@@ -34,7 +37,11 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     Callout,
     SectionFolding,
     ...(tools
-      ? [BlockHandle.configure(tools.blockHandle), TableTools.configure(tools.tableTools)]
+      ? [
+          BlockHandle.configure(tools.blockHandle),
+          TableTools.configure(tools.tableTools),
+          SelectionWatcher.configure(tools.selection),
+        ]
       : []),
   ];
 }
