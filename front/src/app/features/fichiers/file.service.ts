@@ -56,6 +56,18 @@ export class FileService {
     return this.http.post<StoredFile>(`${ueUrl(ueCode)}/files`, form);
   }
 
+  // Renommage (name) ou déplacement (folderId, null pour la racine de l'UE).
+  updateFile(
+    id: number,
+    changes: { name?: string; folderId?: number | null },
+  ): Observable<StoredFile> {
+    return this.http.patch<StoredFile>(`/api/files/${id}`, changes);
+  }
+
+  removeFile(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/files/${id}`);
+  }
+
   downloadUrl(id: number): string {
     return `/api/files/${id}/download`;
   }

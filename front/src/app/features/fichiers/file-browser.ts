@@ -9,16 +9,22 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, concatMap, forkJoin, from, map, of, toArray } from 'rxjs';
+import { catchError, concatMap, forkJoin, from, map, Observable, of, toArray } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { FileService, Folder, MAX_FILE_SIZE, StoredFile } from './file.service';
+import { FolderPicker } from './folder-picker';
 import { childrenOf, pathTo } from './folder-tree';
 import { formatSize } from './format-size';
 import { NameForm } from './name-form';
 
-// Formulaire ouvert : création d'un dossier ici, ou renommage du dossier désigné.
-type Editing = { kind: 'new-folder' } | { kind: 'rename-folder'; id: number } | null;
+// Formulaire ouvert : création d'un dossier ici, ou renommage du dossier ou du fichier désigné.
+type Editing =
+  | { kind: 'new-folder' }
+  | { kind: 'rename-folder'; id: number }
+  | { kind: 'rename-file'; id: number }
+  | null;
 
+// Compte rendu d'un envoi ou d'un déplacement.
 interface UploadReport {
   name: string;
   succeeded: boolean;
@@ -28,7 +34,7 @@ interface UploadReport {
 // Fichiers et dossiers d'une UE : parcours, gestion des dossiers, envoi et téléchargement.
 @Component({
   selector: 'app-file-browser',
-  imports: [DatePipe, NameForm, RouterLink],
+  imports: [DatePipe, FolderPicker, NameForm, RouterLink],
   templateUrl: './file-browser.html',
   styleUrl: './file-browser.css',
   host: {
@@ -56,6 +62,8 @@ export class FileBrowser {
   protected readonly isUploading = signal(false);
   protected readonly isDragging = signal(false);
   protected readonly reports = signal<UploadReport[]>([]);
+  // Fichier dont on choisit la destination dans la boîte « Déplacer vers… ».
+  protected readonly moving = signal<StoredFile | null>(null);
 
   protected readonly path = computed(() => pathTo(this.folders(), this.folderId()));
   protected readonly subfolders = computed(() => childrenOf(this.folders(), this.folderId()));
@@ -71,6 +79,7 @@ export class FileBrowser {
       this.folderId();
       this.editing.set(null);
       this.reports.set([]);
+      this.moving.set(null);
       this.load();
     });
   }
@@ -93,12 +102,55 @@ export class FileBrowser {
     return editing?.kind === 'rename-folder' && editing.id === folder.id;
   }
 
+  protected isRenamingFile(file: StoredFile): boolean {
+    const editing = this.editing();
+    return editing?.kind === 'rename-file' && editing.id === file.id;
+  }
+
+  protected renameFile(file: StoredFile, name: string): void {
+    this.save(this.fileService.updateFile(file.id, { name }));
+  }
+
+  protected moveTo(folderId: number | null): void {
+    const file = this.moving();
+    if (!file) {
+      return;
+    }
+    this.moving.set(null);
+    this.fileService.updateFile(file.id, { folderId }).subscribe({
+      next: (moved) => {
+        const destination =
+          this.folders().find((folder) => folder.id === folderId)?.name ?? 'la racine de l’UE';
+        const renamed = moved.name === file.name ? '' : `, sous le nom « ${moved.name} »`;
+        this.reports.set([
+          {
+            name: file.name,
+            succeeded: true,
+            message: `Déplacé vers « ${destination} »${renamed}.`,
+          },
+        ]);
+        this.load();
+      },
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
+
+  protected removeFile(file: StoredFile): void {
+    if (!confirm(`Supprimer définitivement « ${file.name} » ?`)) {
+      return;
+    }
+    this.fileService.removeFile(file.id).subscribe({
+      next: () => this.load(),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
+
   protected createFolder(name: string): void {
-    this.saveFolder(this.fileService.createFolder(this.ueCode(), name, this.folderId()));
+    this.save(this.fileService.createFolder(this.ueCode(), name, this.folderId()));
   }
 
   protected renameFolder(folder: Folder, name: string): void {
-    this.saveFolder(this.fileService.renameFolder(folder.id, name));
+    this.save(this.fileService.renameFolder(folder.id, name));
   }
 
   protected removeFolder(folder: Folder): void {
@@ -167,7 +219,8 @@ export class FileBrowser {
     );
   }
 
-  private saveFolder(request: ReturnType<FileService['createFolder']>): void {
+  // Enregistre le formulaire de nom ouvert, puis le ferme et recharge la liste.
+  private save(request: Observable<unknown>): void {
     if (this.isSaving()) {
       return;
     }

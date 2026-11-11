@@ -59,6 +59,20 @@ describe('FileService', () => {
     expect(body.has('folderId')).toBe(false);
   });
 
+  it('renomme, déplace et supprime un fichier', () => {
+    service.updateFile(7, { name: 'notes.txt' }).subscribe();
+    service.updateFile(8, { folderId: null }).subscribe();
+    service.removeFile(7).subscribe();
+
+    expect(http.expectOne({ method: 'PATCH', url: '/api/files/7' }).request.body).toEqual({
+      name: 'notes.txt',
+    });
+    expect(http.expectOne({ method: 'PATCH', url: '/api/files/8' }).request.body).toEqual({
+      folderId: null,
+    });
+    http.expectOne({ method: 'DELETE', url: '/api/files/7' });
+  });
+
   it('donne l’adresse de téléchargement d’un fichier', () => {
     expect(service.downloadUrl(7)).toBe('/api/files/7/download');
   });
