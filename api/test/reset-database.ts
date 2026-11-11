@@ -4,13 +4,15 @@ import { DataSource } from 'typeorm';
 
 // Repart d'un schéma vide à jour et de dossiers de fichiers vides : chaque fichier de test
 // est indépendant des autres.
-// Vide le schéma. dropDatabase ne supprime que les tables : la configuration de
-// recherche lui survit et doit être retirée à part.
+// Vide le schéma. dropDatabase ne supprime que les tables : les configurations de
+// recherche lui survivent et doivent être retirées à part.
 export async function dropSchema(dataSource: DataSource): Promise<void> {
   await dataSource.dropDatabase();
-  await dataSource.query(
-    'DROP TEXT SEARCH CONFIGURATION IF EXISTS french_unaccent',
-  );
+  for (const configuration of ['french_unaccent', 'simple_unaccent']) {
+    await dataSource.query(
+      `DROP TEXT SEARCH CONFIGURATION IF EXISTS ${configuration}`,
+    );
+  }
 }
 
 export async function resetDatabase(dataSource: DataSource): Promise<void> {
