@@ -48,7 +48,6 @@ export class CourseEditPage {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
-    position: [0, [Validators.required, Validators.min(0)]],
   });
 
   constructor() {
@@ -78,23 +77,21 @@ export class CourseEditPage {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, position } = this.form.getRawValue();
+    const { title } = this.form.getRawValue();
     this.isSaving.set(true);
     this.errors.set([]);
-    this.courseService
-      .update(Number(this.id()), { title: title.trim(), position, content })
-      .subscribe({
-        next: (course) => {
-          this.isSaving.set(false);
-          this.isDirty.set(false);
-          this.savedAt.set(new Date());
-          this.title.setTitle(`Édition – ${course.title}`);
-        },
-        error: (error: ApiError) => {
-          this.isSaving.set(false);
-          this.errors.set(error.messages);
-        },
-      });
+    this.courseService.update(Number(this.id()), { title: title.trim(), content }).subscribe({
+      next: (course) => {
+        this.isSaving.set(false);
+        this.isDirty.set(false);
+        this.savedAt.set(new Date());
+        this.title.setTitle(`Édition – ${course.title}`);
+      },
+      error: (error: ApiError) => {
+        this.isSaving.set(false);
+        this.errors.set(error.messages);
+      },
+    });
   }
 
   // Envoie une image collée, déposée ou choisie, puis l'insère à l'endroit du curseur.
@@ -141,7 +138,7 @@ export class CourseEditPage {
     this.courseService.get(id).subscribe({
       next: (course) => {
         this.course.set(course);
-        this.form.setValue({ title: course.title, position: course.position });
+        this.form.setValue({ title: course.title });
         this.isDirty.set(false);
         this.title.setTitle(`Édition – ${course.title}`);
       },

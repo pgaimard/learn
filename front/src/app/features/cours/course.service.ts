@@ -23,7 +23,6 @@ export interface UploadedImage {
 
 export interface CourseInput {
   title?: string;
-  position?: number;
   content?: ContentNode;
 }
 
@@ -45,6 +44,13 @@ export class CourseService {
 
   update(id: number, changes: CourseInput): Observable<Course> {
     return this.http.patch<Course>(`/api/courses/${id}`, changes);
+  }
+
+  // Enregistre l'ordre des cours d'une UE : tous leurs numéros, dans l'ordre voulu.
+  reorder(ueCode: string, ids: number[]): Observable<CourseSummary[]> {
+    return this.http.put<CourseSummary[]>(`/api/ues/${encodeURIComponent(ueCode)}/courses/order`, {
+      ids,
+    });
   }
 
   uploadImage(courseId: number, file: File): Observable<UploadedImage> {

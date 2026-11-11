@@ -14,6 +14,14 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { createOrderSaver } from '../../core/sortable/order-saver';
+import {
+  moveItem,
+  SortableHandle,
+  SortableItem,
+  SortableList,
+  SortChange,
+} from '../../core/sortable/sortable';
 import { CourseService, CourseSummary } from '../cours/course.service';
 import { FileBrowser } from '../fichiers/file-browser';
 import { TermList } from '../termes/term-list';
@@ -22,7 +30,16 @@ import { Ue, UeService } from './ue.service';
 
 @Component({
   selector: 'app-ue-page',
-  imports: [DatePipe, FileBrowser, ReactiveFormsModule, RouterLink, TermList],
+  imports: [
+    DatePipe,
+    FileBrowser,
+    ReactiveFormsModule,
+    RouterLink,
+    SortableHandle,
+    SortableItem,
+    SortableList,
+    TermList,
+  ],
   templateUrl: './ue-page.html',
   styleUrl: './ue-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,8 +78,13 @@ export class UePage {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
-    position: this.formBuilder.control<number | null>(null, Validators.min(0)),
   });
+
+  private readonly saveCourseOrder = createOrderSaver<number[]>(
+    (ids) => this.courseService.reorder(this.code(), ids),
+    () => this.pageErrors.set([]),
+    (error) => this.load(this.code(), error.messages),
+  );
 
   constructor() {
     // Se recharge aussi quand un terme vient d'être créé (création rapide).
@@ -87,18 +109,27 @@ export class UePage {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, position } = this.form.getRawValue();
+    const { title } = this.form.getRawValue();
     this.isSaving.set(true);
-    this.courseService
-      .create(this.code(), { title: title.trim(), ...(position === null ? {} : { position }) })
-      .subscribe({
-        next: (course) =>
-          void this.router.navigate(['/ue', this.code(), 'cours', course.id, 'edition']),
-        error: (error: ApiError) => {
-          this.isSaving.set(false);
-          this.formErrors.set(error.messages);
-        },
-      });
+    this.courseService.create(this.code(), { title: title.trim() }).subscribe({
+      next: (course) =>
+        void this.router.navigate(['/ue', this.code(), 'cours', course.id, 'edition']),
+      error: (error: ApiError) => {
+        this.isSaving.set(false);
+        this.formErrors.set(error.messages);
+      },
+    });
+  }
+
+  // L'ordre change tout de suite à l'écran, puis il est enregistré ; en cas de refus,
+  // la page est rechargée telle qu'elle est en base.
+  protected reorderCourses(change: SortChange): void {
+    const ordered = moveItem(this.courses(), change);
+    if (ordered.every((course, index) => course === this.courses()[index])) {
+      return;
+    }
+    this.courses.set(ordered);
+    this.saveCourseOrder(ordered.map((course) => course.id));
   }
 
   protected async removeTerm(term: TermSummary): Promise<void> {
@@ -115,7 +146,8 @@ export class UePage {
     });
   }
 
-  private load(code: string): void {
+  // messages : erreur à laisser affichée une fois la page rechargée.
+  private load(code: string, messages: string[] = []): void {
     forkJoin({
       ue: this.ueService.get(code),
       courses: this.courseService.list(code),
@@ -125,6 +157,7 @@ export class UePage {
         this.ue.set(ue);
         this.courses.set(courses);
         this.terms.set(terms);
+        this.pageErrors.set(messages);
         this.title.setTitle(`${ue.code} – ${ue.title}`);
       },
       error: (error: ApiError) => this.pageErrors.set(error.messages),

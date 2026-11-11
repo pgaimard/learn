@@ -24,6 +24,14 @@ describe('UeService', () => {
     expect(http.expectOne('/api/ues').request.method).toBe('GET');
   });
 
+  it('enregistre l’ordre des UE', () => {
+    service.reorder(['NFE108', 'UTC502']).subscribe();
+
+    const request = http.expectOne('/api/ues/order').request;
+    expect(request.method).toBe('PUT');
+    expect(request.body).toEqual({ codes: ['NFE108', 'UTC502'] });
+  });
+
   it('crée une UE', () => {
     service.create(input).subscribe();
 

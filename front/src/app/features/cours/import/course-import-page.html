@@ -32,7 +32,7 @@
         <dd>{{ preview.ueCode }}</dd>
       </div>
       <div>
-        <dt>Ordre</dt>
+        <dt>Rang demandé</dt>
         <dd>{{ preview.position }}</dd>
       </div>
       <div>
@@ -63,8 +63,8 @@
     }
     @if (preview.existingCourse; as existing) {
       <p class="warning" role="status">
-        Le chapitre « {{ existing.title }} » occupe déjà l’ordre {{ preview.position }} dans
-        {{ preview.ueCode }}. L’import remplacera son contenu et ses images.
+        Le chapitre « {{ existing.title }} » existe déjà dans {{ preview.ueCode }}. L’import
+        remplacera son contenu et ses images, sans changer sa place dans la liste.
       </p>
     }
 

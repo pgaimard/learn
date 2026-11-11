@@ -74,17 +74,6 @@
                 </p>
               }
             </div>
-            <div class="field field-short">
-              <label for="course-position">Ordre</label>
-              <input
-                id="course-position"
-                type="number"
-                min="0"
-                formControlName="position"
-                aria-describedby="course-position-hint"
-              />
-              <p id="course-position-hint" class="field-hint">Vide : à la suite.</p>
-            </div>
           </div>
 
           <div role="alert">
@@ -106,16 +95,25 @@
     @if (courses().length === 0 && !isCreating()) {
       <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
     } @else {
-      <ol class="course-list">
+      <ol class="course-list" appSortableList (sorted)="reorderCourses($event)">
         @for (course of courses(); track course.id) {
-          <li>
-            <a class="card course" [routerLink]="['/ue', ue.code, 'cours', course.id]">
-              <span class="course-position">{{ course.position }}</span>
-              <span class="course-title">{{ course.title }}</span>
-              <span class="course-date"
-                >modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span
-              >
+          <li class="card course" [appSortableItem]="$index" [appSortableLast]="$last">
+            <button
+              type="button"
+              class="sort-handle"
+              appSortableHandle
+              [attr.aria-label]="
+                'Déplacer le cours ' + course.title + ' : faire glisser, ou flèches haut et bas'
+              "
+              title="Glisser pour réordonner"
+            >
+              ⋮⋮
+            </button>
+            <span class="course-position">{{ $index + 1 }}</span>
+            <a class="course-title" [routerLink]="['/ue', ue.code, 'cours', course.id]">
+              {{ course.title }}
             </a>
+            <span class="course-date">modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span>
           </li>
         }
       </ol>
