@@ -96,6 +96,27 @@ describe('BlockMenu', () => {
     expect(button('Dupliquer')).toBeDefined();
   });
 
+  it('épingle le bloc à la fiche de révision, puis propose de le retirer', () => {
+    setup(0, paragraph('un'));
+
+    button('Épingler à la fiche de révision').click();
+    expect(editor.getJSON().content?.[0].attrs).toEqual({ pinned: true });
+
+    fixture.componentRef.setInput('pos', 0);
+    fixture = TestBed.createComponent(BlockMenu);
+    fixture.componentRef.setInput('editor', editor);
+    fixture.componentRef.setInput('pos', 0);
+    document.body.append(fixture.nativeElement as HTMLElement);
+    fixture.detectChanges();
+    expect(button('Retirer de la fiche de révision')).toBeDefined();
+  });
+
+  it('ne propose pas d’épingler un titre', () => {
+    setup(0, { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Titre' }] });
+
+    expect(element().textContent).not.toContain('fiche de révision');
+  });
+
   it('se ferme avec Échap ou par un clic en dehors', () => {
     setup(0, paragraph('un'));
 
@@ -112,6 +133,6 @@ describe('BlockMenu', () => {
 
     element().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
 
-    expect(document.activeElement).toBe(button('Dupliquer'));
+    expect(document.activeElement).toBe(button('Épingler à la fiche de révision'));
   });
 });

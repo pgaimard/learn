@@ -16,7 +16,14 @@ const COURSE: Course = {
   ue: { code: 'UTC502', title: 'Systèmes' },
   content: {
     type: 'doc',
-    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Un programme.' }] }],
+    content: [
+      {
+        type: 'paragraph',
+        // L'éditeur précise pour chaque bloc s'il est épinglé à la fiche de révision.
+        attrs: { pinned: false },
+        content: [{ type: 'text', text: 'Un programme.' }],
+      },
+    ],
   },
 };
 

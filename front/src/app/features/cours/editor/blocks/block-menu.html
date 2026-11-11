@@ -15,6 +15,11 @@
     Niveau inférieur
   </button>
 }
+@if (isPinnable()) {
+  <button type="button" role="menuitem" (click)="togglePin()">
+    {{ isPinned() ? 'Retirer de la fiche de révision' : 'Épingler à la fiche de révision' }}
+  </button>
+}
 <button type="button" role="menuitem" (click)="duplicate()">Dupliquer</button>
 <button type="button" role="menuitem" class="danger" (click)="remove()">
   {{ isSection() ? 'Supprimer le titre' : 'Supprimer' }}

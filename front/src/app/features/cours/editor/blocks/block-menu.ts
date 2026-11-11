@@ -17,6 +17,7 @@ import {
   moveUnit,
   shiftSectionLevel,
 } from '../sections/section-commands';
+import { isPinnable, isPinned, togglePin } from '../../revision/revision-pin';
 import { isFolded, toggleFold } from '../sections/section-folding';
 import { sectionAt } from '../sections/section-range';
 import {
@@ -80,6 +81,10 @@ export class BlockMenu {
     () => sectionAt(this.editor().state.doc, this.pos()) !== null,
   );
   protected readonly isFolded = computed(() => isFolded(this.editor().state, this.pos()));
+  private readonly block = computed(() => this.editor().state.doc.nodeAt(this.pos()));
+  // Le bloc peut faire partie de la fiche de révision ; un titre y vient de lui-même.
+  protected readonly isPinnable = computed(() => isPinnable(this.block()));
+  protected readonly isPinned = computed(() => isPinned(this.block()));
   protected readonly canRaise = computed(() => canShiftSectionLevel(this.editor(), this.pos(), -1));
   protected readonly canLower = computed(() => canShiftSectionLevel(this.editor(), this.pos(), 1));
   protected readonly transforms = computed(() =>
@@ -107,6 +112,10 @@ export class BlockMenu {
 
   protected shiftLevel(delta: -1 | 1): void {
     this.run(() => shiftSectionLevel(this.editor(), this.pos(), delta));
+  }
+
+  protected togglePin(): void {
+    this.run(() => togglePin(this.editor(), this.pos()));
   }
 
   protected duplicate(): void {
