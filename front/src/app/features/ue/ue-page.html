@@ -29,6 +29,13 @@
     >
       Termes ({{ terms().length }})
     </a>
+    <a
+      [routerLink]="[]"
+      [queryParams]="{ onglet: 'fichiers' }"
+      [attr.aria-current]="tab() === 'fichiers' ? 'page' : null"
+    >
+      Fichiers
+    </a>
   </nav>
 
   @if (tab() === 'cours') {
@@ -113,6 +120,8 @@
         }
       </ol>
     }
+  } @else if (tab() === 'fichiers') {
+    <app-file-browser [ueCode]="ue.code" [folderId]="folderId()" />
   } @else {
     <h2 class="terms-title">Termes de l’UE</h2>
     @if (terms().length === 0) {

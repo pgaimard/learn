@@ -1,0 +1,25 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <label class="visually-hidden" for="entry-name">{{ label() }}</label>
+  <input
+    #field
+    id="entry-name"
+    type="text"
+    formControlName="name"
+    autocomplete="off"
+    [attr.aria-invalid]="isInvalid()"
+    aria-describedby="entry-name-messages"
+    (keydown.escape)="cancelled.emit()"
+  />
+  <button type="submit" class="button button-primary" [disabled]="isSaving()">
+    {{ submitLabel() }}
+  </button>
+  <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  <div id="entry-name-messages" class="messages" role="alert">
+    @if (isInvalid()) {
+      <p class="field-error">Le nom est requis, sans « / » ni « \ » (255 caractères au plus).</p>
+    }
+    @for (error of errors(); track error) {
+      <p class="field-error">{{ error }}</p>
+    }
+  </div>
+</form>
