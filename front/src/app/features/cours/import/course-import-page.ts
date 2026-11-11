@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../../core/http/api-error';
-import { CourseImportService, ImportPreview, ImportSource } from './course-import.service';
+import {
+  CourseImportService,
+  ImportedTerm,
+  ImportPreview,
+  ImportSource,
+} from './course-import.service';
 
 type Mode = 'package' | 'markdown';
 
@@ -24,6 +29,10 @@ export class CourseImportPage {
   protected readonly preview = signal<ImportPreview | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly isBusy = signal(false);
+
+  protected labelsOf(terms: ImportedTerm[]): string {
+    return terms.map((term) => term.label).join(', ');
+  }
 
   protected setMode(mode: Mode): void {
     this.mode.set(mode);

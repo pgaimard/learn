@@ -3,6 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Course } from '../course.service';
 
+export interface ImportedTerm {
+  type: 'definition' | 'acronym';
+  label: string;
+}
+
 export interface ImportPreview {
   ueCode: string;
   title: string;
@@ -10,6 +15,9 @@ export interface ImportPreview {
   sectionCount: number;
   imageCount: number;
   termCount: number;
+  // Termes que l'import créera, et ceux déjà présents qu'il laissera tels quels.
+  newTerms: ImportedTerm[];
+  duplicateTerms: ImportedTerm[];
   // Chapitre déjà présent à cet ordre dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }

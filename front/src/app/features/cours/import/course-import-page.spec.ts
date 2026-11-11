@@ -12,7 +12,12 @@ const PREVIEW: ImportPreview = {
   position: 3,
   sectionCount: 2,
   imageCount: 1,
-  termCount: 4,
+  termCount: 3,
+  newTerms: [
+    { type: 'definition', label: 'Processus' },
+    { type: 'acronym', label: 'PCB' },
+  ],
+  duplicateTerms: [{ type: 'acronym', label: 'PID' }],
   existingCourse: null,
 };
 const IMPORTED = { id: 9, ue: { code: 'UTC502', title: 'Systèmes' } } as Course;
@@ -66,7 +71,17 @@ describe('CourseImportPage', () => {
     const text = element().textContent;
     expect(text).toContain('Les processus');
     expect(text).toContain('UTC502');
-    expect(text).toContain('pas encore importés');
+  });
+
+  it('annonce les termes à ajouter et ceux déjà présents', () => {
+    setup();
+    service.preview.mockReturnValue(of(PREVIEW));
+
+    pickPackage();
+
+    const text = element().textContent.replace(/\s+/g, ' ');
+    expect(text).toContain('2 à ajouter au dictionnaire et au glossaire : Processus, PCB');
+    expect(text).toContain('1 déjà présents, laissés tels quels : PID');
   });
 
   it('importe après confirmation puis ouvre le cours', () => {
@@ -114,7 +129,9 @@ describe('CourseImportPage', () => {
   });
 
   it('analyse du Markdown collé', () => {
-    service.preview.mockReturnValue(of({ ...PREVIEW, imageCount: 0, termCount: 0 }));
+    service.preview.mockReturnValue(
+      of({ ...PREVIEW, imageCount: 0, termCount: 0, newTerms: [], duplicateTerms: [] }),
+    );
     setup();
     click('Markdown collé');
     const field = element().querySelector<HTMLTextAreaElement>('#import-markdown');

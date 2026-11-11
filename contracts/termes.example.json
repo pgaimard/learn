@@ -1,0 +1,18 @@
+[
+  {
+    "type": "definition",
+    "libelle": "Processus",
+    "definition": "Programme en cours d'exécution, avec son **contexte** : registres, mémoire et fichiers ouverts.\n\n```c\npid_t pid = fork();\n```\n\n> [!retenir]\n> Un programme est passif, un processus est actif."
+  },
+  {
+    "type": "acronyme",
+    "libelle": "PCB",
+    "forme_developpee": "Process Control Block",
+    "definition": "Structure du noyau qui décrit un processus."
+  },
+  {
+    "type": "acronyme",
+    "libelle": "PID",
+    "forme_developpee": "Process Identifier"
+  }
+]
