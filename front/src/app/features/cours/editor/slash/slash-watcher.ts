@@ -1,10 +1,11 @@
 import { Extension } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { EditorView } from '@tiptap/pm/view';
+import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view';
 
 // « / » en début de paragraphe ou après un espace, suivi du début d'un nom de bloc.
 const TRIGGER = /(?:^|\s)\/([\p{L}\p{N}-]*)$/u;
 const MENU_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'];
+const HINT = 'Tapez / pour insérer un bloc';
 
 export interface SlashTrigger {
   // Texte saisi après le « / ».
@@ -47,6 +48,31 @@ function locate(view: EditorView): SlashTrigger | null {
     // Pas de mise en page disponible (environnement de test).
   }
   return { query: match[1], from, to, ...place };
+}
+
+// Invite affichée dans le paragraphe vide où se trouve le curseur, quand ce paragraphe
+// est un bloc de premier niveau : elle rappelle que « / » ouvre le menu des blocs.
+// C'est une décoration : elle ne fait pas partie du contenu.
+function hintDecoration(state: EditorState, isEditable: boolean): DecorationSet {
+  const { selection } = state;
+  const { $from } = selection;
+  const paragraph = $from.parent;
+  const isEmptyTopLevelParagraph =
+    isEditable &&
+    selection.empty &&
+    $from.depth === 1 &&
+    paragraph.type.name === 'paragraph' &&
+    paragraph.content.size === 0;
+  if (!isEmptyTopLevelParagraph) {
+    return DecorationSet.empty;
+  }
+  const pos = $from.before(1);
+  return DecorationSet.create(state.doc, [
+    Decoration.node(pos, pos + paragraph.nodeSize, {
+      class: 'is-empty-paragraph',
+      'data-placeholder': HINT,
+    }),
+  ]);
 }
 
 class SlashWatcherView {
@@ -106,6 +132,7 @@ export const SlashWatcher = Extension.create<SlashWatcherOptions>({
   addProseMirrorPlugins() {
     const options = this.options;
     let watcher: SlashWatcherView | null = null;
+    const editor = this.editor;
     return [
       new Plugin({
         key: new PluginKey('slashWatcher'),
@@ -115,6 +142,7 @@ export const SlashWatcher = Extension.create<SlashWatcherOptions>({
         },
         props: {
           handleKeyDown: (_view, event) => watcher?.handleKey(event) ?? false,
+          decorations: (state) => hintDecoration(state, editor.isEditable),
         },
       }),
     ];
