@@ -1,7 +1,7 @@
 <ul class="term-list">
   @for (term of terms(); track term.id) {
-    <li>
-      <a class="card term" [routerLink]="[screens[term.type].path, term.id]">
+    <li class="card item">
+      <a class="term" [routerLink]="[screens[term.type].path, term.id]">
         <span class="term-label">{{ term.label }}</span>
         @if (term.expandedForm) {
           <span class="term-expanded">{{ term.expandedForm }}</span>
@@ -10,6 +10,25 @@
           <span class="term-excerpt">{{ term.excerpt }}</span>
         }
       </a>
+      @if (showActions()) {
+        <div class="term-actions">
+          <a
+            class="button"
+            [routerLink]="[screens[term.type].path, term.id, 'edition']"
+            [attr.aria-label]="'Modifier ' + term.label"
+          >
+            Modifier
+          </a>
+          <button
+            type="button"
+            class="button button-danger"
+            [attr.aria-label]="'Supprimer ' + term.label"
+            (click)="removed.emit(term)"
+          >
+            Supprimer
+          </button>
+        </div>
+      }
     </li>
   }
 </ul>

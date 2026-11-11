@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { TermListPage } from './term-list-page';
 import { Term, TermService, TermSummary, TermType } from './term.service';
@@ -26,6 +27,7 @@ describe('TermListPage', () => {
   const service = {
     list: vi.fn<TermService['list']>(),
     create: vi.fn<TermService['create']>(),
+    remove: vi.fn<TermService['remove']>(),
     revision: signal(0),
   };
 
@@ -37,11 +39,23 @@ describe('TermListPage', () => {
     });
   }
 
+  const dialog = { confirmDeletion: vi.fn<DialogService['confirmDeletion']>() };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
+
   function setup(type: TermType, terms: TermSummary[]): void {
     vi.resetAllMocks();
     service.list.mockReturnValue(of(terms));
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: TermService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: TermService, useValue: service },
+        { provide: DialogService, useValue: dialog },
+      ],
     });
     fixture = TestBed.createComponent(TermListPage);
     fixture.componentRef.setInput('type', type);
@@ -86,6 +100,53 @@ describe('TermListPage', () => {
     expect(element().querySelector('h1')?.textContent).toBe('Glossaire');
     expect(labels()).toEqual(['PID', 'TLB']);
     expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/1');
+  });
+
+  it('propose de modifier chaque terme', () => {
+    setup('acronym', [PID, TLB]);
+
+    const links = Array.from(element().querySelectorAll('.term-actions a')).map((link) => [
+      link.getAttribute('aria-label'),
+      link.getAttribute('href'),
+    ]);
+    expect(links).toEqual([
+      ['Modifier PID', '/glossaire/1/edition'],
+      ['Modifier TLB', '/glossaire/2/edition'],
+    ]);
+  });
+
+  it('supprime un terme après confirmation seulement, puis recharge', async () => {
+    setup('acronym', [PID, TLB]);
+    service.remove.mockReturnValue(of(undefined));
+    dialog.confirmDeletion.mockResolvedValue(false);
+    const remove = (): void => {
+      element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer TLB"]')?.click();
+    };
+
+    remove();
+    await settle();
+    expect(dialog.confirmDeletion).toHaveBeenCalledWith(
+      'Supprimer le terme',
+      '« TLB » et sa définition seront supprimés définitivement.',
+    );
+    expect(service.remove).not.toHaveBeenCalled();
+
+    dialog.confirmDeletion.mockResolvedValue(true);
+    remove();
+    await settle();
+    expect(service.remove).toHaveBeenCalledWith(2);
+    expect(service.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('affiche le refus d’une suppression', async () => {
+    setup('acronym', [PID]);
+    dialog.confirmDeletion.mockResolvedValue(true);
+    service.remove.mockReturnValue(throwError(() => new ApiError(404, ['Ce terme n’existe pas.'])));
+
+    element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer PID"]')?.click();
+    await settle();
+
+    expect(element().textContent).toContain('Ce terme n’existe pas.');
   });
 
   it('filtre la liste à la saisie', () => {

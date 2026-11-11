@@ -48,6 +48,6 @@
   @if (visibleTerms().length === 0) {
     <p class="empty">Aucun terme ne correspond à « {{ filter() }} ».</p>
   } @else {
-    <app-term-list [terms]="visibleTerms()" />
+    <app-term-list [terms]="visibleTerms()" [showActions]="true" (removed)="remove($event)" />
   }
 }
