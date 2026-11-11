@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { FileBrowser } from './file-browser';
 import { FileService, Folder, StoredFile } from './file.service';
@@ -31,12 +32,26 @@ describe('FileBrowser', () => {
     removeFile: vi.fn<FileService['removeFile']>(),
     downloadUrl: (id: number) => `/api/files/${id}/download`,
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   function setup(folderId: number | null = null, files: StoredFile[] = [NOTES]): void {
     service.listFolders.mockReturnValue(of(FOLDERS));
     service.listFiles.mockReturnValue(of(files));
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: FileService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: DialogService, useValue: dialog },
+        { provide: FileService, useValue: service },
+      ],
     });
     fixture = TestBed.createComponent(FileBrowser);
     fixture.componentRef.setInput('ueCode', 'UTC502');
@@ -153,14 +168,15 @@ describe('FileBrowser', () => {
     expect(service.renameFolder).toHaveBeenCalledWith(1, 'Travaux dirigés');
   });
 
-  it('supprime un dossier après confirmation, et affiche un refus', () => {
+  it('supprime un dossier après confirmation, et affiche un refus', async () => {
     setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     service.removeFolder.mockReturnValue(
       throwError(() => new ApiError(409, ['Le dossier « TD » n’est pas vide.'])),
     );
 
     click('Supprimer le dossier TD');
+    await settle();
 
     expect(service.removeFolder).toHaveBeenCalledWith(1);
     expect(text()).toContain('Le dossier « TD » n’est pas vide.');
@@ -201,16 +217,22 @@ describe('FileBrowser', () => {
     expect(element().querySelector('app-folder-picker')).toBeNull();
   });
 
-  it('supprime un fichier après confirmation seulement', () => {
+  it('supprime un fichier après confirmation seulement', async () => {
     setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirmDeletion.mockResolvedValue(false);
     service.removeFile.mockReturnValue(of(undefined));
 
     click('Supprimer le fichier notes.pdf');
+    await settle();
+    expect(dialog.confirmDeletion).toHaveBeenCalledWith(
+      'Supprimer le fichier',
+      '« notes.pdf » sera supprimé définitivement.',
+    );
     expect(service.removeFile).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     click('Supprimer le fichier notes.pdf');
+    await settle();
     expect(service.removeFile).toHaveBeenCalledWith(7);
     expect(service.listFiles).toHaveBeenCalledTimes(2);
   });

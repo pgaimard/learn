@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { UeListPage } from './ue-list-page';
 import { Ue, UeService } from './ue.service';
@@ -15,12 +16,26 @@ describe('UeListPage', () => {
     update: vi.fn<UeService['update']>(),
     remove: vi.fn<UeService['remove']>(),
   };
+  const dialog = {
+    confirm: vi.fn<DialogService['confirm']>(),
+    confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+  };
+
+  // La modale répond de façon asynchrone : on laisse la réponse arriver.
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
   function setup(ues: Ue[]): void {
     vi.resetAllMocks();
     service.list.mockReturnValue(of(ues));
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: UeService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: DialogService, useValue: dialog },
+        { provide: UeService, useValue: service },
+      ],
     });
     fixture = TestBed.createComponent(UeListPage);
     fixture.detectChanges();
@@ -107,16 +122,22 @@ describe('UeListPage', () => {
     );
   });
 
-  it('supprime après confirmation seulement', () => {
+  it('supprime après confirmation seulement', async () => {
     setup([UTC502]);
     service.remove.mockReturnValue(of(undefined));
-    const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    dialog.confirmDeletion.mockResolvedValue(false);
 
     click('Supprimer');
+    await settle();
+    expect(dialog.confirmDeletion).toHaveBeenCalledWith(
+      'Supprimer l’UE',
+      'L’UE UTC502 sera supprimée. Elle doit être vide.',
+    );
     expect(service.remove).not.toHaveBeenCalled();
 
-    confirmation.mockReturnValue(true);
+    dialog.confirmDeletion.mockResolvedValue(true);
     click('Supprimer');
+    await settle();
     expect(service.remove).toHaveBeenCalledWith('UTC502');
   });
 });

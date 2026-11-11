@@ -1,0 +1,23 @@
+<!-- (close) : fermeture par Échap, traitée comme une annulation. -->
+<dialog
+  #dialog
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-message"
+  (close)="answer(false)"
+>
+  @if (request(); as request) {
+    <h2 id="dialog-title">{{ request.title }}</h2>
+    <p id="dialog-message">{{ request.message }}</p>
+    <div class="actions">
+      <button #cancel type="button" class="button" (click)="answer(false)">Annuler</button>
+      <button
+        type="button"
+        class="button confirm"
+        [class.is-destructive]="request.isDestructive"
+        (click)="answer(true)"
+      >
+        {{ request.confirmLabel }}
+      </button>
+    </div>
+  }
+</dialog>

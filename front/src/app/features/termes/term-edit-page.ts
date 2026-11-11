@@ -12,13 +12,12 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { ContentEditor } from '../cours/editor/content-editor';
 import { Ue, UeService } from '../ue/ue.service';
 import { TERM_SCREENS } from './term-screens';
 import { Term, TermInput, TermService } from './term.service';
-
-const UNSAVED_MESSAGE = 'Des modifications ne sont pas enregistrées. Quitter quand même ?';
 
 @Component({
   selector: 'app-term-edit-page',
@@ -37,6 +36,7 @@ export class TermEditPage {
   readonly id = input.required<string>();
 
   private readonly termService = inject(TermService);
+  private readonly dialog = inject(DialogService);
   private readonly ueService = inject(UeService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -68,8 +68,16 @@ export class TermEditPage {
   }
 
   // Appelé par la garde de sortie de la route.
-  canLeave(): boolean {
-    return !this.isDirty() || confirm(UNSAVED_MESSAGE);
+  canLeave(): boolean | Promise<boolean> {
+    return (
+      !this.isDirty() ||
+      this.dialog.confirm({
+        title: 'Modifications non enregistrées',
+        message: 'Quitter cette page fera perdre les modifications en cours.',
+        confirmLabel: 'Quitter sans enregistrer',
+        isDestructive: true,
+      })
+    );
   }
 
   protected markDirty(): void {
@@ -121,9 +129,15 @@ export class TermEditPage {
     });
   }
 
-  protected remove(): void {
+  protected async remove(): Promise<void> {
     const term = this.term();
-    if (!term || !confirm(`Supprimer définitivement « ${term.label} » ?`)) {
+    if (
+      !term ||
+      !(await this.dialog.confirmDeletion(
+        'Supprimer le terme',
+        `« ${term.label} » et sa définition seront supprimés définitivement.`,
+      ))
+    ) {
       return;
     }
     this.termService.remove(term.id).subscribe({
