@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -31,13 +32,40 @@ export class UeService {
   }
 
   async create(input: CreateUeDto): Promise<Ue> {
-    const position = input.position ?? (await this.nextPosition());
+    // Une nouvelle UE se place à la suite ; l'ordre se change ensuite par reorder.
+    const position = await this.nextPosition();
     return this.save(this.ues.create({ ...input, position }), input.code);
   }
 
   async update(code: string, changes: UpdateUeDto): Promise<Ue> {
     const ue = await this.findByCode(code);
     return this.save(this.ues.merge(ue, changes), changes.code ?? ue.code);
+  }
+
+  // Réordonne toutes les UE : la liste doit les contenir toutes, une fois chacune.
+  async reorder(codes: string[]): Promise<Ue[]> {
+    const ordered = codes.map((code) => code.trim().toUpperCase());
+    const existing = await this.ues.find({ select: { id: true, code: true } });
+    const ids = new Map(existing.map((ue) => [ue.code, ue.id]));
+    if (
+      ordered.length !== existing.length ||
+      new Set(ordered).size !== ordered.length ||
+      ordered.some((code) => !ids.has(code))
+    ) {
+      throw new BadRequestException(
+        'L’ordre doit contenir toutes les UE, une fois chacune.',
+      );
+    }
+    await this.ues.manager.transaction(async (manager) => {
+      for (const [index, code] of ordered.entries()) {
+        await manager.update(
+          Ue,
+          { id: ids.get(code) },
+          { position: index + 1 },
+        );
+      }
+    });
+    return this.findAll();
   }
 
   async remove(code: string): Promise<void> {

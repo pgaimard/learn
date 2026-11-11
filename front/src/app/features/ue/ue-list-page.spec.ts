@@ -15,6 +15,7 @@ describe('UeListPage', () => {
     create: vi.fn<UeService['create']>(),
     update: vi.fn<UeService['update']>(),
     remove: vi.fn<UeService['remove']>(),
+    reorder: vi.fn<UeService['reorder']>(),
   };
   const dialog = {
     confirm: vi.fn<DialogService['confirm']>(),
@@ -72,6 +73,52 @@ describe('UeListPage', () => {
 
     expect(element().textContent).toContain('UTC502');
     expect(element().textContent).toContain('Systèmes');
+  });
+
+  const NFE108: Ue = { id: 2, code: 'NFE108', title: 'Méthodes', description: '', position: 2 };
+
+  function codes(): string[] {
+    return Array.from(element().querySelectorAll('.ue-code')).map((code) =>
+      (code.textContent ?? '').trim(),
+    );
+  }
+
+  function pressOnHandle(index: number, key: string): void {
+    const handle = element().querySelectorAll('.sort-handle').item(index);
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
+    fixture.detectChanges();
+  }
+
+  it('réordonne les UE depuis la poignée et enregistre le nouvel ordre', () => {
+    setup([UTC502, NFE108]);
+    service.reorder.mockReturnValue(of([NFE108, UTC502]));
+
+    pressOnHandle(0, 'ArrowDown');
+
+    expect(codes()).toEqual(['NFE108', 'UTC502']);
+    expect(service.reorder).toHaveBeenCalledWith(['NFE108', 'UTC502']);
+  });
+
+  it('n’enregistre rien pour un déplacement hors de la liste', () => {
+    setup([UTC502, NFE108]);
+
+    pressOnHandle(0, 'ArrowUp');
+
+    expect(service.reorder).not.toHaveBeenCalled();
+    expect(codes()).toEqual(['UTC502', 'NFE108']);
+  });
+
+  it('revient à l’ordre enregistré quand l’API refuse', () => {
+    setup([UTC502, NFE108]);
+    service.reorder.mockReturnValue(
+      throwError(() => new ApiError(400, ['L’ordre doit contenir toutes les UE.'])),
+    );
+
+    pressOnHandle(1, 'ArrowUp');
+
+    expect(element().textContent).toContain('L’ordre doit contenir toutes les UE.');
+    expect(service.list).toHaveBeenCalledTimes(2);
+    expect(codes()).toEqual(['UTC502', 'NFE108']);
   });
 
   it('invite à créer une UE quand il n’y en a aucune', () => {

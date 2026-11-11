@@ -57,3 +57,19 @@ h2 a:hover {
 section.card {
   margin-bottom: 0.75rem;
 }
+
+/* Réordonnancement par glisser-déposer. */
+
+.ue {
+  flex-wrap: nowrap;
+}
+
+.ue-text {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 40rem) {
+  .ue {
+    flex-wrap: wrap;
+  }
+}
