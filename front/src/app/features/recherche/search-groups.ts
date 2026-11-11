@@ -3,8 +3,10 @@ import { ExcerptSegment, SearchResults } from './search.service';
 // Résultats mis sous une forme commune aux trois types, prête à afficher.
 export interface DisplayedResult {
   link: (string | number)[];
+  // Paramètres d'adresse du lien : onglet et dossier d'un fichier.
+  queryParams?: Record<string, string | number>;
   title: string;
-  // Précision affichée à côté du titre : code de l'UE ou forme développée.
+  // Précision affichée à côté du titre : code de l'UE, forme développée ou dossier.
   detail: string | null;
   excerpt: ExcerptSegment[];
 }
@@ -45,6 +47,21 @@ export function toDisplayedGroups(results: SearchResults): DisplayedGroup[] {
         title: term.label,
         detail: term.expandedForm,
         excerpt: term.excerpt,
+      })),
+    },
+    {
+      title: 'Fichiers',
+      total: results.files.total,
+      // Un fichier trouvé ouvre son dossier : le téléchargement se fait depuis la liste.
+      results: results.files.items.map((file) => ({
+        link: ['/ue', file.ueCode],
+        queryParams:
+          file.folderId === null
+            ? { onglet: 'fichiers' }
+            : { onglet: 'fichiers', dossier: file.folderId },
+        title: file.name,
+        detail: file.folderName === null ? file.ueCode : `${file.ueCode} › ${file.folderName}`,
+        excerpt: file.excerpt,
       })),
     },
   ];

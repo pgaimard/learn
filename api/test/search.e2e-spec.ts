@@ -35,6 +35,7 @@ describe('Recherche', () => {
   let app: NestExpressApplication;
   let client: AuthenticatedClient;
   let memoryCourseId: number;
+  let folderId: number;
 
   async function createCourse(title: string, content: object): Promise<number> {
     const created = await client('post', '/api/ues/UTC502/courses').send({
@@ -69,6 +70,18 @@ describe('Recherche', () => {
     await createCourse(
       'Les processus',
       doc('Un processus est un programme en cours d’exécution.'),
+    );
+    const folder = await client('post', '/api/ues/UTC502/folders').send({
+      name: 'TD',
+    });
+    folderId = (folder.body as { id: number }).id;
+    await client('post', '/api/ues/UTC502/files')
+      .field('folderId', String(folderId))
+      .attach('file', Buffer.from('x'), 'TD3_Mémoire-corrigé.pdf');
+    await client('post', '/api/ues/UTC502/files').attach(
+      'file',
+      Buffer.from('x'),
+      'annales.zip',
     );
     await client('post', '/api/terms').send({
       type: 'definition',
@@ -109,6 +122,32 @@ describe('Recherche', () => {
       'Pagination',
     ]);
     expect(results.acronyms).toEqual({ total: 0, items: [] });
+  });
+
+  it('trouve un fichier par un mot de son nom, quels que soient les séparateurs', async () => {
+    const byWord = await search('memoire');
+    const byPrefix = await search('td3 corr');
+
+    expect(byWord.files).toEqual({
+      total: 1,
+      items: [
+        {
+          id: expect.any(Number) as number,
+          name: 'TD3_Mémoire-corrigé.pdf',
+          ueCode: 'UTC502',
+          folderId,
+          folderName: 'TD',
+          excerpt: [],
+        },
+      ],
+    });
+    expect(byPrefix.files.total).toBe(1);
+  });
+
+  it('indique un fichier rangé à la racine de l’UE', async () => {
+    const [file] = (await search('annales')).files.items;
+
+    expect(file).toMatchObject({ folderId: null, folderName: null });
   });
 
   it('prend le dernier mot comme un début de mot', async () => {
