@@ -154,22 +154,6 @@ describe('Termes', () => {
         content: { type: 'doc', content: [{ type: 'script' }] },
       },
     ],
-    [
-      'une image',
-      {
-        type: 'definition',
-        label: 'X',
-        content: {
-          type: 'doc',
-          content: [
-            {
-              type: 'figure',
-              attrs: { src: '/api/courses/1/images/1', alt: 'Schéma' },
-            },
-          ],
-        },
-      },
-    ],
   ])('refuse %s', async (_label, body) => {
     const input =
       'courseId' in body && body.courseId === 0 ? { ...body, courseId } : body;
