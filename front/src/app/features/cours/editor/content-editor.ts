@@ -10,6 +10,7 @@ import { DialogService } from '../../../core/dialog/dialog.service';
 import { ContentNode } from '../content/content-node';
 import { CourseContent } from '../content/course-content';
 import { BlockMenu } from './blocks/block-menu';
+import { CodeBlockBar } from './code/code-block-bar';
 import { EditorToolbar } from './editor-toolbar';
 import { editLink } from './selection/edit-link';
 import { SelectionBar } from './selection/selection-bar';
@@ -19,7 +20,7 @@ import { TableMenu } from './tables/table-menu';
 // fournit ses actions (projetées au-dessus de la barre), l'enregistrement et l'envoi des images.
 @Component({
   selector: 'app-content-editor',
-  imports: [BlockMenu, CourseContent, EditorToolbar, SelectionBar, TableMenu],
+  imports: [BlockMenu, CodeBlockBar, CourseContent, EditorToolbar, SelectionBar, TableMenu],
   host: {
     // Ctrl+K est pris par la recherche : le lien se pose avec Ctrl+Maj+K.
     '(keydown.control.shift.k)': 'linkFromKeyboard($event)',

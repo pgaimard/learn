@@ -16,7 +16,7 @@ describe('poignée de bloc', () => {
       extensions: createCourseExtensions({
         blockHandle: { onOpenMenu: (target) => opened.push(target) },
         tableTools: { onOpenMenu: () => undefined },
-        selection: { onChange: () => undefined },
+        selection: { onChange: () => undefined, onCodeBlock: () => undefined },
       }),
       content: {
         type: 'doc',

@@ -1,0 +1,29 @@
+:host {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 15%);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  /* Posée juste au-dessus du bloc, alignée sur son bord droit. */
+  transform: translate(-100%, calc(-100% - 0.25rem));
+}
+
+label {
+  color: var(--color-text-muted);
+}
+
+select {
+  padding: 0.125rem 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+}

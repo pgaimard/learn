@@ -44,6 +44,8 @@ export class CourseContent {
   readonly tableMenu = signal<{ top: number; left: number } | null>(null);
   // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
+  // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut droit.
+  readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -64,7 +66,13 @@ export class CourseContent {
                   left: left + this.host.nativeElement.offsetLeft,
                 }),
             },
-            selection: { onChange: (target) => this.selectionBar.set(this.offset(target)) },
+            selection: {
+              onChange: (target) => this.selectionBar.set(this.offset(target)),
+              onCodeBlock: (target) => {
+                const place = this.offset(target);
+                this.codeBlockBar.set(target && place ? { pos: target.pos, ...place } : null);
+              },
+            },
           }),
           content: untracked(this.content),
           editable: untracked(this.editable),
