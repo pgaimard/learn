@@ -264,3 +264,53 @@
 .course-content:not(.is-editable) figcaption:has(> br.ProseMirror-trailingBreak:only-child) {
   display: none;
 }
+
+/* Poignée de bloc : à gauche du bloc survolé, dans la marge de la feuille. */
+
+.course-content.is-editable {
+  position: relative;
+}
+
+.course-content .block-handle {
+  position: absolute;
+  left: -1.75rem;
+  width: 1.5rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.2em;
+  line-height: 1.75rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.course-content .block-handle:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .block-handle:active {
+  cursor: grabbing;
+}
+
+/* Bloc en cours de déplacement. */
+.course-content .is-dragged {
+  opacity: 0.4;
+}
+
+.course-content.is-editable .ProseMirror-selectednode:not(figure) {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  .course-content .block-handle {
+    left: -1rem;
+    width: 1rem;
+  }
+}

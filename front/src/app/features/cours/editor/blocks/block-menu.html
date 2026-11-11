@@ -1,0 +1,17 @@
+<button type="button" role="menuitem" [disabled]="!canMoveUp()" (click)="moveUp()">
+  Monter <kbd>Alt+Maj+↑</kbd>
+</button>
+<button type="button" role="menuitem" [disabled]="!canMoveDown()" (click)="moveDown()">
+  Descendre <kbd>Alt+Maj+↓</kbd>
+</button>
+<button type="button" role="menuitem" (click)="duplicate()">Dupliquer</button>
+<button type="button" role="menuitem" class="danger" (click)="remove()">Supprimer</button>
+
+@if (transforms().length > 0) {
+  <p class="title" id="block-menu-transform">Transformer en</p>
+  <div role="group" aria-labelledby="block-menu-transform">
+    @for (choice of transforms(); track choice.label) {
+      <button type="button" role="menuitem" (click)="transform(choice)">{{ choice.label }}</button>
+    }
+  </div>
+}

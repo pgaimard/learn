@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, input, output, viewChild } from '@angular/core';
 import { ContentNode } from '../content/content-node';
 import { CourseContent } from '../content/course-content';
+import { BlockMenu } from './blocks/block-menu';
 import { EditorToolbar } from './editor-toolbar';
 
 // Éditeur complet : barre d'outils collante et feuille de contenu. La page qui l'utilise
 // fournit ses actions (projetées au-dessus de la barre), l'enregistrement et l'envoi des images.
 @Component({
   selector: 'app-content-editor',
-  imports: [CourseContent, EditorToolbar],
+  imports: [BlockMenu, CourseContent, EditorToolbar],
   templateUrl: './content-editor.html',
   styleUrl: './content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -36,6 +36,9 @@ export class CourseContent {
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
+  // Bloc dont le menu est ouvert : sa position dans le document et la hauteur où
+  // afficher le menu, en pixels depuis le haut du conteneur de ce composant.
+  readonly blockMenu = signal<{ pos: number; top: number } | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -44,7 +47,10 @@ export class CourseContent {
       this.editor.set(
         new Editor({
           element: this.host.nativeElement,
-          extensions: createCourseExtensions(),
+          extensions: createCourseExtensions({
+            onOpenMenu: ({ pos, top }) =>
+              this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+          }),
           content: untracked(this.content),
           editable: untracked(this.editable),
           editorProps: {
@@ -58,7 +64,10 @@ export class CourseContent {
               return this.receiveImages(event.dataTransfer);
             },
           },
-          onUpdate: () => this.edited.emit(),
+          onUpdate: () => {
+            this.blockMenu.set(null);
+            this.edited.emit();
+          },
         }),
       );
     });
