@@ -403,3 +403,14 @@
   font-weight: 400;
   content: '…';
 }
+
+/* Invite du menu « / » dans le paragraphe vide où se trouve le curseur. */
+
+.course-content .is-empty-paragraph::before {
+  float: left;
+  height: 0;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}

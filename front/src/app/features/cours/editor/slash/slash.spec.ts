@@ -144,6 +144,48 @@ describe('menu « / »', () => {
     });
   });
 
+  describe('invite', () => {
+    function hint(): string | null {
+      return (
+        editor.view.dom.querySelector('.is-empty-paragraph')?.getAttribute('data-placeholder') ??
+        null
+      );
+    }
+
+    it('rappelle le « / » dans le paragraphe vide du curseur', () => {
+      expect(hint()).toBe('Tapez / pour insérer un bloc');
+      expect(editor.view.dom.querySelectorAll('.is-empty-paragraph')).toHaveLength(1);
+    });
+
+    it('disparaît dès qu’on écrit, ou quand le curseur est ailleurs', () => {
+      type('a');
+      expect(hint()).toBeNull();
+
+      editor.commands.deleteRange({ from: 8, to: 9 });
+      expect(hint()).not.toBeNull();
+      editor.commands.setTextSelection(2);
+      expect(hint()).toBeNull();
+    });
+
+    it('ne s’affiche ni dans un titre vide, ni dans une cellule, ni en lecture', () => {
+      editor.commands.setHeading({ level: 2 });
+      expect(hint()).toBeNull();
+
+      editor.commands.setParagraph();
+      editor.commands.insertTable({ rows: 1, cols: 1 });
+      expect(hint()).toBeNull();
+
+      editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+      expect(hint()).not.toBeNull();
+      editor.setEditable(false);
+      expect(hint()).toBeNull();
+    });
+
+    it('ne fait pas partie du contenu enregistré', () => {
+      expect(JSON.stringify(editor.getJSON())).not.toContain('Tapez');
+    });
+  });
+
   describe('choix', () => {
     it('se parcourt aux flèches, en bouclant', () => {
       type('/liste');
