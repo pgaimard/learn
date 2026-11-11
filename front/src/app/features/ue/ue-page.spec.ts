@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from '../cours/course.service';
 import { TermService } from '../termes/term.service';
@@ -16,7 +17,12 @@ describe('UePage', () => {
     list: vi.fn<CourseService['list']>(),
     create: vi.fn<CourseService['create']>(),
   };
-  const termService = { list: vi.fn<TermService['list']>(), revision: signal(0) };
+  const termService = {
+    list: vi.fn<TermService['list']>(),
+    remove: vi.fn<TermService['remove']>(),
+    revision: signal(0),
+  };
+  const dialog = { confirmDeletion: vi.fn<DialogService['confirmDeletion']>() };
 
   function setup(): void {
     TestBed.configureTestingModule({
@@ -25,6 +31,7 @@ describe('UePage', () => {
         { provide: UeService, useValue: ueService },
         { provide: CourseService, useValue: courseService },
         { provide: TermService, useValue: termService },
+        { provide: DialogService, useValue: dialog },
       ],
     });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -80,8 +87,31 @@ describe('UePage', () => {
     expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
     expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
     expect(element().querySelector('.course-list')).toBeNull();
-    // Les actions sur les termes sont réservées au dictionnaire et au glossaire.
-    expect(element().querySelector('.term-actions')).toBeNull();
+    expect(element().querySelector('.term-actions a')?.getAttribute('href')).toBe(
+      '/glossaire/4/edition',
+    );
+  });
+
+  it('supprime un terme de l’onglet après confirmation seulement, puis recharge', async () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'termes');
+    fixture.detectChanges();
+    termService.remove.mockReturnValue(of(undefined));
+    const remove = async (): Promise<void> => {
+      element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer PID"]')?.click();
+      // La modale répond de façon asynchrone : on laisse la réponse arriver.
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    };
+
+    dialog.confirmDeletion.mockResolvedValue(false);
+    await remove();
+    expect(termService.remove).not.toHaveBeenCalled();
+
+    dialog.confirmDeletion.mockResolvedValue(true);
+    await remove();
+    expect(termService.remove).toHaveBeenCalledWith(4);
+    expect(termService.list).toHaveBeenCalledTimes(2);
   });
 
   it('se recharge quand un terme vient d’être créé', () => {

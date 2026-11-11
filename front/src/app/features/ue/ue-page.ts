@@ -12,6 +12,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { CourseService, CourseSummary } from '../cours/course.service';
 import { FileBrowser } from '../fichiers/file-browser';
@@ -37,6 +38,7 @@ export class UePage {
   private readonly ueService = inject(UeService);
   private readonly courseService = inject(CourseService);
   private readonly termService = inject(TermService);
+  private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly formBuilder = inject(NonNullableFormBuilder);
@@ -97,6 +99,20 @@ export class UePage {
           this.formErrors.set(error.messages);
         },
       });
+  }
+
+  protected async removeTerm(term: TermSummary): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le terme',
+      `« ${term.label} » et sa définition seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.termService.remove(term.id).subscribe({
+      next: () => this.load(this.code()),
+      error: (error: ApiError) => this.pageErrors.set(error.messages),
+    });
   }
 
   private load(code: string): void {

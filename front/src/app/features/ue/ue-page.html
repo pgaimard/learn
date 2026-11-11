@@ -129,7 +129,7 @@
         Aucun terme rattaché à cette UE. « Nouveau terme », en haut de page, en crée un.
       </p>
     } @else {
-      <app-term-list [terms]="terms()" />
+      <app-term-list [terms]="terms()" [showActions]="true" (removed)="removeTerm($event)" />
     }
   }
 }
