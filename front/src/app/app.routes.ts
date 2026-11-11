@@ -22,6 +22,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'dictionnaire',
+        title: 'Dictionnaire',
+        data: { type: 'definition' },
+        loadChildren: () =>
+          import('./features/termes/termes.routes').then((module) => module.termesRoutes),
+      },
+      {
+        path: 'glossaire',
+        title: 'Glossaire',
+        data: { type: 'acronym' },
+        loadChildren: () =>
+          import('./features/termes/termes.routes').then((module) => module.termesRoutes),
+      },
+      {
         path: 'ue/:code/cours',
         loadChildren: () =>
           import('./features/cours/cours.routes').then((module) => module.coursRoutes),

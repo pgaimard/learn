@@ -127,6 +127,7 @@ a {
 }
 
 .field input,
+.field select,
 .field textarea {
   box-sizing: border-box;
   width: 100%;

@@ -1,0 +1,67 @@
+<div class="page-header">
+  <h1>{{ screen().title }}</h1>
+  @if (!isCreating()) {
+    <button type="button" class="button button-primary" (click)="openForm()">
+      {{ screen().createLabel }}
+    </button>
+  }
+</div>
+
+<div role="alert">
+  @for (error of pageErrors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (isCreating()) {
+  <section class="card" [attr.aria-label]="screen().createLabel">
+    <app-term-form
+      [type]="type()"
+      [errors]="formErrors()"
+      [isSaving]="isSaving()"
+      (saved)="create($event)"
+      (cancelled)="closeForm()"
+    />
+  </section>
+}
+
+@if (isLoading()) {
+  <p>Chargement…</p>
+} @else if (terms().length === 0) {
+  @if (!isCreating()) {
+    <p class="empty">{{ screen().emptyMessage }}</p>
+  }
+} @else {
+  <div class="filter">
+    <label for="term-filter">Filtrer</label>
+    <input
+      #filterField
+      id="term-filter"
+      type="search"
+      autocomplete="off"
+      [value]="filter()"
+      (input)="filter.set(filterField.value)"
+    />
+    <p class="count" aria-live="polite">{{ visibleTerms().length }} sur {{ terms().length }}</p>
+  </div>
+
+  @if (visibleTerms().length === 0) {
+    <p class="empty">Aucun terme ne correspond à « {{ filter() }} ».</p>
+  } @else {
+    <ul class="term-list">
+      @for (term of visibleTerms(); track term.id) {
+        <li>
+          <a class="card term" [routerLink]="[screen().path, term.id]">
+            <span class="term-label">{{ term.label }}</span>
+            @if (term.expandedForm) {
+              <span class="term-expanded">{{ term.expandedForm }}</span>
+            }
+            @if (term.excerpt) {
+              <span class="term-excerpt">{{ term.excerpt }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  }
+}

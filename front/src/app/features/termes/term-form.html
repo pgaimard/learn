@@ -1,0 +1,62 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="form-row">
+    <div class="field field-grow">
+      <label for="term-label">{{ type() === 'acronym' ? 'Acronyme' : 'Terme' }}</label>
+      <input
+        id="term-label"
+        type="text"
+        formControlName="label"
+        [attr.aria-invalid]="isInvalid('label')"
+        [attr.aria-describedby]="isInvalid('label') ? 'term-label-error' : null"
+      />
+      @if (isInvalid('label')) {
+        <p id="term-label-error" class="field-error">
+          Le libellé est requis (200 caractères au plus).
+        </p>
+      }
+    </div>
+
+    @if (type() === 'acronym') {
+      <div class="field field-grow">
+        <label for="term-expanded-form">Forme développée</label>
+        <input
+          id="term-expanded-form"
+          type="text"
+          formControlName="expandedForm"
+          [attr.aria-invalid]="isExpandedFormInvalid()"
+          [attr.aria-describedby]="isExpandedFormInvalid() ? 'term-expanded-form-error' : null"
+        />
+        @if (isExpandedFormInvalid()) {
+          <p id="term-expanded-form-error" class="field-error">
+            La forme développée est requise (300 caractères au plus).
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="field">
+    <label for="term-text">Définition courte</label>
+    <textarea
+      id="term-text"
+      rows="3"
+      formControlName="text"
+      [attr.aria-invalid]="isInvalid('text')"
+      aria-describedby="term-text-hint"
+    ></textarea>
+    <p id="term-text-hint" class="field-hint">
+      Facultative. Code, images et tableaux s’ajoutent ensuite en ouvrant le terme.
+    </p>
+  </div>
+
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button button-primary" [disabled]="isSaving()">Créer</button>
+    <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>
