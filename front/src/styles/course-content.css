@@ -360,3 +360,46 @@
   background: var(--color-accent);
   pointer-events: none;
 }
+
+/* Chapitres : chevron de pliage devant chaque titre, contenu replié caché. */
+
+.course-content .fold-toggle {
+  width: 1.25em;
+  margin-right: 0.125em;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.75em;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+}
+
+.course-content .fold-toggle::before {
+  content: '▾';
+}
+
+.course-content .fold-toggle[aria-expanded='false']::before {
+  content: '▸';
+}
+
+.course-content .fold-toggle:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .is-folded-away {
+  display: none;
+}
+
+.course-content .is-folded::after {
+  margin-left: 0.5em;
+  color: var(--color-text-muted);
+  font-size: 0.75em;
+  font-weight: 400;
+  content: '…';
+}

@@ -4,6 +4,7 @@ import { TableKit } from '@tiptap/extension-table';
 import { StarterKit } from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
 import { BlockHandle, BlockHandleOptions } from '../editor/blocks/block-handle';
+import { SectionFolding } from '../editor/sections/section-folding';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { Callout } from './callout';
 import { Figure } from './figure';
@@ -31,6 +32,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     TableKit.configure({ table: { resizable: false } }),
     Figure,
     Callout,
+    SectionFolding,
     ...(tools
       ? [BlockHandle.configure(tools.blockHandle), TableTools.configure(tools.tableTools)]
       : []),
