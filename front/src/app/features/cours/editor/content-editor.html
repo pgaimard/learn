@@ -33,6 +33,16 @@
       />
     }
   }
+  @if (view.codeBlockBar(); as target) {
+    @if (view.editor(); as editor) {
+      <app-code-block-bar
+        [editor]="editor"
+        [pos]="target.pos"
+        [style.top.px]="target.top"
+        [style.left.px]="target.left"
+      />
+    }
+  }
   @if (view.tableMenu(); as target) {
     @if (view.editor(); as editor) {
       <app-table-menu

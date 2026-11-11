@@ -403,29 +403,3 @@
   font-weight: 400;
   content: '…';
 }
-
-/* Bloc de code : choix du langage posé sur le bloc, en édition. */
-
-.course-content .code-block {
-  position: relative;
-}
-
-.course-content .code-language {
-  position: absolute;
-  top: 0.375rem;
-  right: 0.375rem;
-  max-width: 60%;
-  padding: 0.125rem 0.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.75rem;
-  opacity: 0.55;
-}
-
-.course-content .code-block:hover .code-language,
-.course-content .code-block:focus-within .code-language {
-  opacity: 1;
-}

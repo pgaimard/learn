@@ -7,14 +7,19 @@ import { SelectionBar } from './selection-bar';
 describe('barre de mise en forme', () => {
   let editor: Editor;
   let shown: ({ top: number; left: number } | null)[];
+  let codeBlocks: ({ pos: number; top: number; left: number } | null)[];
 
   function setup(): void {
     shown = [];
+    codeBlocks = [];
     editor = new Editor({
       extensions: createCourseExtensions({
         blockHandle: { onOpenMenu: () => undefined },
         tableTools: { onOpenMenu: () => undefined },
-        selection: { onChange: (target) => shown.push(target) },
+        selection: {
+          onChange: (target) => shown.push(target),
+          onCodeBlock: (target) => codeBlocks.push(target),
+        },
       }),
       content: {
         type: 'doc',
@@ -43,6 +48,28 @@ describe('barre de mise en forme', () => {
       editor.commands.setTextSelection({ from: 12, to: 15 });
 
       expect(shown.at(-1)).toBeNull();
+    });
+
+    it('signale le bloc de code où se trouve le curseur, et quand il en sort', () => {
+      editor.commands.setTextSelection(13);
+      expect(codeBlocks.at(-1)).toMatchObject({ pos: 10 });
+
+      editor.commands.setTextSelection(2);
+      expect(codeBlocks.at(-1)).toBeNull();
+    });
+
+    it('garde les barres quand le focus passe dans l’une d’elles', () => {
+      const bar = document.createElement('div');
+      bar.setAttribute('data-editor-bar', '');
+      const field = document.createElement('select');
+      bar.append(field);
+      editor.commands.setTextSelection(13);
+
+      editor.view.dom.dispatchEvent(new FocusEvent('blur', { relatedTarget: field }));
+      expect(codeBlocks.at(-1)).not.toBeNull();
+
+      editor.view.dom.dispatchEvent(new FocusEvent('blur'));
+      expect(codeBlocks.at(-1)).toBeNull();
     });
 
     it('attend que le bouton de la souris soit relâché', () => {

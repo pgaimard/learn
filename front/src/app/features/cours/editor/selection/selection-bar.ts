@@ -21,6 +21,7 @@ type Mark = 'bold' | 'italic' | 'underline' | 'strike' | 'code';
   host: {
     role: 'toolbar',
     'aria-label': 'Mise en forme de la sélection',
+    'data-editor-bar': '',
     // Cliquer la barre ne doit ni déplacer le curseur ni défaire la sélection.
     '(mousedown)': '$event.preventDefault()',
   },

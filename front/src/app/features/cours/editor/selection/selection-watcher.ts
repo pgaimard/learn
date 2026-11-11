@@ -7,6 +7,9 @@ export interface SelectionWatcherOptions {
   // haut gauche de la zone de contenu (haut de la sélection, milieu de sa première ligne).
   // null : plus de sélection à mettre en forme.
   onChange: (target: { top: number; left: number } | null) => void;
+  // Bloc de code où se trouve le curseur : sa position dans le document et son coin
+  // haut droit, dans le même repère. null : le curseur n'est pas dans un bloc de code.
+  onCodeBlock: (target: { pos: number; top: number; left: number } | null) => void;
 }
 
 // Position de la barre pour la sélection en cours ; null s'il n'y a rien à mettre en forme.
@@ -37,8 +40,24 @@ function locate(view: EditorView): { top: number; left: number } | null {
   }
 }
 
+// Bloc de code qui contient le curseur ; null s'il n'y en a pas.
+function locateCodeBlock(view: EditorView): { pos: number; top: number; left: number } | null {
+  const { $from } = view.state.selection;
+  if (!view.editable || !$from.parent.type.spec.code || $from.depth === 0) {
+    return null;
+  }
+  const pos = $from.before($from.depth);
+  const element = view.nodeDOM(pos);
+  if (!(element instanceof HTMLElement)) {
+    return null;
+  }
+  const box = element.getBoundingClientRect();
+  const origin = (view.dom.parentElement ?? view.dom).getBoundingClientRect();
+  return { pos, top: box.top - origin.top, left: box.right - origin.left };
+}
+
 // Surveille la sélection : signale où afficher la barre de mise en forme, une fois la
-// sélection terminée (bouton de la souris relâché).
+// sélection terminée (bouton de la souris relâché), et la barre du bloc de code.
 class SelectionWatcherView {
   private isMouseDown = false;
 
@@ -53,6 +72,7 @@ class SelectionWatcherView {
 
   update(): void {
     this.options.onChange(this.isMouseDown ? null : locate(this.view));
+    this.options.onCodeBlock(locateCodeBlock(this.view));
   }
 
   destroy(): void {
@@ -74,15 +94,23 @@ class SelectionWatcherView {
     }
   };
 
-  // Le curseur est parti ailleurs (autre champ, modale) : la barre n'a plus lieu d'être.
-  private readonly onBlur = (): void => this.options.onChange(null);
+  // Le curseur est parti ailleurs (autre champ, modale) : les barres n'ont plus lieu d'être,
+  // sauf s'il est allé dans l'une d'elles.
+  private readonly onBlur = (event: FocusEvent): void => {
+    const destination = event.relatedTarget;
+    if (destination instanceof Element && destination.closest('[data-editor-bar]')) {
+      return;
+    }
+    this.options.onChange(null);
+    this.options.onCodeBlock(null);
+  };
 }
 
 export const SelectionWatcher = Extension.create<SelectionWatcherOptions>({
   name: 'selectionWatcher',
 
   addOptions() {
-    return { onChange: () => undefined };
+    return { onChange: () => undefined, onCodeBlock: () => undefined };
   },
 
   addProseMirrorPlugins() {
