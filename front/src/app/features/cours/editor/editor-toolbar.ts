@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { DialogService } from '../../../core/dialog/dialog.service';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 
 type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4';
@@ -38,6 +39,8 @@ const CODE_LANGUAGES = [
 })
 export class EditorToolbar {
   readonly editor = input.required<Editor>();
+
+  private readonly dialog = inject(DialogService);
 
   // Image choisie par le bouton « Image » ; l'envoi est fait par la page.
   readonly imagePicked = output<File>();
@@ -119,12 +122,14 @@ export class EditorToolbar {
       .run();
   }
 
-  protected editLink(): void {
+  protected async editLink(): Promise<void> {
     const current: unknown = this.editor().getAttributes('link')['href'];
-    const href = prompt(
-      'Adresse du lien (laisser vide pour le retirer)',
-      typeof current === 'string' ? current : 'https://',
-    );
+    const href = await this.dialog.prompt({
+      title: 'Lien',
+      label: 'Adresse du lien',
+      initialValue: typeof current === 'string' ? current : 'https://',
+      hint: 'Laisser vide pour retirer le lien.',
+    });
     if (href === null) {
       return;
     }
@@ -144,12 +149,14 @@ export class EditorToolbar {
     field.value = '';
   }
 
-  protected editAlternativeText(): void {
+  protected async editAlternativeText(): Promise<void> {
     const current: unknown = this.editor().getAttributes('figure')['alt'];
-    const alt = prompt(
-      'Texte alternatif : ce que montre l’image, pour qui ne la voit pas',
-      typeof current === 'string' ? current : '',
-    );
+    const alt = await this.dialog.prompt({
+      title: 'Texte alternatif',
+      label: 'Ce que montre l’image',
+      initialValue: typeof current === 'string' ? current : '',
+      hint: 'Lu à la place de l’image par qui ne la voit pas.',
+    });
     if (alt !== null) {
       this.editor().chain().focus().updateAttributes('figure', { alt: alt.trim() }).run();
     }

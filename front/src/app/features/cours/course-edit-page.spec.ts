@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { CourseContent } from './content/course-content';
 import { CourseEditPage } from './course-edit-page';
 import { Course, CourseService } from './course.service';
 
@@ -30,6 +32,7 @@ describe('CourseEditPage', () => {
   const dialog = {
     confirm: vi.fn<DialogService['confirm']>(),
     confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
+    prompt: vi.fn<DialogService['prompt']>(),
   };
 
   // La modale répond de façon asynchrone : on laisse la réponse arriver.
@@ -141,6 +144,44 @@ describe('CourseEditPage', () => {
       confirmLabel: 'Quitter sans enregistrer',
       isDestructive: true,
     });
+  });
+
+  // jsdom ne transmet pas une sélection du document à l'éditeur : on la pose par son API.
+  function selectAllText(): void {
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    content.editor()?.commands.selectAll();
+  }
+
+  it('pose un lien avec l’adresse saisie dans la modale', async () => {
+    await setup();
+    dialog.prompt.mockResolvedValue(' https://www.cnam.fr ');
+    selectAllText();
+
+    click('Lien');
+    await settle();
+
+    expect(dialog.prompt).toHaveBeenCalledWith({
+      title: 'Lien',
+      label: 'Adresse du lien',
+      initialValue: 'https://',
+      hint: 'Laisser vide pour retirer le lien.',
+    });
+    expect(element().querySelector('.ProseMirror a')?.getAttribute('href')).toBe(
+      'https://www.cnam.fr',
+    );
+  });
+
+  it('ne touche pas au texte quand la saisie du lien est annulée', async () => {
+    await setup();
+    dialog.prompt.mockResolvedValue(null);
+    selectAllText();
+
+    click('Lien');
+    await settle();
+
+    expect(element().querySelector('.ProseMirror a')).toBeNull();
+    expect(element().textContent).not.toContain('Modifications non enregistrées');
   });
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
