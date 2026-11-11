@@ -15,6 +15,10 @@ interface DragState {
   source: TopLevelBlock | null;
 }
 
+// Délai avant de cacher la poignée : le temps, pour la souris, de traverser la marge
+// qui sépare le texte de la poignée.
+const HIDE_DELAY_MS = 300;
+
 const HANDLE_LABEL = 'Déplacer le bloc en le faisant glisser, ou ouvrir son menu';
 
 // Poignée affichée à gauche du bloc survolé. On la fait glisser pour déplacer le bloc ;
@@ -24,6 +28,7 @@ class BlockHandleView {
   private readonly container: HTMLElement;
   private current: TopLevelBlock | null = null;
   private draggedElement: HTMLElement | null = null;
+  private hideTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly view: EditorView,
@@ -46,6 +51,7 @@ class BlockHandleView {
   destroy(): void {
     this.container.removeEventListener('mousemove', this.onMouseMove);
     this.container.removeEventListener('mouseleave', this.onMouseLeave);
+    this.cancelHide();
     this.handle.remove();
   }
 
@@ -59,12 +65,16 @@ class BlockHandleView {
     handle.title = 'Glisser pour déplacer, cliquer pour le menu';
     handle.textContent = '⋮⋮';
     handle.addEventListener('click', () => this.openMenu());
+    // La poignée est hors du texte : la souris qui s'y trouve ne « quitte » pas le bloc.
+    handle.addEventListener('mouseenter', () => this.cancelHide());
+    handle.addEventListener('mouseleave', () => this.hideSoon());
     handle.addEventListener('dragstart', (event) => this.startDrag(event));
     handle.addEventListener('dragend', () => this.endDrag());
     return handle;
   }
 
   private readonly onMouseMove = (event: MouseEvent): void => {
+    this.cancelHide();
     if (!this.view.editable || event.target === this.handle) {
       return;
     }
@@ -77,7 +87,19 @@ class BlockHandleView {
     }
   };
 
-  private readonly onMouseLeave = (): void => this.show(null);
+  private readonly onMouseLeave = (): void => this.hideSoon();
+
+  private hideSoon(): void {
+    this.cancelHide();
+    this.hideTimer = setTimeout(() => this.show(null), HIDE_DELAY_MS);
+  }
+
+  private cancelHide(): void {
+    if (this.hideTimer !== null) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
+  }
 
   private show(block: TopLevelBlock | null): void {
     const element = block ? this.view.nodeDOM(block.pos) : null;
