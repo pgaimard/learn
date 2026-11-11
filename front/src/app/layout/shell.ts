@@ -2,12 +2,20 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from '../core/auth/session.service';
 import { SearchBox } from '../features/recherche/search-box';
+import { TaskReminderBadge } from '../features/taches/task-reminder-badge';
 import { TermQuickCreate } from '../features/termes/term-quick-create';
 import { LOGIN_URL } from '../core/http/api-error.interceptor';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, SearchBox, TermQuickCreate],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    SearchBox,
+    TaskReminderBadge,
+    TermQuickCreate,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

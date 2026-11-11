@@ -1,5 +1,6 @@
 :host {
-  flex: 1 1 12rem;
+  flex: 1 1 8rem;
+  min-width: 8rem;
   max-width: 22rem;
 }
 

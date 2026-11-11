@@ -47,10 +47,12 @@ describe('Migrations', () => {
     expect(await readTableNames()).toEqual([
       'course_images',
       'courses',
+      'events',
       'files',
       'folders',
       'migrations',
       'sessions',
+      'tasks',
       'term_images',
       'terms',
       'ues',
