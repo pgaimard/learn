@@ -15,6 +15,7 @@ import { Editor } from '@tiptap/core';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
+import { setSheetView } from '../revision/revision-sheet-view';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -30,6 +31,8 @@ export class CourseContent {
   readonly editable = input(false);
   // Nom accessible de la zone de contenu.
   readonly label = input('Contenu du cours');
+  // Réduit l'affichage à la fiche de révision du cours.
+  readonly sheet = input(false);
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
@@ -112,6 +115,13 @@ export class CourseContent {
       const content = this.content();
       // emitUpdate à false : charger un contenu n'est pas une modification de l'utilisateur.
       untracked(this.editor)?.commands.setContent(content, { emitUpdate: false });
+    });
+    effect(() => {
+      const isSheet = this.sheet();
+      const view = this.editor()?.view;
+      if (view) {
+        setSheetView(view, isSheet);
+      }
     });
     effect(() => {
       const editable = this.editable();

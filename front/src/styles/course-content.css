@@ -437,3 +437,9 @@
   content: 'Fiche';
   pointer-events: none;
 }
+
+/* Vue « fiche de révision » : les blocs hors fiche sont cachés. */
+
+.course-content .is-off-sheet {
+  display: none;
+}
