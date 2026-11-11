@@ -32,6 +32,10 @@ Un **processus** est un *programme en cours d'exécution*. Il est créé par l'a
 pid_t pid = fork();
 ```
 
+##### Valeur de retour
+
+`fork()` renvoie 0 dans le processus créé.
+
 ## 2. Ordonnancement
 
 | Algorithme | Préemptif |

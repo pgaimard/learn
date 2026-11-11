@@ -60,13 +60,13 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 ## 5. Décisions fonctionnelles
 
 - **Cours — édition** : éditeur riche de type WYSIWYG, construit sur une bibliothèque d'édition existante (ne pas écrire d'éditeur maison). On édite directement la page telle qu'elle s'affiche, sans syntaxe à connaître.
-- **Cours — blocs à gérer** : titres sur trois niveaux (section, sous-section, sous-sous-section), paragraphes, listes, tableaux, blocs de code avec coloration, images avec légende, encadrés typés (« À retenir », « Ce qui a changé », « Attention »), citations, liens.
+- **Cours — blocs à gérer** : titres sur quatre niveaux (section, sous-section, sous-sous-section, point), paragraphes, listes, tableaux, blocs de code avec coloration, images avec légende, encadrés typés (« À retenir », « Ce qui a changé », « Attention »), citations, liens.
 - **Cours — images** : insertion par collage direct d'une capture d'écran, par glisser-déposer ou par sélection de fichier. Formats PNG, JPEG, SVG. Chaque image est enregistrée comme fichier rattaché au cours ; jamais encodée dans le contenu. Les SVG sont assainis à l'envoi.
 - **Cours — lecture** : présentation soignée (largeur de ligne limitée, typographie lisible), sommaire automatique cliquable construit à partir des titres, numérotation des sections conservée telle qu'écrite.
 - **Cours — stockage** : contenu dans le format structuré natif de l'éditeur ; une version texte brut est dérivée à chaque enregistrement pour alimenter la recherche.
 - **Import** : un cours se crée en déposant un « paquet de cours », archive .zip produite par Claude en même temps que le cours réécrit. Aucun passage par Word. Après import, le cours reste entièrement éditable.
 - **Format du paquet de cours** (contrat entre Claude et l'application, à respecter strictement des deux côtés) :
-  - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 4 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`). Images référencées par chemin relatif, avec légende.
+  - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 5 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`). Images référencées par chemin relatif, avec légende.
   - `images/` : un fichier par figure (SVG pour les schémas redessinés, PNG ou JPEG pour les figures d'origine et captures), nommé de façon stable (`fig-01.svg`, `fig-02.png`).
   - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, sans image), importées dans les Termes en signalant les doublons au lieu de les écraser.
 - **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images et de termes détectés) ; réimporter un chapitre existant propose de le remplacer ; un paquet invalide est refusé avec un message précis.

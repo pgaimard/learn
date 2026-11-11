@@ -108,7 +108,7 @@ export class CourseContent {
   }
 
   scrollToHeading(index: number): void {
-    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4');
+    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
     const heading = headings.item(index) as HTMLElement | null;
     if (heading) {
       heading.tabIndex = -1;

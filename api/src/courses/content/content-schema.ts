@@ -68,7 +68,7 @@ export const NODE_RULES: Record<string, NodeRule> = {
   heading: {
     children: 'inline',
     // Le niveau 1 est réservé au titre du cours.
-    attrs: { level: isIntegerBetween(2, 4) },
+    attrs: { level: isIntegerBetween(2, 5) },
   },
   bulletList: { children: ['listItem'], minChildren: 1 },
   orderedList: {
