@@ -151,6 +151,8 @@ describe('CourseEditPage', () => {
     const content = fixture.debugElement.query(By.directive(CourseContent))
       .componentInstance as CourseContent;
     content.editor()?.commands.selectAll();
+    // La barre de mise en forme apparaît avec la sélection.
+    fixture.detectChanges();
   }
 
   it('pose un lien avec l’adresse saisie dans la modale', async () => {
@@ -180,6 +182,7 @@ describe('CourseEditPage', () => {
     click('Lien');
     await settle();
 
+    expect(dialog.prompt).toHaveBeenCalledOnce();
     expect(element().querySelector('.ProseMirror a')).toBeNull();
     expect(element().textContent).not.toContain('Modifications non enregistrées');
   });

@@ -24,6 +24,15 @@
       />
     }
   }
+  @if (view.selectionBar(); as target) {
+    @if (view.editor(); as editor) {
+      <app-selection-bar
+        [editor]="editor"
+        [style.top.px]="target.top"
+        [style.left.px]="target.left"
+      />
+    }
+  }
   @if (view.tableMenu(); as target) {
     @if (view.editor(); as editor) {
       <app-table-menu

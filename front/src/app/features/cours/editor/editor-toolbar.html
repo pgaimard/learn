@@ -1,4 +1,4 @@
-<div class="toolbar" role="toolbar" aria-label="Mise en forme">
+<div class="toolbar" role="toolbar" aria-label="Blocs et insertions">
   <div class="group">
     <select aria-label="Style du bloc" [value]="blockStyle()" (change)="setBlockStyle($event)">
       <option value="paragraph">Paragraphe</option>
@@ -7,68 +7,6 @@
       <option value="h4">Sous-sous-section</option>
       <option value="h5">Point</option>
     </select>
-  </div>
-
-  <div class="group">
-    <button
-      type="button"
-      class="tool bold"
-      title="Gras (Ctrl+B)"
-      aria-label="Gras"
-      [attr.aria-pressed]="isActive('bold')"
-      (click)="run(toggleBold)"
-    >
-      G
-    </button>
-    <button
-      type="button"
-      class="tool italic"
-      title="Italique (Ctrl+I)"
-      aria-label="Italique"
-      [attr.aria-pressed]="isActive('italic')"
-      (click)="run(toggleItalic)"
-    >
-      I
-    </button>
-    <button
-      type="button"
-      class="tool underline"
-      title="Souligné (Ctrl+U)"
-      aria-label="Souligné"
-      [attr.aria-pressed]="isActive('underline')"
-      (click)="run(toggleUnderline)"
-    >
-      S
-    </button>
-    <button
-      type="button"
-      class="tool strike"
-      title="Barré"
-      aria-label="Barré"
-      [attr.aria-pressed]="isActive('strike')"
-      (click)="run(toggleStrike)"
-    >
-      B
-    </button>
-    <button
-      type="button"
-      class="tool mono"
-      title="Code dans le texte"
-      aria-label="Code dans le texte"
-      [attr.aria-pressed]="isActive('code')"
-      (click)="run(toggleCode)"
-    >
-      &lt;/&gt;
-    </button>
-    <button
-      type="button"
-      class="tool"
-      title="Lien"
-      [attr.aria-pressed]="isActive('link')"
-      (click)="editLink()"
-    >
-      Lien
-    </button>
   </div>
 
   <div class="group">
@@ -166,19 +104,6 @@
       <button type="button" class="tool" (click)="editAlternativeText()">Texte alternatif</button>
       <button type="button" class="tool danger" (click)="run(deleteFigure)">
         Supprimer l’image
-      </button>
-    </div>
-  }
-
-  @if (isActive('table')) {
-    <div class="group context" role="group" aria-label="Tableau">
-      <button type="button" class="tool" (click)="run(addRow)">+ Ligne</button>
-      <button type="button" class="tool" (click)="run(deleteRow)">− Ligne</button>
-      <button type="button" class="tool" (click)="run(addColumn)">+ Colonne</button>
-      <button type="button" class="tool" (click)="run(deleteColumn)">− Colonne</button>
-      <button type="button" class="tool" (click)="run(toggleHeaderRow)">Ligne d’en-tête</button>
-      <button type="button" class="tool danger" (click)="run(deleteTable)">
-        Supprimer le tableau
       </button>
     </div>
   }
