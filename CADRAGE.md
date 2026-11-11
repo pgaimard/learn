@@ -43,7 +43,8 @@ Seul le reverse proxy est accessible de l'extérieur ; la base n'est jamais expo
 | Image de cours | cours, chemin de stockage, type MIME, taille, texte alternatif | Schémas (SVG, PNG) et captures d'écran ; contenu sur disque |
 | Dossier | UE, dossier parent (optionnel), nom | Arborescence par UE |
 | Fichier | UE, dossier (optionnel), nom d'origine, chemin de stockage, type MIME, taille | Contenu sur disque, métadonnées en base |
-| Terme | type (définition ou acronyme), libellé, forme développée (acronymes), définition (Markdown), UE d'origine (optionnelle), cours d'origine (optionnel) | Commun à toutes les UE |
+| Terme | type (définition ou acronyme), libellé, forme développée (acronymes), définition (format structuré de l'éditeur, comme un cours), texte brut dérivé pour la recherche, UE d'origine (optionnelle), cours d'origine (optionnel) | Commun à toutes les UE |
+| Image de terme | terme, chemin de stockage, type MIME, taille, texte alternatif | Mêmes règles que les images de cours |
 
 Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés par type.
 
@@ -65,11 +66,11 @@ Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés
 - **Format du paquet de cours** (contrat entre Claude et l'application, à respecter strictement des deux côtés) :
   - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 4 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`). Images référencées par chemin relatif, avec légende.
   - `images/` : un fichier par figure (SVG pour les schémas redessinés, PNG ou JPEG pour les figures d'origine et captures), nommé de façon stable (`fig-01.svg`, `fig-02.png`).
-  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition), importées dans les Termes en signalant les doublons au lieu de les écraser.
+  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, sans image), importées dans les Termes en signalant les doublons au lieu de les écraser.
 - **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images et de termes détectés) ; réimporter un chapitre existant propose de le remplacer ; un paquet invalide est refusé avec un message précis.
 - **Import simple** : coller du Markdown seul reste possible pour un contenu sans image.
 - **Fichiers** : envoi, téléchargement, renommage, déplacement, suppression, dans une arborescence de dossiers par UE.
-- **Termes** : liste alphabétique avec filtre instantané ; création rapide depuis n'importe quel écran.
+- **Termes** : liste alphabétique avec filtre instantané ; création rapide depuis n'importe quel écran. Une définition s'édite comme un mini-cours, avec l'éditeur et les blocs des cours (code, images, tableaux, encadrés).
 - **Recherche** : une barre globale, accessible au clavier. Recherche plein texte PostgreSQL en configuration française, insensible aux accents, sur les cours (titre et contenu), les termes et les noms de fichiers. Résultats groupés par type avec extrait surligné.
 - **Navigation** : accueil = liste des UE ; page UE = onglets Cours, Fichiers, Termes de l'UE.
 
