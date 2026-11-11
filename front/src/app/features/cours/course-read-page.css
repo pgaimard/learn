@@ -70,8 +70,8 @@
 
   .outline {
     position: sticky;
-    top: 1rem;
-    max-height: calc(100vh - 2rem);
+    top: calc(var(--sticky-top) + 1rem);
+    max-height: calc(100vh - var(--sticky-top) - 2rem);
     overflow-y: auto;
   }
 

@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
@@ -84,6 +85,16 @@ describe('SearchPage', () => {
 
     expect(excerpt?.querySelector('b')).toBeNull();
     expect(excerpt?.textContent).toContain('Les <b>');
+  });
+
+  it('ramène à la page quittée pour chercher', () => {
+    service.search.mockReturnValue(of(RESULTS));
+    setup('mémoire');
+    const back = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => undefined);
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button')?.click();
+
+    expect(back).toHaveBeenCalled();
   });
 
   it('annonce une recherche sans résultat', () => {
