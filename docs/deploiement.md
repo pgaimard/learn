@@ -75,11 +75,34 @@ Sur le serveur, relancez la préparation avec le contenu de `~/.ssh/learn-pipeli
 sudo /srv/learn/deploy/setup-server.sh learn.example.org 'ssh-ed25519 AAAA… learn-pipeline'
 ```
 
-La clé privée ne va que dans les secrets du dépôt GitHub. Relancer la commande avec une nouvelle clé publique remplace l'ancienne.
+Relancer la commande avec une nouvelle clé publique remplace l'ancienne.
+
+Dans le dépôt GitHub, sous Settings → Secrets and variables → Actions, créez trois secrets :
+
+| Secret | Valeur |
+|---|---|
+| `DEPLOY_SSH_KEY` | Contenu du fichier `~/.ssh/learn-pipeline` (la clé privée, en entier) |
+| `DEPLOY_HOST` | Nom de domaine du serveur |
+| `DEPLOY_KNOWN_HOSTS` | Résultat de la commande ci-dessous, lancée depuis votre poste |
+
+```bash
+ssh-keyscan -t ed25519 learn.example.org
+```
+
+Ce dernier secret épingle l'identité du serveur : le pipeline refuse de se connecter à une autre machine. Une fois les secrets créés, supprimez la clé privée de votre poste.
+
+## Pipeline
+
+`.github/workflows/ci.yml` fait deux choses :
+
+- sur chaque PR vers `develop` ou `main` : lint, formatage, tests et build de l'API et du front ;
+- sur chaque tag `v*` : les mêmes vérifications, puis la mise en production si elles passent.
+
+Le pipeline ne construit aucune image et ne détient aucun secret de l'application : il demande au serveur de déployer le tag et attend le résultat.
 
 ## Mettre à jour
 
-Chaque version est un tag `v1.2.3` posé sur `main`. Le pipeline la déploie ; à la main, c'est la même commande que la première fois :
+Chaque version est un tag `v1.2.3` posé sur `main`. Le pipeline la déploie (onglet Actions du dépôt pour suivre) ; à la main, c'est la même commande que la première fois :
 
 ```bash
 sudo -u deploy /srv/learn/deploy/deploy.sh v1.2.3

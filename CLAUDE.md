@@ -164,7 +164,7 @@ Appliquer la section 6 de `CADRAGE.md` sans exception : l'application est expos�
 - Une PR par sujet, de taille relisible. Au-delà d'environ 400 lignes modifiées, découper.
 - Description obligatoire : objectif, ce qui change, comment tester, points d'attention, dépendances ajoutées.
 - Avant d'ouvrir : lint, tests et build passent ; migrations incluses ; `CLAUDE.md` et `docs/` mis à jour si une commande ou une procédure change.
-- Claude Code ouvre la PR, la fusionne en squash dans `develop` une fois lint, tests et build passés, puis supprime la branche. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
+- Claude Code ouvre la PR, la fusionne en squash dans `develop` une fois lint, tests et build passés, en local comme dans le pipeline (`.github/workflows/ci.yml`), puis supprime la branche. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
 
 ## Interdits
 
