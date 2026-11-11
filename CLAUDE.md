@@ -17,6 +17,7 @@ Le besoin, le modèle de données et les décisions figées sont dans `CADRAGE.m
 front/    Angular
 api/      NestJS
 docker/   Dockerfiles, Compose, reverse proxy
+contracts/ exemples partagés et testés des deux côtés (contenu d'un cours)
 docs/     décisions et procédures (sauvegarde, restauration, déploiement)
 ```
 

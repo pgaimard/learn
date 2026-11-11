@@ -38,6 +38,9 @@ services:
       DATABASE_USER: ${DATABASE_USER:?}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
       SESSION_SECRET: ${SESSION_SECRET:?}
+      UPLOADS_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -62,3 +65,4 @@ volumes:
   proxy_data:
   proxy_config:
   db_data:
+  uploads:

@@ -1,14 +1,24 @@
+@import './styles/course-content.css';
+
 :root {
   --color-background: #f7f7f5;
   --color-surface: #ffffff;
   --color-text: #1f2328;
   --color-text-muted: #57606a;
   --color-border: #c9ccd1;
+  --color-border-soft: #eceef1;
+  --color-code-background: #f1f2f4;
   --color-accent: #1d4ed8;
+  --color-accent-hover: #1e40af;
+  --color-accent-soft: #e8eefc;
   --color-on-accent: #ffffff;
   --color-danger: #b42318;
+  --color-callout-retenir: #1a7f37;
+  --color-callout-change: #1d4ed8;
+  --color-callout-attention: #b45309;
   --radius: 6px;
-  --page-width: 60rem;
+  --page-width: 68rem;
+  --reading-width: 46rem;
 }
 
 body {
@@ -32,4 +42,147 @@ h1 {
 
 a {
   color: var(--color-accent);
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.card {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+/* Boutons */
+
+.button {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-background);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.button-primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.button-danger {
+  color: var(--color-danger);
+}
+
+/* Formulaires */
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field-short {
+  flex: 0 1 8rem;
+}
+
+.field-grow {
+  flex: 1 1 16rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+}
+
+.field input,
+.field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field [aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.field-error,
+.field-hint,
+.form-error {
+  margin: 0.375rem 0 0;
+  font-size: 0.875rem;
+}
+
+.field-error,
+.form-error {
+  color: var(--color-danger);
+}
+
+.field-hint {
+  color: var(--color-text-muted);
+}
+
+.form-error {
+  margin: 0 0 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

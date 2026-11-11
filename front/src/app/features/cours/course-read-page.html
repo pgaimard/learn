@@ -1,0 +1,40 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/">Mes UE</a>
+  <span aria-hidden="true">›</span>
+  <a [routerLink]="['/ue', code()]">{{ code() }}</a>
+</nav>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (course(); as course) {
+  <div class="reading">
+    @if (outline().length > 0) {
+      <nav class="outline" aria-label="Sommaire">
+        <details open>
+          <summary>Sommaire</summary>
+          <ol>
+            @for (entry of outline(); track entry.index) {
+              <li [class]="'level-' + entry.level">
+                <button type="button" (click)="goTo(entry.index)">{{ entry.text }}</button>
+              </li>
+            }
+          </ol>
+        </details>
+      </nav>
+    }
+
+    <article class="article">
+      <div class="page-header">
+        <h1>{{ course.title }}</h1>
+        <a class="button" [routerLink]="['/ue', code(), 'cours', course.id, 'edition']">Modifier</a>
+      </div>
+      <app-course-content [content]="course.content" />
+    </article>
+  </div>
+} @else if (errors().length === 0) {
+  <p>Chargement…</p>
+}

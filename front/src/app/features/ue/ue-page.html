@@ -1,0 +1,100 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/">Mes UE</a>
+</nav>
+
+<div role="alert">
+  @for (error of pageErrors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (ue(); as ue) {
+  <header class="ue-header">
+    <h1>
+      <span class="ue-code">{{ ue.code }}</span> {{ ue.title }}
+    </h1>
+    @if (ue.description) {
+      <p class="ue-description">{{ ue.description }}</p>
+    }
+  </header>
+
+  <div class="page-header">
+    <h2>Cours</h2>
+    <div class="header-actions">
+      <a class="button" routerLink="/import">Importer un paquet</a>
+      @if (!isCreating()) {
+        <button type="button" class="button button-primary" (click)="openForm()">
+          Nouveau cours
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isCreating()) {
+    <section class="card new-course" aria-label="Nouveau cours">
+      <form [formGroup]="form" (ngSubmit)="createCourse()" novalidate>
+        <div class="form-row">
+          <div class="field field-grow">
+            <label for="course-title">Titre du chapitre</label>
+            <input
+              id="course-title"
+              type="text"
+              formControlName="title"
+              [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+              [attr.aria-describedby]="
+                form.controls.title.touched && form.controls.title.invalid
+                  ? 'course-title-error'
+                  : null
+              "
+            />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <p id="course-title-error" class="field-error">
+                Le titre est requis (200 caractères au plus).
+              </p>
+            }
+          </div>
+          <div class="field field-short">
+            <label for="course-position">Ordre</label>
+            <input
+              id="course-position"
+              type="number"
+              min="0"
+              formControlName="position"
+              aria-describedby="course-position-hint"
+            />
+            <p id="course-position-hint" class="field-hint">Vide : à la suite.</p>
+          </div>
+        </div>
+
+        <div role="alert">
+          @for (error of formErrors(); track error) {
+            <p class="form-error">{{ error }}</p>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary" [disabled]="isSaving()">
+            Créer le cours
+          </button>
+          <button type="button" class="button" (click)="closeForm()">Annuler</button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (courses().length === 0 && !isCreating()) {
+    <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
+  } @else {
+    <ol class="course-list">
+      @for (course of courses(); track course.id) {
+        <li>
+          <a class="card course" [routerLink]="['/ue', ue.code, 'cours', course.id]">
+            <span class="course-position">{{ course.position }}</span>
+            <span class="course-title">{{ course.title }}</span>
+            <span class="course-date">modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span>
+          </a>
+        </li>
+      }
+    </ol>
+  }
+}
