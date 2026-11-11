@@ -187,6 +187,7 @@ describe('commandes de bloc', () => {
         blockHandle: { onOpenMenu: () => undefined },
         tableTools: { onOpenMenu: () => undefined },
         selection: { onChange: () => undefined, onCodeBlock: () => undefined },
+        slash: { onChange: () => undefined, onKey: () => false },
       }),
       content: { type: 'doc', content: [paragraph('un'), paragraph('deux')] },
     });

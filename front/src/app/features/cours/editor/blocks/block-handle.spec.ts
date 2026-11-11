@@ -17,6 +17,7 @@ describe('poignée de bloc', () => {
         blockHandle: { onOpenMenu: (target) => opened.push(target) },
         tableTools: { onOpenMenu: () => undefined },
         selection: { onChange: () => undefined, onCodeBlock: () => undefined },
+        slash: { onChange: () => undefined, onKey: () => false },
       }),
       content: {
         type: 'doc',

@@ -20,6 +20,7 @@ describe('barre de mise en forme', () => {
           onChange: (target) => shown.push(target),
           onCodeBlock: (target) => codeBlocks.push(target),
         },
+        slash: { onChange: () => undefined, onKey: () => false },
       }),
       content: {
         type: 'doc',

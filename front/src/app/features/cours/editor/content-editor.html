@@ -43,6 +43,15 @@
       />
     }
   }
+  @if (view.slash.trigger(); as trigger) {
+    <app-slash-menu
+      [commands]="view.slash.commands()"
+      [activeIndex]="view.slash.activeIndex()"
+      [style.top.px]="trigger.top"
+      [style.left.px]="trigger.left"
+      (picked)="view.slash.pick($event)"
+    />
+  }
   @if (view.tableMenu(); as target) {
     @if (view.editor(); as editor) {
       <app-table-menu

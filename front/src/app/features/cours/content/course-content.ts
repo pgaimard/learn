@@ -14,6 +14,7 @@ import {
 import { Editor } from '@tiptap/core';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
+import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -46,6 +47,11 @@ export class CourseContent {
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
   // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
   readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
+  // Menu « / » d'insertion de bloc.
+  readonly slash = new SlashMenuState(
+    () => this.editor(),
+    () => this.pickImages(),
+  );
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -72,6 +78,13 @@ export class CourseContent {
                 const place = this.offset(target);
                 this.codeBlockBar.set(target && place ? { pos: target.pos, ...place } : null);
               },
+            },
+            slash: {
+              onChange: (trigger) => {
+                const place = this.offset(trigger);
+                this.slash.show(trigger && place ? { ...trigger, ...place } : null);
+              },
+              onKey: (key) => this.slash.handleKey(key),
             },
           }),
           content: untracked(this.content),
@@ -105,6 +118,21 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  // Ouvre le choix de fichiers du navigateur ; les images choisies suivent le même
+  // chemin que celles collées ou déposées.
+  private pickImages(): void {
+    const field = document.createElement('input');
+    field.type = 'file';
+    field.accept = 'image/png,image/jpeg,image/svg+xml';
+    field.multiple = true;
+    field.addEventListener('change', () => {
+      for (const file of Array.from(field.files ?? [])) {
+        this.imageReceived.emit(file);
+      }
+    });
+    field.click();
   }
 
   // Passe du repère de ce composant à celui de son conteneur.
