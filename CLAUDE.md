@@ -147,13 +147,14 @@ Appliquer la section 6 de `CADRAGE.md` sans exception : l'application est expos�
 - Jamais de commit direct ni de push forcé sur `main` ou `develop`.
 - Commits atomiques au format Conventional Commits, en français : `feat(cours): ajoute l'import d'un paquet de cours`. Types : `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 - Rebase sur `develop` avant d'ouvrir la PR. Fusion en squash.
+- Une branche fusionnée est supprimée aussitôt, en local et sur GitHub : `gh pr merge --squash --delete-branch`. `main` et `develop` ne sont jamais supprimées.
 
 ## Pull requests
 
 - Une PR par sujet, de taille relisible. Au-delà d'environ 400 lignes modifiées, découper.
 - Description obligatoire : objectif, ce qui change, comment tester, points d'attention, dépendances ajoutées.
 - Avant d'ouvrir : lint, tests et build passent ; migrations incluses ; `CLAUDE.md` et `docs/` mis à jour si une commande ou une procédure change.
-- Claude Code ouvre la PR puis la fusionne en squash dans `develop` une fois lint, tests et build passés. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
+- Claude Code ouvre la PR, la fusionne en squash dans `develop` une fois lint, tests et build passés, puis supprime la branche. Pierre valide les fonctionnalités dans l'interface avant le passage à la suite.
 
 ## Interdits
 
