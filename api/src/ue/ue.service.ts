@@ -47,7 +47,7 @@ export class UeService {
     } catch (error) {
       if (REFERENCED_ROW_CODES.some((code) => hasErrorCode(error, code))) {
         throw new ConflictException(
-          `L’UE ${ue.code} contient des cours : supprimez-les d’abord.`,
+          `L’UE ${ue.code} n’est pas vide : supprimez d’abord ses cours, ses dossiers et ses fichiers.`,
         );
       }
       throw error;
