@@ -1,15 +1,23 @@
 import { ContentNode } from './content-node.js';
 
+// Ressource à laquelle une image est rattachée, telle qu'elle apparaît dans son adresse.
+export type ImageOwner = 'courses' | 'terms';
+
 export interface FigureReference {
-  courseId: number;
+  owner: ImageOwner;
+  ownerId: number;
   imageId: number;
   altText: string;
 }
 
-const IMAGE_SOURCE = /^\/api\/courses\/(\d+)\/images\/(\d+)$/;
+const IMAGE_SOURCE = /^\/api\/(courses|terms)\/(\d+)\/images\/(\d+)$/;
 
-export function buildImageSource(courseId: number, imageId: number): string {
-  return `/api/courses/${courseId}/images/${imageId}`;
+export function buildImageSource(
+  owner: ImageOwner,
+  ownerId: number,
+  imageId: number,
+): string {
+  return `/api/${owner}/${ownerId}/images/${imageId}`;
 }
 
 export function isImageSource(value: unknown): boolean {
@@ -25,8 +33,9 @@ function collect(node: ContentNode, figures: FigureReference[]): void {
     const match = IMAGE_SOURCE.exec(readString(node.attrs?.['src']));
     if (match) {
       figures.push({
-        courseId: Number(match[1]),
-        imageId: Number(match[2]),
+        owner: match[1] as ImageOwner,
+        ownerId: Number(match[2]),
+        imageId: Number(match[3]),
         altText: readString(node.attrs?.['alt']),
       });
     }

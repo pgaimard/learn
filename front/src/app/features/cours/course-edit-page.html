@@ -40,7 +40,12 @@
       </div>
     </form>
 
-    <div class="sticky">
+    <app-content-editor
+      [content]="course.content"
+      label="Contenu du cours"
+      (edited)="markDirty()"
+      (imageAdded)="addImage($event)"
+    >
       <div class="actions">
         <button
           type="button"
@@ -69,21 +74,7 @@
           <p class="form-error">{{ error }}</p>
         }
       </div>
-
-      @if (content.editor(); as editor) {
-        <app-editor-toolbar [editor]="editor" (imagePicked)="addImage($event)" />
-      }
-    </div>
-
-    <div class="sheet">
-      <app-course-content
-        #content
-        [content]="course.content"
-        [editable]="true"
-        (edited)="markDirty()"
-        (imageReceived)="addImage($event)"
-      />
-    </div>
+    </app-content-editor>
   </div>
 } @else {
   <div role="alert">

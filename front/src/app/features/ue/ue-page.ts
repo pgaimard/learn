@@ -1,16 +1,26 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { CourseService, CourseSummary } from '../cours/course.service';
+import { TermList } from '../termes/term-list';
+import { TermService, TermSummary } from '../termes/term.service';
 import { Ue, UeService } from './ue.service';
 
 @Component({
   selector: 'app-ue-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, TermList],
   templateUrl: './ue-page.html',
   styleUrl: './ue-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,15 +28,20 @@ import { Ue, UeService } from './ue.service';
 export class UePage {
   // Paramètre de la route /ue/:code.
   readonly code = input.required<string>();
+  // Paramètre de requête ?onglet=termes ; l'onglet des cours est celui par défaut.
+  readonly onglet = input<string>();
 
   private readonly ueService = inject(UeService);
   private readonly courseService = inject(CourseService);
+  private readonly termService = inject(TermService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
   protected readonly ue = signal<Ue | null>(null);
   protected readonly courses = signal<CourseSummary[]>([]);
+  protected readonly terms = signal<TermSummary[]>([]);
+  protected readonly tab = computed(() => (this.onglet() === 'termes' ? 'termes' : 'cours'));
   protected readonly pageErrors = signal<string[]>([]);
   protected readonly isCreating = signal(false);
   protected readonly isSaving = signal(false);
@@ -38,7 +53,11 @@ export class UePage {
   });
 
   constructor() {
-    effect(() => this.load(this.code()));
+    // Se recharge aussi quand un terme vient d'être créé (création rapide).
+    effect(() => {
+      this.termService.revision();
+      this.load(this.code());
+    });
   }
 
   protected openForm(): void {
@@ -71,10 +90,15 @@ export class UePage {
   }
 
   private load(code: string): void {
-    forkJoin({ ue: this.ueService.get(code), courses: this.courseService.list(code) }).subscribe({
-      next: ({ ue, courses }) => {
+    forkJoin({
+      ue: this.ueService.get(code),
+      courses: this.courseService.list(code),
+      terms: this.termService.list({ ue: code }),
+    }).subscribe({
+      next: ({ ue, courses, terms }) => {
         this.ue.set(ue);
         this.courses.set(courses);
+        this.terms.set(terms);
         this.title.setTitle(`${ue.code} – ${ue.title}`);
       },
       error: (error: ApiError) => this.pageErrors.set(error.messages),

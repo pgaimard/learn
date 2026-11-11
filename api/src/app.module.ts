@@ -7,6 +7,7 @@ import { CoursesModule } from './courses/courses.module.js';
 import { validateEnvironment } from './config/environment.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
+import { TermsModule } from './terms/terms.module.js';
 import { UeModule } from './ue/ue.module.js';
 import { UsersModule } from './users/users.module.js';
 
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module.js';
     UsersModule,
     UeModule,
     CoursesModule,
+    TermsModule,
   ],
   providers: [
     {

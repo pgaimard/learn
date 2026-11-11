@@ -1,0 +1,97 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  @if (type() === null) {
+    <fieldset class="type-choice">
+      <legend>Type</legend>
+      <label class="check">
+        <input
+          type="radio"
+          [name]="idPrefix() + '-type'"
+          [checked]="chosenType() === 'definition'"
+          (change)="chosenType.set('definition')"
+        />
+        Définition (dictionnaire)
+      </label>
+      <label class="check">
+        <input
+          type="radio"
+          [name]="idPrefix() + '-type'"
+          [checked]="chosenType() === 'acronym'"
+          (change)="chosenType.set('acronym')"
+        />
+        Acronyme (glossaire)
+      </label>
+    </fieldset>
+  }
+
+  <div class="form-row">
+    <div class="field field-grow">
+      <label [attr.for]="idPrefix() + '-label'">{{
+        effectiveType() === 'acronym' ? 'Acronyme' : 'Terme'
+      }}</label>
+      <input
+        [id]="idPrefix() + '-label'"
+        type="text"
+        formControlName="label"
+        [attr.aria-invalid]="isInvalid('label')"
+        [attr.aria-describedby]="isInvalid('label') ? idPrefix() + '-label-error' : null"
+      />
+      @if (isInvalid('label')) {
+        <p [id]="idPrefix() + '-label-error'" class="field-error">
+          Le libellé est requis (200 caractères au plus).
+        </p>
+      }
+    </div>
+
+    @if (effectiveType() === 'acronym') {
+      <div class="field field-grow">
+        <label [attr.for]="idPrefix() + '-expanded-form'">Forme développée</label>
+        <input
+          [id]="idPrefix() + '-expanded-form'"
+          type="text"
+          formControlName="expandedForm"
+          [attr.aria-invalid]="isExpandedFormInvalid()"
+          [attr.aria-describedby]="
+            isExpandedFormInvalid() ? idPrefix() + '-expanded-form-error' : null
+          "
+        />
+        @if (isExpandedFormInvalid()) {
+          <p [id]="idPrefix() + '-expanded-form-error'" class="field-error">
+            La forme développée est requise (300 caractères au plus).
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="field">
+    <label [attr.for]="idPrefix() + '-text'">Définition courte</label>
+    <textarea
+      [id]="idPrefix() + '-text'"
+      rows="3"
+      formControlName="text"
+      [attr.aria-invalid]="isInvalid('text')"
+      [attr.aria-describedby]="idPrefix() + '-text-hint'"
+    ></textarea>
+    <p [id]="idPrefix() + '-text-hint'" class="field-hint">
+      Facultative. Code, images et tableaux s’ajoutent ensuite en ouvrant le terme.
+    </p>
+  </div>
+
+  @if (origin(); as origin) {
+    <label class="check attach">
+      <input type="checkbox" formControlName="attach" />
+      Rattacher à {{ origin.label }}
+    </label>
+  }
+
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button button-primary" [disabled]="isSaving()">Créer</button>
+    <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

@@ -1,0 +1,17 @@
+<div class="sticky">
+  <ng-content />
+  @if (view.editor(); as editor) {
+    <app-editor-toolbar [editor]="editor" (imagePicked)="imageAdded.emit($event)" />
+  }
+</div>
+
+<div class="sheet">
+  <app-course-content
+    #view
+    [content]="content()"
+    [label]="label()"
+    [editable]="true"
+    (edited)="edited.emit()"
+    (imageReceived)="imageAdded.emit($event)"
+  />
+</div>

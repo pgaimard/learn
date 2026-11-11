@@ -4,7 +4,17 @@
   <div class="header-inner">
     <a class="brand" routerLink="/">Espace d’études</a>
 
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a routerLink="/dictionnaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
+        Dictionnaire
+      </a>
+      <a routerLink="/glossaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
+        Glossaire
+      </a>
+    </nav>
+
     <div class="account">
+      <app-term-quick-create />
       @if (user(); as currentUser) {
         <span class="username">{{ currentUser.username }}</span>
       }

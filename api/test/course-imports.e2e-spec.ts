@@ -20,18 +20,10 @@ const MARKDOWN = readFileSync(
 );
 const SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" onload="alert(1)"><rect width="10" height="10"/></svg>';
-const TERMS = JSON.stringify([
-  {
-    type: 'acronyme',
-    libelle: 'PCB',
-    formeDeveloppee: 'Process Control Block',
-  },
-  {
-    type: 'definition',
-    libelle: 'Processus',
-    definition: 'Programme en exécution.',
-  },
-]);
+const TERMS = readFileSync(
+  new URL('../../contracts/termes.example.json', import.meta.url),
+  'utf8',
+);
 
 function validPackage(extra: Record<string, Buffer | string> = {}): Buffer {
   return createZip({
@@ -96,6 +88,17 @@ describe('Import d’un paquet de cours', () => {
     );
   }
 
+  async function readTerms(): Promise<object[]> {
+    return app.get(DataSource).query<object[]>(
+      `SELECT term.type, term.label, term.expanded_form, term.plain_text,
+              ue.code AS ue_code, course.title AS course_title
+         FROM terms term
+         LEFT JOIN ues ue ON ue.id = term.ue_id
+         LEFT JOIN courses course ON course.id = term.course_id
+        ORDER BY term.id`,
+    );
+  }
+
   it('refuse l’accès sans session', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/course-imports/preview')
@@ -114,10 +117,17 @@ describe('Import d’un paquet de cours', () => {
       position: 3,
       sectionCount: 2,
       imageCount: 1,
-      termCount: 2,
+      termCount: 3,
+      newTerms: [
+        { type: 'definition', label: 'Processus' },
+        { type: 'acronym', label: 'PCB' },
+        { type: 'acronym', label: 'PID' },
+      ],
+      duplicateTerms: [],
       existingCourse: null,
     });
     expect(await countCourses()).toBe(0);
+    expect(await readTerms()).toEqual([]);
     expect(storedFiles()).toEqual([]);
   });
 
@@ -149,6 +159,75 @@ describe('Import d’un paquet de cours', () => {
       ?.filter((node) => node.type === 'callout')
       .map((node) => node.attrs?.['kind']);
     expect(kinds).toEqual(['retenir', 'change', 'attention']);
+  });
+
+  it('crée les termes du paquet, rattachés au cours et à son UE', async () => {
+    const origin = {
+      ue_code: 'UTC502',
+      course_title: 'Les processus : notions de base',
+    };
+
+    expect(await readTerms()).toEqual([
+      {
+        type: 'definition',
+        label: 'Processus',
+        expanded_form: null,
+        plain_text: expect.stringContaining('pid_t pid = fork();') as string,
+        ...origin,
+      },
+      {
+        type: 'acronym',
+        label: 'PCB',
+        expanded_form: 'Process Control Block',
+        plain_text: 'Structure du noyau qui décrit un processus.',
+        ...origin,
+      },
+      {
+        type: 'acronym',
+        label: 'PID',
+        expanded_form: 'Process Identifier',
+        plain_text: '',
+        ...origin,
+      },
+    ]);
+  });
+
+  it('signale les termes déjà présents et ne les écrase pas', async () => {
+    const terms = JSON.stringify([
+      { type: 'definition', libelle: 'PROCESSUS', definition: 'Autre texte.' },
+      {
+        type: 'definition',
+        libelle: 'PCB',
+        definition: 'Homonyme du glossaire.',
+      },
+    ]);
+    const zip = validPackage({
+      'cours.md': MARKDOWN.replace('ordre: 3', 'ordre: 7'),
+      'termes.json': terms,
+    });
+
+    const previewed = await preview(zip);
+    expect(previewed.body).toMatchObject({
+      termCount: 2,
+      newTerms: [{ type: 'definition', label: 'PCB' }],
+      duplicateTerms: [{ type: 'definition', label: 'PROCESSUS' }],
+    });
+
+    const imported = await importPackage(zip);
+    expect(imported.status).toBe(201);
+    // Les tests suivants comptent les cours : celui-ci n'en laisse pas.
+    await client('delete', `/api/courses/${(imported.body as Course).id}`);
+    const stored = (await readTerms()) as {
+      label: string;
+      plain_text: string;
+    }[];
+    expect(stored.map((term) => term.label)).toEqual([
+      'Processus',
+      'PCB',
+      'PID',
+      'PCB',
+    ]);
+    expect(stored[0].plain_text).toContain('Programme en cours d');
   });
 
   it('laisse le cours importé entièrement modifiable', async () => {
@@ -270,6 +349,14 @@ describe('Import d’un paquet de cours', () => {
       'un titre de niveau 1',
       validPackage({ 'cours.md': `${MARKDOWN}\n# Trop haut\n` }),
       /cours\.md, ligne \d+ : titre de niveau 1 non pris en charge/,
+    ],
+    [
+      'une entrée de termes.json invalide',
+      validPackage({
+        'cours.md': MARKDOWN.replace('ordre: 3', 'ordre: 8'),
+        'termes.json': JSON.stringify([{ type: 'acronyme', libelle: 'CPU' }]),
+      }),
+      /termes\.json, entrée 1 : « forme_developpee » est requise/,
     ],
     [
       'un termes.json illisible',
