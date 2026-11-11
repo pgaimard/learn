@@ -48,6 +48,7 @@ describe('Migrations', () => {
       'courses',
       'migrations',
       'sessions',
+      'term_images',
       'terms',
       'ues',
       'users',

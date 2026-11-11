@@ -122,7 +122,7 @@ export class CourseImportService {
         manager,
       );
       written.push(image);
-      sources.set(path, buildImageSource(course.id, image.id));
+      sources.set(path, buildImageSource('courses', course.id, image.id));
     }
     const content = placeImages(analysed.document, sources);
     throwIfAny(validateContent(content));

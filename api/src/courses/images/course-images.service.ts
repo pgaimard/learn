@@ -75,7 +75,9 @@ export class CourseImagesService {
     figures: FigureReference[],
   ): Promise<void> {
     const ids = [...new Set(figures.map((figure) => figure.imageId))];
-    const isForeign = figures.some((figure) => figure.courseId !== courseId);
+    const isForeign = figures.some(
+      (figure) => figure.owner !== 'courses' || figure.ownerId !== courseId,
+    );
     const known = await this.images.countBy({ courseId, id: In(ids) });
     if (isForeign || known !== ids.length) {
       throw new BadRequestException(

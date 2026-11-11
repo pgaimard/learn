@@ -19,20 +19,14 @@ import {
   CourseImagesService,
   MAX_IMAGE_SIZE,
 } from './course-images.service.js';
+import {
+  imageHeaders,
+  ReceivedFile,
+  UploadedImageResponse,
+} from './image-http.js';
 import { UploadImageDto } from './upload-image.dto.js';
 
-export interface UploadedImageResponse {
-  id: number;
-  src: string;
-  mimeType: string;
-  size: number;
-  altText: string;
-}
-
-// Seule partie utile du fichier reçu en mémoire par multer.
-interface ReceivedFile {
-  buffer: Buffer;
-}
+export type { UploadedImageResponse };
 
 // Un identifiant non numérique désigne une ressource qui n'existe pas.
 const parseId = new ParseIntPipe({
@@ -65,7 +59,7 @@ export class CourseImagesController {
     );
     return {
       id: image.id,
-      src: buildImageSource(courseId, image.id),
+      src: buildImageSource('courses', courseId, image.id),
       mimeType: image.mimeType,
       size: image.size,
       altText: image.altText,
@@ -79,15 +73,7 @@ export class CourseImagesController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
     const { image, stream } = await this.imagesService.open(courseId, imageId);
-    response.set({
-      'Content-Type': image.mimeType,
-      'Content-Length': String(image.size),
-      'X-Content-Type-Options': 'nosniff',
-      // Même ouvert directement, un SVG ne peut ni exécuter de script ni charger de ressource.
-      'Content-Security-Policy':
-        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
-      'Cache-Control': 'private, max-age=31536000, immutable',
-    });
+    response.set(imageHeaders(image));
     return new StreamableFile(stream);
   }
 }

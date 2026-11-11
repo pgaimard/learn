@@ -4,8 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import {
+  DataSource,
+  EntityManager,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { collectFigures } from '../courses/content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from '../courses/content/content-node.js';
 import { extractPlainText } from '../courses/content/extract-plain-text.js';
@@ -15,6 +20,7 @@ import { Ue } from '../ue/ue.entity.js';
 import { CreateTermDto } from './dto/create-term.dto.js';
 import { ListTermsDto } from './dto/list-terms.dto.js';
 import { UpdateTermDto } from './dto/update-term.dto.js';
+import { TermImagesService } from './images/term-images.service.js';
 import { resolveExpandedForm } from './term-rules.js';
 import { Term } from './term.entity.js';
 
@@ -38,6 +44,8 @@ export class TermsService {
     @InjectRepository(Term) private readonly terms: Repository<Term>,
     @InjectRepository(Ue) private readonly ues: Repository<Ue>,
     @InjectRepository(Course) private readonly courses: Repository<Course>,
+    @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly imagesService: TermImagesService,
   ) {}
 
   async findAll(filters: ListTermsDto): Promise<TermSummary[]> {
@@ -77,6 +85,11 @@ export class TermsService {
 
   async create(input: CreateTermDto): Promise<Term> {
     const content = checkContent(input.content ?? EMPTY_CONTENT);
+    if (collectFigures(content).length > 0) {
+      throw new BadRequestException(
+        'Les images s’ajoutent une fois le terme créé.',
+      );
+    }
     const origin = await this.resolveOrigin(input, {
       ueId: null,
       courseId: null,
@@ -89,7 +102,7 @@ export class TermsService {
       plainText: extractPlainText(content),
       ...origin,
     });
-    const saved = await this.save(term);
+    const saved = await this.save(this.terms.manager, term);
     return this.findById(saved.id);
   }
 
@@ -107,17 +120,29 @@ export class TermsService {
       ),
       ...origin,
     };
-    if (changes.content !== undefined) {
-      updates.content = checkContent(changes.content);
-      updates.plainText = extractPlainText(updates.content);
+    const term = this.terms.create({ id, ...updates });
+    if (changes.content === undefined) {
+      await this.save(this.terms.manager, term);
+      return this.findById(id);
     }
-    await this.save(this.terms.create({ id, ...updates }));
+    term.content = checkContent(changes.content);
+    term.plainText = extractPlainText(term.content);
+    const figures = collectFigures(term.content);
+    await this.imagesService.assertFiguresExist(id, figures);
+    // Le terme et ses images changent ensemble ou pas du tout.
+    const unused = await this.dataSource.transaction(async (manager) => {
+      await this.save(manager, term);
+      return this.imagesService.reconcile(manager, id, figures);
+    });
+    await this.imagesService.removeFiles(unused);
     return this.findById(id);
   }
 
   async remove(id: number): Promise<void> {
     const term = await this.findById(id);
+    const images = await this.imagesService.findByTerm(id);
     await this.terms.delete({ id: term.id });
+    await this.imagesService.removeFiles(images);
   }
 
   // Un cours d'origine impose son UE ; sans cours, l'UE est libre.
@@ -173,9 +198,9 @@ export class TermsService {
     return ue;
   }
 
-  private async save(term: Term): Promise<Term> {
+  private async save(manager: EntityManager, term: Term): Promise<Term> {
     try {
-      return await this.terms.save(term);
+      return await manager.save(term);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ConflictException(duplicateMessage(term));
@@ -195,13 +220,7 @@ function checkContent(content: unknown): ContentNode {
   if (errors.length > 0) {
     throw new BadRequestException(errors);
   }
-  const document = content as ContentNode;
-  if (collectFigures(document).length > 0) {
-    throw new BadRequestException(
-      'Une définition ne peut pas encore contenir d’image.',
-    );
-  }
-  return document;
+  return content as ContentNode;
 }
 
 function isUniqueViolation(error: unknown): boolean {
