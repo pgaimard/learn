@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
@@ -25,6 +26,7 @@ export class SearchPage {
 
   private readonly searchService = inject(SearchService);
   private readonly title = inject(Title);
+  private readonly location = inject(Location);
 
   protected readonly state = signal<State>({ kind: 'idle' });
   protected readonly errors = signal<string[]>([]);
@@ -43,6 +45,11 @@ export class SearchPage {
         takeUntilDestroyed(),
       )
       .subscribe((state) => this.state.set(state));
+  }
+
+  // Retour à la page quittée pour chercher ; l'affichage y reprend à la même hauteur.
+  protected goBack(): void {
+    this.location.back();
   }
 
   private load(query: string) {

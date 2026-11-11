@@ -19,6 +19,8 @@
 .course-content h2,
 .course-content h3,
 .course-content h4 {
+  /* Un titre atteint par le sommaire ne passe pas sous l'en-tête. */
+  scroll-margin-top: calc(var(--sticky-top) + 1rem);
   margin: 2em 0 0.5em;
   line-height: 1.25;
   scroll-margin-top: 1rem;
