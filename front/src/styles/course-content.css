@@ -414,3 +414,26 @@
   content: attr(data-placeholder);
   pointer-events: none;
 }
+
+/* Bloc épinglé à la fiche de révision : un filet et une étiquette discrète. */
+
+.course-content .is-pinned {
+  position: relative;
+  box-shadow: -0.625rem 0 0 -0.375rem var(--color-callout-retenir);
+}
+
+.course-content.is-editable .is-pinned::after {
+  position: absolute;
+  top: -0.625rem;
+  right: 0;
+  padding: 0 0.375rem;
+  border-radius: 4px;
+  background: var(--color-callout-retenir);
+  color: var(--color-on-accent);
+  font-family: system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  content: 'Fiche';
+  pointer-events: none;
+}

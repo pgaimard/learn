@@ -47,10 +47,10 @@ describe('CodeBlockBar', () => {
 
   it('change le langage du bloc, ou revient à la détection automatique', () => {
     choose('python');
-    expect(editor.getJSON().content?.[0].attrs).toEqual({ language: 'python' });
+    expect(editor.getJSON().content?.[0].attrs).toMatchObject({ language: 'python' });
 
     choose('');
-    expect(editor.getJSON().content?.[0].attrs).toEqual({ language: null });
+    expect(editor.getJSON().content?.[0].attrs).toMatchObject({ language: null });
   });
 
   it('ne touche pas au code', () => {

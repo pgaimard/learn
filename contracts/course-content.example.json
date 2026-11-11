@@ -15,6 +15,9 @@
     },
     {
       "type": "paragraph",
+      "attrs": {
+        "pinned": false
+      },
       "content": [
         {
           "type": "text",
@@ -128,12 +131,18 @@
     },
     {
       "type": "bulletList",
+      "attrs": {
+        "pinned": false
+      },
       "content": [
         {
           "type": "listItem",
           "content": [
             {
               "type": "paragraph",
+              "attrs": {
+                "pinned": false
+              },
               "content": [
                 {
                   "type": "text",
@@ -149,7 +158,8 @@
       "type": "orderedList",
       "attrs": {
         "start": 1,
-        "type": null
+        "type": null,
+        "pinned": false
       },
       "content": [
         {
@@ -157,6 +167,9 @@
           "content": [
             {
               "type": "paragraph",
+              "attrs": {
+                "pinned": false
+              },
               "content": [
                 {
                   "type": "text",
@@ -194,9 +207,15 @@
     },
     {
       "type": "blockquote",
+      "attrs": {
+        "pinned": false
+      },
       "content": [
         {
           "type": "paragraph",
+          "attrs": {
+            "pinned": false
+          },
           "content": [
             {
               "type": "text",
@@ -209,7 +228,8 @@
     {
       "type": "codeBlock",
       "attrs": {
-        "language": "c"
+        "language": "c",
+        "pinned": false
       },
       "content": [
         {
@@ -220,6 +240,9 @@
     },
     {
       "type": "table",
+      "attrs": {
+        "pinned": true
+      },
       "content": [
         {
           "type": "tableRow",
@@ -235,6 +258,9 @@
               "content": [
                 {
                   "type": "paragraph",
+                  "attrs": {
+                    "pinned": false
+                  },
                   "content": [
                     {
                       "type": "text",
@@ -260,6 +286,9 @@
               "content": [
                 {
                   "type": "paragraph",
+                  "attrs": {
+                    "pinned": false
+                  },
                   "content": [
                     {
                       "type": "text",
@@ -280,7 +309,8 @@
       "type": "figure",
       "attrs": {
         "src": "/api/courses/1/images/1",
-        "alt": "Schéma des états d'un processus"
+        "alt": "Schéma des états d'un processus",
+        "pinned": true
       },
       "content": [
         {
@@ -292,11 +322,15 @@
     {
       "type": "callout",
       "attrs": {
-        "kind": "retenir"
+        "kind": "retenir",
+        "pinned": false
       },
       "content": [
         {
           "type": "paragraph",
+          "attrs": {
+            "pinned": false
+          },
           "content": [
             {
               "type": "text",
@@ -309,11 +343,15 @@
     {
       "type": "callout",
       "attrs": {
-        "kind": "change"
+        "kind": "change",
+        "pinned": false
       },
       "content": [
         {
           "type": "paragraph",
+          "attrs": {
+            "pinned": false
+          },
           "content": [
             {
               "type": "text",
@@ -326,17 +364,24 @@
     {
       "type": "callout",
       "attrs": {
-        "kind": "attention"
+        "kind": "attention",
+        "pinned": false
       },
       "content": [
         {
           "type": "bulletList",
+          "attrs": {
+            "pinned": false
+          },
           "content": [
             {
               "type": "listItem",
               "content": [
                 {
                   "type": "paragraph",
+                  "attrs": {
+                    "pinned": false
+                  },
                   "content": [
                     {
                       "type": "text",
@@ -352,6 +397,9 @@
     },
     {
       "type": "paragraph",
+      "attrs": {
+        "pinned": false
+      },
       "content": [
         {
           "type": "text",

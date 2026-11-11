@@ -9,7 +9,14 @@ import { Term, TermService } from './term.service';
 
 const CONTENT = {
   type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Numéro d’un processus.' }] }],
+  content: [
+    {
+      type: 'paragraph',
+      // L'éditeur précise pour chaque bloc s'il est épinglé à la fiche de révision.
+      attrs: { pinned: false },
+      content: [{ type: 'text', text: 'Numéro d’un processus.' }],
+    },
+  ],
 };
 const PID: Term = {
   id: 7,
