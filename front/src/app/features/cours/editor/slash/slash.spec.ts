@@ -78,6 +78,17 @@ describe('menu « / »', () => {
       ).toEqual(['Section', 'Sous-section', 'Sous-sous-section', 'Séparateur']);
     });
 
+    it('trouve les encadrés par leur nom', () => {
+      const labels = (query: string): string[] =>
+        filterSlashCommands(query).map((command) => command.label);
+
+      expect(labels('retenir')).toEqual(['À retenir']);
+      expect(labels('a')[0]).toBe('À retenir');
+      expect(labels('change')).toEqual(['Ce qui a changé']);
+      expect(labels('att')).toEqual(['Attention']);
+      expect(labels('encadre')).toEqual(['À retenir', 'Ce qui a changé', 'Attention']);
+    });
+
     it('ne propose rien pour une saisie inconnue', () => {
       expect(filterSlashCommands('zzz')).toEqual([]);
     });
@@ -141,6 +152,19 @@ describe('menu « / »', () => {
       editor.view.dom.dispatchEvent(new FocusEvent('blur'));
 
       expect(state.trigger()).toBeNull();
+    });
+  });
+
+  describe('encadrés', () => {
+    it('transforme le paragraphe en encadré « À retenir »', () => {
+      editor.commands.insertContent('Un programme est passif. /retenir');
+
+      press('Enter');
+
+      const callout = editor.state.doc.child(1);
+      expect(callout.type.name).toBe('callout');
+      expect(callout.attrs['kind']).toBe('retenir');
+      expect(callout.textContent).toBe('Un programme est passif. ');
     });
   });
 

@@ -35,6 +35,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     apply: (chain) => chain.setHeading({ level: 4 }),
   },
   { label: 'Point', keywords: ['titre', 'h5'], apply: (chain) => chain.setHeading({ level: 5 }) },
+  // Les encadrés portent leur nom, comme dans la barre d'outils : « /retenir », « /attention ».
+  ...CALLOUT_KINDS.map((kind): SlashCommand => ({
+    label: CALLOUT_LABELS[kind],
+    keywords: ['encadre', 'bloc', kind],
+    apply: (chain) => chain.wrapIn('callout', { kind }),
+  })),
   {
     label: 'Liste à puces',
     keywords: ['puce', 'liste'],
@@ -62,11 +68,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     apply: (chain) => chain.setHorizontalRule(),
   },
   IMAGE_COMMAND,
-  ...CALLOUT_KINDS.map((kind): SlashCommand => ({
-    label: `Encadré « ${CALLOUT_LABELS[kind]} »`,
-    keywords: ['encadre', 'bloc', kind],
-    apply: (chain) => chain.wrapIn('callout', { kind }),
-  })),
 ];
 
 function normalize(text: string): string {

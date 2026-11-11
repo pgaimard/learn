@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { SlashCommand } from './slash-commands';
 
 // Liste des blocs proposés sous le « / » saisi. Le focus reste dans l'éditeur : les
@@ -20,4 +28,19 @@ export class SlashMenu {
   readonly activeIndex = input.required<number>();
 
   readonly picked = output<number>();
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // La liste est plus longue que sa fenêtre : le bloc mis en avant reste visible
+    // quand on la parcourt aux flèches.
+    afterRenderEffect(() => {
+      this.activeIndex();
+      const active = this.host.nativeElement.querySelector<HTMLElement>('.is-active');
+      // Absent de l'environnement de test, qui ne fait pas de mise en page.
+      if (typeof active?.scrollIntoView === 'function') {
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
 }
