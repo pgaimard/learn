@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { createOrderSaver } from '../../core/sortable/order-saver';
 import {
   moveItem,
   SortableHandle,
@@ -30,6 +31,12 @@ export class UeListPage implements OnInit {
   protected readonly editing = signal<Ue | 'new' | null>(null);
   protected readonly formErrors = signal<string[]>([]);
   protected readonly isSaving = signal(false);
+
+  private readonly saveOrder = createOrderSaver<string[]>(
+    (codes) => this.ueService.reorder(codes),
+    () => this.pageErrors.set([]),
+    (error) => this.load(error.messages),
+  );
 
   ngOnInit(): void {
     this.load();
@@ -73,10 +80,7 @@ export class UeListPage implements OnInit {
       return;
     }
     this.ues.set(ordered);
-    this.ueService.reorder(ordered.map((ue) => ue.code)).subscribe({
-      next: () => this.pageErrors.set([]),
-      error: (error: ApiError) => this.load(error.messages),
-    });
+    this.saveOrder(ordered.map((ue) => ue.code));
   }
 
   protected async remove(ue: Ue): Promise<void> {

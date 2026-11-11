@@ -92,7 +92,7 @@ describe('CourseEditPage', () => {
     expect(editor?.textContent).toContain('Un programme.');
   });
 
-  it('enregistre le titre, l’ordre et le contenu de l’éditeur', async () => {
+  it('enregistre le titre et le contenu de l’éditeur', async () => {
     service.update.mockReturnValue(of(COURSE));
     await setup();
     typeTitle(' Les processus ');
@@ -101,7 +101,6 @@ describe('CourseEditPage', () => {
 
     expect(service.update).toHaveBeenCalledWith(7, {
       title: 'Les processus',
-      position: 3,
       content: COURSE.content,
     });
     expect(element().textContent).toContain('Enregistré à');
@@ -109,14 +108,14 @@ describe('CourseEditPage', () => {
 
   it('affiche le refus de l’API et garde les modifications en attente', async () => {
     service.update.mockReturnValue(
-      throwError(() => new ApiError(409, ['Un cours occupe déjà l’ordre 3 dans cette UE.'])),
+      throwError(() => new ApiError(400, ['Le titre ne doit pas dépasser 200 caractères.'])),
     );
     await setup();
     typeTitle('Autre titre');
 
     click('Enregistrer');
 
-    expect(element().textContent).toContain('Un cours occupe déjà l’ordre 3 dans cette UE.');
+    expect(element().textContent).toContain('Le titre ne doit pas dépasser 200 caractères.');
     expect(element().textContent).toContain('Modifications non enregistrées');
   });
 

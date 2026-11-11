@@ -37,10 +37,9 @@ h2 {
 .course {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 0.25rem 0.75rem;
-  color: inherit;
-  text-decoration: none;
+  padding: 0.625rem 1rem;
 }
 
 .course:hover {
@@ -55,7 +54,13 @@ h2 {
 
 .course-title {
   flex: 1 1 12rem;
+  color: inherit;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.course-title:hover {
+  text-decoration: underline;
 }
 
 .course-date {

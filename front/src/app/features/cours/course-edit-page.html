@@ -26,17 +26,6 @@
             </p>
           }
         </div>
-        <div class="field field-short">
-          <label for="edit-position">Ordre</label>
-          <input
-            id="edit-position"
-            type="number"
-            min="0"
-            formControlName="position"
-            (input)="markDirty()"
-            [attr.aria-invalid]="form.controls.position.touched && form.controls.position.invalid"
-          />
-        </div>
       </div>
     </form>
 
