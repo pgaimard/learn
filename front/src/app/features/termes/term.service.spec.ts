@@ -45,6 +45,15 @@ describe('TermService', () => {
     http.expectOne({ method: 'DELETE', url: '/api/terms/4' });
   });
 
+  it('signale chaque création réussie aux listes affichées', () => {
+    service.create({ type: 'definition', label: 'Processus' }).subscribe();
+    expect(service.revision()).toBe(0);
+
+    http.expectOne('/api/terms').flush({ id: 1 });
+
+    expect(service.revision()).toBe(1);
+  });
+
   it('envoie une image en formulaire multipart', () => {
     const file = new File(['x'], 'schema.png', { type: 'image/png' });
 

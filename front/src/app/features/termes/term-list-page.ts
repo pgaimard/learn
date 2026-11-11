@@ -7,16 +7,16 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
 import { filterTerms } from './filter-terms';
 import { TermForm } from './term-form';
+import { TermList } from './term-list';
 import { TERM_SCREENS } from './term-screens';
 import { TermInput, TermService, TermSummary, TermType } from './term.service';
 
 @Component({
   selector: 'app-term-list-page',
-  imports: [RouterLink, TermForm],
+  imports: [TermForm, TermList],
   templateUrl: './term-list-page.html',
   styleUrl: './term-list-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,7 +38,11 @@ export class TermListPage {
   protected readonly isSaving = signal(false);
 
   constructor() {
-    effect(() => this.load(this.type()));
+    // La liste se recharge aussi après une création faite ailleurs (création rapide).
+    effect(() => {
+      this.termService.revision();
+      this.load(this.type());
+    });
   }
 
   protected openForm(): void {
@@ -59,7 +63,6 @@ export class TermListPage {
       next: () => {
         this.isSaving.set(false);
         this.closeForm();
-        this.load(this.type());
       },
       error: (error: ApiError) => {
         this.isSaving.set(false);

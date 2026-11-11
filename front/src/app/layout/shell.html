@@ -14,6 +14,7 @@
     </nav>
 
     <div class="account">
+      <app-term-quick-create />
       @if (user(); as currentUser) {
         <span class="username">{{ currentUser.username }}</span>
       }

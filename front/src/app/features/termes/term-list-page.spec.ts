@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -25,7 +26,16 @@ describe('TermListPage', () => {
   const service = {
     list: vi.fn<TermService['list']>(),
     create: vi.fn<TermService['create']>(),
+    revision: signal(0),
   };
+
+  // Comme le vrai service, une création réussie fait avancer la révision.
+  function acceptCreation(id: number): void {
+    service.create.mockImplementation(() => {
+      service.revision.update((revision) => revision + 1);
+      return of({ id } as Term);
+    });
+  }
 
   function setup(type: TermType, terms: TermSummary[]): void {
     vi.resetAllMocks();
@@ -104,7 +114,7 @@ describe('TermListPage', () => {
 
   it('crée une définition avec son texte en premier paragraphe, puis recharge', () => {
     setup('definition', []);
-    service.create.mockReturnValue(of({ id: 3 } as Term));
+    acceptCreation(3);
     click('Nouvelle définition');
 
     fill('term-label', ' Processus ');
@@ -124,6 +134,7 @@ describe('TermListPage', () => {
         ],
       },
     });
+    fixture.detectChanges();
     expect(service.list).toHaveBeenCalledTimes(2);
     expect(element().querySelector('form')).toBeNull();
   });
@@ -138,7 +149,7 @@ describe('TermListPage', () => {
     expect(service.create).not.toHaveBeenCalled();
     expect(element().textContent).toContain('La forme développée est requise');
 
-    service.create.mockReturnValue(of({ id: 4 } as Term));
+    acceptCreation(4);
     fill('term-expanded-form', 'Central Processing Unit');
     submit();
 

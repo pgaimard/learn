@@ -1,0 +1,32 @@
+<button type="button" class="button open" (click)="open()">Nouveau terme</button>
+
+<dialog #dialog aria-labelledby="quick-term-title" (close)="isOpen.set(false)">
+  @if (isOpen()) {
+    <h2 id="quick-term-title">Nouveau terme</h2>
+    @if (created(); as term) {
+      <p role="status">
+        « {{ term.label }} » est ajouté au {{ screens[term.type].title.toLowerCase() }}.
+      </p>
+      <div class="form-actions">
+        <a
+          class="button button-primary"
+          [routerLink]="[screens[term.type].path, term.id, 'edition']"
+          (click)="close()"
+        >
+          Enrichir la définition
+        </a>
+        <button type="button" class="button" (click)="startOver()">En créer un autre</button>
+        <button type="button" class="button" (click)="close()">Fermer</button>
+      </div>
+    } @else {
+      <app-term-form
+        idPrefix="quick-term"
+        [origin]="origin()"
+        [errors]="errors()"
+        [isSaving]="isSaving()"
+        (saved)="create($event)"
+        (cancelled)="close()"
+      />
+    }
+  }
+</dialog>

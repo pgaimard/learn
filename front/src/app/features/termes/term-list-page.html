@@ -48,20 +48,6 @@
   @if (visibleTerms().length === 0) {
     <p class="empty">Aucun terme ne correspond à « {{ filter() }} ».</p>
   } @else {
-    <ul class="term-list">
-      @for (term of visibleTerms(); track term.id) {
-        <li>
-          <a class="card term" [routerLink]="[screen().path, term.id]">
-            <span class="term-label">{{ term.label }}</span>
-            @if (term.expandedForm) {
-              <span class="term-expanded">{{ term.expandedForm }}</span>
-            }
-            @if (term.excerpt) {
-              <span class="term-excerpt">{{ term.excerpt }}</span>
-            }
-          </a>
-        </li>
-      }
-    </ul>
+    <app-term-list [terms]="visibleTerms()" />
   }
 }
