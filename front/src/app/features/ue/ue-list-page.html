@@ -27,9 +27,9 @@
 } @else if (ues().length === 0 && editing() !== 'new') {
   <p class="empty">Aucune UE pour l’instant. Commencez par en créer une.</p>
 } @else {
-  <ul class="ue-list">
+  <ul class="ue-list" appSortableList (sorted)="reorder($event)">
     @for (ue of ues(); track ue.id) {
-      <li class="card">
+      <li class="card" [appSortableItem]="$index" [appSortableLast]="$last">
         @if (editing() === ue) {
           <app-ue-form
             [ue]="ue"
@@ -40,6 +40,17 @@
           />
         } @else {
           <div class="ue">
+            <button
+              type="button"
+              class="sort-handle"
+              appSortableHandle
+              [attr.aria-label]="
+                'Déplacer l’UE ' + ue.code + ' : faire glisser, ou flèches haut et bas'
+              "
+              title="Glisser pour réordonner"
+            >
+              ⋮⋮
+            </button>
             <div class="ue-text">
               <h2>
                 <a [routerLink]="['/ue', ue.code]">

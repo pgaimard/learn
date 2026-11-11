@@ -196,3 +196,43 @@ a {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Listes réordonnables : poignée, élément en cours de déplacement, trait de dépôt. */
+
+.sort-handle {
+  flex: none;
+  width: 1.5rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  letter-spacing: -0.2em;
+  line-height: 1.75rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.sort-handle:hover,
+.sort-handle:focus-visible {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.sort-handle:active {
+  cursor: grabbing;
+}
+
+.is-dragged {
+  opacity: 0.4;
+}
+
+.drop-before {
+  box-shadow: 0 -3px 0 0 var(--color-accent);
+}
+
+.drop-after {
+  box-shadow: 0 3px 0 0 var(--color-accent);
+}
