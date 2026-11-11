@@ -14,4 +14,14 @@
     (edited)="edited.emit()"
     (imageReceived)="imageAdded.emit($event)"
   />
+  @if (view.blockMenu(); as target) {
+    @if (view.editor(); as editor) {
+      <app-block-menu
+        [editor]="editor"
+        [pos]="target.pos"
+        [style.top.px]="target.top"
+        (closed)="view.blockMenu.set(null)"
+      />
+    }
+  }
 </div>
