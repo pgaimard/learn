@@ -1,5 +1,4 @@
 import { Extensions } from '@tiptap/core';
-import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { TableKit } from '@tiptap/extension-table';
 import { StarterKit } from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
@@ -8,6 +7,7 @@ import { SectionFolding } from '../editor/sections/section-folding';
 import { SelectionWatcher, SelectionWatcherOptions } from '../editor/selection/selection-watcher';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { Callout } from './callout';
+import { CodeBlock } from './code-block';
 import { Figure } from './figure';
 
 const lowlight = createLowlight(common);
@@ -31,7 +31,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
       codeBlock: false,
       link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] },
     }),
-    CodeBlockLowlight.configure({ lowlight }),
+    CodeBlock.configure({ lowlight }),
     TableKit.configure({ table: { resizable: false } }),
     Figure,
     Callout,

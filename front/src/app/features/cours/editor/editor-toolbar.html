@@ -85,20 +85,6 @@
     </button>
   </div>
 
-  @if (isActive('codeBlock')) {
-    <div class="group context">
-      <label>
-        Langage
-        <select [value]="codeLanguage()" (change)="setCodeLanguage($event)">
-          <option value="">Détection automatique</option>
-          @for (language of languages; track language) {
-            <option [value]="language">{{ language }}</option>
-          }
-        </select>
-      </label>
-    </div>
-  }
-
   @if (isActive('figure')) {
     <div class="group context" role="group" aria-label="Image">
       <button type="button" class="tool" (click)="editAlternativeText()">Texte alternatif</button>

@@ -16,21 +16,6 @@ type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4' | 'h5';
 type Chain = ReturnType<Editor['chain']>;
 type Command = (chain: Chain) => Chain;
 
-const CODE_LANGUAGES = [
-  'bash',
-  'c',
-  'cpp',
-  'css',
-  'java',
-  'javascript',
-  'json',
-  'python',
-  'sql',
-  'typescript',
-  'xml',
-  'yaml',
-] as const;
-
 @Component({
   selector: 'app-editor-toolbar',
   templateUrl: './editor-toolbar.html',
@@ -47,8 +32,6 @@ export class EditorToolbar {
 
   protected readonly calloutKinds = CALLOUT_KINDS;
   protected readonly calloutLabels = CALLOUT_LABELS;
-
-  protected readonly languages = CODE_LANGUAGES;
 
   protected readonly toggleBulletList: Command = (chain) => chain.toggleBulletList();
   protected readonly toggleOrderedList: Command = (chain) => chain.toggleOrderedList();
@@ -94,21 +77,6 @@ export class EditorToolbar {
     } else {
       chain.setHeading({ level: Number(style.slice(1)) as 2 | 3 | 4 | 5 }).run();
     }
-  }
-
-  protected codeLanguage(): string {
-    this.revision();
-    const language: unknown = this.editor().getAttributes('codeBlock')['language'];
-    return typeof language === 'string' ? language : '';
-  }
-
-  protected setCodeLanguage(event: Event): void {
-    const language = (event.target as HTMLSelectElement).value;
-    this.editor()
-      .chain()
-      .focus()
-      .updateAttributes('codeBlock', { language: language === '' ? null : language })
-      .run();
   }
 
   protected pickImage(event: Event): void {

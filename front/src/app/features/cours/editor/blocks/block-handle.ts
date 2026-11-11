@@ -23,10 +23,10 @@ interface DragState {
 // qui sépare le texte de la poignée.
 const HIDE_DELAY_MS = 300;
 
-const HANDLE_LABEL = 'Déplacer le bloc en le faisant glisser, ou ouvrir son menu';
+const HANDLE_LABEL = 'Faire glisser pour déplacer le bloc ; clic droit pour son menu';
 
 // Poignée affichée à gauche du bloc survolé. On la fait glisser pour déplacer le bloc ;
-// un clic ouvre son menu. Elle vit hors du contenu éditable : ProseMirror ne la voit pas.
+// un clic droit ouvre son menu. Elle vit hors du contenu éditable : ProseMirror ne la voit pas.
 class BlockHandleView {
   private readonly handle: HTMLButtonElement;
   private readonly container: HTMLElement;
@@ -66,9 +66,14 @@ class BlockHandleView {
     handle.draggable = true;
     handle.hidden = true;
     handle.setAttribute('aria-label', HANDLE_LABEL);
-    handle.title = 'Glisser pour déplacer, cliquer pour le menu';
+    handle.title = 'Glisser pour déplacer, clic droit pour le menu';
     handle.textContent = '⋮⋮';
-    handle.addEventListener('click', () => this.openMenu());
+    // Le clic gauche est réservé au glisser : le menu s'ouvre au clic droit
+    // (ou par la touche de menu du clavier).
+    handle.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      this.openMenu();
+    });
     // La poignée est hors du texte : la souris qui s'y trouve ne « quitte » pas le bloc.
     handle.addEventListener('mouseenter', () => this.cancelHide());
     handle.addEventListener('mouseleave', () => this.hideSoon());
