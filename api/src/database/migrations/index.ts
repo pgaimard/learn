@@ -7,6 +7,7 @@ import { CreateTerms1794500000000 } from './1794500000000-create-terms.js';
 import { CreateTermImages1794510000000 } from './1794510000000-create-term-images.js';
 import { CreateSearch1794600000000 } from './1794600000000-create-search.js';
 import { CreateFolders1794700000000 } from './1794700000000-create-folders.js';
+import { CreateFiles1794710000000 } from './1794710000000-create-files.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -18,4 +19,5 @@ export const migrations = [
   CreateTermImages1794510000000,
   CreateSearch1794600000000,
   CreateFolders1794700000000,
+  CreateFiles1794710000000,
 ];
