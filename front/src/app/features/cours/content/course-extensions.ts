@@ -5,6 +5,7 @@ import { common, createLowlight } from 'lowlight';
 import { BlockHandle, BlockHandleOptions } from '../editor/blocks/block-handle';
 import { SectionFolding } from '../editor/sections/section-folding';
 import { SelectionWatcher, SelectionWatcherOptions } from '../editor/selection/selection-watcher';
+import { SlashWatcher, SlashWatcherOptions } from '../editor/slash/slash-watcher';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { Callout } from './callout';
@@ -19,10 +20,11 @@ export interface EditingTools {
   blockHandle: BlockHandleOptions;
   tableTools: TableToolsOptions;
   selection: SelectionWatcherOptions;
+  slash: SlashWatcherOptions;
 }
 
-// tools : branche la poignée de bloc, les outils de tableau et la barre de sélection
-// sur l'interface (édition).
+// tools : branche la poignée de bloc, les outils de tableau, la barre de sélection et
+// le menu « / » sur l'interface (édition).
 export function createCourseExtensions(tools?: EditingTools): Extensions {
   return [
     StarterKit.configure({
@@ -41,6 +43,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
           BlockHandle.configure(tools.blockHandle),
           TableTools.configure(tools.tableTools),
           SelectionWatcher.configure(tools.selection),
+          SlashWatcher.configure(tools.slash),
         ]
       : []),
   ];
