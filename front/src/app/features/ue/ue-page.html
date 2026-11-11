@@ -20,11 +20,14 @@
 
   <div class="page-header">
     <h2>Cours</h2>
-    @if (!isCreating()) {
-      <button type="button" class="button button-primary" (click)="openForm()">
-        Nouveau cours
-      </button>
-    }
+    <div class="header-actions">
+      <a class="button" routerLink="/import">Importer un paquet</a>
+      @if (!isCreating()) {
+        <button type="button" class="button button-primary" (click)="openForm()">
+          Nouveau cours
+        </button>
+      }
+    </div>
   </div>
 
   @if (isCreating()) {

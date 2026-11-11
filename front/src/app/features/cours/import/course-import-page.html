@@ -1,0 +1,123 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/">Mes UE</a>
+</nav>
+
+<h1>Importer un cours</h1>
+
+<div class="modes" role="group" aria-label="Type d’import">
+  <button
+    type="button"
+    class="button"
+    [attr.aria-pressed]="mode() === 'package'"
+    (click)="setMode('package')"
+  >
+    Paquet de cours (.zip)
+  </button>
+  <button
+    type="button"
+    class="button"
+    [attr.aria-pressed]="mode() === 'markdown'"
+    (click)="setMode('markdown')"
+  >
+    Markdown collé
+  </button>
+</div>
+
+@if (preview(); as preview) {
+  <section class="card preview" aria-label="Aperçu avant import">
+    <h2>{{ preview.title }}</h2>
+    <dl>
+      <div>
+        <dt>UE</dt>
+        <dd>{{ preview.ueCode }}</dd>
+      </div>
+      <div>
+        <dt>Ordre</dt>
+        <dd>{{ preview.position }}</dd>
+      </div>
+      <div>
+        <dt>Sections</dt>
+        <dd>{{ preview.sectionCount }}</dd>
+      </div>
+      <div>
+        <dt>Images</dt>
+        <dd>{{ preview.imageCount }}</dd>
+      </div>
+      <div>
+        <dt>Termes</dt>
+        <dd>{{ preview.termCount }}</dd>
+      </div>
+    </dl>
+
+    @if (preview.termCount > 0) {
+      <p class="note">
+        Les termes sont détectés mais pas encore importés : le glossaire arrive avec une prochaine
+        version.
+      </p>
+    }
+    @if (preview.existingCourse; as existing) {
+      <p class="warning" role="status">
+        Le chapitre « {{ existing.title }} » occupe déjà l’ordre {{ preview.position }} dans
+        {{ preview.ueCode }}. L’import remplacera son contenu et ses images.
+      </p>
+    }
+
+    <div role="alert">
+      @for (error of errors(); track error) {
+        <p class="form-error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="button button-primary" [disabled]="isBusy()" (click)="confirm()">
+        {{ preview.existingCourse ? 'Remplacer le chapitre' : 'Importer le cours' }}
+      </button>
+      <button type="button" class="button" (click)="reset()">Annuler</button>
+    </div>
+  </section>
+} @else {
+  @if (mode() === 'package') {
+    <label class="dropzone">
+      <span class="dropzone-title">Choisir un paquet ou le déposer ici</span>
+      <span class="dropzone-hint">Archive .zip contenant cours.md, images/ et termes.json</span>
+      <input type="file" accept=".zip,application/zip" (change)="pickPackage($event)" />
+    </label>
+  } @else {
+    <div class="field">
+      <label for="import-markdown">Markdown du cours, en-tête compris (ue, titre, ordre)</label>
+      <textarea
+        id="import-markdown"
+        rows="14"
+        spellcheck="false"
+        [formControl]="markdown"
+        aria-describedby="import-markdown-hint"
+      ></textarea>
+      <p id="import-markdown-hint" class="field-hint">Pour un contenu sans image.</p>
+    </div>
+    <button
+      type="button"
+      class="button button-primary"
+      [disabled]="isBusy()"
+      (click)="analyseMarkdown()"
+    >
+      Analyser
+    </button>
+  }
+
+  @if (isBusy()) {
+    <p aria-live="polite">Analyse en cours…</p>
+  }
+
+  <div role="alert">
+    @if (errors().length > 0) {
+      <div class="card errors">
+        <p class="errors-title">Ce contenu ne peut pas être importé :</p>
+        <ul>
+          @for (error of errors(); track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+}

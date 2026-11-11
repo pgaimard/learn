@@ -14,6 +14,14 @@ export const routes: Routes = [
     canActivate: [authenticatedGuard],
     children: [
       {
+        path: 'import',
+        title: 'Importer un cours',
+        loadComponent: () =>
+          import('./features/cours/import/course-import-page').then(
+            (module) => module.CourseImportPage,
+          ),
+      },
+      {
         path: 'ue/:code/cours',
         loadChildren: () =>
           import('./features/cours/cours.routes').then((module) => module.coursRoutes),
