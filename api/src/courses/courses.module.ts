@@ -8,11 +8,22 @@ import { CourseImage } from './images/course-image.entity.js';
 import { CourseImagesController } from './images/course-images.controller.js';
 import { CourseImagesService } from './images/course-images.service.js';
 import { ImageStorageService } from './images/image-storage.service.js';
+import { CourseImportService } from './import/course-import.service.js';
+import { CourseImportsController } from './import/course-imports.controller.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Course, CourseImage]), UeModule],
-  controllers: [CoursesController, CourseImagesController],
-  providers: [CoursesService, CourseImagesService, ImageStorageService],
+  controllers: [
+    CoursesController,
+    CourseImagesController,
+    CourseImportsController,
+  ],
+  providers: [
+    CoursesService,
+    CourseImagesService,
+    ImageStorageService,
+    CourseImportService,
+  ],
   exports: [CoursesService],
 })
 export class CoursesModule {}

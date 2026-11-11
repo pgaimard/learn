@@ -115,7 +115,8 @@ export class CourseImagesService {
   }
 }
 
-function prepareImage(data: Buffer): {
+// Vérifie une image reçue et renvoie ce qui sera réellement stocké.
+export function prepareImage(data: Buffer): {
   content: Buffer;
   mimeType: keyof typeof IMAGE_EXTENSIONS;
 } {
