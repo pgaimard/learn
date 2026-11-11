@@ -27,6 +27,8 @@ describe('FileBrowser', () => {
     renameFolder: vi.fn<FileService['renameFolder']>(),
     removeFolder: vi.fn<FileService['removeFolder']>(),
     upload: vi.fn<FileService['upload']>(),
+    updateFile: vi.fn<FileService['updateFile']>(),
+    removeFile: vi.fn<FileService['removeFile']>(),
     downloadUrl: (id: number) => `/api/files/${id}/download`,
   };
 
@@ -52,7 +54,10 @@ describe('FileBrowser', () => {
 
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      .find(
+        (button) =>
+          button.textContent.trim() === label || button.getAttribute('aria-label') === label,
+      )
       ?.click();
     fixture.detectChanges();
   }
@@ -140,7 +145,7 @@ describe('FileBrowser', () => {
   it('renomme un dossier', () => {
     setup();
     service.renameFolder.mockReturnValue(of({ id: 1, parentId: null, name: 'Travaux dirigés' }));
-    click('Renommer');
+    click('Renommer le dossier TD');
     expect(element().querySelector<HTMLInputElement>('#entry-name')?.value).toBe('TD');
 
     submitName('Travaux dirigés');
@@ -155,10 +160,59 @@ describe('FileBrowser', () => {
       throwError(() => new ApiError(409, ['Le dossier « TD » n’est pas vide.'])),
     );
 
-    click('Supprimer');
+    click('Supprimer le dossier TD');
 
     expect(service.removeFolder).toHaveBeenCalledWith(1);
     expect(text()).toContain('Le dossier « TD » n’est pas vide.');
+  });
+
+  it('renomme un fichier, et affiche le refus d’un nom déjà pris', () => {
+    setup();
+    service.updateFile.mockReturnValue(
+      throwError(() => new ApiError(409, ['Un fichier « a.pdf » existe déjà dans ce dossier.'])),
+    );
+    click('Renommer le fichier notes.pdf');
+    expect(element().querySelector<HTMLInputElement>('#entry-name')?.value).toBe('notes.pdf');
+
+    submitName('a.pdf');
+    expect(service.updateFile).toHaveBeenCalledWith(7, { name: 'a.pdf' });
+    expect(text()).toContain('Un fichier « a.pdf » existe déjà dans ce dossier.');
+
+    service.updateFile.mockReturnValue(of({ ...NOTES, name: 'b.pdf' }));
+    submitName('b.pdf');
+    expect(element().querySelector('form')).toBeNull();
+  });
+
+  it('déplace un fichier vers le dossier choisi et dit sous quel nom', () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    setup();
+    service.updateFile.mockReturnValue(of({ ...NOTES, folderId: 2, name: 'notes - 2.pdf' }));
+    click('Déplacer le fichier notes.pdf');
+
+    element().querySelectorAll<HTMLInputElement>('app-folder-picker input')[2].click();
+    fixture.detectChanges();
+    element().querySelector<HTMLButtonElement>('app-folder-picker .button-primary')?.click();
+    fixture.detectChanges();
+
+    expect(service.updateFile).toHaveBeenCalledWith(7, { folderId: 2 });
+    expect(text()).toContain(
+      'notes.pdf : Déplacé vers « Corrigés », sous le nom « notes - 2.pdf ».',
+    );
+    expect(element().querySelector('app-folder-picker')).toBeNull();
+  });
+
+  it('supprime un fichier après confirmation seulement', () => {
+    setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    service.removeFile.mockReturnValue(of(undefined));
+
+    click('Supprimer le fichier notes.pdf');
+    expect(service.removeFile).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    click('Supprimer le fichier notes.pdf');
+    expect(service.removeFile).toHaveBeenCalledWith(7);
+    expect(service.listFiles).toHaveBeenCalledTimes(2);
   });
 
   it('envoie les fichiers un par un et rend compte de chacun', () => {

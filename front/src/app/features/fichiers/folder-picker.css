@@ -1,0 +1,41 @@
+dialog {
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.choices {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.choice.is-current {
+  color: var(--color-text-muted);
+}
+
+.here {
+  font-size: 0.875rem;
+}

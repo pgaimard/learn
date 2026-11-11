@@ -1,5 +1,5 @@
 import { Folder } from './file.service';
-import { childrenOf, pathTo } from './folder-tree';
+import { childrenOf, flattenTree, pathTo } from './folder-tree';
 
 const FOLDERS: Folder[] = [
   { id: 1, parentId: null, name: 'TD' },
@@ -36,5 +36,16 @@ describe('pathTo', () => {
     ];
 
     expect(pathTo(cycle, 1)?.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('flattenTree', () => {
+  it('fait suivre chaque dossier de ses sous-dossiers, avec leur profondeur', () => {
+    expect(flattenTree(FOLDERS).map((entry) => [entry.folder.name, entry.depth])).toEqual([
+      ['TD', 0],
+      ['Corrigés', 1],
+      ['2024', 2],
+      ['Annales', 0],
+    ]);
   });
 });
