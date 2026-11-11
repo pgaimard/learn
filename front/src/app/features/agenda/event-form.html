@@ -1,0 +1,81 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="form-row">
+    <div class="field field-grow">
+      <label for="event-title">Événement</label>
+      <input
+        id="event-title"
+        type="text"
+        formControlName="title"
+        [attr.aria-invalid]="isTitleInvalid()"
+        [attr.aria-describedby]="isTitleInvalid() ? 'event-title-error' : null"
+      />
+      @if (isTitleInvalid()) {
+        <p id="event-title-error" class="field-error">
+          Le titre est requis (200 caractères au plus).
+        </p>
+      }
+    </div>
+    <div class="field field-short">
+      <label for="event-type">Type</label>
+      <select
+        #typeField
+        id="event-type"
+        formControlName="type"
+        (change)="type.set(typeField.value === 'deadline' ? 'deadline' : 'course')"
+      >
+        <option value="course">Cours</option>
+        <option value="deadline">Échéance</option>
+      </select>
+    </div>
+    <div class="field field-grow">
+      <label for="event-ue">UE</label>
+      <select id="event-ue" formControlName="ueCode">
+        <option value="">Aucune</option>
+        @for (ue of ues(); track ue.id) {
+          <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="field field-grow">
+      <label for="event-start">{{ type() === 'deadline' ? 'Date et heure' : 'Début' }}</label>
+      <input id="event-start" type="datetime-local" formControlName="startsAt" />
+    </div>
+    @if (type() === 'course') {
+      <div class="field field-grow">
+        <label for="event-end">Fin</label>
+        <input id="event-end" type="datetime-local" formControlName="endsAt" />
+      </div>
+    }
+    @if (!event()) {
+      <div class="field field-grow">
+        <label for="event-repeat">Répéter chaque semaine jusqu’au</label>
+        <input
+          id="event-repeat"
+          type="date"
+          formControlName="repeatUntil"
+          aria-describedby="event-repeat-hint"
+        />
+        <p id="event-repeat-hint" class="field-hint">
+          Facultatif. Chaque semaine devient un événement indépendant (60 au plus).
+        </p>
+      </div>
+    }
+  </div>
+
+  <div role="alert">
+    @if (periodError(); as error) {
+      <p class="form-error">{{ error }}</p>
+    }
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button button-primary" [disabled]="isSaving()">Enregistrer</button>
+    <button type="button" class="button" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>
