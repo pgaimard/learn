@@ -12,15 +12,14 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
-import { CourseContent } from './content/course-content';
 import { Course, CourseService } from './course.service';
-import { EditorToolbar } from './editor/editor-toolbar';
+import { ContentEditor } from './editor/content-editor';
 
 const UNSAVED_MESSAGE = 'Des modifications ne sont pas enregistrées. Quitter quand même ?';
 
 @Component({
   selector: 'app-course-edit-page',
-  imports: [CourseContent, DatePipe, EditorToolbar, ReactiveFormsModule, RouterLink],
+  imports: [ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './course-edit-page.html',
   styleUrl: './course-edit-page.css',
   host: {
@@ -39,7 +38,7 @@ export class CourseEditPage {
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly formBuilder = inject(NonNullableFormBuilder);
-  private readonly contentView = viewChild(CourseContent);
+  private readonly editor = viewChild(ContentEditor);
 
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
@@ -66,7 +65,7 @@ export class CourseEditPage {
   }
 
   protected save(): void {
-    const content = this.contentView()?.getContent();
+    const content = this.editor()?.getContent();
     if (this.form.invalid || this.isSaving() || !content) {
       this.form.markAllAsTouched();
       return;
@@ -94,7 +93,7 @@ export class CourseEditPage {
   protected addImage(file: File): void {
     this.errors.set([]);
     this.courseService.uploadImage(Number(this.id()), file).subscribe({
-      next: (image) => this.contentView()?.insertFigure(image.src, image.altText),
+      next: (image) => this.editor()?.insertFigure(image.src, image.altText),
       error: (error: ApiError) => this.errors.set(error.messages),
     });
   }

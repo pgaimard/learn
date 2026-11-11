@@ -15,7 +15,7 @@ import { Editor } from '@tiptap/core';
 import { ContentNode } from './content-node';
 import { createCourseExtensions } from './course-extensions';
 
-// Affiche le contenu d'un cours avec le moteur de l'éditeur : le rendu est le même
+// Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
 // en lecture et en édition, et le contenu n'est jamais injecté comme du HTML.
 @Component({
   selector: 'app-course-content',
@@ -26,6 +26,8 @@ import { createCourseExtensions } from './course-extensions';
 export class CourseContent {
   readonly content = input.required<ContentNode>();
   readonly editable = input(false);
+  // Nom accessible de la zone de contenu.
+  readonly label = input('Contenu du cours');
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
@@ -46,7 +48,7 @@ export class CourseContent {
           content: untracked(this.content),
           editable: untracked(this.editable),
           editorProps: {
-            attributes: { 'aria-label': 'Contenu du cours' },
+            attributes: { 'aria-label': untracked(this.label) },
             handlePaste: (_view, event) => this.receiveImages(event.clipboardData),
             handleDrop: (view, event) => {
               const position = view.posAtCoords({ left: event.clientX, top: event.clientY });

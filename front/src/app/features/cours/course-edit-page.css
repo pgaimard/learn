@@ -2,14 +2,6 @@
   max-width: calc(var(--reading-width) + 4rem);
 }
 
-.sticky {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 0.5rem 0;
-  background: var(--color-background);
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -31,17 +23,4 @@
 
 .form-error {
   margin: 0 0 0.5rem;
-}
-
-.sheet {
-  padding: 1.5rem 2rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-}
-
-@media (max-width: 40rem) {
-  .sheet {
-    padding: 1rem;
-  }
 }
