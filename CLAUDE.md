@@ -45,12 +45,15 @@ L'application est servie sur https://localhost. En local, le certificat vient de
 
 ### Production (sur le serveur, dans `/srv/learn`)
 
-Procédure complète : `docs/deploiement.md`.
+Procédures complètes : `docs/deploiement.md`, `docs/sauvegarde.md`, `docs/restauration.md`.
 
 | Action | Commande |
 |---|---|
 | Préparer un serveur vierge | `sudo ./deploy/setup-server.sh <nom-de-domaine> ['<clé publique du pipeline>']` |
 | Mettre une version en production | `sudo -u deploy ./deploy/deploy.sh <tag>` |
+| Sauvegarder maintenant | `sudo -u deploy -H ./deploy/backup.sh` |
+| Lister les sauvegardes | `sudo -u deploy -H ./deploy/restore.sh` |
+| Restaurer une sauvegarde | `sudo -u deploy -H ./deploy/restore.sh <horodatage>` |
 
 ### API (dans `api/`)
 
