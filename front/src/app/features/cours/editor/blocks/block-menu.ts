@@ -12,12 +12,18 @@ import { Editor } from '@tiptap/core';
 import { CALLOUT_KINDS, CALLOUT_LABELS } from '../../content/callout';
 import { focusMenuItem, menuItems } from '../menu-keys';
 import {
+  canMoveUnit,
+  canShiftSectionLevel,
+  moveUnit,
+  shiftSectionLevel,
+} from '../sections/section-commands';
+import { isFolded, toggleFold } from '../sections/section-folding';
+import { sectionAt } from '../sections/section-range';
+import {
   BlockTransform,
-  canMoveBlock,
   canTransformBlock,
   deleteBlock,
   duplicateBlock,
-  moveBlock,
   transformBlock,
 } from './block-commands';
 
@@ -67,8 +73,15 @@ export class BlockMenu {
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  protected readonly canMoveUp = computed(() => canMoveBlock(this.editor(), this.pos(), -1));
-  protected readonly canMoveDown = computed(() => canMoveBlock(this.editor(), this.pos(), 1));
+  protected readonly canMoveUp = computed(() => canMoveUnit(this.editor(), this.pos(), -1));
+  protected readonly canMoveDown = computed(() => canMoveUnit(this.editor(), this.pos(), 1));
+  // Le bloc est un titre : le menu agit sur son chapitre.
+  protected readonly isSection = computed(
+    () => sectionAt(this.editor().state.doc, this.pos()) !== null,
+  );
+  protected readonly isFolded = computed(() => isFolded(this.editor().state, this.pos()));
+  protected readonly canRaise = computed(() => canShiftSectionLevel(this.editor(), this.pos(), -1));
+  protected readonly canLower = computed(() => canShiftSectionLevel(this.editor(), this.pos(), 1));
   protected readonly transforms = computed(() =>
     canTransformBlock(this.editor(), this.pos()) ? TRANSFORMS : [],
   );
@@ -78,11 +91,22 @@ export class BlockMenu {
   }
 
   protected moveUp(): void {
-    this.run(() => moveBlock(this.editor(), this.pos(), -1));
+    this.run(() => moveUnit(this.editor(), this.pos(), -1));
   }
 
   protected moveDown(): void {
-    this.run(() => moveBlock(this.editor(), this.pos(), 1));
+    this.run(() => moveUnit(this.editor(), this.pos(), 1));
+  }
+
+  protected toggleFold(): void {
+    this.run(() => {
+      toggleFold(this.editor().view, this.pos());
+      return true;
+    });
+  }
+
+  protected shiftLevel(delta: -1 | 1): void {
+    this.run(() => shiftSectionLevel(this.editor(), this.pos(), delta));
   }
 
   protected duplicate(): void {

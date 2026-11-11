@@ -1,11 +1,24 @@
 <button type="button" role="menuitem" [disabled]="!canMoveUp()" (click)="moveUp()">
-  Monter <kbd>Alt+Maj+↑</kbd>
+  {{ isSection() ? 'Monter le chapitre' : 'Monter' }} <kbd>Alt+Maj+↑</kbd>
 </button>
 <button type="button" role="menuitem" [disabled]="!canMoveDown()" (click)="moveDown()">
-  Descendre <kbd>Alt+Maj+↓</kbd>
+  {{ isSection() ? 'Descendre le chapitre' : 'Descendre' }} <kbd>Alt+Maj+↓</kbd>
 </button>
+@if (isSection()) {
+  <button type="button" role="menuitem" (click)="toggleFold()">
+    {{ isFolded() ? 'Déplier le chapitre' : 'Replier le chapitre' }}
+  </button>
+  <button type="button" role="menuitem" [disabled]="!canRaise()" (click)="shiftLevel(-1)">
+    Niveau supérieur
+  </button>
+  <button type="button" role="menuitem" [disabled]="!canLower()" (click)="shiftLevel(1)">
+    Niveau inférieur
+  </button>
+}
 <button type="button" role="menuitem" (click)="duplicate()">Dupliquer</button>
-<button type="button" role="menuitem" class="danger" (click)="remove()">Supprimer</button>
+<button type="button" role="menuitem" class="danger" (click)="remove()">
+  {{ isSection() ? 'Supprimer le titre' : 'Supprimer' }}
+</button>
 
 @if (transforms().length > 0) {
   <p class="title" id="block-menu-transform">Transformer en</p>

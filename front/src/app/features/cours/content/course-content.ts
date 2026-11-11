@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { ContentNode } from './content-node';
+import { revealPosition } from '../editor/sections/section-folding';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -131,6 +132,11 @@ export class CourseContent {
   scrollToHeading(index: number): void {
     const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
     const heading = headings.item(index) as HTMLElement | null;
+    const view = this.editor()?.view;
+    if (heading && view) {
+      // Le titre visé peut se trouver dans un chapitre replié.
+      revealPosition(view, view.posAtDOM(heading, 0));
+    }
     if (heading) {
       heading.tabIndex = -1;
       heading.scrollIntoView({ behavior: 'smooth', block: 'start' });

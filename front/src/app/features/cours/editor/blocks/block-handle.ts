@@ -2,7 +2,9 @@ import { Extension } from '@tiptap/core';
 import { Fragment, Slice } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { EditorView } from '@tiptap/pm/view';
-import { blockAt, dropBlock, moveBlock, TopLevelBlock } from './block-commands';
+import { dropSection, moveUnit } from '../sections/section-commands';
+import { Section, sectionAt } from '../sections/section-range';
+import { blockAt, dropBlock, TopLevelBlock } from './block-commands';
 
 export interface BlockHandleOptions {
   // Clic sur la poignée : ouvre le menu du bloc, positionné à cette hauteur
@@ -13,6 +15,8 @@ export interface BlockHandleOptions {
 // Bloc en cours de déplacement par la poignée, partagé entre la poignée et le dépôt.
 interface DragState {
   source: TopLevelBlock | null;
+  // Chapitre déplacé quand le bloc est un titre.
+  section: Section | null;
 }
 
 // Délai avant de cacher la poignée : le temps, pour la souris, de traverser la marge
@@ -132,8 +136,16 @@ class BlockHandleView {
       event.preventDefault();
       return;
     }
+    // Un titre emporte son chapitre : tout ce qui le suit jusqu'au titre suivant de même niveau.
+    const section = sectionAt(this.view.state.doc, block.pos);
     this.drag.source = block;
-    this.view.dragging = { slice: new Slice(Fragment.from(block.node), 0, 0), move: true };
+    this.drag.section = section;
+    this.view.dragging = {
+      slice: section
+        ? this.view.state.doc.slice(section.from, section.to)
+        : new Slice(Fragment.from(block.node), 0, 0),
+      move: true,
+    };
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', block.node.textContent);
     event.dataTransfer.setDragImage(element, 0, 0);
@@ -144,6 +156,7 @@ class BlockHandleView {
   private endDrag(): void {
     // Glisser terminé ou abandonné : rien ne doit rester « en cours de déplacement ».
     this.drag.source = null;
+    this.drag.section = null;
     this.view.dragging = null;
     this.draggedElement?.classList.remove('is-dragged');
     this.draggedElement = null;
@@ -158,11 +171,17 @@ function handleBlockDrop(view: EditorView, event: DragEvent, drag: DragState): b
   if (!source) {
     return false;
   }
+  const section = drag.section;
   drag.source = null;
+  drag.section = null;
   const aimed = view.posAtCoords({ left: event.clientX, top: event.clientY });
   const current = blockAt(view.state.doc, source.pos);
   const transaction =
-    aimed && current?.node === source.node ? dropBlock(view.state, current, aimed.pos) : null;
+    !aimed || current?.node !== source.node
+      ? null
+      : section
+        ? dropSection(view.state, section, aimed.pos)
+        : dropBlock(view.state, current, aimed.pos);
   if (transaction) {
     view.dispatch(transaction.scrollIntoView());
   }
@@ -179,14 +198,14 @@ export const BlockHandle = Extension.create<BlockHandleOptions>({
 
   addKeyboardShortcuts() {
     return {
-      'Alt-Shift-ArrowUp': ({ editor }) => moveBlock(editor, editor.state.selection.from, -1),
-      'Alt-Shift-ArrowDown': ({ editor }) => moveBlock(editor, editor.state.selection.from, 1),
+      'Alt-Shift-ArrowUp': ({ editor }) => moveUnit(editor, editor.state.selection.from, -1),
+      'Alt-Shift-ArrowDown': ({ editor }) => moveUnit(editor, editor.state.selection.from, 1),
     };
   },
 
   addProseMirrorPlugins() {
     const options = this.options;
-    const drag: DragState = { source: null };
+    const drag: DragState = { source: null, section: null };
     return [
       new Plugin({
         key: new PluginKey('blockHandle'),
