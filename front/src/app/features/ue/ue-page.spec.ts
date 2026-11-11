@@ -80,6 +80,8 @@ describe('UePage', () => {
     expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
     expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
     expect(element().querySelector('.course-list')).toBeNull();
+    // Les actions sur les termes sont réservées au dictionnaire et au glossaire.
+    expect(element().querySelector('.term-actions')).toBeNull();
   });
 
   it('se recharge quand un terme vient d’être créé', () => {
