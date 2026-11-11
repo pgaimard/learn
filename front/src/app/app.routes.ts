@@ -22,6 +22,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'recherche',
+        title: 'Recherche',
+        loadComponent: () =>
+          import('./features/recherche/search-page').then((module) => module.SearchPage),
+      },
+      {
         path: 'dictionnaire',
         title: 'Dictionnaire',
         data: { type: 'definition' },
