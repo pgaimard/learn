@@ -48,12 +48,14 @@ Seul le reverse proxy est accessible de l'extérieur ; la base n'est jamais expo
 
 Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés par type.
 
-### V3 (ne pas développer avant demande)
+### Agenda et tâches (tranche 6)
 
 | Entité | Champs principaux |
 |---|---|
 | Événement | UE (optionnelle), titre, type (cours ou échéance), début, fin |
 | Tâche | UE (optionnelle), titre, échéance, état (fait ou non), date de rappel |
+
+Les rappels par e-mail ne sont pas à développer avant demande.
 
 ## 5. Décisions fonctionnelles
 
@@ -72,7 +74,9 @@ Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés
 - **Fichiers** : envoi, téléchargement, renommage, déplacement, suppression, dans une arborescence de dossiers par UE.
 - **Termes** : liste alphabétique avec filtre instantané ; création rapide depuis n'importe quel écran. Une définition s'édite comme un mini-cours, avec l'éditeur et les blocs des cours (code, images, tableaux, encadrés).
 - **Recherche** : une barre globale, accessible au clavier. Recherche plein texte PostgreSQL en configuration française, insensible aux accents, sur les cours (titre et contenu), les termes et les noms de fichiers. Résultats groupés par type avec extrait surligné.
-- **Navigation** : accueil = liste des UE ; page UE = onglets Cours, Fichiers, Termes de l'UE.
+- **Tâches** : liste à cocher, filtrable par UE ; les tâches faites sont gardées et masquées par défaut. Sans e-mail, la date de rappel fait apparaître la tâche dans un encart « À faire maintenant » et dans une pastille de l'en-tête.
+- **Agenda** : une semaine à la fois, les jours en liste. Un événement peut être répété chaque semaine jusqu'à une date : chaque occurrence est ensuite un événement indépendant. Les tâches apparaissent à la date de leur échéance.
+- **Navigation** : accueil = liste des UE ; page UE = onglets Cours, Fichiers, Termes de l'UE ; l'agenda et les tâches ont chacun leur écran, avec un filtre par UE.
 
 ## 6. Sécurité (application exposée sur Internet)
 
@@ -105,7 +109,8 @@ Chaque tranche est livrée de bout en bout (base, API, écran) et validée avant
 | 3 | Recherche globale |
 | 4 | Fichiers par UE |
 | 5 | Mise en production sur le serveur, HTTPS, sauvegardes |
-| Plus tard | Agenda, tâches, rappels par e-mail |
+| 6 | Agenda et tâches |
+| Plus tard | Rappels par e-mail |
 
 ## 9. Hors périmètre
 

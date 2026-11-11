@@ -51,6 +51,7 @@ describe('Migrations', () => {
       'folders',
       'migrations',
       'sessions',
+      'tasks',
       'term_images',
       'terms',
       'ues',
