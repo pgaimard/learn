@@ -31,58 +31,6 @@ section.card {
   font-size: 0.875rem;
 }
 
-.term-list {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.term {
-  display: grid;
-  grid-template-columns: minmax(8rem, 16rem) minmax(0, 1fr);
-  gap: 0.125rem 1rem;
-  padding: 0.75rem 1rem;
-  color: inherit;
-  text-decoration: none;
-}
-
-.term:hover {
-  border-color: var(--color-accent);
-}
-
-.term-label {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.term-expanded,
-.term-excerpt {
-  grid-column: 2;
-}
-
-.term-excerpt {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: 0.9375rem;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-
 .empty {
   color: var(--color-text-muted);
-}
-
-@media (max-width: 40rem) {
-  .term {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .term-expanded,
-  .term-excerpt {
-    grid-column: 1;
-  }
 }

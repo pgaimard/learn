@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { inject, Injectable, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { ContentNode } from '../cours/content/content-node';
 import { UploadedImage } from '../cours/course.service';
 
@@ -43,6 +43,9 @@ export interface TermFilters {
 export class TermService {
   private readonly http = inject(HttpClient);
 
+  // Augmente à chaque création : les listes affichées s'en servent pour se recharger.
+  readonly revision = signal(0);
+
   list(filters: TermFilters = {}): Observable<TermSummary[]> {
     return this.http.get<TermSummary[]>('/api/terms', { params: { ...filters } });
   }
@@ -52,7 +55,9 @@ export class TermService {
   }
 
   create(input: TermInput): Observable<Term> {
-    return this.http.post<Term>('/api/terms', input);
+    return this.http
+      .post<Term>('/api/terms', input)
+      .pipe(tap(() => this.revision.update((revision) => revision + 1)));
   }
 
   update(id: number, changes: TermInput): Observable<Term> {

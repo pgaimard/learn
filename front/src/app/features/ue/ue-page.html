@@ -18,83 +18,109 @@
     }
   </header>
 
-  <div class="page-header">
-    <h2>Cours</h2>
-    <div class="header-actions">
-      <a class="button" routerLink="/import">Importer un paquet</a>
-      @if (!isCreating()) {
-        <button type="button" class="button button-primary" (click)="openForm()">
-          Nouveau cours
-        </button>
-      }
-    </div>
-  </div>
+  <nav class="tabs" aria-label="Contenu de l’UE">
+    <a [routerLink]="[]" [attr.aria-current]="tab() === 'cours' ? 'page' : null">
+      Cours ({{ courses().length }})
+    </a>
+    <a
+      [routerLink]="[]"
+      [queryParams]="{ onglet: 'termes' }"
+      [attr.aria-current]="tab() === 'termes' ? 'page' : null"
+    >
+      Termes ({{ terms().length }})
+    </a>
+  </nav>
 
-  @if (isCreating()) {
-    <section class="card new-course" aria-label="Nouveau cours">
-      <form [formGroup]="form" (ngSubmit)="createCourse()" novalidate>
-        <div class="form-row">
-          <div class="field field-grow">
-            <label for="course-title">Titre du chapitre</label>
-            <input
-              id="course-title"
-              type="text"
-              formControlName="title"
-              [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
-              [attr.aria-describedby]="
-                form.controls.title.touched && form.controls.title.invalid
-                  ? 'course-title-error'
-                  : null
-              "
-            />
-            @if (form.controls.title.touched && form.controls.title.invalid) {
-              <p id="course-title-error" class="field-error">
-                Le titre est requis (200 caractères au plus).
-              </p>
+  @if (tab() === 'cours') {
+    <div class="page-header">
+      <h2>Cours</h2>
+      <div class="header-actions">
+        <a class="button" routerLink="/import">Importer un paquet</a>
+        @if (!isCreating()) {
+          <button type="button" class="button button-primary" (click)="openForm()">
+            Nouveau cours
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (isCreating()) {
+      <section class="card new-course" aria-label="Nouveau cours">
+        <form [formGroup]="form" (ngSubmit)="createCourse()" novalidate>
+          <div class="form-row">
+            <div class="field field-grow">
+              <label for="course-title">Titre du chapitre</label>
+              <input
+                id="course-title"
+                type="text"
+                formControlName="title"
+                [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+                [attr.aria-describedby]="
+                  form.controls.title.touched && form.controls.title.invalid
+                    ? 'course-title-error'
+                    : null
+                "
+              />
+              @if (form.controls.title.touched && form.controls.title.invalid) {
+                <p id="course-title-error" class="field-error">
+                  Le titre est requis (200 caractères au plus).
+                </p>
+              }
+            </div>
+            <div class="field field-short">
+              <label for="course-position">Ordre</label>
+              <input
+                id="course-position"
+                type="number"
+                min="0"
+                formControlName="position"
+                aria-describedby="course-position-hint"
+              />
+              <p id="course-position-hint" class="field-hint">Vide : à la suite.</p>
+            </div>
+          </div>
+
+          <div role="alert">
+            @for (error of formErrors(); track error) {
+              <p class="form-error">{{ error }}</p>
             }
           </div>
-          <div class="field field-short">
-            <label for="course-position">Ordre</label>
-            <input
-              id="course-position"
-              type="number"
-              min="0"
-              formControlName="position"
-              aria-describedby="course-position-hint"
-            />
-            <p id="course-position-hint" class="field-hint">Vide : à la suite.</p>
+
+          <div class="form-actions">
+            <button type="submit" class="button button-primary" [disabled]="isSaving()">
+              Créer le cours
+            </button>
+            <button type="button" class="button" (click)="closeForm()">Annuler</button>
           </div>
-        </div>
+        </form>
+      </section>
+    }
 
-        <div role="alert">
-          @for (error of formErrors(); track error) {
-            <p class="form-error">{{ error }}</p>
-          }
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="button button-primary" [disabled]="isSaving()">
-            Créer le cours
-          </button>
-          <button type="button" class="button" (click)="closeForm()">Annuler</button>
-        </div>
-      </form>
-    </section>
-  }
-
-  @if (courses().length === 0 && !isCreating()) {
-    <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
+    @if (courses().length === 0 && !isCreating()) {
+      <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
+    } @else {
+      <ol class="course-list">
+        @for (course of courses(); track course.id) {
+          <li>
+            <a class="card course" [routerLink]="['/ue', ue.code, 'cours', course.id]">
+              <span class="course-position">{{ course.position }}</span>
+              <span class="course-title">{{ course.title }}</span>
+              <span class="course-date"
+                >modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span
+              >
+            </a>
+          </li>
+        }
+      </ol>
+    }
   } @else {
-    <ol class="course-list">
-      @for (course of courses(); track course.id) {
-        <li>
-          <a class="card course" [routerLink]="['/ue', ue.code, 'cours', course.id]">
-            <span class="course-position">{{ course.position }}</span>
-            <span class="course-title">{{ course.title }}</span>
-            <span class="course-date">modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span>
-          </a>
-        </li>
-      }
-    </ol>
+    <h2 class="terms-title">Termes de l’UE</h2>
+    @if (terms().length === 0) {
+      <p class="empty">
+        Aucun terme rattaché à cette UE. « Nouveau terme », en haut de page, en crée un.
+      </p>
+    } @else {
+      <app-term-list [terms]="terms()" />
+    }
   }
 }

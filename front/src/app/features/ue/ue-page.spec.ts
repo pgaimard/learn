@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from '../cours/course.service';
+import { TermService } from '../termes/term.service';
 import { UePage } from './ue-page';
 import { UeService } from './ue.service';
 
@@ -14,6 +16,7 @@ describe('UePage', () => {
     list: vi.fn<CourseService['list']>(),
     create: vi.fn<CourseService['create']>(),
   };
+  const termService = { list: vi.fn<TermService['list']>(), revision: signal(0) };
 
   function setup(): void {
     TestBed.configureTestingModule({
@@ -21,6 +24,7 @@ describe('UePage', () => {
         provideRouter([]),
         { provide: UeService, useValue: ueService },
         { provide: CourseService, useValue: courseService },
+        { provide: TermService, useValue: termService },
       ],
     });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -58,6 +62,33 @@ describe('UePage', () => {
     courseService.list.mockReturnValue(
       of([{ id: 7, title: 'Processus', position: 1, updatedAt: '2026-11-10T10:00:00.000Z' }]),
     );
+    termService.list.mockReturnValue(
+      of([
+        { id: 4, type: 'acronym', label: 'PID', expandedForm: 'Process Identifier', excerpt: '' },
+      ]),
+    );
+  });
+
+  it('affiche les termes de l’UE dans leur onglet', () => {
+    setup();
+    expect(element().textContent).toContain('Termes (1)');
+    expect(element().querySelector('.term-label')).toBeNull();
+
+    fixture.componentRef.setInput('onglet', 'termes');
+    fixture.detectChanges();
+
+    expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
+    expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
+    expect(element().querySelector('.course-list')).toBeNull();
+  });
+
+  it('se recharge quand un terme vient d’être créé', () => {
+    setup();
+
+    termService.revision.update((revision) => revision + 1);
+    fixture.detectChanges();
+
+    expect(termService.list).toHaveBeenCalledTimes(2);
   });
 
   it('affiche l’UE et ses cours', () => {
