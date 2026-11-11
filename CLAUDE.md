@@ -17,6 +17,7 @@ Le besoin, le modèle de données et les décisions figées sont dans `CADRAGE.m
 front/    Angular
 api/      NestJS
 docker/   Dockerfiles, Compose, reverse proxy
+deploy/   scripts lancés sur le serveur (préparation, mise en production)
 contracts/ exemples partagés et testés des deux côtés (contenu d'un cours)
 docs/     décisions et procédures (sauvegarde, restauration, déploiement)
 ```
@@ -41,6 +42,15 @@ Version de Node : voir `.nvmrc`. Variables d'environnement : copier `.env.exampl
 | Créer le compte (une seule fois) | `docker compose exec api npm run user:create` |
 
 L'application est servie sur https://localhost. En local, le certificat vient de l'autorité interne de Caddy : le navigateur affiche un avertissement à accepter.
+
+### Production (sur le serveur, dans `/srv/learn`)
+
+Procédure complète : `docs/deploiement.md`.
+
+| Action | Commande |
+|---|---|
+| Préparer un serveur vierge | `sudo ./deploy/setup-server.sh <nom-de-domaine> ['<clé publique du pipeline>']` |
+| Mettre une version en production | `sudo -u deploy ./deploy/deploy.sh <tag>` |
 
 ### API (dans `api/`)
 
