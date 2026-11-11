@@ -28,6 +28,12 @@ export const routes: Routes = [
           import('./features/recherche/search-page').then((module) => module.SearchPage),
       },
       {
+        path: 'agenda',
+        title: 'Agenda',
+        loadComponent: () =>
+          import('./features/agenda/agenda-page').then((module) => module.AgendaPage),
+      },
+      {
         path: 'taches',
         title: 'Tâches',
         loadComponent: () =>
