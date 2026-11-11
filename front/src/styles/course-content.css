@@ -273,8 +273,9 @@
 
 .course-content .block-handle {
   position: absolute;
+  /* Collée au texte : aucun vide à traverser pour l'atteindre. */
   left: -1.75rem;
-  width: 1.5rem;
+  width: 1.75rem;
   height: 1.75rem;
   padding: 0;
   border: 0;
