@@ -28,6 +28,12 @@ export const routes: Routes = [
           import('./features/recherche/search-page').then((module) => module.SearchPage),
       },
       {
+        path: 'taches',
+        title: 'Tâches',
+        loadComponent: () =>
+          import('./features/taches/tasks-page').then((module) => module.TasksPage),
+      },
+      {
         path: 'dictionnaire',
         title: 'Dictionnaire',
         data: { type: 'definition' },
