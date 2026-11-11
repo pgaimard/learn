@@ -27,6 +27,12 @@ const RESULTS: SearchResults = {
     total: 1,
     items: [{ id: 3, label: 'MMU', expandedForm: 'Memory Management Unit', excerpt: [] }],
   },
+  files: {
+    total: 1,
+    items: [
+      { id: 9, name: 'mémoire.pdf', ueCode: 'UTC502', folderId: 4, folderName: 'TD', excerpt: [] },
+    ],
+  },
 };
 
 describe('SearchPage', () => {
@@ -67,13 +73,13 @@ describe('SearchPage', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(service.search).toHaveBeenCalledWith('mémoire');
-    expect(text()).toContain('26 résultats pour « mémoire »');
+    expect(text()).toContain('27 résultats pour « mémoire »');
     expect(
       Array.from(element.querySelectorAll('h2')).map((title) => (title.textContent ?? '').trim()),
-    ).toEqual(['Cours (25)', 'Glossaire (1)']);
+    ).toEqual(['Cours (25)', 'Glossaire (1)', 'Fichiers (1)']);
     expect(
       Array.from(element.querySelectorAll('a.result')).map((link) => link.getAttribute('href')),
-    ).toEqual(['/ue/UTC502/cours/7', '/glossaire/3']);
+    ).toEqual(['/ue/UTC502/cours/7', '/glossaire/3', '/ue/UTC502?onglet=fichiers&dossier=4']);
     expect(element.querySelector('mark')?.textContent).toBe('mémoires');
     expect(text()).toContain('Les 1 résultats les plus pertinents sur 25');
   });
@@ -98,7 +104,9 @@ describe('SearchPage', () => {
   });
 
   it('annonce une recherche sans résultat', () => {
-    service.search.mockReturnValue(of({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY }));
+    service.search.mockReturnValue(
+      of({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY }),
+    );
     setup('xyz');
 
     expect(text()).toContain('Aucun résultat pour « xyz ».');
@@ -111,10 +119,10 @@ describe('SearchPage', () => {
     expect(text()).toContain('Recherche en cours');
 
     show('mémoire');
-    first.next({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY });
+    first.next({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY });
     fixture.detectChanges();
 
-    expect(text()).toContain('26 résultats pour « mémoire »');
+    expect(text()).toContain('27 résultats pour « mémoire »');
   });
 
   it('affiche le refus de l’API', () => {

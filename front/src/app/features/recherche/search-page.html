@@ -43,9 +43,9 @@
           {{ group.title }} <span class="count">({{ group.total }})</span>
         </h2>
         <ul class="results">
-          @for (result of group.results; track result.link.join('/')) {
+          @for (result of group.results; track $index) {
             <li>
-              <a class="card result" [routerLink]="result.link">
+              <a class="card result" [routerLink]="result.link" [queryParams]="result.queryParams">
                 <span class="result-title">{{ result.title }}</span>
                 @if (result.detail) {
                   <span class="result-detail">{{ result.detail }}</span>

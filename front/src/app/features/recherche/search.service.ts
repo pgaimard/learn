@@ -27,10 +27,21 @@ export interface TermResult {
   excerpt: ExcerptSegment[];
 }
 
+export interface FileResult {
+  id: number;
+  name: string;
+  ueCode: string;
+  // Dossier qui contient le fichier ; null à la racine de l'UE.
+  folderId: number | null;
+  folderName: string | null;
+  excerpt: ExcerptSegment[];
+}
+
 export interface SearchResults {
   courses: SearchGroup<CourseResult>;
   definitions: SearchGroup<TermResult>;
   acronyms: SearchGroup<TermResult>;
+  files: SearchGroup<FileResult>;
 }
 
 export const MIN_QUERY_LENGTH = 2;
