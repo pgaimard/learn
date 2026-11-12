@@ -14,9 +14,12 @@ import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
-import { Task, TaskService } from '../taches/task.service';
+import { formatDateTime } from '../taches/task-dates';
+import { TaskForm } from '../taches/task-form';
+import { Task, TaskInput, TaskService } from '../taches/task.service';
 import { Ue, UeService } from '../ue/ue.service';
 import {
+  AgendaItem,
   addMonths,
   isoWeekNumber,
   itemsOfDay,
@@ -42,7 +45,13 @@ import {
 } from './week';
 
 // Formulaire ouvert : création un jour donné, ou modification d'un événement.
-type Editing = { kind: 'new'; day: Date } | { kind: 'edit'; event: AgendaEvent } | null;
+// Fenêtre ouverte : création un jour donné, ou un événement ou une tâche, d'abord en
+// lecture (« view »), puis en modification (« edit ») sans quitter la fenêtre.
+type Editing =
+  | { kind: 'new'; day: Date }
+  | { kind: 'event'; event: AgendaEvent; mode: 'view' | 'edit' }
+  | { kind: 'task'; task: Task; mode: 'view' | 'edit' }
+  | null;
 
 type View = 'semaine' | 'mois' | 'liste';
 type Kind = 'course' | 'deadline' | 'task';
@@ -71,7 +80,7 @@ function isTyping(target: EventTarget | null): boolean {
 
 @Component({
   selector: 'app-agenda-page',
-  imports: [EventForm, Icon, MiniCalendar, Modal, MonthGrid, RouterLink, WeekGrid],
+  imports: [EventForm, Icon, MiniCalendar, Modal, MonthGrid, RouterLink, TaskForm, WeekGrid],
   host: { '(document:keydown)': 'onKey($event)' },
   templateUrl: './agenda-page.html',
   styleUrl: './agenda-page.css',
@@ -149,6 +158,7 @@ export class AgendaPage {
 
   protected readonly formatDay = formatDay;
   protected readonly formatTime = formatTime;
+  protected readonly formatDateTime = formatDateTime;
 
   constructor() {
     effect(() => {
@@ -247,9 +257,83 @@ export class AgendaPage {
     this.editing.set(editing);
   }
 
+  // Ouvre le détail de l'élément cliqué dans une grille.
+  protected show(item: AgendaItem): void {
+    if (item.event) {
+      this.open({ kind: 'event', event: item.event, mode: 'view' });
+    } else if (item.task) {
+      this.open({ kind: 'task', task: item.task, mode: 'view' });
+    }
+  }
+
+  // Titre de la fenêtre selon ce qu'elle montre.
+  protected modalHeading(editing: NonNullable<Editing>): string {
+    if (editing.kind === 'new') {
+      return 'Nouvel événement';
+    }
+    if (editing.kind === 'event') {
+      return editing.mode === 'edit' ? 'Modifier l’événement' : editing.event.title;
+    }
+    return editing.mode === 'edit' ? 'Modifier la tâche' : editing.task.title;
+  }
+
+  // Passe du détail à la modification, dans la même fenêtre.
+  protected edit(): void {
+    const editing = this.editing();
+    if (editing && editing.kind !== 'new') {
+      this.open({ ...editing, mode: 'edit' });
+    }
+  }
+
+  protected saveTask(input: TaskInput): void {
+    const editing = this.editing();
+    if (editing?.kind !== 'task' || this.isSaving()) {
+      return;
+    }
+    this.isSaving.set(true);
+    this.taskService.update(editing.task.id, input).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.editing.set(null);
+        this.load();
+      },
+      error: (error: ApiError) => {
+        this.isSaving.set(false);
+        this.formErrors.set(error.messages);
+      },
+    });
+  }
+
+  protected toggleTask(task: Task): void {
+    this.taskService.update(task.id, { done: !task.done }).subscribe({
+      next: () => {
+        this.editing.set(null);
+        this.load();
+      },
+      error: (error: ApiError) => this.formErrors.set(error.messages),
+    });
+  }
+
+  protected async removeTask(task: Task): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer la tâche',
+      `La tâche « ${task.title} » sera supprimée.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.taskService.remove(task.id).subscribe({
+      next: () => {
+        this.editing.set(null);
+        this.load();
+      },
+      error: (error: ApiError) => this.formErrors.set(error.messages),
+    });
+  }
+
   protected save(value: EventFormValue): void {
     const editing = this.editing();
-    if (editing === null || this.isSaving()) {
+    if (editing === null || editing.kind === 'task' || this.isSaving()) {
       return;
     }
     this.isSaving.set(true);

@@ -228,6 +228,11 @@ a.button:hover {
   color: var(--color-text-muted);
 }
 
+/* Suppression discrète : sans cadre, mais dans la couleur du danger. */
+.button-ghost.button-danger {
+  color: var(--color-danger);
+}
+
 /* Bouton d'outil : barre de l'éditeur, barre du bloc de code. */
 
 .tool {

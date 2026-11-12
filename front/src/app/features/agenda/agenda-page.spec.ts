@@ -43,7 +43,11 @@ describe('AgendaPage', () => {
     update: vi.fn<EventService['update']>(),
     remove: vi.fn<EventService['remove']>(),
   };
-  const taskService = { list: vi.fn<TaskService['list']>() };
+  const taskService = {
+    list: vi.fn<TaskService['list']>(),
+    update: vi.fn<TaskService['update']>(),
+    remove: vi.fn<TaskService['remove']>(),
+  };
   const dialog = {
     confirm: vi.fn<DialogService['confirm']>(),
     confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
@@ -142,7 +146,7 @@ describe('AgendaPage', () => {
     expect(text(days()[0])).toContain('Rien de prévu.');
     const tuesday = Array.from(days()[1].querySelectorAll('.entry')).map((entry) => text(entry));
     expect(tuesday[0]).toContain('12:00 Rendre le TP Tâche');
-    expect(tuesday[1]).toContain('18:00 – 21:00 Cours systèmesUTC502 Cours');
+    expect(tuesday[1]).toContain('18:00 – 21:00 Cours systèmes UTC502 Cours');
     expect(text(days()[4])).toContain('23:00 Rendu du projet Échéance');
   });
 
@@ -292,28 +296,95 @@ describe('AgendaPage', () => {
 
       const columns = Array.from(element().querySelectorAll('app-week-grid .day'));
       expect(columns).toHaveLength(7);
-      const course = columns[1].querySelector<HTMLElement>('button.block');
+      const course = columns[1].querySelector<HTMLElement>('button.block:not(.is-task)');
       expect(text(course)).toBe('Cours systèmes18:00 – 21:00');
       // 18 h, dix heures après l'ouverture de la grille à 8 h, quarante pixels par heure.
       expect(course?.style.top).toBe('400px');
       expect(course?.style.height).toBe('120px');
-      expect(columns[1].querySelector('a.block')?.getAttribute('href')).toBe('/taches');
+      expect(text(columns[1].querySelector('.block.is-task'))).toBe('Rendre le TP');
       expect(columns[4].querySelector('.block.is-deadline')).not.toBeNull();
     });
 
-    it('ouvre un événement pour le modifier, et un jour pour y créer', () => {
+    it('ouvre un jour pour y créer un événement', () => {
       setup('2026-11-16', 'semaine');
 
-      click('Modifier Cours systèmes, 18:00 – 21:00');
-      expect(element().querySelector<HTMLInputElement>('#event-title')?.value).toBe(
-        'Cours systèmes',
-      );
-
-      click('Fermer la fenêtre');
       click('Ajouter un événement le jeudi 19 novembre');
+
       expect(element().querySelector<HTMLInputElement>('#event-start')?.value).toBe(
         '2026-11-19T09:00',
       );
+    });
+
+    it('montre le détail d’un événement, puis le modifie dans la même fenêtre', () => {
+      setup('2026-11-16', 'semaine');
+      eventService.update.mockReturnValue(of(COURSE));
+
+      click('Cours systèmes, 18:00 – 21:00');
+
+      const modal = (): Element | null => element().querySelector('dialog');
+      expect(text(modal()?.querySelector('h2') ?? null)).toBe('Cours systèmes');
+      expect(text(modal()?.querySelector('.detail') ?? null)).toContain('Type Cours');
+      expect(text(modal()?.querySelector('.detail') ?? null)).toContain('UTC502');
+      expect(text(modal()?.querySelector('.detail') ?? null)).toMatch(/Début.*18:00/);
+      expect(element().querySelector('#event-title')).toBeNull();
+
+      click('Modifier');
+      expect(text(modal()?.querySelector('h2') ?? null)).toBe('Modifier l’événement');
+      fill('event-title', 'Cours déplacé');
+      submit();
+
+      expect(eventService.update).toHaveBeenCalledWith(
+        4,
+        expect.objectContaining({ title: 'Cours déplacé' }),
+      );
+      expect(modal()).toBeNull();
+    });
+
+    it('revient au détail quand la modification est annulée', () => {
+      setup('2026-11-16', 'semaine');
+      click('Cours systèmes, 18:00 – 21:00');
+      click('Modifier');
+
+      click('Annuler');
+
+      expect(element().querySelector('#event-title')).toBeNull();
+      expect(text(element().querySelector('dialog h2'))).toBe('Cours systèmes');
+    });
+
+    it('montre le détail d’une tâche, la modifie ou la marque comme faite', () => {
+      setup('2026-11-16', 'semaine');
+      taskService.update.mockReturnValue(of(TASK));
+
+      click('Tâche : Rendre le TP, 12:00');
+      expect(text(element().querySelector('dialog h2'))).toBe('Rendre le TP');
+      expect(text(element().querySelector('dialog .detail'))).toContain('Tâche à faire');
+
+      click('Modifier');
+      fill('task-title', 'Rendre le TP 2');
+      element().querySelector('app-task-form form')?.dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+      expect(taskService.update).toHaveBeenCalledWith(
+        TASK.id,
+        expect.objectContaining({ title: 'Rendre le TP 2' }),
+      );
+
+      click('Tâche : Rendre le TP, 12:00');
+      click('Marquer comme faite');
+      expect(taskService.update).toHaveBeenLastCalledWith(TASK.id, { done: true });
+      expect(element().querySelector('dialog')).toBeNull();
+    });
+
+    it('supprime depuis le détail, après confirmation', async () => {
+      setup('2026-11-16', 'semaine');
+      dialog.confirmDeletion.mockResolvedValue(true);
+      eventService.remove.mockReturnValue(of(undefined));
+
+      click('Cours systèmes, 18:00 – 21:00');
+      click('Supprimer');
+      await settle();
+
+      expect(eventService.remove).toHaveBeenCalledWith(4);
+      expect(element().querySelector('dialog')).toBeNull();
     });
   });
 
@@ -326,6 +397,9 @@ describe('AgendaPage', () => {
       expect(cells).toHaveLength(42);
       // Le 17 novembre est le vingt-troisième jour d'une grille qui commence le 26 octobre.
       expect(text(cells[22])).toBe('17 Rendre le TP 18:00 Cours systèmes');
+
+      click('Tâche : Rendre le TP, 12:00');
+      expect(text(element().querySelector('dialog h2'))).toBe('Rendre le TP');
       expect(cells[0].classList).toContain('is-outside');
     });
 

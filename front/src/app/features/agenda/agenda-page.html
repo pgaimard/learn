@@ -74,32 +74,145 @@
 }
 
 @if (editing(); as editing) {
-  <app-modal
-    [heading]="editing.kind === 'new' ? 'Nouvel événement' : 'Modifier l’événement'"
-    [wide]="true"
-    (closed)="open(null)"
-  >
-    @if (editing.kind === 'new') {
-      <app-event-form
-        [day]="editing.day"
-        [ues]="ues()"
-        [errors]="formErrors()"
-        [isSaving]="isSaving()"
-        (saved)="save($event)"
-        (cancelled)="open(null)"
-      />
-    } @else {
-      <app-event-form
-        [event]="editing.event"
-        [ues]="ues()"
-        [errors]="formErrors()"
-        [isSaving]="isSaving()"
-        (saved)="save($event)"
-        (cancelled)="open(null)"
-      />
-      <button type="button" class="button button-danger delete" (click)="remove(editing.event)">
-        <app-icon name="trash" />Supprimer l’événement
-      </button>
+  <app-modal [heading]="modalHeading(editing)" [wide]="true" (closed)="open(null)">
+    @switch (editing.kind) {
+      @case ('new') {
+        <app-event-form
+          [day]="editing.day"
+          [ues]="ues()"
+          [errors]="formErrors()"
+          [isSaving]="isSaving()"
+          (saved)="save($event)"
+          (cancelled)="open(null)"
+        />
+      }
+      @case ('event') {
+        @if (editing.mode === 'edit') {
+          <app-event-form
+            [event]="editing.event"
+            [ues]="ues()"
+            [errors]="formErrors()"
+            [isSaving]="isSaving()"
+            (saved)="save($event)"
+            (cancelled)="open({ kind: 'event', event: editing.event, mode: 'view' })"
+          />
+        } @else {
+          <dl class="detail">
+            <div>
+              <dt>Type</dt>
+              <dd>
+                <span class="pill">
+                  {{ editing.event.type === 'deadline' ? 'Échéance' : 'Cours' }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>UE</dt>
+              <dd>
+                @if (editing.event.ue; as ue) {
+                  <span class="code-chip">{{ ue.code }}</span> {{ ue.title }}
+                } @else {
+                  Aucune
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>{{ editing.event.type === 'deadline' ? 'Échéance' : 'Début' }}</dt>
+              <dd>{{ formatDateTime(editing.event.startsAt) }}</dd>
+            </div>
+            @if (editing.event.endsAt !== editing.event.startsAt) {
+              <div>
+                <dt>Fin</dt>
+                <dd>{{ formatDateTime(editing.event.endsAt) }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      }
+      @case ('task') {
+        @if (editing.mode === 'edit') {
+          <app-task-form
+            [task]="editing.task"
+            [ues]="ues()"
+            [errors]="formErrors()"
+            [isSaving]="isSaving()"
+            (saved)="saveTask($event)"
+            (cancelled)="open({ kind: 'task', task: editing.task, mode: 'view' })"
+          />
+        } @else {
+          <dl class="detail">
+            <div>
+              <dt>État</dt>
+              <dd>
+                <span class="pill">{{ editing.task.done ? 'Tâche faite' : 'Tâche à faire' }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>UE</dt>
+              <dd>
+                @if (editing.task.ue; as ue) {
+                  <span class="code-chip">{{ ue.code }}</span> {{ ue.title }}
+                } @else {
+                  Aucune
+                }
+              </dd>
+            </div>
+            @if (editing.task.dueAt; as dueAt) {
+              <div>
+                <dt>Échéance</dt>
+                <dd>{{ formatDateTime(dueAt) }}</dd>
+              </div>
+            }
+            @if (editing.task.remindAt; as remindAt) {
+              <div>
+                <dt>Rappel</dt>
+                <dd>{{ formatDateTime(remindAt) }}</dd>
+              </div>
+            }
+          </dl>
+          <div role="alert">
+            @for (error of formErrors(); track error) {
+              <p class="form-error">{{ error }}</p>
+            }
+          </div>
+        }
+      }
+    }
+
+    <!-- En lecture, les actions sont dans la bande du bas ; en modification, le
+         formulaire porte les siennes. -->
+    @if (editing.kind === 'event' && editing.mode === 'view') {
+      <div modalFooter class="modal-footer">
+        <button
+          type="button"
+          class="button button-ghost button-danger modal-aside"
+          (click)="remove(editing.event)"
+        >
+          <app-icon name="trash" />Supprimer
+        </button>
+        <button type="button" class="button" (click)="open(null)">Fermer</button>
+        <button type="button" class="button button-primary" (click)="edit()">
+          <app-icon name="pencil" />Modifier
+        </button>
+      </div>
+    } @else if (editing.kind === 'task' && editing.mode === 'view') {
+      <div modalFooter class="modal-footer">
+        <button
+          type="button"
+          class="button button-ghost button-danger modal-aside"
+          (click)="removeTask(editing.task)"
+        >
+          <app-icon name="trash" />Supprimer
+        </button>
+        <button type="button" class="button" (click)="toggleTask(editing.task)">
+          <app-icon name="check" />{{
+            editing.task.done ? 'Remettre à faire' : 'Marquer comme faite'
+          }}
+        </button>
+        <button type="button" class="button button-primary" (click)="edit()">
+          <app-icon name="pencil" />Modifier
+        </button>
+      </div>
     }
   </app-modal>
 }
@@ -164,7 +277,7 @@
             [weekStart]="weekStart()"
             [items]="items()"
             [now]="today"
-            (eventPicked)="open({ kind: 'edit', event: $event })"
+            (itemPicked)="show($event)"
             (dayPicked)="open({ kind: 'new', day: $event })"
           />
         }
@@ -173,7 +286,7 @@
             [month]="month()"
             [items]="items()"
             [now]="today"
-            (eventPicked)="open({ kind: 'edit', event: $event })"
+            (itemPicked)="show($event)"
             (dayPicked)="open({ kind: 'new', day: $event })"
             (dayOpened)="goTo($event, 'semaine')"
           />
@@ -207,13 +320,14 @@
                       <li class="entry">
                         @if (entry.kind === 'task') {
                           <span class="time">{{ formatTime(entry.time) }}</span>
-                          <a
+                          <button
+                            type="button"
                             class="entry-title"
-                            routerLink="/taches"
                             [class.is-done]="entry.task.done"
+                            (click)="open({ kind: 'task', task: entry.task, mode: 'view' })"
                           >
                             {{ entry.task.title }}
-                          </a>
+                          </button>
                           @if (entry.task.ue; as ue) {
                             <span class="code-chip">{{ ue.code }}</span>
                           }
@@ -225,7 +339,13 @@
                               – {{ formatTime(entry.event.endsAt) }}
                             }
                           </span>
-                          <span class="entry-title">{{ entry.event.title }}</span>
+                          <button
+                            type="button"
+                            class="entry-title"
+                            (click)="open({ kind: 'event', event: entry.event, mode: 'view' })"
+                          >
+                            {{ entry.event.title }}
+                          </button>
                           @if (entry.event.ue; as ue) {
                             <span class="code-chip">{{ ue.code }}</span>
                           }
@@ -237,7 +357,7 @@
                               type="button"
                               class="button button-icon button-ghost"
                               [attr.aria-label]="'Modifier ' + entry.event.title"
-                              (click)="open({ kind: 'edit', event: entry.event })"
+                              (click)="open({ kind: 'event', event: entry.event, mode: 'edit' })"
                             >
                               <app-icon name="pencil" />
                             </button>
