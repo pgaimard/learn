@@ -97,6 +97,9 @@
             (cancelled)="open({ kind: 'event', event: editing.event, mode: 'view' })"
           />
         } @else {
+          @if (editing.event.description) {
+            <p class="description">{{ editing.event.description }}</p>
+          }
           <dl class="detail">
             <div>
               <dt>Type</dt>

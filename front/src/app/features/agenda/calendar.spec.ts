@@ -75,6 +75,7 @@ describe('toAgendaItems', () => {
         {
           id: 1,
           title: 'Cours',
+          description: '',
           type: 'course',
           ue: { code: 'UTC502', title: '' },
           startsAt: at(18, 30).toISOString(),
@@ -83,6 +84,7 @@ describe('toAgendaItems', () => {
         {
           id: 2,
           title: 'Rendu',
+          description: '',
           type: 'deadline',
           ue: null,
           startsAt: at(12).toISOString(),

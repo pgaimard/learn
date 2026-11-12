@@ -58,6 +58,7 @@ export class EventForm implements OnInit {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    description: ['', Validators.maxLength(2000)],
     type: this.formBuilder.control<EventType>('course'),
     ueCode: [''],
     startsAt: ['', Validators.required],
@@ -72,6 +73,7 @@ export class EventForm implements OnInit {
     this.type.set(event?.type ?? 'course');
     this.form.setValue({
       title: event?.title ?? '',
+      description: event?.description ?? '',
       type: this.type(),
       ueCode: event ? (event.ue?.code ?? '') : this.defaultUeCode(),
       startsAt: toLocalInput(start.toISOString()),
@@ -81,7 +83,8 @@ export class EventForm implements OnInit {
   }
 
   protected submit(): void {
-    const { title, type, ueCode, startsAt, endsAt, repeatUntil } = this.form.getRawValue();
+    const { title, description, type, ueCode, startsAt, endsAt, repeatUntil } =
+      this.form.getRawValue();
     const start = toDate(startsAt);
     // Une échéance est ponctuelle : sa fin est son début.
     const end = type === 'deadline' ? start : toDate(endsAt);
@@ -92,9 +95,18 @@ export class EventForm implements OnInit {
     }
     const until = repeatUntil === '' ? null : new Date(`${repeatUntil}T00:00`);
     this.saved.emit({
-      details: { title: title.trim(), type, ueCode: ueCode === '' ? null : ueCode },
+      details: {
+        title: title.trim(),
+        description: description.trim(),
+        type,
+        ueCode: ueCode === '' ? null : ueCode,
+      },
       occurrences: weeklyOccurrences(start, end, this.event() ? null : until),
     });
+  }
+
+  protected isDescriptionInvalid(): boolean {
+    return this.form.controls.description.invalid;
   }
 
   protected isTitleInvalid(): boolean {

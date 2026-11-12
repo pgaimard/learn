@@ -12,6 +12,7 @@ import { AddFilesSearch1794720000000 } from './1794720000000-add-files-search.js
 import { CreateTasks1794800000000 } from './1794800000000-create-tasks.js';
 import { CreateEvents1794810000000 } from './1794810000000-create-events.js';
 import { AddPrefixSearch1794900000000 } from './1794900000000-add-prefix-search.js';
+import { AddEventDescription1794910000000 } from './1794910000000-add-event-description.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -28,4 +29,5 @@ export const migrations = [
   CreateTasks1794800000000,
   CreateEvents1794810000000,
   AddPrefixSearch1794900000000,
+  AddEventDescription1794910000000,
 ];

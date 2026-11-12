@@ -30,6 +30,22 @@
     </div>
   </div>
 
+  <div class="field">
+    <label for="event-description">Description</label>
+    <textarea
+      id="event-description"
+      rows="2"
+      formControlName="description"
+      [attr.aria-invalid]="isDescriptionInvalid()"
+      [attr.aria-describedby]="isDescriptionInvalid() ? 'event-description-error' : null"
+    ></textarea>
+    @if (isDescriptionInvalid()) {
+      <p id="event-description-error" class="field-error">
+        La description ne doit pas dépasser 2000 caractères.
+      </p>
+    }
+  </div>
+
   <div class="form-row">
     <div class="field field-grow">
       <label for="event-start">{{ type() === 'deadline' ? 'Date et heure' : 'Début' }}</label>

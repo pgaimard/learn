@@ -94,6 +94,8 @@ describe('Événements', () => {
 
   it.each([
     ['un titre vide', { title: ' ' }],
+    ['une description trop longue', { description: 'x'.repeat(2001) }],
+    ['une description qui n’est pas un texte', { description: 12 }],
     ['un type inconnu', { type: 'examen' }],
     ['une UE inconnue', { ueCode: 'ABC123' }],
     ['aucune occurrence', { occurrences: [] }],
@@ -195,6 +197,33 @@ describe('Événements', () => {
     expect(
       await titles('?from=2026-11-23T00:00:00Z&to=2026-12-07T00:00:00Z'),
     ).toEqual(['Cours UTC502', 'Cours UTC502']);
+  });
+
+  it('garde la description d’un événement, vide par défaut', async () => {
+    const created = await create({
+      title: 'Soutenance',
+      description: '  Salle 31.\nApporter le rapport. ',
+      type: 'deadline',
+      occurrences: [occurrence('2027-01-12', '10:00', '10:00')],
+    });
+    const [event] = created.body as AgendaEvent[];
+    expect(created.status).toBe(201);
+    expect(event.description).toBe('Salle 31.\nApporter le rapport.');
+
+    // Une modification qui ne la cite pas la laisse en place.
+    const renamed = await client('patch', `/api/events/${event.id}`).send({
+      title: 'Soutenance du projet',
+    });
+    expect(renamed.body).toMatchObject({
+      title: 'Soutenance du projet',
+      description: 'Salle 31.\nApporter le rapport.',
+    });
+
+    const cleared = await client('patch', `/api/events/${event.id}`).send({
+      description: '',
+    });
+    expect(cleared.body).toMatchObject({ description: '' });
+    await client('delete', `/api/events/${event.id}`);
   });
 
   it('refuse de placer la fin avant le début en modifiant une seule date', async () => {

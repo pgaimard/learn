@@ -143,6 +143,7 @@ describe('UeListPage', () => {
         {
           id: 1,
           title: 'Cours systèmes',
+          description: '',
           type: 'course',
           ue: { code: 'UTC502', title: 'Systèmes' },
           startsAt: today.toISOString(),

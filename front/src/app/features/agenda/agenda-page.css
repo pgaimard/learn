@@ -91,6 +91,12 @@ h1 span {
   font-size: 0.78125rem;
 }
 
+.description {
+  margin: 0 0 1rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .detail {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
