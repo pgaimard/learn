@@ -1,5 +1,5 @@
 :host {
-  flex: 0 1 18.75rem;
+  flex: 0 1 21rem;
   min-width: 9rem;
 }
 
@@ -30,7 +30,7 @@ input {
   background: none;
   color: var(--color-text);
   font: inherit;
-  font-size: 0.78125rem;
+  font-size: 0.875rem;
 }
 
 input::placeholder {

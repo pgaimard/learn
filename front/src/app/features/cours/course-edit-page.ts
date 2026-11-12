@@ -13,12 +13,15 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { MenuButton } from '../../core/ui/menu-button';
+import { shortcut } from '../../core/ui/platform';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
 
 @Component({
   selector: 'app-course-edit-page',
-  imports: [ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, MenuButton, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './course-edit-page.html',
   styleUrl: './course-edit-page.css',
   host: {
@@ -42,6 +45,7 @@ export class CourseEditPage {
 
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
+  protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
   protected readonly savedAt = signal<Date | null>(null);

@@ -1,11 +1,16 @@
-<div class="sticky">
-  <ng-content />
+<!-- Trois emplacements : [editorActions] à droite de la barre, [sheetHeader] en tête de
+     la feuille, et le reste (erreurs) entre la barre et la feuille. -->
+<div class="bar">
   @if (view.editor(); as editor) {
     <app-editor-toolbar [editor]="editor" (imagePicked)="imageAdded.emit($event)" />
   }
+  <div class="bar-actions"><ng-content select="[editorActions]" /></div>
 </div>
 
+<ng-content />
+
 <div class="sheet">
+  <ng-content select="[sheetHeader]" />
   <app-course-content
     #view
     [content]="content()"
@@ -40,6 +45,7 @@
         [pos]="target.pos"
         [style.top.px]="target.top"
         [style.left.px]="target.left"
+        [style.width.px]="target.width"
       />
     }
   }

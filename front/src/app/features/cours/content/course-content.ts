@@ -16,6 +16,7 @@ import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { setSheetView } from '../revision/revision-sheet-view';
+import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -49,7 +50,7 @@ export class CourseContent {
   // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
   // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
-  readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
+  readonly codeBlockBar = signal<CodeBlockTarget | null>(null);
   // Menu « / » d'insertion de bloc.
   readonly slash = new SlashMenuState(
     () => this.editor(),
@@ -79,7 +80,7 @@ export class CourseContent {
               onChange: (target) => this.selectionBar.set(this.offset(target)),
               onCodeBlock: (target) => {
                 const place = this.offset(target);
-                this.codeBlockBar.set(target && place ? { pos: target.pos, ...place } : null);
+                this.codeBlockBar.set(target && place ? { ...target, ...place } : null);
               },
             },
             slash: {
@@ -103,7 +104,12 @@ export class CourseContent {
               return this.receiveImages(event.dataTransfer);
             },
           },
-          onUpdate: () => {
+          onUpdate: ({ transaction }) => {
+            // Une retouche que l'éditeur fait seul (paragraphe final ajouté au premier
+            // clic, par exemple) n'est pas une modification de l'utilisateur.
+            if (!transaction.docChanged) {
+              return;
+            }
             this.blockMenu.set(null);
             this.tableMenu.set(null);
             this.edited.emit();

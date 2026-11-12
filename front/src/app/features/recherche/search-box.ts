@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs';
 import { Icon } from '../../core/ui/icon';
+import { shortcut } from '../../core/ui/platform';
 import { MIN_QUERY_LENGTH } from './search.service';
 
 export const SEARCH_PATH = '/recherche';
@@ -28,7 +29,7 @@ export class SearchBox {
 
   protected readonly query = new FormControl('', { nonNullable: true });
   // Le raccourci affiché est celui du clavier de l'appareil ; les deux fonctionnent.
-  protected readonly shortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
+  protected readonly shortcut = shortcut('K');
 
   constructor() {
     this.query.valueChanges

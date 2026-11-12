@@ -9,3 +9,5 @@
   [value]="language()"
   (valueChange)="setLanguage($event)"
 />
+<span class="meta name">Bloc de code</span>
+<button type="button" class="tool" (click)="copy()">{{ copied() ? 'Copié' : 'Copier' }}</button>

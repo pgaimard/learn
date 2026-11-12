@@ -7,12 +7,14 @@ import {
   input,
   output,
 } from '@angular/core';
+import { Icon } from '../../../../core/ui/icon';
 import { SlashCommand } from './slash-commands';
 
 // Liste des blocs proposés sous le « / » saisi. Le focus reste dans l'éditeur : les
 // flèches et Entrée y sont interceptées, la liste ne fait que montrer le choix en cours.
 @Component({
   selector: 'app-slash-menu',
+  imports: [Icon],
   templateUrl: './slash-menu.html',
   styleUrl: './slash-menu.css',
   host: {
