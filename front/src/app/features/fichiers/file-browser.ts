@@ -12,6 +12,8 @@ import { RouterLink } from '@angular/router';
 import { catchError, concatMap, forkJoin, from, map, Observable, of, toArray } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { Modal } from '../../core/ui/modal';
 import { FileService, Folder, MAX_FILE_SIZE, StoredFile } from './file.service';
 import { FolderPicker } from './folder-picker';
 import { childrenOf, pathTo } from './folder-tree';
@@ -35,7 +37,7 @@ interface UploadReport {
 // Fichiers et dossiers d'une UE : parcours, gestion des dossiers, envoi et téléchargement.
 @Component({
   selector: 'app-file-browser',
-  imports: [DatePipe, FolderPicker, NameForm, RouterLink],
+  imports: [DatePipe, FolderPicker, Icon, Modal, NameForm, RouterLink],
   templateUrl: './file-browser.html',
   styleUrl: './file-browser.css',
   host: {
@@ -74,6 +76,26 @@ export class FileBrowser {
   );
 
   protected readonly formatSize = formatSize;
+  // Titre de la fenêtre selon le formulaire ouvert.
+  protected readonly headings = {
+    'new-folder': 'Nouveau dossier',
+    'rename-folder': 'Renommer le dossier',
+    'rename-file': 'Renommer le fichier',
+  } as const;
+  protected readonly renamedFolder = computed(() => {
+    const editing = this.editing();
+    return editing?.kind === 'rename-folder'
+      ? this.folders().find((folder) => folder.id === editing.id)
+      : undefined;
+  });
+  protected readonly renamedFile = computed(() => {
+    const editing = this.editing();
+    return editing?.kind === 'rename-file'
+      ? this.files().find((file) => file.id === editing.id)
+      : undefined;
+  });
+  // Nom du dossier affiché, celui de l'UE à sa racine.
+  protected readonly currentName = computed(() => this.path()?.at(-1)?.name ?? this.ueCode());
 
   constructor() {
     effect(() => {
@@ -97,16 +119,6 @@ export class FileBrowser {
   protected open(editing: Editing): void {
     this.formErrors.set([]);
     this.editing.set(editing);
-  }
-
-  protected isRenaming(folder: Folder): boolean {
-    const editing = this.editing();
-    return editing?.kind === 'rename-folder' && editing.id === folder.id;
-  }
-
-  protected isRenamingFile(file: StoredFile): boolean {
-    const editing = this.editing();
-    return editing?.kind === 'rename-file' && editing.id === file.id;
   }
 
   protected renameFile(file: StoredFile, name: string): void {

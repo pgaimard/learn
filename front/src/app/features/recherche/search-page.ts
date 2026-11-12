@@ -5,6 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { catchError, EMPTY, map, of, switchMap, tap } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
 import { DisplayedGroup, toDisplayedGroups } from './search-groups';
 import { MIN_QUERY_LENGTH, SearchService } from './search.service';
 
@@ -15,7 +16,7 @@ type State =
 
 @Component({
   selector: 'app-search-page',
-  imports: [RouterLink],
+  imports: [Icon, RouterLink],
   templateUrl: './search-page.html',
   styleUrl: './search-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

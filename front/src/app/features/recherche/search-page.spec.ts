@@ -75,8 +75,15 @@ describe('SearchPage', () => {
     expect(service.search).toHaveBeenCalledWith('mémoire');
     expect(text()).toContain('27 résultats pour « mémoire »');
     expect(
-      Array.from(element.querySelectorAll('h2')).map((title) => (title.textContent ?? '').trim()),
-    ).toEqual(['Cours (25)', 'Glossaire (1)', 'Fichiers (1)']);
+      Array.from(element.querySelectorAll('h2')).map((title) => [
+        title.firstChild?.textContent?.trim(),
+        title.querySelector('.count')?.textContent,
+      ]),
+    ).toEqual([
+      ['Cours', '25'],
+      ['Glossaire', '1'],
+      ['Fichiers', '1'],
+    ]);
     expect(
       Array.from(element.querySelectorAll('a.result')).map((link) => link.getAttribute('href')),
     ).toEqual(['/ue/UTC502/cours/7', '/glossaire/3', '/ue/UTC502?onglet=fichiers&dossier=4']);
