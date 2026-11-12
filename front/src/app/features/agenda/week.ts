@@ -34,12 +34,17 @@ export function weekDays(weekStart: Date): Date[] {
 // Semaine désignée par le paramètre d'adresse ?semaine=AAAA-MM-JJ ; la semaine en cours
 // si le paramètre est absent ou invalide.
 export function parseWeekParam(value: string | undefined, today: Date): Date {
+  return startOfWeek(parseDateParam(value, today));
+}
+
+// Jour désigné par ce même paramètre ; aujourd'hui s'il est absent ou invalide.
+export function parseDateParam(value: string | undefined, today: Date): Date {
   const match = WEEK_PARAM.exec(value ?? '');
   if (!match) {
-    return startOfWeek(today);
+    return today;
   }
   const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return startOfWeek(Number.isNaN(date.getTime()) ? today : date);
+  return Number.isNaN(date.getTime()) ? today : date;
 }
 
 export function formatWeekParam(date: Date): string {

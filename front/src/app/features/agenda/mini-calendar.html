@@ -1,0 +1,39 @@
+<div class="head">
+  <button
+    type="button"
+    class="button button-icon button-ghost"
+    aria-label="Mois précédent"
+    (click)="shiftMonth(-1)"
+  >
+    <app-icon name="chevron-left" />
+  </button>
+  <span class="title">{{ title() }}</span>
+  <button
+    type="button"
+    class="button button-icon button-ghost"
+    aria-label="Mois suivant"
+    (click)="shiftMonth(1)"
+  >
+    <app-icon name="chevron-right" />
+  </button>
+</div>
+<div class="grid">
+  @for (weekday of weekdays; track $index) {
+    <span class="weekday" aria-hidden="true">{{ weekday }}</span>
+  }
+  @for (day of days(); track day.date.getTime()) {
+    <button
+      type="button"
+      class="day"
+      [class.is-outside]="day.isOutside"
+      [class.is-in-week]="day.isInWeek"
+      [class.is-today]="day.isToday"
+      [class.has-items]="day.hasItems"
+      [attr.aria-label]="day.label + (day.hasItems ? ', avec des éléments' : '')"
+      [attr.aria-current]="day.isToday ? 'date' : null"
+      (click)="picked.emit(day.date)"
+    >
+      {{ day.date.getDate() }}
+    </button>
+  }
+</div>
