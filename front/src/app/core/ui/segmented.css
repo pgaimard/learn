@@ -1,0 +1,30 @@
+:host {
+  display: inline-block;
+}
+
+.segments {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--color-raised);
+}
+
+button {
+  height: 1.5rem;
+  padding: 0 0.6875rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button.is-on {
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  color: var(--color-text);
+}

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   OnInit,
@@ -8,7 +9,10 @@ import {
   signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Dropdown } from '../../core/ui/dropdown';
+import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { fromLocalInput, toLocalInput } from '../taches/task-dates';
+import { ueOptions } from '../ue/ue-options';
 import { Ue } from '../ue/ue.service';
 import { AgendaEvent, EventDetails, EventType, Occurrence } from './event.service';
 import { weeklyOccurrences } from './week';
@@ -23,7 +27,7 @@ const HOUR_MS = 60 * 60 * 1000;
 
 @Component({
   selector: 'app-event-form',
-  imports: [ReactiveFormsModule],
+  imports: [Dropdown, Segmented, ReactiveFormsModule],
   templateUrl: './event-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,6 +37,13 @@ export class EventForm implements OnInit {
   // Jour proposé à la création.
   readonly day = input<Date | null>(null);
   readonly ues = input.required<Ue[]>();
+  protected readonly ueChoices = computed(() =>
+    ueOptions(this.ues(), [{ value: '', label: 'Aucune' }]),
+  );
+  protected readonly typeOptions: SegmentedOption[] = [
+    { value: 'course', label: 'Cours' },
+    { value: 'deadline', label: 'Échéance' },
+  ];
   readonly defaultUeCode = input('');
   readonly errors = input<string[]>([]);
   readonly isSaving = input(false);

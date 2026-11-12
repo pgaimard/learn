@@ -17,12 +17,7 @@
     </div>
     <div class="field field-grow">
       <label for="task-ue">UE</label>
-      <select id="task-ue" formControlName="ueCode">
-        <option value="">Aucune</option>
-        @for (ue of ues(); track ue.id) {
-          <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-        }
-      </select>
+      <app-dropdown fieldId="task-ue" formControlName="ueCode" [options]="ueChoices()" />
     </div>
   </div>
 

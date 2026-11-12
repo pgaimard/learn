@@ -1,12 +1,13 @@
 <div class="toolbar" role="toolbar" aria-label="Blocs et insertions">
   <div class="group">
-    <select aria-label="Style du bloc" [value]="blockStyle()" (change)="setBlockStyle($event)">
-      <option value="paragraph">Paragraphe</option>
-      <option value="h2">Section</option>
-      <option value="h3">Sous-section</option>
-      <option value="h4">Sous-sous-section</option>
-      <option value="h5">Point</option>
-    </select>
+    <app-dropdown
+      compact
+      label="Style du bloc"
+      [returnFocus]="false"
+      [options]="blockStyles"
+      [value]="blockStyle()"
+      (valueChange)="setBlockStyle($event)"
+    />
   </div>
 
   <div class="group">

@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { pickOption } from '../../core/ui/dropdown.testing';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { UeService } from '../ue/ue.service';
@@ -124,20 +125,20 @@ describe('TasksPage', () => {
       task(2, 'Acheter un cahier'),
     ]);
 
-    fill('task-ue-filter', 'UTC502', 'change');
+    pickOption(fixture, '#task-ue-filter', 'UTC502');
     expect(titles('Tâches à faire')).toEqual(['TP systèmes']);
 
-    fill('task-ue-filter', '-', 'change');
+    pickOption(fixture, '#task-ue-filter', '-');
     expect(titles('Tâches à faire')).toEqual(['Acheter un cahier']);
 
-    fill('task-ue-filter', 'NFE108', 'change');
+    pickOption(fixture, '#task-ue-filter', 'NFE108');
     expect(text()).toContain('Aucune tâche à faire.');
   });
 
   it('crée une tâche dans l’UE filtrée, avec son échéance', () => {
     setup([]);
     service.create.mockReturnValue(of(task(3, 'Réviser')));
-    fill('task-ue-filter', 'UTC502', 'change');
+    pickOption(fixture, '#task-ue-filter', 'UTC502');
     click('Nouvelle tâche');
 
     fill('task-title', ' Réviser ');
@@ -187,7 +188,7 @@ describe('TasksPage', () => {
     click('Modifier la tâche Réviser');
 
     fill('task-title', 'Réviser le chapitre 3');
-    fill('task-ue', '', 'change');
+    pickOption(fixture, '#task-ue', '');
     submit();
 
     expect(service.update).toHaveBeenCalledWith(1, {

@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
+import { Dropdown, DropdownOption } from '../../../core/ui/dropdown';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 
 type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4' | 'h5';
@@ -18,6 +19,7 @@ type Command = (chain: Chain) => Chain;
 
 @Component({
   selector: 'app-editor-toolbar',
+  imports: [Dropdown],
   templateUrl: './editor-toolbar.html',
   styleUrl: './editor-toolbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +32,14 @@ export class EditorToolbar {
   // Image choisie par le bouton « Image » ; l'envoi est fait par la page.
   readonly imagePicked = output<File>();
 
+  // Chaque style de titre se montre à sa taille dans la liste.
+  protected readonly blockStyles: DropdownOption[] = [
+    { value: 'paragraph', label: 'Paragraphe' },
+    { value: 'h2', label: 'Section', look: 'large' },
+    { value: 'h3', label: 'Sous-section', look: 'medium' },
+    { value: 'h4', label: 'Sous-sous-section', look: 'strong' },
+    { value: 'h5', label: 'Point', look: 'muted' },
+  ];
   protected readonly calloutKinds = CALLOUT_KINDS;
   protected readonly calloutLabels = CALLOUT_LABELS;
 
@@ -69,8 +79,7 @@ export class EditorToolbar {
     return 'paragraph';
   }
 
-  protected setBlockStyle(event: Event): void {
-    const style = (event.target as HTMLSelectElement).value as BlockStyle;
+  protected setBlockStyle(style: string): void {
     const chain = this.editor().chain().focus();
     if (style === 'paragraph') {
       chain.setParagraph().run();

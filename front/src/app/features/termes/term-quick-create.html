@@ -2,14 +2,37 @@
   <app-icon name="plus" />Terme
 </button>
 
-<dialog #dialog aria-labelledby="quick-term-title" (close)="isOpen.set(false)">
+<dialog
+  #dialog
+  class="modal modal-wide"
+  aria-labelledby="quick-term-title"
+  (close)="isOpen.set(false)"
+>
   @if (isOpen()) {
-    <h2 id="quick-term-title">Nouveau terme</h2>
     @if (created(); as term) {
-      <p role="status">
-        « {{ term.label }} » est ajouté au {{ screens[term.type].title.toLowerCase() }}.
-      </p>
-      <div class="form-actions">
+      <div class="modal-header">
+        <span class="modal-badge modal-badge-success"><app-icon name="check" [size]="16" /></span>
+        <h2 id="quick-term-title">Terme ajouté</h2>
+        <button
+          type="button"
+          class="button button-icon button-ghost"
+          aria-label="Fermer la fenêtre"
+          (click)="close()"
+        >
+          <app-icon name="close" [size]="15" />
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="added" role="status">
+          « {{ term.label }} » est ajouté au {{ screens[term.type].title.toLowerCase() }}.
+        </p>
+        <p class="field-hint">Code, images et tableaux s’ajoutent en ouvrant le terme.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="button button-ghost modal-aside" (click)="startOver()">
+          En créer un autre
+        </button>
+        <button type="button" class="button" (click)="close()">Fermer</button>
         <a
           class="button button-primary"
           [routerLink]="[screens[term.type].path, term.id, 'edition']"
@@ -17,18 +40,29 @@
         >
           Enrichir la définition
         </a>
-        <button type="button" class="button" (click)="startOver()">En créer un autre</button>
-        <button type="button" class="button" (click)="close()">Fermer</button>
       </div>
     } @else {
-      <app-term-form
-        idPrefix="quick-term"
-        [origin]="origin()"
-        [errors]="errors()"
-        [isSaving]="isSaving()"
-        (saved)="create($event)"
-        (cancelled)="close()"
-      />
+      <div class="modal-header">
+        <h2 id="quick-term-title">Nouveau terme</h2>
+        <button
+          type="button"
+          class="button button-icon button-ghost"
+          aria-label="Fermer la fenêtre"
+          (click)="close()"
+        >
+          <app-icon name="close" [size]="15" />
+        </button>
+      </div>
+      <div class="modal-body">
+        <app-term-form
+          idPrefix="quick-term"
+          [origin]="origin()"
+          [errors]="errors()"
+          [isSaving]="isSaving()"
+          (saved)="create($event)"
+          (cancelled)="close()"
+        />
+      </div>
     }
   }
 </dialog>

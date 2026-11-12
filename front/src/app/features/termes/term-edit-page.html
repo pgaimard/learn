@@ -46,17 +46,13 @@
 
         <div class="field field-origin">
           <label for="edit-ue">UE d’origine</label>
-          <select
-            id="edit-ue"
+          <app-dropdown
+            fieldId="edit-ue"
             formControlName="ueCode"
-            (change)="markDirty()"
-            [attr.aria-describedby]="origin().course ? 'edit-ue-hint' : null"
-          >
-            <option value="">Aucune</option>
-            @for (ue of ues(); track ue.id) {
-              <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-            }
-          </select>
+            [options]="ueChoices()"
+            [describedBy]="origin().course ? 'edit-ue-hint' : null"
+            (valueChange)="markDirty()"
+          />
           @if (origin().course; as course) {
             <p id="edit-ue-hint" class="field-hint">
               Issu du cours « {{ course.title }} ». Changer d’UE le détache de ce cours.

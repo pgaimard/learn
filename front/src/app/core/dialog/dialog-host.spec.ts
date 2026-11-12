@@ -52,7 +52,7 @@ describe('DialogHost', () => {
     expect(element().querySelector('h2')?.textContent).toBe('Supprimer l’UE');
     expect(element().querySelector('p')?.textContent).toBe('L’UE UTC502 sera supprimée.');
     expect(buttons().map((button) => button.textContent.trim())).toEqual(['Annuler', 'Supprimer']);
-    expect(buttons()[1].classList.contains('is-destructive')).toBe(true);
+    expect(buttons()[1].classList.contains('button-destructive')).toBe(true);
     expect(document.activeElement).toBe(buttons()[0]);
   });
 
@@ -79,7 +79,7 @@ describe('DialogHost', () => {
     expect(element().querySelector('label')?.textContent).toBe('Adresse du lien');
     expect(field.value).toBe('https://');
     expect(document.activeElement).toBe(field);
-    expect(element().querySelector('.hint')?.textContent).toBe(
+    expect(element().querySelector('.field-hint')?.textContent).toBe(
       'Laisser vide pour retirer le lien.',
     );
 

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ContentNode } from '../cours/content/content-node';
+import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { TermOrigin } from './term-origin';
 import { TermInput, TermType } from './term.service';
 
@@ -16,7 +17,7 @@ import { TermInput, TermType } from './term.service';
 // à enrichir ensuite dans l'éditeur.
 @Component({
   selector: 'app-term-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Segmented],
   templateUrl: './term-form.html',
   styleUrl: './term-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +37,10 @@ export class TermForm {
 
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
+  protected readonly typeOptions: SegmentedOption[] = [
+    { value: 'definition', label: 'Définition' },
+    { value: 'acronym', label: 'Acronyme' },
+  ];
   protected readonly chosenType = signal<TermType>('definition');
   protected readonly effectiveType = computed(() => this.type() ?? this.chosenType());
 

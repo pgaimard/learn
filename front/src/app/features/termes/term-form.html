@@ -1,26 +1,12 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
   @if (type() === null) {
-    <fieldset class="type-choice">
-      <legend>Type</legend>
-      <label class="check">
-        <input
-          type="radio"
-          [name]="idPrefix() + '-type'"
-          [checked]="chosenType() === 'definition'"
-          (change)="chosenType.set('definition')"
-        />
-        Définition (dictionnaire)
-      </label>
-      <label class="check">
-        <input
-          type="radio"
-          [name]="idPrefix() + '-type'"
-          [checked]="chosenType() === 'acronym'"
-          (change)="chosenType.set('acronym')"
-        />
-        Acronyme (glossaire)
-      </label>
-    </fieldset>
+    <app-segmented
+      class="type-choice"
+      label="Type"
+      [options]="typeOptions"
+      [value]="chosenType()"
+      (valueChange)="chosenType.set($event === 'acronym' ? 'acronym' : 'definition')"
+    />
   }
 
   <div class="form-row">

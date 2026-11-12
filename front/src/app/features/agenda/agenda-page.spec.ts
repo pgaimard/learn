@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { pickOption } from '../../core/ui/dropdown.testing';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Task, TaskService } from '../taches/task.service';
@@ -145,7 +146,7 @@ describe('AgendaPage', () => {
   it('filtre par UE', () => {
     setup();
 
-    fill('agenda-ue-filter', 'UTC502', 'change');
+    pickOption(fixture, '#agenda-ue-filter', 'UTC502');
 
     expect(text()).toContain('Cours systèmes');
     expect(text()).not.toContain('Rendu du projet');
@@ -161,7 +162,7 @@ describe('AgendaPage', () => {
     );
 
     fill('event-title', ' TD systèmes ');
-    fill('event-ue', 'UTC502', 'change');
+    pickOption(fixture, '#event-ue', 'UTC502');
     fill('event-start', '2026-11-18T18:00');
     fill('event-end', '2026-11-18T20:00');
     fill('event-repeat', '2026-12-02');
@@ -185,7 +186,7 @@ describe('AgendaPage', () => {
     click('Ajouter un événement le lundi 16 novembre');
 
     fill('event-title', 'Examen blanc');
-    fill('event-type', 'deadline', 'change');
+    click('Échéance');
     expect(element().querySelector('#event-end')).toBeNull();
     fill('event-start', '2026-11-16T14:00');
     submit();

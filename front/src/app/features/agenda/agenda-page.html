@@ -26,18 +26,12 @@
 } @else {
   <div class="filters">
     <label for="agenda-ue-filter">UE</label>
-    <select
-      #ueField
-      id="agenda-ue-filter"
+    <app-dropdown
+      fieldId="agenda-ue-filter"
+      [options]="ueFilterOptions()"
       [value]="ueFilter()"
-      (change)="ueFilter.set(ueField.value)"
-    >
-      <option value="">Toutes</option>
-      @for (ue of ues(); track ue.id) {
-        <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-      }
-      <option [value]="withoutUe">Sans UE</option>
-    </select>
+      (valueChange)="ueFilter.set($event)"
+    />
   </div>
 
   <ol class="days">

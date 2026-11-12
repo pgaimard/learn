@@ -13,6 +13,8 @@ import { forkJoin, map, Observable } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Task, TaskService } from '../taches/task.service';
+import { Dropdown } from '../../core/ui/dropdown';
+import { ueOptions } from '../ue/ue-options';
 import { Ue, UeService } from '../ue/ue.service';
 import { EventForm, EventFormValue } from './event-form';
 import { AgendaEvent, EventService } from './event.service';
@@ -38,7 +40,7 @@ function matchesUe(item: { ue: { code: string } | null }, filter: string): boole
 
 @Component({
   selector: 'app-agenda-page',
-  imports: [EventForm, RouterLink],
+  imports: [Dropdown, EventForm, RouterLink],
   templateUrl: './agenda-page.html',
   styleUrl: './agenda-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,7 +56,6 @@ export class AgendaPage {
   private readonly title = inject(Title);
 
   private readonly today = new Date();
-  protected readonly withoutUe = WITHOUT_UE;
   protected readonly weekStart = computed(() => parseWeekParam(this.semaine(), this.today));
   protected readonly weekEnd = computed(() => addDays(this.weekStart(), 6));
   protected readonly events = signal<AgendaEvent[]>([]);
@@ -65,6 +66,13 @@ export class AgendaPage {
   protected readonly notice = signal('');
   // '' : toutes les UE.
   protected readonly ueFilter = signal('');
+  protected readonly ueFilterOptions = computed(() =>
+    ueOptions(
+      this.ues(),
+      [{ value: '', label: 'Toutes' }],
+      [{ value: WITHOUT_UE, label: 'Sans UE' }],
+    ),
+  );
   protected readonly editing = signal<Editing>(null);
   protected readonly formErrors = signal<string[]>([]);
   protected readonly isSaving = signal(false);

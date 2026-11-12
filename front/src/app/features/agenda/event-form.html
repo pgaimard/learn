@@ -16,25 +16,17 @@
       }
     </div>
     <div class="field field-short">
-      <label for="event-type">Type</label>
-      <select
-        #typeField
-        id="event-type"
+      <span class="field-label">Type</span>
+      <app-segmented
+        label="Type"
         formControlName="type"
-        (change)="type.set(typeField.value === 'deadline' ? 'deadline' : 'course')"
-      >
-        <option value="course">Cours</option>
-        <option value="deadline">Échéance</option>
-      </select>
+        [options]="typeOptions"
+        (valueChange)="type.set($event === 'deadline' ? 'deadline' : 'course')"
+      />
     </div>
     <div class="field field-grow">
       <label for="event-ue">UE</label>
-      <select id="event-ue" formControlName="ueCode">
-        <option value="">Aucune</option>
-        @for (ue of ues(); track ue.id) {
-          <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-        }
-      </select>
+      <app-dropdown fieldId="event-ue" formControlName="ueCode" [options]="ueChoices()" />
     </div>
   </div>
 
