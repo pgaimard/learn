@@ -1,14 +1,14 @@
-<div class="page-header">
+<div class="toolbar">
   <nav class="path" aria-label="Dossier affiché">
     <a
       [routerLink]="[]"
       [queryParams]="queryFor(null)"
       [attr.aria-current]="folderId() === null ? 'page' : null"
     >
-      Fichiers
+      {{ ueCode() }}
     </a>
     @for (folder of path() ?? []; track folder.id; let last = $last) {
-      <span aria-hidden="true">›</span>
+      <span class="meta" aria-hidden="true">/</span>
       <a
         [routerLink]="[]"
         [queryParams]="queryFor(folder.id)"
@@ -20,21 +20,19 @@
   </nav>
 
   @if (path() !== null) {
-    <div class="header-actions">
-      <button type="button" class="button" (click)="open({ kind: 'new-folder' })">
-        Nouveau dossier
-      </button>
-      <label class="button button-primary upload" [class.is-disabled]="isUploading()">
-        Envoyer des fichiers
-        <input
-          class="visually-hidden"
-          type="file"
-          multiple
-          [disabled]="isUploading()"
-          (change)="pickFiles($event)"
-        />
-      </label>
-    </div>
+    <button type="button" class="button" (click)="open({ kind: 'new-folder' })">
+      <app-icon name="folder" />Nouveau dossier
+    </button>
+    <label class="button button-primary upload" [class.is-disabled]="isUploading()">
+      <app-icon name="upload" />Envoyer des fichiers
+      <input
+        class="visually-hidden"
+        type="file"
+        multiple
+        [disabled]="isUploading()"
+        (change)="pickFiles($event)"
+      />
+    </label>
   }
 </div>
 
@@ -62,116 +60,130 @@
   }
 </div>
 
-@if (editing()?.kind === 'new-folder') {
-  <section class="card new-folder" aria-label="Nouveau dossier">
-    <app-name-form
-      label="Nom du nouveau dossier"
-      submitLabel="Créer"
-      [errors]="formErrors()"
-      [isSaving]="isSaving()"
-      (saved)="createFolder($event)"
-      (cancelled)="open(null)"
-    />
-  </section>
+@if (editing(); as editing) {
+  <app-modal [heading]="headings[editing.kind]" (closed)="open(null)">
+    @switch (editing.kind) {
+      @case ('new-folder') {
+        <app-name-form
+          label="Nom du dossier"
+          submitLabel="Créer"
+          [errors]="formErrors()"
+          [isSaving]="isSaving()"
+          (saved)="createFolder($event)"
+          (cancelled)="open(null)"
+        />
+      }
+      @case ('rename-folder') {
+        @if (renamedFolder(); as folder) {
+          <app-name-form
+            label="Nouveau nom du dossier"
+            [initialName]="folder.name"
+            [errors]="formErrors()"
+            [isSaving]="isSaving()"
+            (saved)="renameFolder(folder, $event)"
+            (cancelled)="open(null)"
+          />
+        }
+      }
+      @case ('rename-file') {
+        @if (renamedFile(); as file) {
+          <app-name-form
+            label="Nouveau nom du fichier"
+            [initialName]="file.name"
+            [errors]="formErrors()"
+            [isSaving]="isSaving()"
+            (saved)="renameFile(file, $event)"
+            (cancelled)="open(null)"
+          />
+        }
+      }
+    }
+  </app-modal>
 }
 
 @if (isLoading()) {
   <p>Chargement…</p>
 } @else if (path() !== null) {
   @if (isEmpty()) {
-    <p class="empty">
-      Ce dossier est vide. Envoyez des fichiers avec le bouton ci-dessus ou en les déposant ici.
-    </p>
+    <p class="empty">Ce dossier est vide.</p>
   } @else {
-    <ul class="entries">
-      @for (folder of subfolders(); track folder.id) {
-        <li class="card entry">
-          @if (isRenaming(folder)) {
-            <app-name-form
-              label="Nouveau nom du dossier"
-              [initialName]="folder.name"
-              [errors]="formErrors()"
-              [isSaving]="isSaving()"
-              (saved)="renameFolder(folder, $event)"
-              (cancelled)="open(null)"
-            />
-          } @else {
+    <div class="list">
+      <div class="entry head" aria-hidden="true">
+        <span></span><span>Nom</span><span>Taille</span><span>Modifié</span><span></span>
+      </div>
+      <ul>
+        @for (folder of subfolders(); track folder.id) {
+          <li class="entry is-folder">
+            <app-icon name="folder" [size]="15" />
             <a class="entry-name folder" [routerLink]="[]" [queryParams]="queryFor(folder.id)">
-              <span class="kind">Dossier</span> {{ folder.name }}
+              <span class="visually-hidden">Dossier </span>{{ folder.name }}
             </a>
-            <div class="entry-actions">
+            <span class="detail"></span>
+            <span class="detail"></span>
+            <span class="entry-actions">
               <button
                 type="button"
-                class="button"
+                class="button button-icon button-ghost"
                 [attr.aria-label]="'Renommer le dossier ' + folder.name"
                 (click)="open({ kind: 'rename-folder', id: folder.id })"
               >
-                Renommer
+                <app-icon name="pencil" />
               </button>
               <button
                 type="button"
-                class="button button-danger"
+                class="button button-icon button-ghost"
                 [attr.aria-label]="'Supprimer le dossier ' + folder.name"
                 (click)="removeFolder(folder)"
               >
-                Supprimer
+                <app-icon name="trash" />
               </button>
-            </div>
-          }
-        </li>
-      }
-      @for (file of files(); track file.id) {
-        <li class="card entry">
-          @if (isRenamingFile(file)) {
-            <app-name-form
-              label="Nouveau nom du fichier"
-              [initialName]="file.name"
-              [errors]="formErrors()"
-              [isSaving]="isSaving()"
-              (saved)="renameFile(file, $event)"
-              (cancelled)="open(null)"
-            />
-          } @else {
-            <a class="entry-name" [href]="downloadUrl(file)" download>{{ file.name }}</a>
-            <span class="entry-detail">
-              {{ formatSize(file.size) }} · {{ file.updatedAt | date: 'dd/MM/yyyy' }}
             </span>
-            <div class="entry-actions">
+          </li>
+        }
+        @for (file of files(); track file.id) {
+          <li class="entry">
+            <app-icon name="file" [size]="15" />
+            <a class="entry-name" [href]="downloadUrl(file)" download>{{ file.name }}</a>
+            <span class="detail">{{ formatSize(file.size) }}</span>
+            <span class="detail">{{ file.updatedAt | date: 'dd/MM/yyyy' }}</span>
+            <span class="entry-actions">
               <button
                 type="button"
-                class="button"
+                class="button button-icon button-ghost"
                 [attr.aria-label]="'Renommer le fichier ' + file.name"
                 (click)="open({ kind: 'rename-file', id: file.id })"
               >
-                Renommer
+                <app-icon name="pencil" />
               </button>
               <button
                 type="button"
-                class="button"
+                class="button button-icon button-ghost"
                 [attr.aria-label]="'Déplacer le fichier ' + file.name"
                 (click)="moving.set(file)"
               >
-                Déplacer
+                <app-icon name="move" />
               </button>
               <button
                 type="button"
-                class="button button-danger"
+                class="button button-icon button-ghost"
                 [attr.aria-label]="'Supprimer le fichier ' + file.name"
                 (click)="removeFile(file)"
               >
-                Supprimer
+                <app-icon name="trash" />
               </button>
-            </div>
-          }
-        </li>
-      }
-    </ul>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
   }
+  <p class="dropzone">Glisser des fichiers ici pour les envoyer dans « {{ currentName() }} »</p>
 }
 
 @if (moving(); as file) {
   <app-folder-picker
     [fileName]="file.name"
+    [rootName]="ueCode()"
     [folders]="folders()"
     [currentFolderId]="file.folderId"
     (picked)="moveTo($event)"

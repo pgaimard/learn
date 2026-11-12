@@ -1,6 +1,8 @@
 <div class="page-header">
   <h1>Recherche</h1>
-  <button type="button" class="button" (click)="goBack()">Revenir où j’étais</button>
+  <button type="button" class="button" (click)="goBack()">
+    <app-icon name="chevron-left" />Revenir où j’étais
+  </button>
 </div>
 
 <div role="alert">
@@ -40,12 +42,12 @@
     @for (group of state.groups; track group.title) {
       <section [attr.aria-label]="group.title">
         <h2>
-          {{ group.title }} <span class="count">({{ group.total }})</span>
+          {{ group.title }}<span class="count">{{ group.total }}</span>
         </h2>
         <ul class="results">
           @for (result of group.results; track $index) {
             <li>
-              <a class="card result" [routerLink]="result.link" [queryParams]="result.queryParams">
+              <a class="result" [routerLink]="result.link" [queryParams]="result.queryParams">
                 <span class="result-title">{{ result.title }}</span>
                 @if (result.detail) {
                   <span class="result-detail">{{ result.detail }}</span>
