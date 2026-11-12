@@ -8,9 +8,43 @@
 }
 
 .ue {
+  /* Repère du lien étendu à toute la carte. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+.ue:hover {
+  border-color: var(--color-accent);
+}
+
+/* Toute la carte mène à l'UE : le lien du titre s'étend sur elle. */
+h2 a::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-large);
+  content: '';
+}
+
+h2 a:hover {
+  text-decoration: none;
+}
+
+h2 a:focus-visible {
+  outline: none;
+}
+
+h2 a:focus-visible::after {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* La poignée et les boutons restent au-dessus du lien, donc cliquables pour eux-mêmes. */
+.sort-handle,
+.ue-actions {
+  position: relative;
+  z-index: 1;
 }
 
 .ue-top {
