@@ -21,6 +21,8 @@ export class TermList {
   readonly showType = input(false);
   // Origine affichée : l'UE du terme, ou le cours dont il est issu.
   readonly origin = input<'none' | 'ue' | 'course'>('none');
+  // Forme développée et début de la définition dans deux colonnes (glossaire).
+  readonly columns = input(false);
   // Regroupe les termes sous leur première lettre.
   readonly grouped = input(false);
 
