@@ -83,7 +83,9 @@
 
 .block {
   position: absolute;
-  display: block;
+  /* En colonne : le contenu part du haut de la carte. */
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   padding: 0.1875rem 0.4375rem;
   overflow: hidden;
@@ -106,8 +108,43 @@
   filter: brightness(0.97);
 }
 
+/* La pastille passe à la ligne quand la carte est trop étroite pour l'heure et elle. */
+.block .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem 0.25rem;
+}
+
+.block .time {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Pastille de l'UE à laquelle l'élément est rattaché. */
+.block .ue {
+  flex: none;
+  padding: 0 0.25rem;
+  border-radius: 4px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+/* Description sous le titre : coupée par « … » quand la carte est trop petite. */
+.block .description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
 .block b {
   display: block;
+  flex: none;
+  min-width: 0;
   overflow: hidden;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -116,6 +153,10 @@
 
 .block span {
   display: block;
+}
+
+.block .row b {
+  flex: 1;
 }
 
 .block.is-deadline {
