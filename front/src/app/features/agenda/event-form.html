@@ -49,29 +49,37 @@
   <div class="form-row">
     <div class="field field-grow">
       <label for="event-start">{{ type() === 'deadline' ? 'Date et heure' : 'Début' }}</label>
-      <input id="event-start" type="datetime-local" formControlName="startsAt" />
+      <app-date-field fieldId="event-start" formControlName="startsAt" [clearable]="false" />
     </div>
     @if (type() === 'course') {
       <div class="field field-grow">
         <label for="event-end">Fin</label>
-        <input id="event-end" type="datetime-local" formControlName="endsAt" />
-      </div>
-    }
-    @if (!event()) {
-      <div class="field field-grow">
-        <label for="event-repeat">Répéter chaque semaine jusqu’au</label>
-        <input
-          id="event-repeat"
-          type="date"
-          formControlName="repeatUntil"
-          aria-describedby="event-repeat-hint"
+        <app-date-field
+          fieldId="event-end"
+          formControlName="endsAt"
+          [clearable]="false"
+          [durationFrom]="form.controls.startsAt.value"
+          [invalid]="periodError() !== null"
         />
-        <p id="event-repeat-hint" class="field-hint">
-          Facultatif. Chaque semaine devient un événement indépendant (60 au plus).
-        </p>
       </div>
     }
   </div>
+
+  @if (!event()) {
+    <div class="field">
+      <label for="event-repeat">Répéter chaque semaine jusqu’au</label>
+      <app-date-field
+        fieldId="event-repeat"
+        formControlName="repeatUntil"
+        placeholder="Sans répétition"
+        describedBy="event-repeat-hint"
+        [withTime]="false"
+      />
+      <p id="event-repeat-hint" class="field-hint">
+        Facultatif. Chaque semaine devient un événement indépendant (60 au plus).
+      </p>
+    </div>
+  }
 
   <div role="alert">
     @if (periodError(); as error) {

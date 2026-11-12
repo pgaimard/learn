@@ -75,17 +75,6 @@
   color: var(--color-text-muted);
 }
 
-.quick-due {
-  height: 1.5rem;
-  padding: 0 0.375rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  font-size: 0.75rem;
-}
-
 .quick-add .tool {
   height: 1.5rem;
   font-size: 0.75rem;

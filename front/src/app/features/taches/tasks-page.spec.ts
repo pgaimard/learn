@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { setDate } from '../../core/ui/date-field.testing';
 import { pickOption } from '../../core/ui/dropdown.testing';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
@@ -166,8 +167,7 @@ describe('TasksPage', () => {
     click('UTC502');
 
     fill('quick-task', ' Réviser ');
-    click('Date');
-    fill('quick-task-due', '2026-12-15T18:00');
+    setDate(fixture, '#quick-task-due', '2026-12-15T18:00');
     submit('.quick-add');
 
     expect(service.create).toHaveBeenCalledWith({
