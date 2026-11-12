@@ -197,4 +197,39 @@ describe('validateContent', () => {
       'Le contenu est trop volumineux ou trop imbriqué.',
     ]);
   });
+
+  it('accepte l’épingle de la fiche de révision sur un bloc, et la refuse ailleurs', () => {
+    const pinnedParagraph = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          attrs: { pinned: true },
+          content: [{ type: 'text', text: 'Définition clé.' }],
+        },
+      ],
+    };
+    const pinnedHeading = {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 2, pinned: true },
+          content: [{ type: 'text', text: 'Titre' }],
+        },
+      ],
+    };
+    const wrongValue = {
+      type: 'doc',
+      content: [{ type: 'paragraph', attrs: { pinned: 'oui' } }],
+    };
+
+    expect(validateContent(pinnedParagraph)).toEqual([]);
+    expect(validateContent(pinnedHeading)).toEqual([
+      'Attribut non autorisé sur « heading » : « pinned ».',
+    ]);
+    expect(validateContent(wrongValue)).toEqual([
+      'Valeur non autorisée pour « pinned » sur « paragraph ».',
+    ]);
+  });
 });

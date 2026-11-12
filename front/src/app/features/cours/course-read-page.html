@@ -30,9 +30,31 @@
     <article class="article">
       <div class="page-header">
         <h1>{{ course.title }}</h1>
-        <a class="button" [routerLink]="['/ue', code(), 'cours', course.id, 'edition']">Modifier</a>
+        <div class="header-actions">
+          @if (isSheet()) {
+            <a class="button" [routerLink]="[]">Cours complet</a>
+          } @else {
+            <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">
+              Fiche de révision
+            </a>
+          }
+          <a class="button" [routerLink]="['/ue', code(), 'cours', course.id, 'edition']">
+            Modifier
+          </a>
+        </div>
       </div>
-      <app-course-content [content]="course.content" />
+      @if (isSheet()) {
+        <p class="sheet-note" role="status">
+          Fiche de révision : les encadrés « À retenir » et les blocs épinglés.
+        </p>
+      }
+      @if (isSheetEmpty()) {
+        <p class="sheet-empty">
+          La fiche est vide. Ajoutez un encadré « À retenir », ou épinglez un bloc depuis son menu
+          en modifiant le cours.
+        </p>
+      }
+      <app-course-content [content]="course.content" [sheet]="isSheet()" />
     </article>
   </div>
 } @else if (errors().length === 0) {

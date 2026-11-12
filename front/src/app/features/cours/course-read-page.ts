@@ -12,6 +12,7 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
 import { buildOutline } from './content/build-outline';
+import { hasSheetContent, sheetHeadingIndexes } from './revision/revision-sheet';
 import { CourseContent } from './content/course-content';
 import { Course, CourseService } from './course.service';
 
@@ -26,6 +27,8 @@ export class CourseReadPage {
   // Paramètres de la route /ue/:code/cours/:id.
   readonly code = input.required<string>();
   readonly id = input.required<string>();
+  // Paramètre de requête ?vue=fiche : le cours réduit à sa fiche de révision.
+  readonly vue = input<string>();
 
   private readonly courseService = inject(CourseService);
   private readonly title = inject(Title);
@@ -33,9 +36,23 @@ export class CourseReadPage {
 
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
+  protected readonly isSheet = computed(() => this.vue() === 'fiche');
+  // Sommaire du cours, réduit aux titres de la fiche quand elle est affichée.
   protected readonly outline = computed(() => {
     const course = this.course();
-    return course ? buildOutline(course.content) : [];
+    if (!course) {
+      return [];
+    }
+    const entries = buildOutline(course.content);
+    if (!this.isSheet()) {
+      return entries;
+    }
+    const kept = sheetHeadingIndexes(course.content);
+    return entries.filter((entry) => kept.has(entry.index));
+  });
+  protected readonly isSheetEmpty = computed(() => {
+    const course = this.course();
+    return this.isSheet() && !!course && !hasSheetContent(course.content);
   });
 
   constructor() {

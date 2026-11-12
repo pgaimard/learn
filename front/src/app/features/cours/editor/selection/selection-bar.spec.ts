@@ -75,6 +75,9 @@ describe('barre de mise en forme', () => {
 
     it('attend que le bouton de la souris soit relâché', () => {
       vi.useFakeTimers();
+      // L'éditeur cherche l'élément sous le pointeur, ce que l'environnement de test
+      // ne sait pas faire : sans cette réponse, son propre gestionnaire lève une erreur.
+      document.elementFromPoint = () => null;
       editor.view.dom.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       editor.commands.setTextSelection({ from: 1, to: 3 });
       expect(shown.at(-1)).toBeNull();

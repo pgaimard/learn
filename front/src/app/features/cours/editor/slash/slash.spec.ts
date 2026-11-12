@@ -78,6 +78,17 @@ describe('menu « / »', () => {
       ).toEqual(['Section', 'Sous-section', 'Sous-sous-section', 'Séparateur']);
     });
 
+    it('trouve les encadrés par leur nom', () => {
+      const labels = (query: string): string[] =>
+        filterSlashCommands(query).map((command) => command.label);
+
+      expect(labels('retenir')).toEqual(['À retenir']);
+      expect(labels('a')[0]).toBe('À retenir');
+      expect(labels('change')).toEqual(['Ce qui a changé']);
+      expect(labels('att')).toEqual(['Attention']);
+      expect(labels('encadre')).toEqual(['À retenir', 'Ce qui a changé', 'Attention']);
+    });
+
     it('ne propose rien pour une saisie inconnue', () => {
       expect(filterSlashCommands('zzz')).toEqual([]);
     });
@@ -141,6 +152,61 @@ describe('menu « / »', () => {
       editor.view.dom.dispatchEvent(new FocusEvent('blur'));
 
       expect(state.trigger()).toBeNull();
+    });
+  });
+
+  describe('encadrés', () => {
+    it('transforme le paragraphe en encadré « À retenir »', () => {
+      editor.commands.insertContent('Un programme est passif. /retenir');
+
+      press('Enter');
+
+      const callout = editor.state.doc.child(1);
+      expect(callout.type.name).toBe('callout');
+      expect(callout.attrs['kind']).toBe('retenir');
+      expect(callout.textContent).toBe('Un programme est passif. ');
+    });
+  });
+
+  describe('invite', () => {
+    function hint(): string | null {
+      return (
+        editor.view.dom.querySelector('.is-empty-paragraph')?.getAttribute('data-placeholder') ??
+        null
+      );
+    }
+
+    it('rappelle le « / » dans le paragraphe vide du curseur', () => {
+      expect(hint()).toBe('Tapez / pour insérer un bloc');
+      expect(editor.view.dom.querySelectorAll('.is-empty-paragraph')).toHaveLength(1);
+    });
+
+    it('disparaît dès qu’on écrit, ou quand le curseur est ailleurs', () => {
+      type('a');
+      expect(hint()).toBeNull();
+
+      editor.commands.deleteRange({ from: 8, to: 9 });
+      expect(hint()).not.toBeNull();
+      editor.commands.setTextSelection(2);
+      expect(hint()).toBeNull();
+    });
+
+    it('ne s’affiche ni dans un titre vide, ni dans une cellule, ni en lecture', () => {
+      editor.commands.setHeading({ level: 2 });
+      expect(hint()).toBeNull();
+
+      editor.commands.setParagraph();
+      editor.commands.insertTable({ rows: 1, cols: 1 });
+      expect(hint()).toBeNull();
+
+      editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+      expect(hint()).not.toBeNull();
+      editor.setEditable(false);
+      expect(hint()).toBeNull();
+    });
+
+    it('ne fait pas partie du contenu enregistré', () => {
+      expect(JSON.stringify(editor.getJSON())).not.toContain('Tapez');
     });
   });
 

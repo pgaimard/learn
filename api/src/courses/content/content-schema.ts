@@ -62,30 +62,36 @@ const cellAttrs: Record<string, AttributeCheck> = {
   align: isNullable(isOneOf(['left', 'center', 'right'])),
 };
 
+// Bloc épinglé à la fiche de révision du cours.
+const pinned: Record<string, AttributeCheck> = {
+  pinned: (value) => typeof value === 'boolean',
+};
+
 export const NODE_RULES: Record<string, NodeRule> = {
   doc: { children: 'block', minChildren: 1 },
-  paragraph: { children: 'inline' },
+  paragraph: { children: 'inline', attrs: pinned },
   heading: {
     children: 'inline',
     // Le niveau 1 est réservé au titre du cours.
     attrs: { level: isIntegerBetween(2, 5) },
   },
-  bulletList: { children: ['listItem'], minChildren: 1 },
+  bulletList: { children: ['listItem'], minChildren: 1, attrs: pinned },
   orderedList: {
     children: ['listItem'],
     minChildren: 1,
     attrs: {
+      ...pinned,
       start: isIntegerBetween(0, 100000),
       type: isNullable(isShortString),
     },
   },
   listItem: { children: 'block', minChildren: 1 },
-  blockquote: { children: 'block', minChildren: 1 },
+  blockquote: { children: 'block', minChildren: 1, attrs: pinned },
   codeBlock: {
     children: 'text',
-    attrs: { language: isNullable(isShortString) },
+    attrs: { ...pinned, language: isNullable(isShortString) },
   },
-  table: { children: ['tableRow'], minChildren: 1 },
+  table: { children: ['tableRow'], minChildren: 1, attrs: pinned },
   tableRow: { children: ['tableCell', 'tableHeader'], minChildren: 1 },
   tableCell: { children: 'block', minChildren: 1, attrs: cellAttrs },
   tableHeader: { children: 'block', minChildren: 1, attrs: cellAttrs },
@@ -94,6 +100,7 @@ export const NODE_RULES: Record<string, NodeRule> = {
   figure: {
     children: 'inline',
     attrs: {
+      ...pinned,
       src: isImageSource,
       alt: (value) => typeof value === 'string' && value.length <= 500,
     },
@@ -102,7 +109,7 @@ export const NODE_RULES: Record<string, NodeRule> = {
   callout: {
     children: 'block',
     minChildren: 1,
-    attrs: { kind: isOneOf(['retenir', 'change', 'attention']) },
+    attrs: { ...pinned, kind: isOneOf(['retenir', 'change', 'attention']) },
   },
   hardBreak: { children: 'none' },
 };

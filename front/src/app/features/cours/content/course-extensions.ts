@@ -8,6 +8,8 @@ import { SelectionWatcher, SelectionWatcherOptions } from '../editor/selection/s
 import { SlashWatcher, SlashWatcherOptions } from '../editor/slash/slash-watcher';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+import { RevisionPin } from '../revision/revision-pin';
+import { RevisionSheetView } from '../revision/revision-sheet-view';
 import { Callout } from './callout';
 import { Figure } from './figure';
 
@@ -38,6 +40,8 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     Figure,
     Callout,
     SectionFolding,
+    RevisionPin,
+    RevisionSheetView,
     ...(tools
       ? [
           BlockHandle.configure(tools.blockHandle),

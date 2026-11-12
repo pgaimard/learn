@@ -10,6 +10,10 @@ produits par l'éditeur. Il est testé des deux côtés :
 
 Ajouter un bloc à l'éditeur impose donc de l'ajouter ici, puis à la liste blanche de l'API.
 
+L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) marque
+un bloc comme épinglé à la fiche de révision du cours. Il est facultatif : un contenu importé ou
+plus ancien qui ne le porte pas reste valide, et le bloc n'est alors pas épinglé.
+
 ## Paquet de cours
 
 Un paquet de cours est une archive `.zip` qui contient :
