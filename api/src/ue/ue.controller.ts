@@ -14,15 +14,15 @@ import { CreateUeDto } from './dto/create-ue.dto.js';
 import { ReorderUesDto } from './dto/reorder-ues.dto.js';
 import { UpdateUeDto } from './dto/update-ue.dto.js';
 import { Ue } from './ue.entity.js';
-import { UeService } from './ue.service.js';
+import { UeService, UeWithCounts } from './ue.service.js';
 
 @Controller('ues')
 export class UeController {
   constructor(private readonly ueService: UeService) {}
 
   @Get()
-  findAll(): Promise<Ue[]> {
-    return this.ueService.findAll();
+  findAll(): Promise<UeWithCounts[]> {
+    return this.ueService.findAllWithCounts();
   }
 
   @Put('order')
@@ -31,8 +31,8 @@ export class UeController {
   }
 
   @Get(':code')
-  findOne(@Param('code') code: string): Promise<Ue> {
-    return this.ueService.findByCode(code);
+  findOne(@Param('code') code: string): Promise<UeWithCounts> {
+    return this.ueService.findByCodeWithCounts(code);
   }
 
   @Post()

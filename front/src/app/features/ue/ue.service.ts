@@ -2,12 +2,21 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+// Nombre de cours, de termes et de fichiers rattachés à une UE.
+export interface UeCounts {
+  courses: number;
+  terms: number;
+  files: number;
+}
+
 export interface Ue {
   id: number;
   code: string;
   title: string;
   description: string;
   position: number;
+  // Présents à la lecture d'une UE, pas dans la réponse à une création ou modification.
+  counts?: UeCounts;
 }
 
 export interface UeInput {

@@ -504,25 +504,25 @@ input[type='radio'] {
 /* Listes réordonnables : poignée, élément en cours de déplacement, trait de dépôt. */
 
 .sort-handle {
+  display: flex;
   flex: none;
-  width: 1.5rem;
-  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 5px;
   background: none;
-  color: var(--color-text-muted);
-  font-weight: 700;
-  letter-spacing: -0.2em;
-  line-height: 1.75rem;
+  color: var(--color-border);
   cursor: grab;
   user-select: none;
 }
 
 .sort-handle:hover,
 .sort-handle:focus-visible {
-  background: var(--color-border-soft);
-  color: var(--color-text);
+  background: var(--color-raised);
+  color: var(--color-text-muted);
 }
 
 .sort-handle:active {
@@ -539,4 +539,88 @@ input[type='radio'] {
 
 .drop-after {
   box-shadow: 0 3px 0 0 var(--color-accent);
+}
+
+/* En grille, le trait de dépôt est vertical. */
+.is-grid .drop-before {
+  box-shadow: -3px 0 0 0 var(--color-accent);
+}
+
+.is-grid .drop-after {
+  box-shadow: 3px 0 0 0 var(--color-accent);
+}
+
+/* Onglets d'une page */
+
+.tabs {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabs a {
+  margin-bottom: -1px;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+}
+
+.tabs a:hover {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.tabs a[aria-current='page'] {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* Liste dense : un cadre, une ligne par élément. */
+
+.list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  list-style: none;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.25rem;
+  padding: 0 0.875rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.list-row:first-child {
+  border-top: 0;
+}
+
+.list-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-row-number {
+  width: 1.125rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.empty {
+  color: var(--color-text-muted);
 }
