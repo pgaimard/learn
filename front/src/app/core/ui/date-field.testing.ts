@@ -16,9 +16,6 @@ export function setDate(
   trigger.click();
   fixture.detectChanges();
   const field = trigger.closest('app-date-field');
-  // Une fin proposée en durée montre d'abord la liste des durées.
-  field?.querySelector<HTMLButtonElement>('.durations .is-quiet')?.click();
-  fixture.detectChanges();
   const typed = field?.querySelector<HTMLInputElement>('.typed');
   if (!typed) {
     throw new Error(`Saisie au clavier introuvable dans ${triggerSelector}`);

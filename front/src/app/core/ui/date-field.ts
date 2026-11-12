@@ -14,11 +14,9 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   DEFAULT_HOUR,
-  durationChoices,
   formatFullDay,
   formatLabel,
   formatMonth,
-  formatTime,
   formatTyped,
   formatValue,
   isSameDay,
@@ -79,8 +77,6 @@ export class DateField implements ControlValueAccessor {
   readonly invalid = input(false);
   // Version basse, pour une barre d'outils.
   readonly compact = input(false, { transform: booleanAttribute });
-  // Début dont ce champ est la fin : la fin est alors proposée en durée.
-  readonly durationFrom = input('');
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly button = viewChild.required<ElementRef<HTMLButtonElement>>('button');
@@ -93,8 +89,6 @@ export class DateField implements ControlValueAccessor {
   protected readonly current = signal('');
   protected readonly isOpen = signal(false);
   protected readonly isDisabled = signal(false);
-  // Fin proposée en durée, ou calendrier complet.
-  protected readonly mode = signal<'durations' | 'full'>('full');
   protected readonly isTypedInvalid = signal(false);
   // Le panneau s'aligne à droite ou s'ouvre vers le haut quand la place manque.
   protected readonly alignsEnd = signal(false);
@@ -105,16 +99,9 @@ export class DateField implements ControlValueAccessor {
   private focusesDay = false;
 
   protected readonly selected = computed(() => parseValue(this.current()));
-  private readonly start = computed(() => parseValue(this.durationFrom()));
   protected readonly display = computed(() => {
     const selected = this.selected();
-    if (selected === null) {
-      return '';
-    }
-    const start = this.start();
-    return start && isSameDay(start, selected)
-      ? formatTime(selected)
-      : formatLabel(selected, this.withTime());
+    return selected === null ? '' : formatLabel(selected, this.withTime());
   });
   protected readonly describedByIds = computed(() =>
     [this.valueId, this.describedBy()].filter(Boolean).join(' '),
@@ -127,10 +114,6 @@ export class DateField implements ControlValueAccessor {
   );
   protected readonly monthTitle = computed(() => formatMonth(this.viewMonth()));
   protected readonly shortcuts = computed(() => shortcuts(this.today()));
-  protected readonly durations = computed(() => {
-    const start = this.start();
-    return start ? durationChoices(start) : [];
-  });
   protected readonly days = computed(() => {
     const month = this.viewMonth().getMonth();
     const selected = this.selected();
@@ -165,7 +148,6 @@ export class DateField implements ControlValueAccessor {
   constructor() {
     afterRenderEffect(() => {
       const panel = this.panel()?.nativeElement;
-      this.mode();
       this.current();
       if (!panel) {
         return;
@@ -238,11 +220,6 @@ export class DateField implements ControlValueAccessor {
     );
   }
 
-  protected pickDuration(date: Date): void {
-    this.commit(date);
-    this.closeAndFocus();
-  }
-
   protected moveDay(event: KeyboardEvent): void {
     const days = DAY_MOVES[event.key];
     if (days === undefined) {
@@ -305,12 +282,8 @@ export class DateField implements ControlValueAccessor {
       return;
     }
     const selected = this.selected();
-    const start = this.start();
     this.today.set(new Date());
-    this.viewMonth.set(selected ?? start ?? this.today());
-    this.mode.set(
-      start && (selected === null || isSameDay(start, selected)) ? 'durations' : 'full',
-    );
+    this.viewMonth.set(selected ?? this.today());
     this.isTypedInvalid.set(false);
     this.alignsEnd.set(false);
     this.dropsUp.set(false);

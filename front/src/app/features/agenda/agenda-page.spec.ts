@@ -178,13 +178,15 @@ describe('AgendaPage', () => {
     setup();
     eventService.create.mockReturnValue(of([COURSE, COURSE, COURSE]));
     click('Ajouter un événement le mercredi 18 novembre');
-    expect(dateValue(fixture, '#event-start')).toBe('2026-11-18T09:00');
+    expect(dateValue(fixture, '#event-day')).toBe('2026-11-18');
+    expect(text(element().querySelector('#event-start'))).toBe('09:00');
+    expect(text(element().querySelector('#event-end'))).toBe('10:00 · 1 h');
 
     fill('event-title', ' TD systèmes ');
     fill('event-description', ' Chapitre 3 ');
     pickOption(fixture, '#event-ue', 'UTC502');
-    setDate(fixture, '#event-start', '2026-11-18T18:00');
-    setDate(fixture, '#event-end', '2026-11-18T20:00');
+    pickOption(fixture, '#event-start', '18:00');
+    pickOption(fixture, '#event-end', '20:00');
     setDate(fixture, '#event-repeat', '2026-12-02');
     submit();
 
@@ -213,7 +215,7 @@ describe('AgendaPage', () => {
     fill('event-title', 'Examen blanc');
     click('Échéance');
     expect(element().querySelector('#event-end')).toBeNull();
-    setDate(fixture, '#event-start', '2026-11-16T14:00');
+    pickOption(fixture, '#event-start', '14:00');
     submit();
 
     const moment = new Date(2026, 10, 16, 14, 0).toISOString();
@@ -223,16 +225,28 @@ describe('AgendaPage', () => {
     );
   });
 
-  it('refuse une fin avant le début sans appeler l’API', () => {
+  it('garde la durée quand le début change, et ne propose que des fins après lui', () => {
     setup();
+    eventService.create.mockReturnValue(of([COURSE]));
     click('Ajouter un événement le lundi 16 novembre');
-
     fill('event-title', 'Cours');
-    setDate(fixture, '#event-end', '2026-11-16T08:00');
+
+    pickOption(fixture, '#event-start', '18:00');
+    expect(text(element().querySelector('#event-end'))).toBe('19:00 · 1 h');
+    element().querySelector<HTMLButtonElement>('#event-end')?.click();
+    fixture.detectChanges();
+    const ends = Array.from(
+      element().querySelectorAll<HTMLElement>('app-dropdown:has(#event-end) .option'),
+    ).map((option) => option.dataset['value']);
+    expect(ends[0]).toBe('18:15');
     submit();
 
-    expect(eventService.create).not.toHaveBeenCalled();
-    expect(text()).toContain('La fin ne peut pas précéder le début.');
+    expect(eventService.create.mock.calls[0][1]).toEqual([
+      {
+        startsAt: new Date(2026, 10, 16, 18, 0).toISOString(),
+        endsAt: new Date(2026, 10, 16, 19, 0).toISOString(),
+      },
+    ]);
   });
 
   it('modifie un événement, sans proposer de répétition', () => {
@@ -322,7 +336,7 @@ describe('AgendaPage', () => {
 
       click('Ajouter un événement le jeudi 19 novembre');
 
-      expect(dateValue(fixture, '#event-start')).toBe('2026-11-19T09:00');
+      expect(dateValue(fixture, '#event-day')).toBe('2026-11-19');
     });
 
     it('montre le détail d’un événement, puis le modifie dans la même fenêtre', () => {

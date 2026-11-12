@@ -48,18 +48,33 @@
 
   <div class="form-row">
     <div class="field field-grow">
-      <label for="event-start">{{ type() === 'deadline' ? 'Date et heure' : 'Début' }}</label>
-      <app-date-field fieldId="event-start" formControlName="startsAt" [clearable]="false" />
+      <label for="event-day">Date</label>
+      <app-date-field
+        fieldId="event-day"
+        formControlName="day"
+        [withTime]="false"
+        [clearable]="false"
+      />
+    </div>
+    <div class="field field-short">
+      <label for="event-start">{{ type() === 'deadline' ? 'Heure' : 'Début' }}</label>
+      <app-dropdown
+        monospace
+        fieldId="event-start"
+        formControlName="startTime"
+        [options]="startOptions()"
+        (valueChange)="moveStart($event)"
+      />
     </div>
     @if (type() === 'course') {
-      <div class="field field-grow">
+      <div class="field field-short">
         <label for="event-end">Fin</label>
-        <app-date-field
+        <app-dropdown
+          monospace
           fieldId="event-end"
-          formControlName="endsAt"
-          [clearable]="false"
-          [durationFrom]="form.controls.startsAt.value"
-          [invalid]="periodError() !== null"
+          formControlName="endTime"
+          [options]="endOptions()"
+          (valueChange)="endTime.set($event)"
         />
       </div>
     }
@@ -82,9 +97,6 @@
   }
 
   <div role="alert">
-    @if (periodError(); as error) {
-      <p class="form-error">{{ error }}</p>
-    }
     @for (error of errors(); track error) {
       <p class="form-error">{{ error }}</p>
     }

@@ -9,7 +9,6 @@ import { dateValue, setDate } from './date-field.testing';
   template: `
     <app-date-field fieldId="due" [formControl]="due" />
     <app-date-field fieldId="start" [formControl]="start" [clearable]="false" />
-    <app-date-field fieldId="end" [formControl]="end" [durationFrom]="start.value" />
     <app-date-field
       fieldId="until"
       placeholder="Sans répétition"
@@ -21,7 +20,6 @@ import { dateValue, setDate } from './date-field.testing';
 class Host {
   readonly due = new FormControl('2026-11-17T18:30', { nonNullable: true });
   readonly start = new FormControl('2026-11-17T18:30', { nonNullable: true });
-  readonly end = new FormControl('2026-11-17T21:30', { nonNullable: true });
   readonly until = new FormControl('', { nonNullable: true });
   readonly withTime = signal(false);
 }
@@ -124,23 +122,6 @@ describe('DateField', () => {
     const start = open('start');
     expect(start.textContent).not.toContain('Effacer');
     expect(start.textContent).not.toContain('Sans date');
-  });
-
-  it('propose la fin en durée après le début, ou un autre jour', () => {
-    expect(field('end').querySelector('.value')?.textContent).toBe('21:30');
-
-    const end = open('end');
-    expect(end.querySelector('.durations .is-selected')?.textContent).toContain('3 h');
-    end.querySelectorAll<HTMLButtonElement>('.durations .row')[1].click();
-    fixture.detectChanges();
-    expect(host.end.value).toBe('2026-11-17T19:30');
-    expect(end.querySelector('.panel')).toBeNull();
-
-    open('end');
-    click(end, 'Autre heure ou autre jour…');
-    click(end, 'mercredi 18 novembre 2026');
-    expect(host.end.value).toBe('2026-11-18T19:30');
-    expect(end.querySelector('.value')?.textContent).toBe('Mer. 18 nov. 2026 · 19:30');
   });
 
   it('choisit une date seule d’un clic et referme le panneau', () => {
