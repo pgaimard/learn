@@ -21,19 +21,11 @@ const MONTH = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' 
 const VALUE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/;
 const TYPED = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2})[:h](\d{2}))?$/;
 export const DEFAULT_HOUR = 9;
-// Durées proposées pour une fin, en minutes après le début.
-const DURATIONS = [30, 60, 120, 180, 240];
 
 export interface Shortcut {
   label: string;
   hint: string;
   date: Date;
-}
-
-export interface DurationChoice {
-  date: Date;
-  time: string;
-  label: string;
 }
 
 export function pad(value: number): string {
@@ -161,16 +153,4 @@ export function shortcuts(today: Date): Shortcut[] {
     ...entries.map(([label, date]) => ({ label, hint: SHORT_DAY.format(date), date })),
     { label: 'Dans 1 mois', hint: SHORT_DATE.format(inAMonth), date: inAMonth },
   ];
-}
-
-// Fins proposées après un début : « 19:00 · 30 min », « 19:30 · 1 h »…
-export function durationChoices(start: Date): DurationChoice[] {
-  return DURATIONS.map((minutes) => {
-    const date = new Date(start.getTime() + minutes * 60_000);
-    return {
-      date,
-      time: formatTime(date),
-      label: minutes < 60 ? `${minutes} min` : `${minutes / 60} h`,
-    };
-  });
 }

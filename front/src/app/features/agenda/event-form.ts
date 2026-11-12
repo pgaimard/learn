@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateField } from '../../core/ui/date-field';
+import { formatTime, formatValue, isSameDay, parseValue } from '../../core/ui/date-field-values';
 import { Dropdown } from '../../core/ui/dropdown';
 import { Segmented, SegmentedOption } from '../../core/ui/segmented';
-import { fromLocalInput, toLocalInput } from '../taches/task-dates';
 import { ueOptions } from '../ue/ue-options';
 import { Ue } from '../ue/ue.service';
 import { AgendaEvent, EventDetails, EventType, Occurrence } from './event.service';
+import { endTimeOptions, shiftTime, startTimeOptions, toMinutes } from './event-times';
 import { weeklyOccurrences } from './week';
 
 export interface EventFormValue {
@@ -55,15 +56,22 @@ export class EventForm implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
   protected readonly type = signal<EventType>('course');
-  protected readonly periodError = signal<string | null>(null);
 
+  // Heures choisies, pour proposer les fins possibles après le début.
+  protected readonly startTime = signal('');
+  protected readonly endTime = signal('');
+  protected readonly startOptions = computed(() => startTimeOptions(this.startTime()));
+  protected readonly endOptions = computed(() => endTimeOptions(this.startTime(), this.endTime()));
+
+  // Un événement tient dans une journée : une date, une heure de début et une de fin.
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
     description: ['', Validators.maxLength(2000)],
     type: this.formBuilder.control<EventType>('course'),
     ueCode: [''],
-    startsAt: ['', Validators.required],
-    endsAt: [''],
+    day: ['', Validators.required],
+    startTime: ['', Validators.required],
+    endTime: [''],
     repeatUntil: [''],
   });
 
@@ -72,25 +80,38 @@ export class EventForm implements OnInit {
     const start = event ? new Date(event.startsAt) : defaultStart(this.day());
     const end = event ? new Date(event.endsAt) : new Date(start.getTime() + HOUR_MS);
     this.type.set(event?.type ?? 'course');
+    this.startTime.set(formatTime(start));
+    // Une échéance devenue cours, ou une fin un autre jour : une heure après le début.
+    this.endTime.set(
+      isSameDay(start, end) && end > start ? formatTime(end) : shiftTime(this.startTime(), 60),
+    );
     this.form.setValue({
       title: event?.title ?? '',
       description: event?.description ?? '',
       type: this.type(),
       ueCode: event ? (event.ue?.code ?? '') : this.defaultUeCode(),
-      startsAt: toLocalInput(start.toISOString()),
-      endsAt: toLocalInput(end.toISOString()),
+      day: formatValue(start, false),
+      startTime: this.startTime(),
+      endTime: this.endTime(),
       repeatUntil: '',
     });
   }
 
+  // Le début change : la fin suit, pour garder la durée.
+  protected moveStart(startTime: string): void {
+    const duration = toMinutes(this.endTime()) - toMinutes(this.startTime());
+    this.startTime.set(startTime);
+    this.endTime.set(shiftTime(startTime, duration));
+    this.form.controls.endTime.setValue(this.endTime());
+  }
+
   protected submit(): void {
-    const { title, description, type, ueCode, startsAt, endsAt, repeatUntil } =
+    const { title, description, type, ueCode, day, startTime, endTime, repeatUntil } =
       this.form.getRawValue();
-    const start = toDate(startsAt);
+    const start = parseValue(`${day}T${startTime}`);
     // Une échéance est ponctuelle : sa fin est son début.
-    const end = type === 'deadline' ? start : toDate(endsAt);
-    this.periodError.set(periodProblem(start, end));
-    if (this.form.invalid || !start || !end || this.periodError() !== null) {
+    const end = type === 'deadline' ? start : parseValue(`${day}T${endTime}`);
+    if (this.form.invalid || !start || !end) {
       this.form.markAllAsTouched();
       return;
     }
@@ -119,16 +140,4 @@ export class EventForm implements OnInit {
 function defaultStart(day: Date | null): Date {
   const base = day ?? new Date();
   return new Date(base.getFullYear(), base.getMonth(), base.getDate(), 9, 0);
-}
-
-function toDate(localValue: string): Date | null {
-  const iso = fromLocalInput(localValue);
-  return iso === null ? null : new Date(iso);
-}
-
-function periodProblem(start: Date | null, end: Date | null): string | null {
-  if (!start || !end) {
-    return 'Le début et la fin sont requis.';
-  }
-  return end < start ? 'La fin ne peut pas précéder le début.' : null;
 }

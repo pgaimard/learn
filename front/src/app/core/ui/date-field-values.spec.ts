@@ -1,5 +1,4 @@
 import {
-  durationChoices,
   formatLabel,
   formatTyped,
   formatValue,
@@ -70,17 +69,5 @@ describe('valeurs du sélecteur de date', () => {
     const sunday = shortcuts(new Date(2026, 10, 15));
     expect(sunday[2].date).toEqual(new Date(2026, 10, 15));
     expect(sunday[3].date).toEqual(new Date(2026, 10, 16));
-  });
-
-  it('propose des fins en durée après un début', () => {
-    const choices = durationChoices(new Date(2026, 10, 17, 18, 30));
-
-    expect(choices.map((choice) => `${choice.time} ${choice.label}`)).toEqual([
-      '19:00 30 min',
-      '19:30 1 h',
-      '20:30 2 h',
-      '21:30 3 h',
-      '22:30 4 h',
-    ]);
   });
 });
