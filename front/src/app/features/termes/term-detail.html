@@ -1,0 +1,34 @@
+<div class="page-header">
+  @if (headingLevel() === 1) {
+    <h1 class="label" [class.mono]="term().type === 'acronym'">{{ term().label }}</h1>
+  } @else {
+    <h2 class="label" [class.mono]="term().type === 'acronym'">{{ term().label }}</h2>
+  }
+  <div class="actions">
+    <a class="button" [routerLink]="[screen().path, term().id, 'edition']">
+      <app-icon name="pencil" />Modifier
+    </a>
+    <button
+      type="button"
+      class="button button-icon button-ghost"
+      [attr.aria-label]="'Supprimer ' + term().label"
+      (click)="removed.emit(term())"
+    >
+      <app-icon name="trash" />
+    </button>
+  </div>
+</div>
+@if (term().expandedForm; as expandedForm) {
+  <p class="expanded-form">{{ expandedForm }}</p>
+}
+@if (term().ue; as ue) {
+  <p class="meta origin">
+    Origine :
+    <a [routerLink]="['/ue', ue.code]">{{ ue.code }}</a>
+    @if (term().course; as course) {
+      <span aria-hidden="true"> / </span>
+      <a [routerLink]="['/ue', ue.code, 'cours', course.id]">{{ course.title }}</a>
+    }
+  </p>
+}
+<app-course-content [content]="term().content" label="Définition" />

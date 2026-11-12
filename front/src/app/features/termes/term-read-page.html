@@ -7,27 +7,12 @@
 @if (term(); as term) {
   <nav class="breadcrumb" aria-label="Fil d’Ariane">
     <a [routerLink]="screen().path">{{ screen().title }}</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ term.label }}</span>
   </nav>
 
-  <article class="article">
-    <div class="page-header">
-      <h1>{{ term.label }}</h1>
-      <a class="button" [routerLink]="[screen().path, term.id, 'edition']">Modifier</a>
-    </div>
-    @if (term.expandedForm) {
-      <p class="expanded-form">{{ term.expandedForm }}</p>
-    }
-    @if (term.ue; as ue) {
-      <p class="origin">
-        Origine :
-        <a [routerLink]="['/ue', ue.code]">{{ ue.code }}</a>
-        @if (term.course; as course) {
-          <span aria-hidden="true"> › </span>
-          <a [routerLink]="['/ue', ue.code, 'cours', course.id]">{{ course.title }}</a>
-        }
-      </p>
-    }
-    <app-course-content [content]="term.content" label="Définition" />
+  <article class="card article">
+    <app-term-detail [term]="term" (removed)="remove($event)" />
   </article>
 } @else if (errors().length === 0) {
   <p>Chargement…</p>

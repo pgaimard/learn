@@ -182,6 +182,9 @@ describe('Termes', () => {
       label: 'Processus',
       expandedForm: null,
       excerpt: 'Programme en cours d’exécution.\npid_t pid = fork();',
+      ueCode: 'UTC502',
+      courseId,
+      courseTitle: 'Processus',
     });
   });
 

@@ -8,15 +8,16 @@ import {
   signal,
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
-import { CourseContent } from '../cours/content/course-content';
+import { TermDetail } from './term-detail';
 import { TERM_SCREENS } from './term-screens';
 import { Term, TermService } from './term.service';
 
 @Component({
   selector: 'app-term-read-page',
-  imports: [CourseContent, RouterLink],
+  imports: [RouterLink, TermDetail],
   templateUrl: './term-read-page.html',
   styleUrl: './term-read-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +28,8 @@ export class TermReadPage {
 
   private readonly termService = inject(TermService);
   private readonly title = inject(Title);
+  private readonly dialog = inject(DialogService);
+  private readonly router = inject(Router);
 
   protected readonly term = signal<Term | null>(null);
   protected readonly errors = signal<string[]>([]);
@@ -34,6 +37,20 @@ export class TermReadPage {
 
   constructor() {
     effect(() => this.load(Number(this.id())));
+  }
+
+  protected async remove(term: Term): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le terme',
+      `« ${term.label} » et sa définition seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.termService.remove(term.id).subscribe({
+      next: () => void this.router.navigateByUrl(this.screen().path),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
   }
 
   private load(id: number): void {

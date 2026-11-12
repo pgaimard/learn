@@ -13,6 +13,9 @@ const PID: TermSummary = {
   label: 'PID',
   expandedForm: 'Process Identifier',
   excerpt: 'Numéro d’un processus.',
+  ueCode: null,
+  courseId: null,
+  courseTitle: null,
 };
 const TLB: TermSummary = {
   id: 2,
@@ -20,12 +23,16 @@ const TLB: TermSummary = {
   label: 'TLB',
   expandedForm: 'Translation Lookaside Buffer',
   excerpt: '',
+  ueCode: null,
+  courseId: null,
+  courseTitle: null,
 };
 
 describe('TermListPage', () => {
   let fixture: ComponentFixture<TermListPage>;
   const service = {
     list: vi.fn<TermService['list']>(),
+    get: vi.fn<TermService['get']>(),
     create: vi.fn<TermService['create']>(),
     remove: vi.fn<TermService['remove']>(),
     revision: signal(0),
@@ -47,9 +54,20 @@ describe('TermListPage', () => {
     fixture.detectChanges();
   }
 
-  function setup(type: TermType, terms: TermSummary[]): void {
+  function setup(type: TermType, terms: TermSummary[], id?: string): void {
     vi.resetAllMocks();
     service.list.mockReturnValue(of(terms));
+    service.get.mockImplementation((termId) =>
+      of({
+        id: termId,
+        type,
+        label: terms.find((term) => term.id === termId)?.label ?? '',
+        expandedForm: null,
+        content: { type: 'doc', content: [{ type: 'paragraph' }] },
+        ue: null,
+        course: null,
+      }),
+    );
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -59,6 +77,7 @@ describe('TermListPage', () => {
     });
     fixture = TestBed.createComponent(TermListPage);
     fixture.componentRef.setInput('type', type);
+    fixture.componentRef.setInput('id', id);
     fixture.detectChanges();
   }
 
@@ -233,5 +252,74 @@ describe('TermListPage', () => {
 
     expect(element().textContent).toContain('existe déjà dans le dictionnaire');
     expect(element().querySelector('form')).not.toBeNull();
+  });
+
+  describe('glossaire', () => {
+    const CPU: TermSummary = { ...PID, id: 3, label: 'CPU', ueCode: 'UTC502' };
+    const PCI: TermSummary = { ...PID, id: 4, label: 'PCIe', ueCode: 'RSX101' };
+
+    it('range les acronymes sous leur lettre et n’active que les lettres utilisées', () => {
+      setup('acronym', [CPU, PCI, PID]);
+
+      expect(
+        Array.from(element().querySelectorAll('.letter')).map((letter) => letter.textContent),
+      ).toEqual(['C', 'P']);
+      expect(
+        Array.from(element().querySelectorAll('.alphabet button')).map(
+          (letter) => letter.textContent,
+        ),
+      ).toEqual(['C', 'P']);
+    });
+
+    it('filtre par UE avec les pastilles, et compte ce qui reste', () => {
+      setup('acronym', [CPU, PCI, PID]);
+      expect(
+        Array.from(element().querySelectorAll('.chip')).map((chip) => chip.textContent.trim()),
+      ).toEqual(['Toutes les UE', 'RSX101', 'UTC502']);
+
+      click('RSX101');
+
+      expect(labels()).toEqual(['PCIe']);
+      expect(element().querySelector('.count')?.textContent.trim()).toBe('1 sur 3');
+      expect(element().querySelector('.chip[aria-pressed="true"]')?.textContent.trim()).toBe(
+        'RSX101',
+      );
+    });
+  });
+
+  describe('dictionnaire', () => {
+    const BUS: TermSummary = { ...PID, id: 5, type: 'definition', label: 'Bus' };
+    const CACHE: TermSummary = { ...PID, id: 6, type: 'definition', label: 'Cache' };
+
+    function shown(): string | undefined {
+      return element().querySelector('.detail .label')?.textContent.trim();
+    }
+
+    it('affiche la première définition à côté de la liste', () => {
+      setup('definition', [BUS, CACHE]);
+
+      expect(labels()).toEqual(['Bus', 'Cache']);
+      expect(service.get).toHaveBeenCalledWith(5);
+      expect(shown()).toBe('Bus');
+      expect(element().querySelector('.entry.is-selected')?.textContent).toContain('Bus');
+    });
+
+    it('affiche la définition désignée par l’adresse', () => {
+      setup('definition', [BUS, CACHE], '6');
+
+      expect(shown()).toBe('Cache');
+      expect(element().querySelector('.entry.is-selected')?.getAttribute('href')).toBe(
+        '/dictionnaire/6',
+      );
+    });
+
+    it('suit le filtre : la première définition restante est affichée', () => {
+      setup('definition', [BUS, CACHE]);
+
+      fill('term-filter', 'cac');
+
+      expect(labels()).toEqual(['Cache']);
+      expect(shown()).toBe('Cache');
+    });
   });
 });

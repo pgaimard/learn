@@ -72,7 +72,16 @@ describe('UePage', () => {
     );
     termService.list.mockReturnValue(
       of([
-        { id: 4, type: 'acronym', label: 'PID', expandedForm: 'Process Identifier', excerpt: '' },
+        {
+          id: 4,
+          type: 'acronym',
+          label: 'PID',
+          expandedForm: 'Process Identifier',
+          excerpt: '',
+          ueCode: 'UTC502',
+          courseId: 12,
+          courseTitle: 'Processus',
+        },
       ]),
     );
   });
@@ -93,6 +102,23 @@ describe('UePage', () => {
     expect(element().querySelector('.term-actions a')?.getAttribute('href')).toBe(
       '/glossaire/4/edition',
     );
+  });
+
+  it('filtre les termes de l’onglet par type et montre le cours d’origine', () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'termes');
+    fixture.detectChanges();
+
+    expect(element().querySelector('.origin a')?.getAttribute('href')).toBe('/ue/UTC502/cours/12');
+    expect(element().querySelector('.pill.type')?.textContent).toBe('Acronyme');
+
+    Array.from(element().querySelectorAll<HTMLButtonElement>('app-segmented button'))
+      .find((button) => button.textContent.trim() === 'Définitions')
+      ?.click();
+    fixture.detectChanges();
+
+    expect(element().querySelector('a.term')).toBeNull();
+    expect(element().textContent).toContain('Aucun terme ne correspond.');
   });
 
   it('supprime un terme de l’onglet après confirmation seulement, puis recharge', async () => {
