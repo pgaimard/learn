@@ -77,18 +77,12 @@
 } @else {
   <div class="filters">
     <label for="task-ue-filter">UE</label>
-    <select
-      #ueField
-      id="task-ue-filter"
+    <app-dropdown
+      fieldId="task-ue-filter"
+      [options]="ueFilterOptions()"
       [value]="ueFilter()"
-      (change)="ueFilter.set(ueField.value)"
-    >
-      <option value="">Toutes</option>
-      @for (ue of ues(); track ue.id) {
-        <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-      }
-      <option [value]="withoutUe">Sans UE</option>
-    </select>
+      (valueChange)="ueFilter.set($event)"
+    />
   </div>
 
   @if (reminders().length > 0) {

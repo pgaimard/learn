@@ -6,11 +6,13 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
+import { Icon } from '../ui/icon';
 import { DialogService } from './dialog.service';
 
 // Modale de confirmation ou de saisie de l'application, pilotée par DialogService.
 @Component({
   selector: 'app-dialog-host',
+  imports: [Icon],
   templateUrl: './dialog-host.html',
   styleUrl: './dialog-host.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

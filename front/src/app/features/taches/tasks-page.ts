@@ -10,6 +10,8 @@ import {
 import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Dropdown } from '../../core/ui/dropdown';
+import { ueOptions } from '../ue/ue-options';
 import { Ue, UeService } from '../ue/ue.service';
 import { formatDateTime, isOverdue, isReminderDue } from './task-dates';
 import { TaskForm } from './task-form';
@@ -20,7 +22,7 @@ const WITHOUT_UE = '-';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [NgTemplateOutlet, TaskForm],
+  imports: [Dropdown, NgTemplateOutlet, TaskForm],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,13 +32,19 @@ export class TasksPage implements OnInit {
   private readonly dialog = inject(DialogService);
   private readonly ueService = inject(UeService);
 
-  protected readonly withoutUe = WITHOUT_UE;
   protected readonly tasks = signal<Task[]>([]);
   protected readonly ues = signal<Ue[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly pageErrors = signal<string[]>([]);
   // '' : toutes les UE.
   protected readonly ueFilter = signal('');
+  protected readonly ueFilterOptions = computed(() =>
+    ueOptions(
+      this.ues(),
+      [{ value: '', label: 'Toutes' }],
+      [{ value: WITHOUT_UE, label: 'Sans UE' }],
+    ),
+  );
   protected readonly showDone = signal(false);
   // Tâche en cours de modification, « new » pour une création, null si aucun formulaire ouvert.
   protected readonly editing = signal<Task | 'new' | null>(null);

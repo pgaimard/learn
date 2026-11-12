@@ -72,7 +72,7 @@ describe('TermQuickCreate', () => {
     service.create.mockReturnValue(of({ id: 5, type: 'acronym', label: 'PID' } as Term));
     click('Nouveau terme');
 
-    check('input[type="radio"]:not(:checked)');
+    click('Acronyme');
     fill('quick-term-label', 'PID');
     fill('quick-term-expanded-form', 'Process Identifier');
     submit();

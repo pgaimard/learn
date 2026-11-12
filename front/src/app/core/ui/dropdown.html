@@ -1,0 +1,88 @@
+<button
+  #button
+  type="button"
+  class="trigger"
+  role="combobox"
+  aria-haspopup="listbox"
+  [id]="fieldId()"
+  [class.is-open]="isOpen()"
+  [class.mono]="monospace()"
+  [disabled]="isDisabled()"
+  [attr.aria-label]="label()"
+  [attr.aria-describedby]="describedBy()"
+  [attr.aria-expanded]="isOpen()"
+  [attr.aria-controls]="listId"
+  [attr.aria-activedescendant]="searchable() ? null : activeId()"
+  (click)="toggle()"
+>
+  <span class="value">
+    @if (selected(); as option) {
+      @if (option.code) {
+        <span class="code-chip">{{ option.code }}</span>
+      }
+      {{ option.label }}
+    }
+  </span>
+  <app-icon name="chevron-down" [size]="15" />
+</button>
+
+@if (isOpen()) {
+  <div class="panel">
+    @if (searchable()) {
+      <input
+        #searchInput
+        type="search"
+        class="search"
+        role="combobox"
+        aria-expanded="true"
+        autocomplete="off"
+        [placeholder]="searchLabel()"
+        [attr.aria-label]="searchLabel()"
+        [attr.aria-controls]="listId"
+        [attr.aria-activedescendant]="activeId()"
+        [value]="query()"
+        (input)="search(searchInput.value)"
+      />
+    }
+    <div class="options" role="listbox" [id]="listId" [attr.aria-label]="label()">
+      @for (option of visible(); track option.value; let index = $index) {
+        <!-- tabindex -1 : le curseur reste sur le bouton ou la recherche, les flèches
+             désignent l'option. mousedown gardé pour que le clic n'emporte pas le curseur. -->
+        <button
+          type="button"
+          role="option"
+          tabindex="-1"
+          class="option"
+          [id]="optionId(index)"
+          [attr.data-value]="option.value"
+          [class.is-active]="index === activeIndex()"
+          [class.is-selected]="option.value === current()"
+          [class.mono]="monospace()"
+          [attr.aria-selected]="option.value === current()"
+          (mousedown)="$event.preventDefault()"
+          (mousemove)="activeIndex.set(index)"
+          (click)="choose(option)"
+        >
+          @if (option.code) {
+            <span class="code-chip">{{ option.code }}</span>
+          }
+          <span class="option-label" [class]="option.look ? 'look-' + option.look : ''">{{
+            option.label
+          }}</span>
+          @if (option.value === current()) {
+            <app-icon class="check" name="check" [size]="15" />
+          }
+        </button>
+      } @empty {
+        <p class="empty">Aucun résultat</p>
+      }
+    </div>
+    @if (!compact()) {
+      <p class="keys" aria-hidden="true">
+        <span><span class="kbd">↑</span> <span class="kbd">↓</span> choisir</span>
+        <span><span class="kbd">↵</span> valider</span>
+        <span><span class="kbd">Échap</span> fermer</span>
+      </p>
+    }
+  </div>
+}

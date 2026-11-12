@@ -1,20 +1,29 @@
 <!-- (close) : fermeture par Échap, traitée comme une annulation. -->
 <dialog
   #dialog
+  class="modal"
   aria-labelledby="dialog-title"
   [attr.aria-describedby]="request()?.kind === 'confirm' ? 'dialog-message' : null"
   (close)="cancel()"
 >
   @if (request(); as request) {
-    <h2 id="dialog-title">{{ request.title }}</h2>
     @if (request.kind === 'confirm') {
-      <p id="dialog-message">{{ request.message }}</p>
-      <div class="actions">
+      <div class="modal-header">
+        <span class="modal-badge" [class.modal-badge-danger]="request.isDestructive">
+          <app-icon [name]="request.isDestructive ? 'trash' : 'warning'" [size]="16" />
+        </span>
+        <h2 id="dialog-title">{{ request.title }}</h2>
+      </div>
+      <div class="modal-body">
+        <p id="dialog-message">{{ request.message }}</p>
+      </div>
+      <div class="modal-footer">
         <button #initialFocus type="button" class="button" (click)="cancel()">Annuler</button>
         <button
           type="button"
           class="button confirm"
-          [class.is-destructive]="request.isDestructive"
+          [class.button-primary]="!request.isDestructive"
+          [class.button-destructive]="request.isDestructive"
           (click)="confirm()"
         >
           {{ request.confirmLabel }}
@@ -22,22 +31,37 @@
       </div>
     } @else {
       <form (submit)="submit($event, field.value)">
-        <label for="dialog-field">{{ request.label }}</label>
-        <input
-          #initialFocus
-          #field
-          id="dialog-field"
-          type="text"
-          autocomplete="off"
-          [value]="request.initialValue"
-          [attr.aria-describedby]="request.hint ? 'dialog-hint' : null"
-        />
-        @if (request.hint) {
-          <p id="dialog-hint" class="hint">{{ request.hint }}</p>
-        }
-        <div class="actions">
+        <div class="modal-header">
+          <h2 id="dialog-title">{{ request.title }}</h2>
+          <button
+            type="button"
+            class="button button-icon button-ghost"
+            aria-label="Fermer"
+            (click)="cancel()"
+          >
+            <app-icon name="close" [size]="15" />
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label for="dialog-field">{{ request.label }}</label>
+            <input
+              #initialFocus
+              #field
+              id="dialog-field"
+              type="text"
+              autocomplete="off"
+              [value]="request.initialValue"
+              [attr.aria-describedby]="request.hint ? 'dialog-hint' : null"
+            />
+            @if (request.hint) {
+              <p id="dialog-hint" class="field-hint">{{ request.hint }}</p>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
           <button type="button" class="button" (click)="cancel()">Annuler</button>
-          <button type="submit" class="button confirm">Valider</button>
+          <button type="submit" class="button button-primary confirm">Valider</button>
         </div>
       </form>
     }

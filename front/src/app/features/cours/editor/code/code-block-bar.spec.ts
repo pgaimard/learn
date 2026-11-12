@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Editor } from '@tiptap/core';
 import { createCourseExtensions } from '../../content/course-extensions';
+import { pickOption } from '../../../../core/ui/dropdown.testing';
 import { CodeBlockBar } from './code-block-bar';
 
 describe('CodeBlockBar', () => {
@@ -29,20 +30,15 @@ describe('CodeBlockBar', () => {
 
   afterEach(() => editor.destroy());
 
-  function select(): HTMLSelectElement {
-    return (fixture.nativeElement as HTMLElement).querySelector('select') as HTMLSelectElement;
-  }
-
   function choose(value: string): void {
-    select().value = value;
-    select().dispatchEvent(new Event('change'));
+    pickOption(fixture, '.trigger', value);
   }
 
   it('montre le langage du bloc', () => {
-    expect(select().value).toBe('c');
-    expect((fixture.nativeElement as HTMLElement).querySelector('label')?.textContent).toBe(
-      'Langage',
-    );
+    const trigger = (fixture.nativeElement as HTMLElement).querySelector('.trigger');
+
+    expect(trigger?.textContent.trim()).toBe('c');
+    expect(trigger?.getAttribute('aria-label')).toBe('Langage du bloc de code');
   });
 
   it('change le langage du bloc, ou revient à la détection automatique', () => {

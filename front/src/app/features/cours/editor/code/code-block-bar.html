@@ -1,9 +1,11 @@
-<label for="code-language">Langage</label>
-<!-- L'option choisie est marquée une à une : la valeur de la liste ne peut pas être
-     posée avant que ses options existent. -->
-<select #field id="code-language" (change)="setLanguage(field.value)">
-  <option value="" [selected]="language() === ''">Détection automatique</option>
-  @for (name of languages; track name) {
-    <option [value]="name" [selected]="language() === name">{{ name }}</option>
-  }
-</select>
+<app-dropdown
+  compact
+  searchable
+  monospace
+  label="Langage du bloc de code"
+  searchLabel="Chercher un langage"
+  [returnFocus]="false"
+  [options]="languages"
+  [value]="language()"
+  (valueChange)="setLanguage($event)"
+/>

@@ -1,12 +1,22 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  output,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Dropdown } from '../../core/ui/dropdown';
+import { ueOptions } from '../ue/ue-options';
 import { Ue } from '../ue/ue.service';
 import { fromLocalInput, toLocalInput } from './task-dates';
 import { Task, TaskInput } from './task.service';
 
 @Component({
   selector: 'app-task-form',
-  imports: [ReactiveFormsModule],
+  imports: [Dropdown, ReactiveFormsModule],
   templateUrl: './task-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -14,6 +24,9 @@ export class TaskForm implements OnInit {
   // Tâche à modifier ; null pour une création.
   readonly task = input<Task | null>(null);
   readonly ues = input.required<Ue[]>();
+  protected readonly ueChoices = computed(() =>
+    ueOptions(this.ues(), [{ value: '', label: 'Aucune' }]),
+  );
   // UE proposée par défaut à la création (filtre en cours).
   readonly defaultUeCode = input('');
   readonly errors = input<string[]>([]);
