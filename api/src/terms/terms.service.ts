@@ -33,6 +33,10 @@ export interface TermSummary extends Pick<
 > {
   // Début de la définition en texte brut.
   excerpt: string;
+  // Origine du terme : code de son UE, cours dont il est issu ; null s'il n'en a pas.
+  ueCode: string | null;
+  courseId: number | null;
+  courseTitle: string | null;
 }
 
 type Origin = Pick<Term, 'ueId' | 'courseId'>;
@@ -56,6 +60,11 @@ export class TermsService {
       .addSelect('term.label', 'label')
       .addSelect('term.expanded_form', 'expandedForm')
       .addSelect('left(term.plain_text, :length)', 'excerpt')
+      .leftJoin('term.ue', 'ue')
+      .addSelect('ue.code', 'ueCode')
+      .leftJoin('term.course', 'course')
+      .addSelect('course.id', 'courseId')
+      .addSelect('course.title', 'courseTitle')
       .setParameter('length', EXCERPT_LENGTH)
       .orderBy('term.label', 'ASC')
       .addOrderBy('term.id', 'ASC');

@@ -137,13 +137,42 @@
   } @else if (tab() === 'fichiers') {
     <app-file-browser [ueCode]="ue.code" [folderId]="folderId()" />
   } @else {
-    <h2 class="terms-title">Termes de l’UE</h2>
     @if (terms().length === 0) {
-      <p class="empty">
-        Aucun terme rattaché à cette UE. « Nouveau terme », en haut de page, en crée un.
-      </p>
+      <p class="empty">Aucun terme rattaché à cette UE. « Terme », en haut de page, en crée un.</p>
     } @else {
-      <app-term-list [terms]="terms()" [showActions]="true" (removed)="removeTerm($event)" />
+      <div class="page-header toolbar terms-toolbar">
+        <label class="visually-hidden" for="ue-term-filter">Filtrer</label>
+        <input
+          #termFilterField
+          id="ue-term-filter"
+          class="term-filter"
+          type="search"
+          autocomplete="off"
+          placeholder="Filtrer les termes de l’UE"
+          [value]="termFilter()"
+          (input)="termFilter.set(termFilterField.value)"
+        />
+        <app-segmented
+          label="Type"
+          [options]="termTypeOptions"
+          [value]="termType()"
+          (valueChange)="termType.set($event)"
+        />
+        <span class="meta" aria-live="polite">
+          {{ visibleTerms().length }} sur {{ terms().length }}
+        </span>
+      </div>
+      @if (visibleTerms().length === 0) {
+        <p class="empty">Aucun terme ne correspond.</p>
+      } @else {
+        <app-term-list
+          origin="course"
+          [terms]="visibleTerms()"
+          [showType]="true"
+          [showActions]="true"
+          (removed)="removeTerm($event)"
+        />
+      }
     }
   }
 }

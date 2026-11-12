@@ -1,10 +1,13 @@
 <div class="page-header">
-  <h1>{{ screen().title }}</h1>
-  @if (!isCreating()) {
-    <button type="button" class="button button-primary" (click)="openForm()">
-      {{ screen().createLabel }}
-    </button>
-  }
+  <div class="heading">
+    <h1>{{ screen().title }}</h1>
+    <span class="meta">
+      {{ isDictionary() ? 'Définitions' : 'Acronymes' }}, communs à toutes les UE
+    </span>
+  </div>
+  <button type="button" class="button button-primary" (click)="openForm()">
+    <app-icon name="plus" />{{ screen().createLabel }}
+  </button>
 </div>
 
 <div role="alert">
@@ -14,7 +17,7 @@
 </div>
 
 @if (isCreating()) {
-  <section class="card" [attr.aria-label]="screen().createLabel">
+  <app-modal [heading]="screen().createLabel" [wide]="true" (closed)="closeForm()">
     <app-term-form
       [type]="type()"
       [errors]="formErrors()"
@@ -22,32 +25,120 @@
       (saved)="create($event)"
       (cancelled)="closeForm()"
     />
-  </section>
+  </app-modal>
 }
 
 @if (isLoading()) {
   <p>Chargement…</p>
 } @else if (terms().length === 0) {
-  @if (!isCreating()) {
-    <p class="empty">{{ screen().emptyMessage }}</p>
-  }
+  <p class="empty">{{ screen().emptyMessage }}</p>
+} @else if (isDictionary()) {
+  <!-- Dictionnaire : la liste à gauche, la définition choisie à droite. -->
+  <div class="split">
+    <div class="master">
+      <div class="toolbar">
+        <label class="visually-hidden" for="term-filter">Filtrer</label>
+        <input
+          #filterField
+          id="term-filter"
+          class="filter"
+          type="search"
+          autocomplete="off"
+          placeholder="Filtrer les définitions"
+          [value]="filter()"
+          (input)="filter.set(filterField.value)"
+        />
+      </div>
+      @if (visibleTerms().length === 0) {
+        <p class="empty">Aucun terme ne correspond à « {{ filter() }} ».</p>
+      } @else {
+        <ul class="list">
+          @for (term of visibleTerms(); track term.id) {
+            <li>
+              <a
+                class="term entry"
+                [class.is-selected]="term.id === selectedId()"
+                [attr.aria-current]="term.id === selectedId() ? 'true' : null"
+                [routerLink]="[screen().path, term.id]"
+              >
+                <strong class="term-label">{{ term.label }}</strong>
+                <span>{{ term.excerpt }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+      <p class="meta count" aria-live="polite">
+        {{ visibleTerms().length }} sur {{ terms().length }}
+      </p>
+    </div>
+
+    <article class="detail" aria-live="polite">
+      @if (selected(); as term) {
+        <app-term-detail [term]="term" [headingLevel]="2" (removed)="remove($event)" />
+      }
+    </article>
+  </div>
 } @else {
-  <div class="filter">
-    <label for="term-filter">Filtrer</label>
+  <!-- Glossaire : tableau par lettre. -->
+  <div class="toolbar">
+    <label class="visually-hidden" for="term-filter">Filtrer</label>
     <input
       #filterField
       id="term-filter"
+      class="filter"
       type="search"
       autocomplete="off"
+      placeholder="Filtrer les acronymes"
       [value]="filter()"
       (input)="filter.set(filterField.value)"
     />
-    <p class="count" aria-live="polite">{{ visibleTerms().length }} sur {{ terms().length }}</p>
+    @if (ueCodes().length > 0) {
+      <div class="chips" role="group" aria-label="UE">
+        <button
+          type="button"
+          class="chip"
+          [attr.aria-pressed]="ueFilter() === ''"
+          (click)="ueFilter.set('')"
+        >
+          Toutes les UE
+        </button>
+        @for (code of ueCodes(); track code) {
+          <button
+            type="button"
+            class="chip"
+            [attr.aria-pressed]="ueFilter() === code"
+            (click)="ueFilter.set(code)"
+          >
+            {{ code }}
+          </button>
+        }
+      </div>
+    }
+    <span class="meta count" aria-live="polite">
+      {{ visibleTerms().length }} sur {{ terms().length }}
+    </span>
   </div>
+
+  <nav class="alphabet" aria-label="Aller à une lettre">
+    @for (letter of alphabet; track letter) {
+      @if (usedLetters().has(letter)) {
+        <button type="button" (click)="goToLetter(letter)">{{ letter }}</button>
+      } @else {
+        <span aria-hidden="true">{{ letter }}</span>
+      }
+    }
+  </nav>
 
   @if (visibleTerms().length === 0) {
     <p class="empty">Aucun terme ne correspond à « {{ filter() }} ».</p>
   } @else {
-    <app-term-list [terms]="visibleTerms()" [showActions]="true" (removed)="remove($event)" />
+    <app-term-list
+      origin="ue"
+      [terms]="visibleTerms()"
+      [grouped]="true"
+      [showActions]="true"
+      (removed)="remove($event)"
+    />
   }
 }

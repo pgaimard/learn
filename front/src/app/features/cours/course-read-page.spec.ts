@@ -151,6 +151,9 @@ describe('CourseReadPage', () => {
       label: `Terme ${index + 1}`,
       expandedForm: index === 0 ? 'Forme développée' : null,
       excerpt: `Définition ${index + 1}`,
+      ueCode: null,
+      courseId: null,
+      courseTitle: null,
     }));
     await setup(COURSE, undefined, terms);
 
