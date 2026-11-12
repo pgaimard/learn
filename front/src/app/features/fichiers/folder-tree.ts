@@ -1,6 +1,20 @@
 import { Folder } from './file.service';
 
 // Sous-dossiers directs d'un dossier, ou dossiers de la racine quand parentId est null.
+// Le dossier « candidateId » est-il le dossier « folderId » ou l'un de ses descendants ?
+export function isInside(folders: Folder[], candidateId: number, folderId: number): boolean {
+  const parents = new Map(folders.map((folder) => [folder.id, folder.parentId]));
+  let current: number | null | undefined = candidateId;
+  // Borne de sécurité : une arborescence ne peut pas être plus profonde que sa taille.
+  for (let depth = 0; depth <= folders.length && current != null; depth += 1) {
+    if (current === folderId) {
+      return true;
+    }
+    current = parents.get(current);
+  }
+  return false;
+}
+
 export function childrenOf(folders: Folder[], parentId: number | null): Folder[] {
   return folders.filter((folder) => folder.parentId === parentId);
 }
