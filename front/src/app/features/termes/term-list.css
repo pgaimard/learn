@@ -40,6 +40,12 @@ ul {
   grid-template-columns: 7.5rem 5.25rem minmax(0, 1fr) minmax(0, 10rem) auto;
 }
 
+/* Glossaire : acronyme, forme développée, définition, UE, actions. L'UE a une largeur
+   fixe pour que les colonnes s'alignent d'une ligne à l'autre. */
+.term-row.has-columns.has-origin {
+  grid-template-columns: 6.875rem minmax(0, 1.1fr) minmax(0, 1.6fr) 5rem auto;
+}
+
 ul:first-child > .term-row:first-child,
 .letter + ul > .term-row:first-child {
   border-top: 0;
@@ -94,8 +100,13 @@ ul:first-child > .term-row:first-child,
     grid-template-columns: 6rem minmax(0, 1fr) auto;
   }
 
+  .term-row.has-columns.has-origin {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+  }
+
   .type,
-  .origin {
+  .origin,
+  .has-columns .term-excerpt {
     display: none;
   }
 }

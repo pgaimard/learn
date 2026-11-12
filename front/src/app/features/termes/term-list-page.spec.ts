@@ -271,6 +271,21 @@ describe('TermListPage', () => {
       ).toEqual(['C', 'P']);
     });
 
+    it('présente chaque acronyme en colonnes : forme développée, définition, UE', () => {
+      setup('acronym', [CPU]);
+
+      const cells = Array.from(element().querySelectorAll('.term-row > *')).map((cell) =>
+        (cell.textContent ?? '').trim(),
+      );
+      expect(element().querySelector('.term-row')?.classList).toContain('has-columns');
+      expect(cells.slice(0, 4)).toEqual([
+        'CPU',
+        'Process Identifier',
+        'Numéro d’un processus.',
+        'UTC502',
+      ]);
+    });
+
     it('filtre par UE avec les pastilles, et compte ce qui reste', () => {
       setup('acronym', [CPU, PCI, PID]);
       expect(

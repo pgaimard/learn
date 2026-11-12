@@ -5,7 +5,12 @@
     }
     <ul>
       @for (term of group.terms; track term.id) {
-        <li class="term-row" [class.has-type]="showType()" [class.has-origin]="origin() !== 'none'">
+        <li
+          class="term-row"
+          [class.has-type]="showType()"
+          [class.has-origin]="origin() !== 'none'"
+          [class.has-columns]="columns()"
+        >
           <a
             class="term term-label"
             [class.mono]="term.type === 'acronym'"
@@ -16,15 +21,22 @@
           @if (showType()) {
             <span class="pill type">{{ term.type === 'acronym' ? 'Acronyme' : 'Définition' }}</span>
           }
-          <span class="term-text">
-            @if (term.expandedForm) {
+          @if (columns()) {
+            <span class="term-text">
               <em class="term-expanded">{{ term.expandedForm }}</em>
-              @if (term.excerpt) {
-                <span aria-hidden="true"> · </span>
+            </span>
+            <span class="term-text term-excerpt">{{ term.excerpt }}</span>
+          } @else {
+            <span class="term-text">
+              @if (term.expandedForm) {
+                <em class="term-expanded">{{ term.expandedForm }}</em>
+                @if (term.excerpt) {
+                  <span aria-hidden="true"> · </span>
+                }
               }
-            }
-            <span class="term-excerpt">{{ term.excerpt }}</span>
-          </span>
+              <span class="term-excerpt">{{ term.excerpt }}</span>
+            </span>
+          }
           @if (origin() === 'ue') {
             <span class="origin">
               @if (term.ueCode; as code) {
