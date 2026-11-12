@@ -1,7 +1,6 @@
 import {
   AgendaItem,
   addMonths,
-  isoWeekNumber,
   itemsOfDay,
   layoutDay,
   monthGrid,
@@ -44,15 +43,6 @@ describe('addMonths', () => {
     expect(addMonths(new Date(2026, 10, 30), 1)).toEqual(new Date(2026, 11, 1));
     expect(addMonths(new Date(2026, 11, 31), 1)).toEqual(new Date(2027, 0, 1));
     expect(addMonths(new Date(2026, 0, 15), -1)).toEqual(new Date(2025, 11, 1));
-  });
-});
-
-describe('isoWeekNumber', () => {
-  it('suit la norme ISO, aux changements d’année compris', () => {
-    expect(isoWeekNumber(new Date(2026, 10, 12))).toBe(46);
-    expect(isoWeekNumber(new Date(2026, 0, 1))).toBe(1);
-    expect(isoWeekNumber(new Date(2027, 0, 1))).toBe(53);
-    expect(isoWeekNumber(new Date(2024, 11, 30))).toBe(1);
   });
 });
 

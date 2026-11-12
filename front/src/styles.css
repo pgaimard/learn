@@ -50,6 +50,8 @@
   --radius-large: 10px;
   --control-height: 1.75rem;
   --page-width: 73.75rem;
+  /* Lecture d'un cours : le plan, la feuille et les termes côte à côte. */
+  --page-width-wide: 88.25rem;
   --reading-width: 43.75rem;
   /* Hauteur occupée en haut de la fenêtre par l'en-tête quand il reste affiché. */
   --sticky-top: 0px;

@@ -138,7 +138,7 @@ describe('AgendaPage', () => {
       dueFrom: from.toISOString(),
       dueTo: to.toISOString(),
     });
-    expect(text(element().querySelector('h1'))).toBe('16 – 22 novembre 2026 · semaine 47');
+    expect(text(element().querySelector('h1'))).toBe('16 – 22 novembre 2026');
   });
 
   it('range les événements et les tâches dans leur jour, par heure', () => {

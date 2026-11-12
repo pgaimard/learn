@@ -130,7 +130,8 @@
 
   .reading {
     /* La colonne du cours compte la largeur de lecture et les marges de la feuille. */
-    grid-template-columns: 13.75rem minmax(0, calc(var(--reading-width) + 5.5rem)) 12.5rem;
+    grid-template-columns: 15rem minmax(0, calc(var(--reading-width) + 5.5rem)) 14rem;
+    column-gap: 3.5rem;
     align-items: start;
   }
 
