@@ -71,7 +71,15 @@ describe('CourseEditPage', () => {
 
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      // Le rappel du raccourci (« ⌘S ») ne fait pas partie du nom du bouton.
+      .find(
+        (button) =>
+          Array.from(button.childNodes)
+            .filter((node) => !(node instanceof Element && node.classList.contains('kbd')))
+            .map((node) => node.textContent)
+            .join('')
+            .trim() === label,
+      )
       ?.click();
     fixture.detectChanges();
   }
@@ -160,6 +168,40 @@ describe('CourseEditPage', () => {
     // La barre de mise en forme apparaît avec la sélection.
     fixture.detectChanges();
   }
+
+  it('ne compte pas comme une modification le fait de placer le curseur ou de sélectionner', async () => {
+    // Un cours qui finit par un bloc de code : l'éditeur lui ajoute de lui-même un
+    // paragraphe final à la première action, ce qui n'est pas une modification.
+    service.get.mockReturnValue(
+      of({
+        ...COURSE,
+        content: {
+          type: 'doc',
+          content: [{ type: 'codeBlock', content: [{ type: 'text', text: 'ls' }] }],
+        },
+      }),
+    );
+    await setup();
+
+    selectAllText();
+
+    expect(fixture.componentInstance.canLeave()).toBe(true);
+  });
+
+  it('met en gras depuis la barre d’outils et signale la modification', async () => {
+    await setup();
+    dialog.confirm.mockResolvedValue(false);
+    selectAllText();
+
+    element().querySelector<HTMLButtonElement>('app-editor-toolbar [aria-label="Gras"]')?.click();
+    fixture.detectChanges();
+
+    expect(element().querySelector('.ProseMirror strong')).not.toBeNull();
+    expect(element().querySelector('.status')?.textContent).toContain(
+      'Modifications non enregistrées',
+    );
+    expect(await fixture.componentInstance.canLeave()).toBe(false);
+  });
 
   it('pose un lien avec l’adresse saisie dans la modale', async () => {
     await setup();

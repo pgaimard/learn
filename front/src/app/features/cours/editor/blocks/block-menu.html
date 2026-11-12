@@ -1,35 +1,72 @@
-<button type="button" role="menuitem" [disabled]="!canMoveUp()" (click)="moveUp()">
-  {{ isSection() ? 'Monter le chapitre' : 'Monter' }} <kbd>Alt+Maj+↑</kbd>
+<button
+  type="button"
+  role="menuitem"
+  class="menu-item"
+  [disabled]="!canMoveUp()"
+  (click)="moveUp()"
+>
+  <app-icon name="arrow-up" [size]="15" />{{ isSection() ? 'Monter le chapitre' : 'Monter'
+  }}<span class="kbd">{{ keys.up }}</span>
 </button>
-<button type="button" role="menuitem" [disabled]="!canMoveDown()" (click)="moveDown()">
-  {{ isSection() ? 'Descendre le chapitre' : 'Descendre' }} <kbd>Alt+Maj+↓</kbd>
+<button
+  type="button"
+  role="menuitem"
+  class="menu-item"
+  [disabled]="!canMoveDown()"
+  (click)="moveDown()"
+>
+  <app-icon name="arrow-down" [size]="15" />{{ isSection() ? 'Descendre le chapitre' : 'Descendre'
+  }}<span class="kbd">{{ keys.down }}</span>
 </button>
 @if (isSection()) {
-  <button type="button" role="menuitem" (click)="toggleFold()">
-    {{ isFolded() ? 'Déplier le chapitre' : 'Replier le chapitre' }}
+  <button type="button" role="menuitem" class="menu-item" (click)="toggleFold()">
+    <app-icon name="fold" [size]="15" />{{
+      isFolded() ? 'Déplier le chapitre' : 'Replier le chapitre'
+    }}
   </button>
-  <button type="button" role="menuitem" [disabled]="!canRaise()" (click)="shiftLevel(-1)">
-    Niveau supérieur
+  <button
+    type="button"
+    role="menuitem"
+    class="menu-item"
+    [disabled]="!canRaise()"
+    (click)="shiftLevel(-1)"
+  >
+    <app-icon name="outdent" [size]="15" />Niveau supérieur
   </button>
-  <button type="button" role="menuitem" [disabled]="!canLower()" (click)="shiftLevel(1)">
-    Niveau inférieur
+  <button
+    type="button"
+    role="menuitem"
+    class="menu-item"
+    [disabled]="!canLower()"
+    (click)="shiftLevel(1)"
+  >
+    <app-icon name="indent" [size]="15" />Niveau inférieur
   </button>
 }
 @if (isPinnable()) {
-  <button type="button" role="menuitem" (click)="togglePin()">
-    {{ isPinned() ? 'Retirer de la fiche de révision' : 'Épingler à la fiche de révision' }}
+  <button type="button" role="menuitem" class="menu-item" (click)="togglePin()">
+    <app-icon name="pin" [size]="15" />{{
+      isPinned() ? 'Retirer de la fiche de révision' : 'Épingler à la fiche de révision'
+    }}
   </button>
 }
-<button type="button" role="menuitem" (click)="duplicate()">Dupliquer</button>
-<button type="button" role="menuitem" class="danger" (click)="remove()">
-  {{ isSection() ? 'Supprimer le titre' : 'Supprimer' }}
+<button type="button" role="menuitem" class="menu-item" (click)="duplicate()">
+  <app-icon name="copy" [size]="15" />Dupliquer
 </button>
 
 @if (transforms().length > 0) {
+  <hr />
   <p class="title" id="block-menu-transform">Transformer en</p>
   <div role="group" aria-labelledby="block-menu-transform">
     @for (choice of transforms(); track choice.label) {
-      <button type="button" role="menuitem" (click)="transform(choice)">{{ choice.label }}</button>
+      <button type="button" role="menuitem" class="menu-item" (click)="transform(choice)">
+        <app-icon [name]="choice.icon" [size]="15" />{{ choice.label }}
+      </button>
     }
   </div>
 }
+
+<hr />
+<button type="button" role="menuitem" class="menu-item menu-item-danger" (click)="remove()">
+  <app-icon name="trash" [size]="15" />{{ isSection() ? 'Supprimer le titre' : 'Supprimer' }}
+</button>

@@ -14,6 +14,9 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { MenuButton } from '../../core/ui/menu-button';
+import { shortcut } from '../../core/ui/platform';
 import { Dropdown } from '../../core/ui/dropdown';
 import { ContentEditor } from '../cours/editor/content-editor';
 import { ueOptions } from '../ue/ue-options';
@@ -23,7 +26,7 @@ import { Term, TermInput, TermService } from './term.service';
 
 @Component({
   selector: 'app-term-edit-page',
-  imports: [Dropdown, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, MenuButton, Dropdown, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './term-edit-page.html',
   styleUrl: './term-edit-page.css',
   host: {
@@ -54,6 +57,7 @@ export class TermEditPage {
   protected readonly origin = signal<Pick<Term, 'ue' | 'course'>>({ ue: null, course: null });
   protected readonly screen = computed(() => TERM_SCREENS[this.term()?.type ?? 'definition']);
   protected readonly errors = signal<string[]>([]);
+  protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
   protected readonly savedAt = signal<Date | null>(null);

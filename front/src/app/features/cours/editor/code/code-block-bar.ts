@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { Dropdown, DropdownOption } from '../../../../core/ui/dropdown';
 import { CODE_LANGUAGES } from '../../content/code-languages';
 
-// Barre flottante affichée au-dessus du bloc de code où se trouve le curseur :
-// elle porte le choix du langage de coloration.
+const COPIED_NOTICE_MS = 1500;
+
+// En-tête du bloc de code où se trouve le curseur : langage de coloration et copie du code.
 @Component({
   selector: 'app-code-block-bar',
   imports: [Dropdown],
@@ -31,6 +32,16 @@ export class CodeBlockBar {
     const language: unknown = this.editor().state.doc.nodeAt(this.pos())?.attrs['language'];
     return typeof language === 'string' ? language : '';
   });
+
+  // Vrai un court instant après une copie, pour le dire sur le bouton.
+  protected readonly copied = signal(false);
+
+  protected async copy(): Promise<void> {
+    const code = this.editor().state.doc.nodeAt(this.pos())?.textContent ?? '';
+    await navigator.clipboard.writeText(code);
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), COPIED_NOTICE_MS);
+  }
 
   protected setLanguage(value: string): void {
     const editor = this.editor();

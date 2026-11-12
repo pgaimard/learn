@@ -89,6 +89,14 @@ describe('menu « / »', () => {
       expect(labels('encadre')).toEqual(['À retenir', 'Ce qui a changé', 'Attention']);
     });
 
+    it('range les blocs par rubrique : titres, encadrés, blocs', () => {
+      const groups = filterSlashCommands('').map((command) => command.group);
+
+      expect([...new Set(groups)]).toEqual(['Titres', 'Encadrés', 'Blocs']);
+      // Chaque rubrique est d'un seul tenant : son intitulé n'apparaît qu'une fois.
+      expect(groups.filter((group, index) => group !== groups[index - 1])).toHaveLength(3);
+    });
+
     it('ne propose rien pour une saisie inconnue', () => {
       expect(filterSlashCommands('zzz')).toEqual([]);
     });

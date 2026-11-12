@@ -49,6 +49,22 @@ describe('CodeBlockBar', () => {
     expect(editor.getJSON().content?.[0].attrs).toMatchObject({ language: null });
   });
 
+  it('copie le code du bloc et le dit sur le bouton', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      'button.tool',
+    ) as HTMLButtonElement;
+
+    button.click();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(writeText).toHaveBeenCalledWith('pid_t pid = fork();');
+    expect(button.textContent.trim()).toBe('Copié');
+    vi.unstubAllGlobals();
+  });
+
   it('ne touche pas au code', () => {
     choose('sql');
 

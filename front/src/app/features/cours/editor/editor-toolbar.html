@@ -1,97 +1,206 @@
-<div class="toolbar" role="toolbar" aria-label="Blocs et insertions">
-  <div class="group">
-    <app-dropdown
-      compact
-      label="Style du bloc"
-      [returnFocus]="false"
-      [options]="blockStyles"
-      [value]="blockStyle()"
-      (valueChange)="setBlockStyle($event)"
+<div class="group">
+  <app-dropdown
+    compact
+    label="Style du bloc"
+    [returnFocus]="false"
+    [options]="blockStyles"
+    [value]="blockStyle()"
+    (valueChange)="setBlockStyle($event)"
+  />
+</div>
+
+<div class="group" role="group" aria-label="Mise en forme du texte">
+  <button
+    type="button"
+    class="tool"
+    [title]="'Gras (' + keys.bold + ')'"
+    aria-label="Gras"
+    [attr.aria-pressed]="isActive('bold')"
+    (click)="toggleMark('bold')"
+  >
+    <b>G</b>
+  </button>
+  <button
+    type="button"
+    class="tool"
+    [title]="'Italique (' + keys.italic + ')'"
+    aria-label="Italique"
+    [attr.aria-pressed]="isActive('italic')"
+    (click)="toggleMark('italic')"
+  >
+    <i class="serif">I</i>
+  </button>
+  <button
+    type="button"
+    class="tool"
+    [title]="'Souligné (' + keys.underline + ')'"
+    aria-label="Souligné"
+    [attr.aria-pressed]="isActive('underline')"
+    (click)="toggleMark('underline')"
+  >
+    <u>S</u>
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Barré"
+    aria-label="Barré"
+    [attr.aria-pressed]="isActive('strike')"
+    (click)="toggleMark('strike')"
+  >
+    <s>ab</s>
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Code dans le texte"
+    aria-label="Code dans le texte"
+    [attr.aria-pressed]="isActive('code')"
+    (click)="toggleMark('code')"
+  >
+    <app-icon name="code" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Lien"
+    aria-label="Lien"
+    [attr.aria-pressed]="isActive('link')"
+    (click)="link()"
+  >
+    <app-icon name="link" [size]="15" />
+  </button>
+</div>
+
+<div class="group" role="group" aria-label="Blocs">
+  <button
+    type="button"
+    class="tool"
+    title="Liste à puces"
+    aria-label="Liste à puces"
+    [attr.aria-pressed]="isActive('bulletList')"
+    (click)="run(toggleBulletList)"
+  >
+    <app-icon name="list-bullets" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Liste numérotée"
+    aria-label="Liste numérotée"
+    [attr.aria-pressed]="isActive('orderedList')"
+    (click)="run(toggleOrderedList)"
+  >
+    <app-icon name="list-numbers" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Citation"
+    aria-label="Citation"
+    [attr.aria-pressed]="isActive('blockquote')"
+    (click)="run(toggleBlockquote)"
+  >
+    <app-icon name="quote" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Bloc de code"
+    aria-label="Bloc de code"
+    [attr.aria-pressed]="isActive('codeBlock')"
+    (click)="run(toggleCodeBlock)"
+  >
+    <app-icon name="code-block" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    title="Insérer un tableau"
+    aria-label="Tableau"
+    (click)="insertTable()"
+  >
+    <app-icon name="table" [size]="15" />
+  </button>
+  <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">
+    <app-icon name="image" [size]="15" />
+    <span class="visually-hidden">Image</span>
+    <input
+      type="file"
+      accept="image/png,image/jpeg,image/svg+xml"
+      multiple
+      class="visually-hidden"
+      (change)="pickImage($event)"
     />
-  </div>
+  </label>
+  <button
+    type="button"
+    class="tool"
+    title="Ligne de séparation"
+    aria-label="Séparateur"
+    (click)="run(insertRule)"
+  >
+    <app-icon name="rule" [size]="15" />
+  </button>
+</div>
 
-  <div class="group">
-    <button
-      type="button"
-      class="tool"
-      title="Liste à puces"
-      [attr.aria-pressed]="isActive('bulletList')"
-      (click)="run(toggleBulletList)"
-    >
-      • Liste
-    </button>
-    <button
-      type="button"
-      class="tool"
-      title="Liste numérotée"
-      [attr.aria-pressed]="isActive('orderedList')"
-      (click)="run(toggleOrderedList)"
-    >
-      1. Liste
-    </button>
-    <button
-      type="button"
-      class="tool"
-      title="Citation"
-      [attr.aria-pressed]="isActive('blockquote')"
-      (click)="run(toggleBlockquote)"
-    >
-      Citation
-    </button>
-    <button
-      type="button"
-      class="tool"
-      title="Bloc de code"
-      [attr.aria-pressed]="isActive('codeBlock')"
-      (click)="run(toggleCodeBlock)"
-    >
-      Bloc de code
-    </button>
-    <button type="button" class="tool" title="Insérer un tableau" (click)="insertTable()">
-      Tableau
-    </button>
-    <button type="button" class="tool" title="Ligne de séparation" (click)="run(insertRule)">
-      Séparateur
-    </button>
-    <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">
-      Image
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/svg+xml"
-        multiple
-        class="visually-hidden"
-        (change)="pickImage($event)"
-      />
-    </label>
-  </div>
-
-  <div class="group" role="group" aria-label="Encadré">
+<div class="group">
+  <app-menu-button
+    label="Insérer un encadré : À retenir, Ce qui a changé, Attention"
+    buttonClass="tool tool-outlined"
+  >
+    <span menuTrigger class="callout-trigger">
+      @for (kind of calloutKinds; track kind) {
+        <span class="dot" [attr.data-kind]="kind"></span>
+      }
+      Encadré
+      <app-icon name="chevron-down" [size]="15" />
+    </span>
     @for (kind of calloutKinds; track kind) {
       <button
         type="button"
-        class="tool"
-        [title]="'Encadré « ' + calloutLabels[kind] + ' »'"
-        [attr.aria-pressed]="isActive('callout', { kind })"
+        role="menuitem"
+        class="menu-item"
+        [class.is-on]="isActive('callout', { kind })"
         (click)="toggleCallout(kind)"
       >
-        {{ calloutLabels[kind] }}
+        <span class="dot" [attr.data-kind]="kind"></span>{{ calloutLabels[kind] }}
+        @if (isActive('callout', { kind })) {
+          <app-icon class="check" name="check" [size]="15" />
+        }
       </button>
     }
-  </div>
+  </app-menu-button>
+</div>
 
-  <div class="group">
-    <button type="button" class="tool" title="Annuler (Ctrl+Z)" (click)="run(undo)">Annuler</button>
-    <button type="button" class="tool" title="Rétablir (Ctrl+Maj+Z)" (click)="run(redo)">
-      Rétablir
+<div class="group" role="group" aria-label="Historique">
+  <button
+    type="button"
+    class="tool"
+    [title]="'Annuler (' + keys.undo + ')'"
+    aria-label="Annuler"
+    (click)="run(undo)"
+  >
+    <app-icon name="undo" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
+    [title]="'Rétablir (' + keys.redo + ')'"
+    aria-label="Rétablir"
+    (click)="run(redo)"
+  >
+    <app-icon name="redo" [size]="15" />
+  </button>
+</div>
+
+@if (isActive('figure')) {
+  <div class="group context" role="group" aria-label="Image">
+    <button type="button" class="tool tool-text" (click)="editAlternativeText()">
+      Texte alternatif
+    </button>
+    <button type="button" class="tool tool-text danger" (click)="run(deleteFigure)">
+      Supprimer l’image
     </button>
   </div>
-
-  @if (isActive('figure')) {
-    <div class="group context" role="group" aria-label="Image">
-      <button type="button" class="tool" (click)="editAlternativeText()">Texte alternatif</button>
-      <button type="button" class="tool danger" (click)="run(deleteFigure)">
-        Supprimer l’image
-      </button>
-    </div>
-  }
-</div>
+}

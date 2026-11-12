@@ -9,8 +9,11 @@ import {
   output,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { Icon, IconName } from '../../../../core/ui/icon';
+import { altShiftShortcut } from '../../../../core/ui/platform';
 import { CALLOUT_KINDS, CALLOUT_LABELS } from '../../content/callout';
 import { focusMenuItem, menuItems } from '../menu-keys';
+import { CALLOUT_ICONS } from '../slash/slash-commands';
 import {
   canMoveUnit,
   canShiftSectionLevel,
@@ -30,21 +33,23 @@ import {
 
 interface TransformChoice {
   label: string;
+  icon: IconName;
   transform: BlockTransform;
 }
 
 const TRANSFORMS: TransformChoice[] = [
-  { label: 'Paragraphe', transform: { kind: 'paragraph' } },
-  { label: 'Section', transform: { kind: 'heading', level: 2 } },
-  { label: 'Sous-section', transform: { kind: 'heading', level: 3 } },
-  { label: 'Sous-sous-section', transform: { kind: 'heading', level: 4 } },
-  { label: 'Point', transform: { kind: 'heading', level: 5 } },
-  { label: 'Liste à puces', transform: { kind: 'bulletList' } },
-  { label: 'Liste numérotée', transform: { kind: 'orderedList' } },
-  { label: 'Citation', transform: { kind: 'blockquote' } },
-  { label: 'Bloc de code', transform: { kind: 'codeBlock' } },
+  { label: 'Paragraphe', icon: 'rule', transform: { kind: 'paragraph' } },
+  { label: 'Section', icon: 'heading', transform: { kind: 'heading', level: 2 } },
+  { label: 'Sous-section', icon: 'heading', transform: { kind: 'heading', level: 3 } },
+  { label: 'Sous-sous-section', icon: 'heading', transform: { kind: 'heading', level: 4 } },
+  { label: 'Point', icon: 'heading', transform: { kind: 'heading', level: 5 } },
+  { label: 'Liste à puces', icon: 'list-bullets', transform: { kind: 'bulletList' } },
+  { label: 'Liste numérotée', icon: 'list-numbers', transform: { kind: 'orderedList' } },
+  { label: 'Citation', icon: 'quote', transform: { kind: 'blockquote' } },
+  { label: 'Bloc de code', icon: 'code-block', transform: { kind: 'codeBlock' } },
   ...CALLOUT_KINDS.map((kind): TransformChoice => ({
     label: `Encadré « ${CALLOUT_LABELS[kind]} »`,
+    icon: CALLOUT_ICONS[kind],
     transform: { kind: 'callout', callout: kind },
   })),
 ];
@@ -53,6 +58,7 @@ const TRANSFORMS: TransformChoice[] = [
 // ou le transformer s'il s'agit d'un paragraphe ou d'un titre.
 @Component({
   selector: 'app-block-menu',
+  imports: [Icon],
   templateUrl: './block-menu.html',
   styleUrl: './block-menu.css',
   host: {
@@ -73,6 +79,8 @@ export class BlockMenu {
   readonly closed = output();
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  protected readonly keys = { up: altShiftShortcut('↑'), down: altShiftShortcut('↓') };
 
   protected readonly canMoveUp = computed(() => canMoveUnit(this.editor(), this.pos(), -1));
   protected readonly canMoveDown = computed(() => canMoveUnit(this.editor(), this.pos(), 1));

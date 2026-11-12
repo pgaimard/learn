@@ -16,6 +16,28 @@ const ICONS = {
   'chevron-down': 'M7 10l5 5 5-5',
   close: 'M6 6l12 12M18 6L6 18',
   warning: 'M12 4l9 16H3zM12 10v4M12 17v.5',
+  code: 'M8 8l-4 4 4 4M16 8l4 4-4 4',
+  link: 'M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1',
+  'list-bullets':
+    'M9 6h11M9 12h11M9 18h11M3.5 6a1 1 0 1 0 2 0a1 1 0 1 0-2 0M3.5 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M3.5 18a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
+  'list-numbers': 'M10 6h10M10 12h10M10 18h10M4 4.5h1.2V8M3.8 16.5c1.6-1.2 2.6.6 0 2.5h2.4',
+  quote: 'M5 6v12M10 8h9M10 12h9M10 16h6',
+  'code-block': 'M4 5h16v14H4zM10 10l-2 2 2 2M14 10l2 2-2 2',
+  table: 'M4 5h16v14H4zM4 10h16M10 5v14',
+  image: 'M4 5h16v14H4zM4 16l5-5 4 4 2-2 5 5M14.3 9a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0',
+  rule: 'M4 12h16',
+  undo: 'M8 6L4 10l4 4M4 10h10a5 5 0 0 1 0 10h-3',
+  redo: 'M16 6l4 4-4 4M20 10H10a5 5 0 0 0 0 10h3',
+  dots: 'M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M18 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
+  'arrow-up': 'M12 19V5M6 11l6-6 6 6',
+  'arrow-down': 'M12 5v14M6 13l6 6 6-6',
+  pin: 'M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7',
+  copy: 'M9 9h11v11H9zM5 15V4h11',
+  heading: 'M5 5v14M13 5v14M5 12h8M17 10l2-1v10',
+  change: 'M4 8h14l-3-3M20 16H6l3 3',
+  fold: 'M7 10l5 5 5-5M5 5h14',
+  indent: 'M4 6h16M10 12h10M10 18h10M4 10l3 2-3 2',
+  outdent: 'M4 6h16M10 12h10M10 18h10M7 10l-3 2 3 2',
 } as const;
 
 export type IconName = keyof typeof ICONS;

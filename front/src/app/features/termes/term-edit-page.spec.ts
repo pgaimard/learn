@@ -78,7 +78,15 @@ describe('TermEditPage', () => {
 
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      // Le rappel du raccourci (« ⌘S ») ne fait pas partie du nom du bouton.
+      .find(
+        (button) =>
+          Array.from(button.childNodes)
+            .filter((node) => !(node instanceof Element && node.classList.contains('kbd')))
+            .map((node) => node.textContent)
+            .join('')
+            .trim() === label,
+      )
       ?.click();
     fixture.detectChanges();
   }
@@ -207,7 +215,7 @@ describe('TermEditPage', () => {
     service.remove.mockReturnValue(of(undefined));
     dialog.confirmDeletion.mockResolvedValue(true);
 
-    click('Supprimer');
+    click('Supprimer le terme');
     await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);

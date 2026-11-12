@@ -1,4 +1,8 @@
 @for (command of commands(); track command.label) {
+  <!-- La rubrique s'affiche quand elle change d'une ligne à la suivante. -->
+  @if ($first || command.group !== commands()[$index - 1].group) {
+    <p class="group" aria-hidden="true">{{ command.group }}</p>
+  }
   <button
     type="button"
     role="option"
@@ -7,7 +11,11 @@
     [class.is-active]="$index === activeIndex()"
     (click)="picked.emit($index)"
   >
+    <app-icon [name]="command.icon" [size]="15" />
     {{ command.label }}
+    @if ($index === activeIndex()) {
+      <span class="kbd" aria-hidden="true">↵</span>
+    }
   </button>
 } @empty {
   <p class="empty">Aucun bloc ne correspond.</p>
