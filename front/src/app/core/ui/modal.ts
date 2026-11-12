@@ -7,22 +7,25 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { BackdropClick } from './backdrop-click';
 import { Icon } from './icon';
 
 let nextId = 0;
 
 // Fenêtre modale : elle s'ouvre dès qu'elle est affichée (dans un @if) et signale sa
-// fermeture, par son bouton ou par Échap. Le contenu est projeté ; un élément marqué
+// fermeture, par son bouton, par Échap ou par un clic en dehors. Le contenu est projeté ; un élément marqué
 // modalFooter va dans la bande d'actions.
 @Component({
   selector: 'app-modal',
-  imports: [Icon],
+  imports: [BackdropClick, Icon],
   template: `
     <dialog
       #dialog
       class="modal"
       [class.modal-wide]="wide()"
       [attr.aria-labelledby]="titleId"
+      appBackdropClick
+      (backdropClick)="closed.emit()"
       (close)="closed.emit()"
     >
       <div class="modal-header">
