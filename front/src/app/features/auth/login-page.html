@@ -1,5 +1,9 @@
+<app-login-background />
+
 <main class="login">
-  <h1>Espace d’études</h1>
+  <p class="brand"><span class="brand-mark" aria-hidden="true"></span>Espace d’études</p>
+  <h1>Connexion</h1>
+  <p class="meta intro">Cours, termes, fichiers et agenda au même endroit.</p>
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <div class="field">
@@ -23,16 +27,30 @@
 
     <div class="field">
       <label for="password">Mot de passe</label>
-      <input
-        id="password"
-        type="password"
-        formControlName="password"
-        autocomplete="current-password"
-        [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
-        [attr.aria-describedby]="
-          form.controls.password.touched && form.controls.password.invalid ? 'password-error' : null
-        "
-      />
+      <div class="password">
+        <input
+          id="password"
+          [type]="isPasswordShown() ? 'text' : 'password'"
+          formControlName="password"
+          autocomplete="current-password"
+          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+          [attr.aria-describedby]="
+            form.controls.password.touched && form.controls.password.invalid
+              ? 'password-error'
+              : null
+          "
+        />
+        <button
+          type="button"
+          class="reveal"
+          [attr.aria-label]="
+            isPasswordShown() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+          "
+          (click)="isPasswordShown.set(!isPasswordShown())"
+        >
+          <app-icon [name]="isPasswordShown() ? 'eye-off' : 'eye'" [size]="15" />
+        </button>
+      </div>
       @if (form.controls.password.touched && form.controls.password.invalid) {
         <p id="password-error" class="field-error">Le mot de passe est requis.</p>
       }
@@ -48,4 +66,6 @@
       {{ isSubmitting() ? 'Connexion…' : 'Se connecter' }}
     </button>
   </form>
+
+  <p class="field-hint note">Accès réservé · session sécurisée</p>
 </main>

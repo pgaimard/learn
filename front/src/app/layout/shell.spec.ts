@@ -25,16 +25,55 @@ describe('Shell', () => {
     fixture.detectChanges();
   }
 
-  function logoutButton(): HTMLButtonElement {
-    return (fixture.nativeElement as HTMLElement).querySelector(
-      'button.logout',
-    ) as HTMLButtonElement;
+  function element(selector: string): HTMLButtonElement {
+    return (fixture.nativeElement as HTMLElement).querySelector(selector) as HTMLButtonElement;
   }
 
-  it('affiche l’identifiant du compte connecté', () => {
+  // Le bouton de déconnexion est dans le menu du compte, ouvert par la pastille.
+  function logoutButton(): HTMLButtonElement {
+    if (!element('.account-item')) {
+      element('.avatar').click();
+      fixture.detectChanges();
+    }
+    return element('.account-item');
+  }
+
+  it('affiche les initiales du compte, puis son identifiant dans le menu', () => {
     setup(of(undefined));
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('pierre');
+    expect(element('.avatar').textContent.trim()).toBe('pi');
+    expect(element('.avatar').getAttribute('aria-label')).toBe('Compte pierre');
+
+    element('.avatar').click();
+    fixture.detectChanges();
+
+    expect(element('.account-name').textContent).toBe('pierre');
+  });
+
+  it('ferme le menu du compte sur Échap ou sur un clic ailleurs', () => {
+    setup(of(undefined));
+
+    logoutButton();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(element('.account-item')).toBeNull();
+
+    logoutButton();
+    document.body.click();
+    fixture.detectChanges();
+    expect(element('.account-item')).toBeNull();
+  });
+
+  it('bascule le thème et renomme le bouton', () => {
+    setup(of(undefined));
+    const toggle = element('button[aria-label^="Passer au thème"]');
+    const before = toggle.getAttribute('aria-label');
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-label')).not.toBe(before);
+    expect(document.documentElement.dataset['theme']).toBeDefined();
   });
 
   it('renvoie à la connexion après la déconnexion', () => {

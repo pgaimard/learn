@@ -3,8 +3,8 @@
 
 .course-content {
   display: block;
-  font-size: 1.0625rem;
-  line-height: 1.65;
+  font-size: 0.875rem;
+  line-height: 1.62;
   overflow-wrap: break-word;
 }
 
@@ -27,17 +27,16 @@
 }
 
 .course-content h2 {
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 1.5rem;
+  font-size: 1.0625rem;
+  letter-spacing: -0.005em;
 }
 
 .course-content h3 {
-  font-size: 1.25rem;
+  font-size: 0.90625rem;
 }
 
 .course-content h4 {
-  font-size: 1.0625rem;
+  font-size: 0.875rem;
 }
 
 .course-content h5 {
@@ -77,7 +76,7 @@
   padding: 0.1em 0.3em;
   border-radius: 4px;
   background: var(--color-code-background);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
@@ -150,27 +149,28 @@
 
 .course-content .callout {
   --callout-color: var(--color-callout-retenir);
+  --callout-background: var(--color-callout-retenir-soft);
   margin: 0 0 1em;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--callout-color);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  background: var(--callout-background);
+  font-size: 0.84375rem;
 }
 
 .course-content .callout::before {
   display: block;
   margin-bottom: 0.25rem;
   color: var(--callout-color);
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: 0.71875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   content: 'À retenir';
 }
 
 .course-content .callout[data-kind='change'] {
   --callout-color: var(--color-callout-change);
+  --callout-background: var(--color-callout-change-soft);
 }
 
 .course-content .callout[data-kind='change']::before {
@@ -179,6 +179,7 @@
 
 .course-content .callout[data-kind='attention'] {
   --callout-color: var(--color-callout-attention);
+  --callout-background: var(--color-callout-attention-soft);
 }
 
 .course-content .callout[data-kind='attention']::before {
@@ -193,7 +194,7 @@
 
 .course-content .hljs-comment,
 .course-content .hljs-quote {
-  color: #6a737d;
+  color: var(--color-syntax-comment);
   font-style: italic;
 }
 
@@ -201,33 +202,33 @@
 .course-content .hljs-selector-tag,
 .course-content .hljs-meta,
 .course-content .hljs-doctag {
-  color: #cf222e;
+  color: var(--color-syntax-keyword);
 }
 
 .course-content .hljs-string,
 .course-content .hljs-regexp,
 .course-content .hljs-addition {
-  color: #0a3069;
+  color: var(--color-syntax-value);
 }
 
 .course-content .hljs-number,
 .course-content .hljs-literal,
 .course-content .hljs-built_in,
 .course-content .hljs-type {
-  color: #0550ae;
+  color: var(--color-syntax-value);
 }
 
 .course-content .hljs-title,
 .course-content .hljs-section,
 .course-content .hljs-attr,
 .course-content .hljs-name {
-  color: #8250df;
+  color: var(--color-syntax-keyword);
 }
 
 .course-content .hljs-variable,
 .course-content .hljs-template-variable,
 .course-content .hljs-deletion {
-  color: #953800;
+  color: var(--color-callout-attention);
 }
 
 /* Édition */
@@ -430,7 +431,7 @@
   border-radius: 4px;
   background: var(--color-callout-retenir);
   color: var(--color-on-accent);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.5;

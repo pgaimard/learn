@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
 import { TermForm } from './term-form';
 import { originFromUrl, TermOrigin } from './term-origin';
 import { TERM_SCREENS } from './term-screens';
@@ -16,7 +17,7 @@ import { Term, TermInput, TermService } from './term.service';
 // Création rapide d'un terme depuis n'importe quel écran, dans une boîte de dialogue.
 @Component({
   selector: 'app-term-quick-create',
-  imports: [RouterLink, TermForm],
+  imports: [Icon, RouterLink, TermForm],
   templateUrl: './term-quick-create.html',
   styleUrl: './term-quick-create.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

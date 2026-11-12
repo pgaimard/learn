@@ -9,7 +9,7 @@ dialog {
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 40%);
+  background: var(--color-backdrop);
 }
 
 h2 {
