@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { ContentNode } from './content/content-node';
 import { TermService, TermSummary } from '../termes/term.service';
 import { CourseReadPage } from './course-read-page';
@@ -96,6 +97,30 @@ describe('CourseReadPage', () => {
     expect(outline()).toEqual(['1. Notion', '2. Création', '2.1 fork', '3. Annexe']);
     expect(link('Fiche de révision')?.getAttribute('href')).toBe('/?vue=fiche');
     expect(element().querySelector('.sheet-note')).toBeNull();
+  });
+
+  it('ouvre en grand l’image d’une figure, au clic comme au clavier', async () => {
+    const figure: ContentNode = {
+      type: 'figure',
+      attrs: { src: '/api/courses/7/images/4', alt: 'États d’un processus' },
+      content: [{ type: 'text', text: 'Figure 1 – états' }],
+    };
+    await setup(course(paragraph('Texte.'), figure));
+    const viewer = TestBed.inject(ImageViewerService);
+    const image = element().querySelector('figure img') as HTMLImageElement;
+    expect(image.getAttribute('tabindex')).toBe('0');
+
+    image.click();
+    expect(viewer.image()).toEqual({
+      src: '/api/courses/7/images/4',
+      alt: 'États d’un processus',
+      caption: 'Figure 1 – états',
+    });
+
+    viewer.close();
+    image.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(viewer.image()?.src).toBe('/api/courses/7/images/4');
+    viewer.close();
   });
 
   it('réduit le cours à sa fiche : encadrés « À retenir », blocs épinglés et leurs titres', async () => {

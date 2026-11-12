@@ -28,10 +28,12 @@ export const Figure = Node.create({
 
   renderHTML({ node, HTMLAttributes }) {
     const image = { src: String(node.attrs['src']), alt: String(node.attrs['alt']) };
+    // En lecture, l'image s'ouvre en grand : elle doit pouvoir recevoir le curseur.
+    const zoom = this.editor?.options.editable === false ? { tabindex: '0' } : {};
     return [
       'figure',
       mergeAttributes(HTMLAttributes, { src: null, alt: null }),
-      ['img', { ...image, draggable: 'false', contenteditable: 'false' }],
+      ['img', { ...image, ...zoom, draggable: 'false', contenteditable: 'false' }],
       ['figcaption', 0],
     ];
   },
