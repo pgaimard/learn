@@ -3,6 +3,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { ErrorResponse } from '../src/common/http-error.filter.js';
 import { Ue } from '../src/ue/ue.entity.js';
+import { UeWithCounts } from '../src/ue/ue.service.js';
 import {
   AuthenticatedClient,
   createAuthenticatedClient,
@@ -90,6 +91,32 @@ describe('UE', () => {
       'UTC502',
       'NFE108',
     ]);
+  });
+
+  it('compte les cours, les termes et les fichiers de chaque UE', async () => {
+    await client('post', '/api/ues/UTC502/courses').send({
+      title: 'Processus',
+    });
+    await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Processus',
+      ueCode: 'UTC502',
+    });
+
+    const listed = await client('get', '/api/ues');
+    const one = await client('get', '/api/ues/utc502');
+
+    expect(
+      (listed.body as UeWithCounts[]).map((ue) => [ue.code, ue.counts]),
+    ).toEqual([
+      ['UTC502', { courses: 1, terms: 1, files: 0 }],
+      ['NFE108', { courses: 0, terms: 0, files: 0 }],
+    ]);
+    expect((one.body as UeWithCounts).counts).toEqual({
+      courses: 1,
+      terms: 1,
+      files: 0,
+    });
   });
 
   it('retrouve une UE par son code, sans tenir compte de la casse', async () => {

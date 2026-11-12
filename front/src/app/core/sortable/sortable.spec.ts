@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { moveItem, SortableHandle, SortableItem, SortableList, SortChange } from './sortable';
+import {
+  moveItem,
+  precedes,
+  SortableHandle,
+  SortableItem,
+  SortableList,
+  SortChange,
+} from './sortable';
 
 @Component({
   imports: [SortableHandle, SortableItem, SortableList],
@@ -34,6 +41,30 @@ describe('moveItem', () => {
     expect(moveItem(['a', 'b'], { from: 1, to: 1 })).toEqual(['a', 'b']);
     expect(moveItem(['a', 'b'], { from: 0, to: 2 })).toEqual(['a', 'b']);
     expect(moveItem(['a', 'b'], { from: -1, to: 0 })).toEqual(['a', 'b']);
+  });
+});
+
+describe('precedes', () => {
+  // Carte de 100 sur 50, dont le coin haut gauche est en (200, 100).
+  const box = { top: 100, bottom: 150, left: 200, width: 100, height: 50 };
+  const at = (clientX: number, clientY: number): { clientX: number; clientY: number } => ({
+    clientX,
+    clientY,
+  });
+
+  it('en liste, ne regarde que la hauteur du milieu', () => {
+    expect(precedes(box, at(0, 126), false)).toBe(true);
+    expect(precedes(box, at(999, 124), false)).toBe(false);
+  });
+
+  it('en grille, suit l’ordre de lecture : rangée, puis milieu horizontal', () => {
+    // Souris sur une rangée plus basse : la carte la précède, où qu'elle soit.
+    expect(precedes(box, at(0, 151), true)).toBe(true);
+    // Même rangée : la carte précède si son milieu est à gauche de la souris.
+    expect(precedes(box, at(251, 120), true)).toBe(true);
+    expect(precedes(box, at(249, 120), true)).toBe(false);
+    // Souris au-dessus de la rangée : la carte ne la précède pas.
+    expect(precedes(box, at(999, 99), true)).toBe(false);
   });
 });
 

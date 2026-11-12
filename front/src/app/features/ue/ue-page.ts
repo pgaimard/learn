@@ -14,6 +14,9 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { Modal } from '../../core/ui/modal';
+import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { createOrderSaver } from '../../core/sortable/order-saver';
 import {
   moveItem,
@@ -24,6 +27,7 @@ import {
 } from '../../core/sortable/sortable';
 import { CourseService, CourseSummary } from '../cours/course.service';
 import { FileBrowser } from '../fichiers/file-browser';
+import { filterTerms } from '../termes/filter-terms';
 import { TermList } from '../termes/term-list';
 import { TermService, TermSummary } from '../termes/term.service';
 import { Ue, UeService } from './ue.service';
@@ -33,6 +37,9 @@ import { Ue, UeService } from './ue.service';
   imports: [
     DatePipe,
     FileBrowser,
+    Icon,
+    Modal,
+    Segmented,
     ReactiveFormsModule,
     RouterLink,
     SortableHandle,
@@ -63,6 +70,19 @@ export class UePage {
   protected readonly ue = signal<Ue | null>(null);
   protected readonly courses = signal<CourseSummary[]>([]);
   protected readonly terms = signal<TermSummary[]>([]);
+  // Onglet Termes : filtre de texte et de type.
+  protected readonly termFilter = signal('');
+  protected readonly termType = signal('');
+  protected readonly termTypeOptions: SegmentedOption[] = [
+    { value: '', label: 'Tous' },
+    { value: 'definition', label: 'Définitions' },
+    { value: 'acronym', label: 'Acronymes' },
+  ];
+  protected readonly visibleTerms = computed(() =>
+    filterTerms(this.terms(), this.termFilter()).filter(
+      (term) => this.termType() === '' || term.type === this.termType(),
+    ),
+  );
   protected readonly tab = computed(() => {
     const tab = this.onglet();
     return tab === 'termes' || tab === 'fichiers' ? tab : 'cours';

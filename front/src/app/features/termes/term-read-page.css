@@ -1,29 +1,9 @@
+:host {
+  display: block;
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
 .article {
-  max-width: var(--reading-width);
-}
-
-.article .page-header {
-  align-items: flex-start;
-}
-
-.article h1 {
-  flex: 1 1 16rem;
-  font-size: 2rem;
-  overflow-wrap: anywhere;
-}
-
-.article a.button {
-  text-decoration: none;
-}
-
-.expanded-form {
-  margin: 0 0 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.origin {
-  margin: 0 0 1rem;
-  color: var(--color-text-muted);
-  font-size: 0.9375rem;
+  padding: 1.25rem 1.5rem;
 }

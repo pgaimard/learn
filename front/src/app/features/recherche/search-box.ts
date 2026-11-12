@@ -3,6 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs';
+import { Icon } from '../../core/ui/icon';
+import { shortcut } from '../../core/ui/platform';
 import { MIN_QUERY_LENGTH } from './search.service';
 
 export const SEARCH_PATH = '/recherche';
@@ -12,7 +14,7 @@ const TYPING_PAUSE_MS = 300;
 // ou après une courte pause de frappe.
 @Component({
   selector: 'app-search-box',
-  imports: [ReactiveFormsModule],
+  imports: [Icon, ReactiveFormsModule],
   templateUrl: './search-box.html',
   styleUrl: './search-box.css',
   host: {
@@ -26,6 +28,8 @@ export class SearchBox {
   private readonly field = viewChild.required<ElementRef<HTMLInputElement>>('field');
 
   protected readonly query = new FormControl('', { nonNullable: true });
+  // Le raccourci affiché est celui du clavier de l'appareil ; les deux fonctionnent.
+  protected readonly shortcut = shortcut('K');
 
   constructor() {
     this.query.valueChanges

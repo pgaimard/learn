@@ -44,14 +44,14 @@ export const routes: Routes = [
         title: 'Dictionnaire',
         data: { type: 'definition' },
         loadChildren: () =>
-          import('./features/termes/termes.routes').then((module) => module.termesRoutes),
+          import('./features/termes/termes.routes').then((module) => module.dictionnaireRoutes),
       },
       {
         path: 'glossaire',
         title: 'Glossaire',
         data: { type: 'acronym' },
         loadChildren: () =>
-          import('./features/termes/termes.routes').then((module) => module.termesRoutes),
+          import('./features/termes/termes.routes').then((module) => module.glossaireRoutes),
       },
       {
         path: 'ue/:code/cours',

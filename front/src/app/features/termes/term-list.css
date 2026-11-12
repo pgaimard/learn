@@ -1,71 +1,112 @@
-.term-list {
-  display: grid;
-  gap: 0.5rem;
+ul {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 1rem;
+/* Intitulé d'une lettre, dans la liste regroupée. */
+.letter {
+  margin: 0;
+  padding: 0.25rem 0.875rem;
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-raised);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  /* Une lettre atteinte par la barre A–Z ne passe pas sous l'en-tête. */
+  scroll-margin-top: calc(var(--sticky-top) + 0.5rem);
 }
 
-.item:hover {
-  border-color: var(--color-accent);
+.letter:first-child {
+  border-top: 0;
 }
 
-.term {
+.term-row {
   display: grid;
-  flex: 1 1 16rem;
-  grid-template-columns: minmax(8rem, 16rem) minmax(0, 1fr);
-  gap: 0.125rem 1rem;
-  min-width: 0;
-  color: inherit;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.5rem 0 0.875rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.term-row.has-origin {
+  grid-template-columns: 7.5rem minmax(0, 1fr) minmax(0, 10rem) auto;
+}
+
+.term-row.has-type.has-origin {
+  grid-template-columns: 7.5rem 5.25rem minmax(0, 1fr) minmax(0, 10rem) auto;
+}
+
+/* Glossaire : acronyme, forme développée, définition, UE, actions. L'UE a une largeur
+   fixe pour que les colonnes s'alignent d'une ligne à l'autre. */
+.term-row.has-columns.has-origin {
+  grid-template-columns: 6.875rem minmax(0, 1.1fr) minmax(0, 1.6fr) 5rem auto;
+}
+
+ul:first-child > .term-row:first-child,
+.letter + ul > .term-row:first-child {
+  border-top: 0;
+}
+
+.term-label {
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.term-label.mono {
+  font-family: var(--font-mono);
+  font-size: 0.78125rem;
+  font-weight: 500;
+}
+
+.type {
+  justify-self: start;
+}
+
+.term-text,
+.origin {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.term-excerpt {
+  color: var(--color-text-muted);
+}
+
+.origin {
+  font-size: 0.75rem;
+}
+
+.origin .code-chip:hover {
   text-decoration: none;
 }
 
 .term-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 2px;
 }
 
-.term-actions .button {
-  padding: 0.25rem 0.625rem;
-  font-size: 0.875rem;
-  text-decoration: none;
-}
-
-.term-label {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.term-expanded,
-.term-excerpt {
-  grid-column: 2;
-}
-
-.term-excerpt {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: 0.9375rem;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-
-@media (max-width: 40rem) {
-  .term {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 48rem) {
+  .term-row,
+  .term-row.has-origin,
+  .term-row.has-type.has-origin {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
   }
 
-  .term-expanded,
-  .term-excerpt {
-    grid-column: 1;
+  .term-row.has-columns.has-origin {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+  }
+
+  .type,
+  .origin,
+  .has-columns .term-excerpt {
+    display: none;
   }
 }

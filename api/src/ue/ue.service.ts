@@ -15,12 +15,37 @@ const UNIQUE_VIOLATION = '23505';
 // et les autres violations de clé étrangère avec 23503.
 const REFERENCED_ROW_CODES = ['23001', '23503'];
 
+// Nombre de cours, de termes et de fichiers rattachés à une UE.
+export interface UeCounts {
+  courses: number;
+  terms: number;
+  files: number;
+}
+
+export type UeWithCounts = Ue & { counts: UeCounts };
+
+interface CountsRow extends UeCounts {
+  ue_id: number;
+}
+
+const NO_COUNTS: UeCounts = { courses: 0, terms: 0, files: 0 };
+
 @Injectable()
 export class UeService {
   constructor(@InjectRepository(Ue) private readonly ues: Repository<Ue>) {}
 
   findAll(): Promise<Ue[]> {
     return this.ues.find({ order: { position: 'ASC', code: 'ASC' } });
+  }
+
+  // UE avec leurs compteurs, pour l'accueil.
+  async findAllWithCounts(): Promise<UeWithCounts[]> {
+    return this.withCounts(await this.findAll());
+  }
+
+  async findByCodeWithCounts(code: string): Promise<UeWithCounts> {
+    const [ue] = await this.withCounts([await this.findByCode(code)]);
+    return ue;
   }
 
   async findByCode(code: string): Promise<Ue> {
@@ -80,6 +105,22 @@ export class UeService {
       }
       throw error;
     }
+  }
+
+  private async withCounts(ues: Ue[]): Promise<UeWithCounts[]> {
+    const rows = await this.ues.query<CountsRow[]>(
+      `SELECT u.id AS ue_id,
+              (SELECT count(*)::int FROM courses c WHERE c.ue_id = u.id) AS courses,
+              (SELECT count(*)::int FROM terms t WHERE t.ue_id = u.id) AS terms,
+              (SELECT count(*)::int FROM files f WHERE f.ue_id = u.id) AS files
+         FROM ues u
+        WHERE u.id = ANY($1)`,
+      [ues.map((ue) => ue.id)],
+    );
+    const counts = new Map(
+      rows.map(({ ue_id, ...count }): [number, UeCounts] => [ue_id, count]),
+    );
+    return ues.map((ue) => ({ ...ue, counts: counts.get(ue.id) ?? NO_COUNTS }));
   }
 
   private async nextPosition(): Promise<number> {

@@ -145,14 +145,74 @@ describe('Dossiers', () => {
     const unknown = await client('patch', '/api/folders/9999').send({
       name: 'X',
     });
-    const moved = await client('patch', `/api/folders/${tdId}`).send({
+    const unknownProperty = await client('patch', `/api/folders/${tdId}`).send({
       name: 'X',
-      parentId: null,
+      ueId: 2,
     });
 
     expect(duplicate.status).toBe(409);
     expect(unknown.status).toBe(404);
-    expect(moved.status).toBe(400);
+    expect(unknownProperty.status).toBe(400);
+  });
+
+  it('déplace un dossier dans un autre, puis le ramène à la racine', async () => {
+    const tempId = ((await create('Temp')).body as FolderSummary).id;
+
+    const moved = await client('patch', `/api/folders/${tempId}`).send({
+      parentId: tdId,
+    });
+    expect(moved.status).toBe(200);
+    expect(moved.body).toEqual({ id: tempId, parentId: tdId, name: 'Temp' });
+
+    const back = await client('patch', `/api/folders/${tempId}`).send({
+      parentId: null,
+    });
+    expect(back.body).toEqual({ id: tempId, parentId: null, name: 'Temp' });
+
+    expect((await client('delete', `/api/folders/${tempId}`)).status).toBe(204);
+  });
+
+  it('refuse de déplacer un dossier dans lui-même ou dans un de ses sous-dossiers', async () => {
+    const corriges = (await list()).find(
+      (folder) => folder.name === 'Corrigés',
+    );
+
+    const intoItself = await client('patch', `/api/folders/${tdId}`).send({
+      parentId: tdId,
+    });
+    const intoChild = await client('patch', `/api/folders/${tdId}`).send({
+      parentId: corriges?.id,
+    });
+
+    expect(intoItself.status).toBe(400);
+    expect(intoChild.status).toBe(400);
+    expect(messages(intoChild)).toEqual([
+      'Un dossier ne peut pas être déplacé dans lui-même ni dans un de ses sous-dossiers.',
+    ]);
+    expect(
+      (await list()).find((folder) => folder.id === tdId)?.parentId,
+    ).toBeNull();
+  });
+
+  it('refuse un déplacement vers une autre UE, un dossier inconnu, ou un nom déjà pris', async () => {
+    const nested = (await list()).find(
+      (folder) => folder.name === 'Annales' && folder.parentId === tdId,
+    );
+
+    const foreign = await client('patch', `/api/folders/${tdId}`).send({
+      parentId: otherUeFolderId,
+    });
+    const unknown = await client('patch', `/api/folders/${tdId}`).send({
+      parentId: 9999,
+    });
+    // Un dossier « Annales » existe déjà à la racine.
+    const taken = await client('patch', `/api/folders/${nested?.id}`).send({
+      parentId: null,
+    });
+
+    expect(foreign.status).toBe(400);
+    expect(unknown.status).toBe(400);
+    expect(taken.status).toBe(409);
   });
 
   it('refuse de supprimer un dossier qui a des sous-dossiers', async () => {

@@ -12,9 +12,11 @@ import { RouterLink } from '@angular/router';
 import { catchError, concatMap, forkJoin, from, map, Observable, of, toArray } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { Modal } from '../../core/ui/modal';
 import { FileService, Folder, MAX_FILE_SIZE, StoredFile } from './file.service';
 import { FolderPicker } from './folder-picker';
-import { childrenOf, pathTo } from './folder-tree';
+import { childrenOf, isInside, pathTo } from './folder-tree';
 import { formatSize } from './format-size';
 import { NameForm } from './name-form';
 
@@ -24,6 +26,11 @@ type Editing =
   | { kind: 'rename-folder'; id: number }
   | { kind: 'rename-file'; id: number }
   | null;
+
+// Fichier ou dossier en cours de glissement.
+type Dragged =
+  | { kind: 'file'; id: number; name: string; parentId: number | null }
+  | { kind: 'folder'; id: number; name: string; parentId: number | null };
 
 // Compte rendu d'un envoi ou d'un déplacement.
 interface UploadReport {
@@ -35,7 +42,7 @@ interface UploadReport {
 // Fichiers et dossiers d'une UE : parcours, gestion des dossiers, envoi et téléchargement.
 @Component({
   selector: 'app-file-browser',
-  imports: [DatePipe, FolderPicker, NameForm, RouterLink],
+  imports: [DatePipe, FolderPicker, Icon, Modal, NameForm, RouterLink],
   templateUrl: './file-browser.html',
   styleUrl: './file-browser.css',
   host: {
@@ -66,6 +73,10 @@ export class FileBrowser {
   protected readonly reports = signal<UploadReport[]>([]);
   // Fichier dont on choisit la destination dans la boîte « Déplacer vers… ».
   protected readonly moving = signal<StoredFile | null>(null);
+  // Glisser-déposer d'un fichier ou d'un dossier dans un dossier : l'élément glissé, et
+  // la destination survolée (null pour la racine, undefined s'il n'y en a pas).
+  protected readonly dragged = signal<Dragged | null>(null);
+  protected readonly dropTarget = signal<number | null | undefined>(undefined);
 
   protected readonly path = computed(() => pathTo(this.folders(), this.folderId()));
   protected readonly subfolders = computed(() => childrenOf(this.folders(), this.folderId()));
@@ -74,6 +85,26 @@ export class FileBrowser {
   );
 
   protected readonly formatSize = formatSize;
+  // Titre de la fenêtre selon le formulaire ouvert.
+  protected readonly headings = {
+    'new-folder': 'Nouveau dossier',
+    'rename-folder': 'Renommer le dossier',
+    'rename-file': 'Renommer le fichier',
+  } as const;
+  protected readonly renamedFolder = computed(() => {
+    const editing = this.editing();
+    return editing?.kind === 'rename-folder'
+      ? this.folders().find((folder) => folder.id === editing.id)
+      : undefined;
+  });
+  protected readonly renamedFile = computed(() => {
+    const editing = this.editing();
+    return editing?.kind === 'rename-file'
+      ? this.files().find((file) => file.id === editing.id)
+      : undefined;
+  });
+  // Nom du dossier affiché, celui de l'UE à sa racine.
+  protected readonly currentName = computed(() => this.path()?.at(-1)?.name ?? this.ueCode());
 
   constructor() {
     effect(() => {
@@ -99,16 +130,6 @@ export class FileBrowser {
     this.editing.set(editing);
   }
 
-  protected isRenaming(folder: Folder): boolean {
-    const editing = this.editing();
-    return editing?.kind === 'rename-folder' && editing.id === folder.id;
-  }
-
-  protected isRenamingFile(file: StoredFile): boolean {
-    const editing = this.editing();
-    return editing?.kind === 'rename-file' && editing.id === file.id;
-  }
-
   protected renameFile(file: StoredFile, name: string): void {
     this.save(this.fileService.updateFile(file.id, { name }));
   }
@@ -119,18 +140,77 @@ export class FileBrowser {
       return;
     }
     this.moving.set(null);
-    this.fileService.updateFile(file.id, { folderId }).subscribe({
+    this.move({ kind: 'file', id: file.id, name: file.name, parentId: file.folderId }, folderId);
+  }
+
+  protected startDrag(event: DragEvent, entry: Dragged): void {
+    this.dragged.set(entry);
+    event.dataTransfer?.setData('text/plain', entry.name);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  protected endDrag(): void {
+    this.dragged.set(null);
+    this.dropTarget.set(undefined);
+  }
+
+  // Un dossier accepte l'élément glissé s'il ne s'y trouve pas déjà, et s'il n'est ni
+  // ce dossier lui-même ni l'un de ses sous-dossiers.
+  protected canDropOn(folderId: number | null): boolean {
+    const entry = this.dragged();
+    if (!entry || entry.parentId === folderId) {
+      return false;
+    }
+    return (
+      entry.kind === 'file' || folderId === null || !isInside(this.folders(), folderId, entry.id)
+    );
+  }
+
+  protected aim(event: DragEvent, folderId: number | null): void {
+    if (this.canDropOn(folderId)) {
+      event.preventDefault();
+      this.dropTarget.set(folderId);
+    }
+  }
+
+  protected leave(folderId: number | null): void {
+    if (this.dropTarget() === folderId) {
+      this.dropTarget.set(undefined);
+    }
+  }
+
+  protected dropOn(event: DragEvent, folderId: number | null): void {
+    const entry = this.dragged();
+    const accepted = this.canDropOn(folderId);
+    this.endDrag();
+    if (entry && accepted) {
+      event.preventDefault();
+      // Le dépôt est traité ici : il ne doit pas passer pour un envoi de fichiers.
+      event.stopPropagation();
+      this.move(entry, folderId);
+    }
+  }
+
+  private move(entry: Dragged, folderId: number | null): void {
+    const request: Observable<{ name: string }> =
+      entry.kind === 'file'
+        ? this.fileService.updateFile(entry.id, { folderId })
+        : this.fileService.moveFolder(entry.id, folderId);
+    request.subscribe({
       next: (moved) => {
         const destination =
           this.folders().find((folder) => folder.id === folderId)?.name ?? 'la racine de l’UE';
-        const renamed = moved.name === file.name ? '' : `, sous le nom « ${moved.name} »`;
+        const renamed = moved.name === entry.name ? '' : `, sous le nom « ${moved.name} »`;
         this.reports.set([
           {
-            name: file.name,
+            name: entry.name,
             succeeded: true,
             message: `Déplacé vers « ${destination} »${renamed}.`,
           },
         ]);
+        this.errors.set([]);
         this.load();
       },
       error: (error: ApiError) => this.errors.set(error.messages),

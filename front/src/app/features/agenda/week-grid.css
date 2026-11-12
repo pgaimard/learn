@@ -1,0 +1,216 @@
+:host {
+  /* Hauteur d'une heure. */
+  --hour: 2.5rem;
+
+  display: block;
+  /* Sur un écran étroit, la grille défile dans son cadre. */
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+}
+
+.head,
+.body {
+  display: grid;
+  grid-template-columns: 2.75rem repeat(7, minmax(0, 1fr));
+  min-width: 45rem;
+}
+
+.head {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.day-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  padding: 0.4375rem 0.5rem;
+  border: 0;
+  border-left: 1px solid var(--color-border-soft);
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.71875rem;
+  text-align: left;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.day-head:hover {
+  background: var(--color-raised);
+}
+
+.day-head b {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.day-head.is-today {
+  color: var(--color-accent);
+}
+
+.day-head.is-today b {
+  padding: 0 0.375rem;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.body {
+  height: calc(var(--hours) * var(--hour));
+}
+
+.hours {
+  display: flex;
+  flex-direction: column;
+}
+
+.hours span {
+  /* Marge comprise : chaque heure a exactement la hauteur d'une ligne de la grille. */
+  box-sizing: border-box;
+  height: var(--hour);
+  padding: 2px 0.375rem 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65625rem;
+  text-align: right;
+}
+
+/* Une ligne par heure, tracée par le fond de la colonne. */
+.day {
+  position: relative;
+  border-left: 1px solid var(--color-border-soft);
+  background-image: linear-gradient(var(--color-border-soft) 1px, transparent 1px);
+  background-size: 100% var(--hour);
+}
+
+.day.is-today {
+  background-color: color-mix(in srgb, var(--color-accent-soft) 45%, transparent);
+}
+
+.block {
+  position: absolute;
+  top: calc(var(--top) * var(--hour));
+  height: calc(var(--height) * var(--hour));
+  /* En colonne : le contenu part du haut de la carte. */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 0.1875rem 0.4375rem;
+  overflow: hidden;
+  border: 1px solid var(--tone);
+  /* Deux pixels de jour entre deux blocs voisins. */
+  border-right-width: 1px;
+  border-radius: 6px;
+  outline-offset: 1px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font: inherit;
+  font-size: 0.71875rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.block:hover {
+  text-decoration: none;
+  filter: brightness(0.97);
+}
+
+/* La pastille passe à la ligne quand la carte est trop étroite pour l'heure et elle. */
+.block .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem 0.25rem;
+}
+
+.block .time {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Pastille de l'UE à laquelle l'élément est rattaché. */
+.block .ue {
+  flex: none;
+  padding: 0 0.25rem;
+  border-radius: 4px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+/* Description sous le titre : coupée par « … » quand la carte est trop petite. */
+.block .description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.block b {
+  display: block;
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.block span {
+  display: block;
+}
+
+.block .row b {
+  flex: 1;
+}
+
+.block.is-deadline {
+  border-style: dashed;
+}
+
+.block.is-task {
+  border-color: var(--color-border);
+  background: var(--color-raised);
+  color: var(--color-text);
+}
+
+.block.is-done b {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.now {
+  position: absolute;
+  top: calc(var(--top) * var(--hour));
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-danger);
+  pointer-events: none;
+}
+
+.now::before {
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  content: '';
+}
+
+/* Grand écran : la journée, de 8 h à 22 h, tient dans la hauteur de la fenêtre. Sont
+   retranchés l'en-tête de l'application, la barre de l'agenda, la ligne des jours et une
+   marge sous la grille. */
+@media (min-width: 62.5rem) {
+  :host {
+    --hour: max(2.5rem, calc((100dvh - 11.5rem) / 14));
+  }
+}

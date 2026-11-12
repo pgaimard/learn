@@ -14,14 +14,19 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { MenuButton } from '../../core/ui/menu-button';
+import { shortcut } from '../../core/ui/platform';
+import { Dropdown } from '../../core/ui/dropdown';
 import { ContentEditor } from '../cours/editor/content-editor';
+import { ueOptions } from '../ue/ue-options';
 import { Ue, UeService } from '../ue/ue.service';
 import { TERM_SCREENS } from './term-screens';
 import { Term, TermInput, TermService } from './term.service';
 
 @Component({
   selector: 'app-term-edit-page',
-  imports: [ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, MenuButton, Dropdown, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './term-edit-page.html',
   styleUrl: './term-edit-page.css',
   host: {
@@ -45,10 +50,14 @@ export class TermEditPage {
 
   protected readonly term = signal<Term | null>(null);
   protected readonly ues = signal<Ue[]>([]);
+  protected readonly ueChoices = computed(() =>
+    ueOptions(this.ues(), [{ value: '', label: 'Aucune' }]),
+  );
   // Origine telle qu'enregistrée : elle sert à savoir si l'UE choisie a changé.
   protected readonly origin = signal<Pick<Term, 'ue' | 'course'>>({ ue: null, course: null });
   protected readonly screen = computed(() => TERM_SCREENS[this.term()?.type ?? 'definition']);
   protected readonly errors = signal<string[]>([]);
+  protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
   protected readonly savedAt = signal<Date | null>(null);

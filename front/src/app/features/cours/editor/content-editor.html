@@ -1,65 +1,83 @@
-<div class="sticky">
-  <ng-content />
+<!-- Trois emplacements : [editorActions] à droite de la barre, [sheetHeader] en tête de
+     la feuille, et le reste (erreurs) entre la barre et la feuille. -->
+<div class="bar">
   @if (view.editor(); as editor) {
     <app-editor-toolbar [editor]="editor" (imagePicked)="imageAdded.emit($event)" />
   }
+  <div class="bar-actions"><ng-content select="[editorActions]" /></div>
 </div>
 
-<div class="sheet">
-  <app-course-content
-    #view
-    [content]="content()"
-    [label]="label()"
-    [editable]="true"
-    (edited)="edited.emit()"
-    (imageReceived)="imageAdded.emit($event)"
-  />
-  @if (view.blockMenu(); as target) {
-    @if (view.editor(); as editor) {
-      <app-block-menu
-        [editor]="editor"
-        [pos]="target.pos"
-        [style.top.px]="target.top"
-        (closed)="view.blockMenu.set(null)"
+<ng-content />
+
+<div class="body" [class.has-outline]="outline() && liveOutline().length > 0">
+  @if (outline() && liveOutline().length > 0) {
+    <aside class="plan">
+      <app-course-outline
+        heading="Plan du chapitre"
+        headingId="editor-outline-title"
+        [entries]="liveOutline()"
+        (picked)="view.scrollToHeading($event)"
       />
-    }
+    </aside>
   }
-  @if (view.selectionBar(); as target) {
-    @if (view.editor(); as editor) {
-      <app-selection-bar
-        [editor]="editor"
-        [style.top.px]="target.top"
-        [style.left.px]="target.left"
-      />
-    }
-  }
-  @if (view.codeBlockBar(); as target) {
-    @if (view.editor(); as editor) {
-      <app-code-block-bar
-        [editor]="editor"
-        [pos]="target.pos"
-        [style.top.px]="target.top"
-        [style.left.px]="target.left"
-      />
-    }
-  }
-  @if (view.slash.trigger(); as trigger) {
-    <app-slash-menu
-      [commands]="view.slash.commands()"
-      [activeIndex]="view.slash.activeIndex()"
-      [style.top.px]="trigger.top"
-      [style.left.px]="trigger.left"
-      (picked)="view.slash.pick($event)"
+  <div class="sheet">
+    <ng-content select="[sheetHeader]" />
+    <app-course-content
+      #view
+      [content]="content()"
+      [label]="label()"
+      [editable]="true"
+      (edited)="onEdited()"
+      (imageReceived)="imageAdded.emit($event)"
     />
-  }
-  @if (view.tableMenu(); as target) {
-    @if (view.editor(); as editor) {
-      <app-table-menu
-        [editor]="editor"
-        [style.top.px]="target.top"
-        [style.left.px]="target.left"
-        (closed)="view.tableMenu.set(null)"
+    @if (view.blockMenu(); as target) {
+      @if (view.editor(); as editor) {
+        <app-block-menu
+          [editor]="editor"
+          [pos]="target.pos"
+          [style.top.px]="target.top"
+          (closed)="view.blockMenu.set(null)"
+        />
+      }
+    }
+    @if (view.selectionBar(); as target) {
+      @if (view.editor(); as editor) {
+        <app-selection-bar
+          [editor]="editor"
+          [style.top.px]="target.top"
+          [style.left.px]="target.left"
+        />
+      }
+    }
+    @if (view.codeBlockBar(); as target) {
+      @if (view.editor(); as editor) {
+        <app-code-block-bar
+          [editor]="editor"
+          [pos]="target.pos"
+          [style.top.px]="target.top"
+          [style.left.px]="target.left"
+          [style.width.px]="target.width"
+        />
+      }
+    }
+    @if (view.slash.trigger(); as trigger) {
+      <app-slash-menu
+        [commands]="view.slash.commands()"
+        [activeIndex]="view.slash.activeIndex()"
+        [style.top.px]="trigger.top"
+        [style.left.px]="trigger.left"
+        (picked)="view.slash.pick($event)"
       />
     }
-  }
+    @if (view.tableMenu(); as target) {
+      @if (view.editor(); as editor) {
+        <app-table-menu
+          [editor]="editor"
+          [style.top.px]="target.top"
+          [style.left.px]="target.left"
+          (closed)="view.tableMenu.set(null)"
+        />
+      }
+    }
+  </div>
 </div>

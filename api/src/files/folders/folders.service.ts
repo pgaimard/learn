@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { UeService } from '../../ue/ue.service.js';
 import { StoredFile } from '../stored-file.entity.js';
-import { CreateFolderDto } from './folder.dto.js';
+import { CreateFolderDto, UpdateFolderDto } from './folder.dto.js';
 import { Folder } from './folder.entity.js';
 
 const UNIQUE_VIOLATION = '23505';
@@ -63,10 +63,46 @@ export class FoldersService {
     return toSummary(await this.save(folder));
   }
 
-  async rename(id: number, name: string): Promise<FolderSummary> {
+  async update(id: number, changes: UpdateFolderDto): Promise<FolderSummary> {
     const folder = await this.findById(id);
-    folder.name = name;
+    if (changes.name !== undefined) {
+      folder.name = changes.name;
+    }
+    if (
+      changes.parentId !== undefined &&
+      changes.parentId !== folder.parentId
+    ) {
+      if (changes.parentId !== null) {
+        await this.assertInUe(changes.parentId, folder.ueId);
+        await this.assertNotInside(changes.parentId, folder.id);
+      }
+      folder.parentId = changes.parentId;
+    }
     return toSummary(await this.save(folder));
+  }
+
+  // Un dossier ne peut pas devenir son propre sous-dossier : la destination ne doit être
+  // ni le dossier lui-même, ni un de ses descendants.
+  private async assertNotInside(
+    destinationId: number,
+    folderId: number,
+  ): Promise<void> {
+    const ancestors = await this.folders.query<{ id: number }[]>(
+      `WITH RECURSIVE ancestors AS (
+         SELECT id, parent_id FROM folders WHERE id = $1
+         UNION ALL
+         SELECT parent.id, parent.parent_id
+           FROM folders parent
+           JOIN ancestors child ON parent.id = child.parent_id
+       )
+       SELECT id FROM ancestors WHERE id = $2`,
+      [destinationId, folderId],
+    );
+    if (ancestors.length > 0) {
+      throw new BadRequestException(
+        'Un dossier ne peut pas être déplacé dans lui-même ni dans un de ses sous-dossiers.',
+      );
+    }
   }
 
   async remove(id: number): Promise<void> {

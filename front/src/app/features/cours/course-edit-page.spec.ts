@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { CourseContent } from './content/course-content';
 import { CourseEditPage } from './course-edit-page';
 import { Course, CourseService } from './course.service';
@@ -71,7 +72,15 @@ describe('CourseEditPage', () => {
 
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      // Le rappel du raccourci (« ⌘S ») ne fait pas partie du nom du bouton.
+      .find(
+        (button) =>
+          Array.from(button.childNodes)
+            .filter((node) => !(node instanceof Element && node.classList.contains('kbd')))
+            .map((node) => node.textContent)
+            .join('')
+            .trim() === label,
+      )
       ?.click();
     fixture.detectChanges();
   }
@@ -161,6 +170,73 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
   }
 
+  it('ne compte pas comme une modification le fait de placer le curseur ou de sélectionner', async () => {
+    // Un cours qui finit par un bloc de code : l'éditeur lui ajoute de lui-même un
+    // paragraphe final à la première action, ce qui n'est pas une modification.
+    service.get.mockReturnValue(
+      of({
+        ...COURSE,
+        content: {
+          type: 'doc',
+          content: [{ type: 'codeBlock', content: [{ type: 'text', text: 'ls' }] }],
+        },
+      }),
+    );
+    await setup();
+
+    selectAllText();
+
+    expect(fixture.componentInstance.canLeave()).toBe(true);
+  });
+
+  it('met en gras depuis la barre d’outils et signale la modification', async () => {
+    await setup();
+    dialog.confirm.mockResolvedValue(false);
+    selectAllText();
+
+    element().querySelector<HTMLButtonElement>('app-editor-toolbar [aria-label="Gras"]')?.click();
+    fixture.detectChanges();
+
+    expect(element().querySelector('.ProseMirror strong')).not.toBeNull();
+    expect(element().querySelector('.status')?.textContent).toContain(
+      'Modifications non enregistrées',
+    );
+    expect(await fixture.componentInstance.canLeave()).toBe(false);
+  });
+
+  it('affiche le plan du chapitre et le tient à jour pendant la saisie', async () => {
+    service.get.mockReturnValue(
+      of({
+        ...COURSE,
+        content: {
+          type: 'doc',
+          content: [
+            {
+              type: 'heading',
+              attrs: { level: 2, pinned: false },
+              content: [{ type: 'text', text: '1. Notion' }],
+            },
+            { type: 'paragraph', attrs: { pinned: false }, content: [{ type: 'text', text: 'x' }] },
+          ],
+        },
+      }),
+    );
+    await setup();
+    const plan = (): string[] =>
+      Array.from(element().querySelectorAll('.plan button')).map((entry) =>
+        (entry.textContent ?? '').trim(),
+      );
+
+    expect(plan()).toEqual(['1. Notion']);
+
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    content.editor()?.chain().selectAll().setHeading({ level: 3 }).run();
+    fixture.detectChanges();
+
+    expect(plan()).toEqual(['1. Notion', 'x']);
+  });
+
   it('pose un lien avec l’adresse saisie dans la modale', async () => {
     await setup();
     dialog.prompt.mockResolvedValue(' https://www.cnam.fr ');
@@ -243,6 +319,11 @@ describe('CourseEditPage', () => {
       image.getAttribute('src'),
     );
     expect(sources).toEqual(['/api/courses/7/images/4', '/api/courses/7/images/5']);
+    // En édition, un clic sélectionne l'image : il ne l'ouvre pas en grand.
+    const image = element().querySelector('figure img') as HTMLImageElement;
+    image.click();
+    expect(image.hasAttribute('tabindex')).toBe(false);
+    expect(TestBed.inject(ImageViewerService).image()).toBeNull();
   });
 
   it('affiche le refus de l’API quand l’image n’est pas acceptée', async () => {

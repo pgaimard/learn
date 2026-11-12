@@ -12,10 +12,12 @@ import {
   untracked,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { ImageViewerService } from '../../../core/ui/image-viewer.service';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { setSheetView } from '../revision/revision-sheet-view';
+import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
@@ -23,7 +25,12 @@ import { createCourseExtensions } from './course-extensions';
 @Component({
   selector: 'app-course-content',
   template: '',
-  host: { class: 'course-content', '[class.is-editable]': 'editable()' },
+  host: {
+    class: 'course-content',
+    '[class.is-editable]': 'editable()',
+    '(click)': 'zoom($event)',
+    '(keydown.enter)': 'zoom($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseContent {
@@ -49,7 +56,7 @@ export class CourseContent {
   // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
   // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
-  readonly codeBlockBar = signal<{ pos: number; top: number; left: number } | null>(null);
+  readonly codeBlockBar = signal<CodeBlockTarget | null>(null);
   // Menu « / » d'insertion de bloc.
   readonly slash = new SlashMenuState(
     () => this.editor(),
@@ -57,6 +64,7 @@ export class CourseContent {
   );
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly imageViewer = inject(ImageViewerService);
 
   constructor() {
     afterNextRender(() => {
@@ -79,7 +87,7 @@ export class CourseContent {
               onChange: (target) => this.selectionBar.set(this.offset(target)),
               onCodeBlock: (target) => {
                 const place = this.offset(target);
-                this.codeBlockBar.set(target && place ? { pos: target.pos, ...place } : null);
+                this.codeBlockBar.set(target && place ? { ...target, ...place } : null);
               },
             },
             slash: {
@@ -103,7 +111,12 @@ export class CourseContent {
               return this.receiveImages(event.dataTransfer);
             },
           },
-          onUpdate: () => {
+          onUpdate: ({ transaction }) => {
+            // Une retouche que l'éditeur fait seul (paragraphe final ajouté au premier
+            // clic, par exemple) n'est pas une modification de l'utilisateur.
+            if (!transaction.docChanged) {
+              return;
+            }
             this.blockMenu.set(null);
             this.tableMenu.set(null);
             this.edited.emit();
@@ -128,6 +141,22 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  // En lecture, un clic (ou Entrée) sur l'image d'une figure l'ouvre en grand.
+  protected zoom(event: Event): void {
+    const image = event.target;
+    if (this.editable() || !(image instanceof HTMLImageElement)) {
+      return;
+    }
+    const figure = image.closest('figure');
+    if (figure) {
+      this.imageViewer.open({
+        src: image.getAttribute('src') ?? '',
+        alt: image.alt,
+        caption: figure.querySelector('figcaption')?.textContent.trim() ?? '',
+      });
+    }
   }
 
   // Ouvre le choix de fichiers du navigateur ; les images choisies suivent le même
@@ -186,6 +215,19 @@ export class CourseContent {
       this.imageReceived.emit(file);
     }
     return true;
+  }
+
+  // Rang du dernier titre passé au-dessus de la hauteur donnée (dans la fenêtre) : celui
+  // de la section en cours de lecture. null avant le premier titre.
+  headingIndexAbove(limit: number): number | null {
+    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
+    let current: number | null = null;
+    headings.forEach((heading, index) => {
+      if (heading.getBoundingClientRect().top <= limit) {
+        current = index;
+      }
+    });
+    return current;
   }
 
   scrollToHeading(index: number): void {

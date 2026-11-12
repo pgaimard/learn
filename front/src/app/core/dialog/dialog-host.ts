@@ -6,11 +6,14 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
+import { BackdropClick } from '../ui/backdrop-click';
+import { Icon } from '../ui/icon';
 import { DialogService } from './dialog.service';
 
 // Modale de confirmation ou de saisie de l'application, pilotée par DialogService.
 @Component({
   selector: 'app-dialog-host',
+  imports: [BackdropClick, Icon],
   templateUrl: './dialog-host.html',
   styleUrl: './dialog-host.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +53,13 @@ export class DialogHost {
     // Formulaire natif : l'envoi par défaut rechargerait la page.
     event.preventDefault();
     this.dialogService.answer(value);
+  }
+
+  // Clic en dehors : une saisie s'abandonne ainsi, une confirmation attend sa réponse.
+  protected dismiss(): void {
+    if (this.request()?.kind === 'prompt') {
+      this.cancel();
+    }
   }
 
   protected cancel(): void {

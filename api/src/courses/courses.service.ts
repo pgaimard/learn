@@ -23,10 +23,11 @@ import { CourseImagesService } from './images/course-images.service.js';
 
 const UNIQUE_VIOLATION = '23505';
 
+// Résumé d'un cours pour les listes ; les sections sont ses titres de premier niveau.
 export type CourseSummary = Pick<
   Course,
   'id' | 'title' | 'position' | 'updatedAt'
->;
+> & { sectionCount: number };
 
 @Injectable()
 export class CoursesService {
@@ -39,11 +40,17 @@ export class CoursesService {
 
   async findAllByUe(ueCode: string): Promise<CourseSummary[]> {
     const ue = await this.ueService.findByCode(ueCode);
-    return this.courses.find({
-      select: { id: true, title: true, position: true, updatedAt: true },
-      where: { ueId: ue.id },
-      order: { position: 'ASC' },
-    });
+    return this.courses.query<CourseSummary[]>(
+      `SELECT c.id, c.title, c.position, c.updated_at AS "updatedAt",
+              (SELECT count(*)::int
+                 FROM jsonb_array_elements(c.content -> 'content') AS block
+                WHERE block ->> 'type' = 'heading'
+                  AND block -> 'attrs' ->> 'level' = '2') AS "sectionCount"
+         FROM courses c
+        WHERE c.ue_id = $1
+        ORDER BY c.position`,
+      [ue.id],
+    );
   }
 
   async findById(id: number): Promise<Course> {

@@ -1,0 +1,26 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 5;
+  min-width: 12rem;
+  padding: 5px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+}
+
+.menu.align-end {
+  right: 0;
+  left: auto;
+}
+
+.menu[hidden] {
+  display: none;
+}

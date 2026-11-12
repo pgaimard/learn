@@ -52,7 +52,7 @@ describe('DialogHost', () => {
     expect(element().querySelector('h2')?.textContent).toBe('Supprimer l’UE');
     expect(element().querySelector('p')?.textContent).toBe('L’UE UTC502 sera supprimée.');
     expect(buttons().map((button) => button.textContent.trim())).toEqual(['Annuler', 'Supprimer']);
-    expect(buttons()[1].classList.contains('is-destructive')).toBe(true);
+    expect(buttons()[1].classList.contains('button-destructive')).toBe(true);
     expect(document.activeElement).toBe(buttons()[0]);
   });
 
@@ -79,7 +79,7 @@ describe('DialogHost', () => {
     expect(element().querySelector('label')?.textContent).toBe('Adresse du lien');
     expect(field.value).toBe('https://');
     expect(document.activeElement).toBe(field);
-    expect(element().querySelector('.hint')?.textContent).toBe(
+    expect(element().querySelector('.field-hint')?.textContent).toBe(
       'Laisser vide pour retirer le lien.',
     );
 
@@ -106,6 +106,35 @@ describe('DialogHost', () => {
     buttons()[0].click();
 
     expect(await answer).toBe(false);
+  });
+
+  // Clic enfoncé et relâché sur le fond, en dehors du cadre de la fenêtre.
+  function clickOutside(): void {
+    const dialog = element().querySelector('dialog') as HTMLDialogElement;
+    dialog.getBoundingClientRect = () => new DOMRect(100, 100, 200, 200);
+    for (const type of ['mousedown', 'click']) {
+      dialog.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: 20, clientY: 20 }));
+    }
+    fixture.detectChanges();
+  }
+
+  it('abandonne une saisie par un clic en dehors', async () => {
+    const answer = service.prompt({ title: 'Lien', label: 'Adresse', initialValue: '' });
+    fixture.detectChanges();
+
+    clickOutside();
+
+    expect(await answer).toBeNull();
+  });
+
+  it('garde une confirmation ouverte après un clic en dehors : la réponse est obligatoire', async () => {
+    const answer = ask();
+
+    clickOutside();
+
+    expect(element().querySelector('dialog')?.hasAttribute('open')).toBe(true);
+    buttons()[1].click();
+    expect(await answer).toBe(true);
   });
 
   it('traite la fermeture par Échap comme une annulation', async () => {

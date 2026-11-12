@@ -1,61 +1,54 @@
 <nav class="breadcrumb" aria-label="Fil d’Ariane">
   <a routerLink="/">Mes UE</a>
-  <span aria-hidden="true">›</span>
+  <span aria-hidden="true">/</span>
   <a [routerLink]="['/ue', code()]">{{ code() }}</a>
+  <span aria-hidden="true">/</span>
+  <span>Édition</span>
 </nav>
 
 @if (course(); as course) {
   <div class="edit">
-    <form class="meta" [formGroup]="form" (ngSubmit)="save()" novalidate>
-      <div class="form-row">
-        <div class="field field-grow">
-          <label for="edit-title">Titre du chapitre</label>
-          <input
-            id="edit-title"
-            type="text"
-            formControlName="title"
-            (input)="markDirty()"
-            [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
-            [attr.aria-describedby]="
-              form.controls.title.touched && form.controls.title.invalid ? 'edit-title-error' : null
-            "
-          />
-          @if (form.controls.title.touched && form.controls.title.invalid) {
-            <p id="edit-title-error" class="field-error">
-              Le titre est requis (200 caractères au plus).
-            </p>
-          }
-        </div>
-      </div>
-    </form>
-
     <app-content-editor
       [content]="course.content"
       label="Contenu du cours"
+      [outline]="true"
       (edited)="markDirty()"
       (imageAdded)="addImage($event)"
     >
-      <div class="actions">
-        <button
-          type="button"
-          class="button button-primary"
-          [disabled]="isSaving()"
-          title="Enregistrer (Ctrl+S)"
-          (click)="save()"
-        >
-          Enregistrer
-        </button>
-        <a class="button" [routerLink]="['/ue', code(), 'cours', course.id]">Terminer</a>
+      <div editorActions class="actions">
         <p class="status" aria-live="polite">
-          @if (isDirty()) {
-            Modifications non enregistrées
+          @if (isSaving()) {
+            Enregistrement…
+          } @else if (isDirty()) {
+            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
           } @else if (savedAt(); as savedAt) {
             Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
-        <button type="button" class="button button-danger delete" (click)="remove()">
-          Supprimer le cours
+        <a class="button" [routerLink]="['/ue', code(), 'cours', course.id]">Terminer</a>
+        <button
+          type="button"
+          class="button button-primary"
+          [disabled]="isSaving()"
+          (click)="save()"
+        >
+          Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
         </button>
+        <app-menu-button
+          label="Autres actions"
+          buttonClass="button button-icon button-ghost"
+          [alignEnd]="true"
+        >
+          <app-icon menuTrigger name="dots" [size]="15" />
+          <button
+            type="button"
+            role="menuitem"
+            class="menu-item menu-item-danger"
+            (click)="remove()"
+          >
+            <app-icon name="trash" [size]="15" />Supprimer le cours
+          </button>
+        </app-menu-button>
       </div>
 
       <div role="alert">
@@ -63,6 +56,30 @@
           <p class="form-error">{{ error }}</p>
         }
       </div>
+
+      <form sheetHeader class="heading" [formGroup]="form" (ngSubmit)="save()" novalidate>
+        <label class="visually-hidden" for="edit-title">Titre du chapitre</label>
+        <input
+          id="edit-title"
+          class="title"
+          type="text"
+          placeholder="Titre du chapitre"
+          formControlName="title"
+          (input)="markDirty()"
+          [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+          [attr.aria-describedby]="
+            form.controls.title.touched && form.controls.title.invalid ? 'edit-title-error' : null
+          "
+        />
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <p id="edit-title-error" class="field-error">
+            Le titre est requis (200 caractères au plus).
+          </p>
+        }
+        <p class="meta origin">
+          <span class="code-chip">{{ code() }}</span>
+        </p>
+      </form>
     </app-content-editor>
   </div>
 } @else {

@@ -28,9 +28,10 @@ describe('TermQuickCreate', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  // Un bouton se désigne par son nom accessible : aria-label s'il en a un, sinon son texte.
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      .find((button) => (button.getAttribute('aria-label') ?? button.textContent.trim()) === label)
       ?.click();
     fixture.detectChanges();
   }
@@ -71,7 +72,7 @@ describe('TermQuickCreate', () => {
     service.create.mockReturnValue(of({ id: 5, type: 'acronym', label: 'PID' } as Term));
     click('Nouveau terme');
 
-    check('input[type="radio"]:not(:checked)');
+    click('Acronyme');
     fill('quick-term-label', 'PID');
     fill('quick-term-expanded-form', 'Process Identifier');
     submit();

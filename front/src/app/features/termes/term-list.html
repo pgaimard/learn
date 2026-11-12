@@ -1,34 +1,78 @@
-<ul class="term-list">
-  @for (term of terms(); track term.id) {
-    <li class="card item">
-      <a class="term" [routerLink]="[screens[term.type].path, term.id]">
-        <span class="term-label">{{ term.label }}</span>
-        @if (term.expandedForm) {
-          <span class="term-expanded">{{ term.expandedForm }}</span>
-        }
-        @if (term.excerpt) {
-          <span class="term-excerpt">{{ term.excerpt }}</span>
-        }
-      </a>
-      @if (showActions()) {
-        <div class="term-actions">
+<div class="list">
+  @for (group of groups(); track group.letter) {
+    @if (grouped()) {
+      <h2 class="letter" [id]="'lettre-' + group.letter">{{ group.letter }}</h2>
+    }
+    <ul>
+      @for (term of group.terms; track term.id) {
+        <li
+          class="term-row"
+          [class.has-type]="showType()"
+          [class.has-origin]="origin() !== 'none'"
+          [class.has-columns]="columns()"
+        >
           <a
-            class="button"
-            [routerLink]="[screens[term.type].path, term.id, 'edition']"
-            [attr.aria-label]="'Modifier ' + term.label"
+            class="term term-label"
+            [class.mono]="term.type === 'acronym'"
+            [routerLink]="[screens[term.type].path, term.id]"
           >
-            Modifier
+            {{ term.label }}
           </a>
-          <button
-            type="button"
-            class="button button-danger"
-            [attr.aria-label]="'Supprimer ' + term.label"
-            (click)="removed.emit(term)"
-          >
-            Supprimer
-          </button>
-        </div>
+          @if (showType()) {
+            <span class="pill type">{{ term.type === 'acronym' ? 'Acronyme' : 'Définition' }}</span>
+          }
+          @if (columns()) {
+            <span class="term-text">
+              <em class="term-expanded">{{ term.expandedForm }}</em>
+            </span>
+            <span class="term-text term-excerpt">{{ term.excerpt }}</span>
+          } @else {
+            <span class="term-text">
+              @if (term.expandedForm) {
+                <em class="term-expanded">{{ term.expandedForm }}</em>
+                @if (term.excerpt) {
+                  <span aria-hidden="true"> · </span>
+                }
+              }
+              <span class="term-excerpt">{{ term.excerpt }}</span>
+            </span>
+          }
+          @if (origin() === 'ue') {
+            <span class="origin">
+              @if (term.ueCode; as code) {
+                <a class="code-chip" [routerLink]="['/ue', code]">{{ code }}</a>
+              }
+            </span>
+          } @else if (origin() === 'course') {
+            <span class="origin">
+              @if (term.ueCode && term.courseId) {
+                <a class="course" [routerLink]="['/ue', term.ueCode, 'cours', term.courseId]">{{
+                  term.courseTitle
+                }}</a>
+              }
+            </span>
+          }
+          @if (showActions()) {
+            <span class="term-actions">
+              <a
+                class="button button-icon button-ghost"
+                [routerLink]="[screens[term.type].path, term.id, 'edition']"
+                [attr.aria-label]="'Modifier ' + term.label"
+              >
+                <app-icon name="pencil" />
+              </a>
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Supprimer ' + term.label"
+                (click)="removed.emit(term)"
+              >
+                <app-icon name="trash" />
+              </button>
+            </span>
+          }
+        </li>
       }
-    </li>
+    </ul>
   }
-</ul>
+</div>

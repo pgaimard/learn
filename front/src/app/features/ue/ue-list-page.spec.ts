@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { AgendaEvent, EventService } from '../agenda/event.service';
+import { TaskService } from '../taches/task.service';
 import { UeListPage } from './ue-list-page';
 import { Ue, UeService } from './ue.service';
 
@@ -28,7 +30,7 @@ describe('UeListPage', () => {
     fixture.detectChanges();
   }
 
-  function setup(ues: Ue[]): void {
+  function setup(ues: Ue[], events: AgendaEvent[] = []): void {
     vi.resetAllMocks();
     service.list.mockReturnValue(of(ues));
     TestBed.configureTestingModule({
@@ -36,6 +38,8 @@ describe('UeListPage', () => {
         provideRouter([]),
         { provide: DialogService, useValue: dialog },
         { provide: UeService, useValue: service },
+        { provide: EventService, useValue: { list: () => of(events) } },
+        { provide: TaskService, useValue: { list: () => of([]) } },
       ],
     });
     fixture = TestBed.createComponent(UeListPage);
@@ -48,7 +52,8 @@ describe('UeListPage', () => {
 
   function click(label: string): void {
     const button = Array.from(element().querySelectorAll('button')).find(
-      (candidate) => candidate.textContent.trim() === label,
+      (candidate) =>
+        (candidate.getAttribute('aria-label') ?? candidate.textContent.trim()) === label,
     );
     button?.click();
     fixture.detectChanges();
@@ -78,7 +83,7 @@ describe('UeListPage', () => {
   const NFE108: Ue = { id: 2, code: 'NFE108', title: 'Méthodes', description: '', position: 2 };
 
   function codes(): string[] {
-    return Array.from(element().querySelectorAll('.ue-code')).map((code) =>
+    return Array.from(element().querySelectorAll('.ue .code-chip')).map((code) =>
       (code.textContent ?? '').trim(),
     );
   }
@@ -121,6 +126,42 @@ describe('UeListPage', () => {
     expect(codes()).toEqual(['UTC502', 'NFE108']);
   });
 
+  it('affiche les compteurs de chaque UE', () => {
+    setup([{ ...UTC502, counts: { courses: 1, terms: 12, files: 0 } }]);
+
+    expect(
+      Array.from(element().querySelectorAll('.ue-counts .pill')).map((pill) => pill.textContent),
+    ).toEqual(['1 cours', '12 termes', '0 fichier']);
+  });
+
+  it('liste ce qui est prévu cette semaine, ou le dit quand il n’y a rien', () => {
+    const today = new Date();
+    today.setHours(18, 30, 0, 0);
+    setup(
+      [UTC502],
+      [
+        {
+          id: 1,
+          title: 'Cours systèmes',
+          description: '',
+          type: 'course',
+          ue: { code: 'UTC502', title: 'Systèmes' },
+          startsAt: today.toISOString(),
+          endsAt: today.toISOString(),
+        },
+      ],
+    );
+
+    const row = element().querySelector('.week .list-row');
+    expect(row?.textContent).toContain('18:30');
+    expect(row?.textContent).toContain('Cours systèmes');
+    expect(row?.querySelector('.code-chip')?.textContent).toBe('UTC502');
+
+    TestBed.resetTestingModule();
+    setup([UTC502]);
+    expect(element().querySelector('.week')?.textContent).toContain('Rien de prévu cette semaine.');
+  });
+
   it('invite à créer une UE quand il n’y en a aucune', () => {
     setup([]);
 
@@ -159,7 +200,7 @@ describe('UeListPage', () => {
   it('modifie l’UE désignée par son code d’origine', () => {
     setup([UTC502]);
     service.update.mockReturnValue(of(UTC502));
-    click('Modifier');
+    click('Modifier l’UE UTC502');
 
     fillAndSubmit('UTC503', 'Systèmes');
 
@@ -174,7 +215,7 @@ describe('UeListPage', () => {
     service.remove.mockReturnValue(of(undefined));
     dialog.confirmDeletion.mockResolvedValue(false);
 
-    click('Supprimer');
+    click('Supprimer l’UE UTC502');
     await settle();
     expect(dialog.confirmDeletion).toHaveBeenCalledWith(
       'Supprimer l’UE',
@@ -183,7 +224,7 @@ describe('UeListPage', () => {
     expect(service.remove).not.toHaveBeenCalled();
 
     dialog.confirmDeletion.mockResolvedValue(true);
-    click('Supprimer');
+    click('Supprimer l’UE UTC502');
     await settle();
     expect(service.remove).toHaveBeenCalledWith('UTC502');
   });

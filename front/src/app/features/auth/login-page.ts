@@ -3,10 +3,12 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { SessionService } from '../../core/auth/session.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { LoginBackground } from './login-background';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule],
+  imports: [Icon, LoginBackground, ReactiveFormsModule],
   templateUrl: './login-page.html',
   styleUrl: './login-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +22,7 @@ export class LoginPage {
     password: ['', Validators.required],
   });
   protected readonly isSubmitting = signal(false);
+  protected readonly isPasswordShown = signal(false);
   protected readonly errors = signal<string[]>([]);
 
   protected submit(): void {

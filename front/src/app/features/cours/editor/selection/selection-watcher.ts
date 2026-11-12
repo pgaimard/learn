@@ -2,14 +2,22 @@ import { Extension } from '@tiptap/core';
 import { AllSelection, Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { EditorView } from '@tiptap/pm/view';
 
+// Bloc de code : sa position dans le document, son coin haut gauche (dans le repère
+// de la barre de sélection) et sa largeur.
+export interface CodeBlockTarget {
+  pos: number;
+  top: number;
+  left: number;
+  width: number;
+}
+
 export interface SelectionWatcherOptions {
   // Sélection de texte à mettre en forme : où afficher la barre, en pixels depuis le coin
   // haut gauche de la zone de contenu (haut de la sélection, milieu de sa première ligne).
   // null : plus de sélection à mettre en forme.
   onChange: (target: { top: number; left: number } | null) => void;
-  // Bloc de code où se trouve le curseur : sa position dans le document et son coin
-  // haut gauche, dans le même repère. null : le curseur n'est pas dans un bloc de code.
-  onCodeBlock: (target: { pos: number; top: number; left: number } | null) => void;
+  // Bloc de code où se trouve le curseur ; null : le curseur n'est pas dans un bloc de code.
+  onCodeBlock: (target: CodeBlockTarget | null) => void;
 }
 
 // Position de la barre pour la sélection en cours ; null s'il n'y a rien à mettre en forme.
@@ -41,7 +49,7 @@ function locate(view: EditorView): { top: number; left: number } | null {
 }
 
 // Bloc de code qui contient le curseur ; null s'il n'y en a pas.
-function locateCodeBlock(view: EditorView): { pos: number; top: number; left: number } | null {
+function locateCodeBlock(view: EditorView): CodeBlockTarget | null {
   const { $from } = view.state.selection;
   if (!view.editable || !$from.parent.type.spec.code || $from.depth === 0) {
     return null;
@@ -53,7 +61,7 @@ function locateCodeBlock(view: EditorView): { pos: number; top: number; left: nu
   }
   const box = element.getBoundingClientRect();
   const origin = (view.dom.parentElement ?? view.dom).getBoundingClientRect();
-  return { pos, top: box.top - origin.top, left: box.left - origin.left };
+  return { pos, top: box.top - origin.top, left: box.left - origin.left, width: box.width };
 }
 
 // Surveille la sélection : signale où afficher la barre de mise en forme, une fois la

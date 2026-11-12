@@ -3,12 +3,15 @@ import {
   Component,
   inject,
   input,
+  linkedSignal,
   output,
   viewChild,
 } from '@angular/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
+import { buildOutline } from '../content/build-outline';
 import { ContentNode } from '../content/content-node';
 import { CourseContent } from '../content/course-content';
+import { CourseOutline } from '../content/course-outline';
 import { BlockMenu } from './blocks/block-menu';
 import { CodeBlockBar } from './code/code-block-bar';
 import { EditorToolbar } from './editor-toolbar';
@@ -25,6 +28,7 @@ import { TableMenu } from './tables/table-menu';
     BlockMenu,
     CodeBlockBar,
     CourseContent,
+    CourseOutline,
     EditorToolbar,
     SelectionBar,
     SlashMenu,
@@ -44,6 +48,9 @@ export class ContentEditor {
   // Nom accessible de la zone de saisie.
   readonly label = input.required<string>();
 
+  // Plan du chapitre à gauche de la feuille, pour un texte long et structuré.
+  readonly outline = input(false);
+
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
   // Émis pour chaque image collée, déposée ou choisie ; l'envoi est fait par la page.
@@ -51,6 +58,14 @@ export class ContentEditor {
 
   private readonly view = viewChild.required(CourseContent);
   private readonly dialog = inject(DialogService);
+
+  // Plan tenu à jour pendant la saisie : il part du contenu reçu, puis suit l'éditeur.
+  protected readonly liveOutline = linkedSignal(() => buildOutline(this.content()));
+
+  protected onEdited(): void {
+    this.liveOutline.set(buildOutline(this.view().getContent()));
+    this.edited.emit();
+  }
 
   protected linkFromKeyboard(event: Event): void {
     const editor = this.view().editor();

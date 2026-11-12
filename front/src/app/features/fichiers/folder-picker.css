@@ -1,27 +1,16 @@
-dialog {
-  box-sizing: border-box;
-  width: min(32rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
-  padding: 1.5rem;
+:host {
+  display: contents;
+}
+
+/* Arbre des dossiers : une ligne par dossier, décalée selon sa profondeur. */
+.tree {
+  max-height: 50vh;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-dialog::backdrop {
-  background: rgb(0 0 0 / 40%);
-}
-
-h2 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-  overflow-wrap: anywhere;
-}
-
-.choices {
-  margin: 0 0 1rem;
-  padding: 0;
+  border-radius: 8px;
+  background: var(--color-background);
   list-style: none;
 }
 
@@ -29,13 +18,49 @@ h2 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0;
+  min-height: 1.75rem;
+  padding: 0 0.5rem;
+  border-radius: 6px;
+  font-size: 0.78125rem;
+  cursor: pointer;
+}
+
+.choice:hover {
+  background: var(--color-raised);
+}
+
+.choice app-icon {
+  color: var(--color-text-muted);
+}
+
+.choice:has(input:checked) {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.choice:has(input:checked) app-icon {
+  color: var(--color-accent);
+}
+
+.choice:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
 }
 
 .choice.is-current {
   color: var(--color-text-muted);
+  cursor: default;
 }
 
-.here {
-  font-size: 0.875rem;
+.choice.is-current:hover {
+  background: none;
+}
+
+.check {
+  margin-left: auto;
+}
+
+.modal-footer .button:disabled {
+  cursor: default;
 }

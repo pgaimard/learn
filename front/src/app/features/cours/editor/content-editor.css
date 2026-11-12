@@ -2,25 +2,70 @@
   display: block;
 }
 
-.sticky {
+/* Barre d'outils et actions de la page, toujours à portée pendant la saisie. */
+.bar {
   position: sticky;
   top: var(--sticky-top);
-  z-index: 1;
-  padding: 0.5rem 0;
-  background: var(--color-background);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.375rem;
+  margin-bottom: 0.75rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+  /* Ombre portée : la barre se détache du texte qui défile dessous. */
+  box-shadow: var(--shadow-bar);
+}
+
+app-editor-toolbar {
+  flex: 1 1 auto;
+}
+
+.bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
 }
 
 .sheet {
-  /* Repère du menu de bloc. */
+  /* Repère des menus et des barres flottantes. */
   position: relative;
-  padding: 1.5rem 2rem;
+  padding: 1.75rem 2.75rem 2.5rem;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-large);
   background: var(--color-surface);
+}
+
+/* Plan du chapitre à gauche de la feuille, sur grand écran seulement. */
+.plan {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .body.has-outline {
+    display: grid;
+    grid-template-columns: 13.75rem minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .plan {
+    position: sticky;
+    /* Sous l'en-tête et la barre d'outils, restés affichés. */
+    top: calc(var(--sticky-top) + 4.5rem);
+    display: block;
+    max-height: calc(100vh - var(--sticky-top) - 5.5rem);
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 40rem) {
   .sheet {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 }

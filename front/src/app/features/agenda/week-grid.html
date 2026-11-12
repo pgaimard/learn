@@ -1,0 +1,74 @@
+<div class="head">
+  <div class="corner"></div>
+  @for (day of days(); track day.date.getTime()) {
+    <button
+      type="button"
+      class="day-head"
+      [class.is-today]="day.isToday"
+      [attr.aria-label]="'Ajouter un événement le ' + day.label"
+      [attr.aria-current]="day.isToday ? 'date' : null"
+      (click)="dayPicked.emit(day.date)"
+    >
+      <span class="weekday">{{ day.weekday }}</span>
+      <b>{{ day.date.getDate() }}</b>
+    </button>
+  }
+</div>
+
+<div class="body" [style.--hours]="hours.length">
+  <div class="hours" aria-hidden="true">
+    @for (hour of hours; track hour) {
+      <span>{{ hour }}</span>
+    }
+  </div>
+  @for (day of days(); track day.date.getTime()) {
+    <div class="day" [class.is-today]="day.isToday">
+      @for (block of day.blocks; track block.item.key) {
+        <button
+          type="button"
+          [class]="'block ' + block.item.tone"
+          [class.is-deadline]="block.item.kind === 'deadline'"
+          [class.is-task]="block.item.kind === 'task'"
+          [class.is-done]="block.item.task?.done"
+          [style.--top]="block.top / hourPx"
+          [style.--height]="block.height / hourPx"
+          [style.left.%]="(100 * block.column) / block.columns"
+          [style.width.%]="100 / block.columns"
+          [attr.aria-label]="
+            (block.item.kind === 'task' ? 'Tâche : ' : '') +
+            block.item.title +
+            ', ' +
+            block.item.time
+          "
+          (click)="itemPicked.emit(block.item)"
+        >
+          <!-- La pastille de l'UE suit l'heure ; une tâche n'a pas de ligne d'heure. -->
+          @if (block.item.kind === 'task') {
+            <span class="row">
+              <b>{{ block.item.title }}</b>
+              @if (block.item.ueCode; as ueCode) {
+                <span class="ue">{{ ueCode }}</span>
+              }
+            </span>
+          } @else {
+            <b>{{ block.item.title }}</b>
+            <span class="row">
+              <span class="time">{{ block.item.time }}</span>
+              @if (block.item.ueCode; as ueCode) {
+                <span class="ue">{{ ueCode }}</span>
+              }
+            </span>
+          }
+          @if (block.item.description && descriptionLines(block); as lines) {
+            <span class="description" [style.-webkit-line-clamp]="lines">{{
+              block.item.description
+            }}</span>
+          }
+        </button>
+      }
+      @if (day.now !== null) {
+        <div class="now" aria-hidden="true" [style.--top]="day.now / hourPx"></div>
+      }
+    </div>
+  }
+</div>

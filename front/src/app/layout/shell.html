@@ -1,34 +1,74 @@
 <a class="skip-link" href="#contenu">Aller au contenu</a>
 
 <header class="header">
-  <div class="header-inner">
-    <a class="brand" routerLink="/">Espace d’études</a>
+  <a class="brand" routerLink="/"
+    ><span class="brand-mark" aria-hidden="true"></span>Espace d’études</a
+  >
 
-    <nav class="main-nav" aria-label="Navigation principale">
-      <a routerLink="/dictionnaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
-        Dictionnaire
-      </a>
-      <a routerLink="/glossaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
-        Glossaire
-      </a>
-      <a routerLink="/agenda" routerLinkActive="is-active" ariaCurrentWhenActive="page"> Agenda </a>
-      <a routerLink="/taches" routerLinkActive="is-active" ariaCurrentWhenActive="page">
-        Tâches<app-task-reminder-badge />
-      </a>
-    </nav>
+  <nav class="main-nav" aria-label="Navigation principale">
+    <a
+      routerLink="/"
+      routerLinkActive="is-active"
+      ariaCurrentWhenActive="page"
+      [routerLinkActiveOptions]="{ exact: true }"
+      [class.is-current-section]="isInUe()"
+    >
+      Mes UE
+    </a>
+    <a routerLink="/dictionnaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
+      Dictionnaire
+    </a>
+    <a routerLink="/glossaire" routerLinkActive="is-active" ariaCurrentWhenActive="page">
+      Glossaire
+    </a>
+    <a routerLink="/agenda" routerLinkActive="is-active" ariaCurrentWhenActive="page"> Agenda </a>
+    <a routerLink="/taches" routerLinkActive="is-active" ariaCurrentWhenActive="page">
+      Tâches<app-task-reminder-badge />
+    </a>
+  </nav>
 
-    <app-search-box />
+  <app-search-box />
 
+  <app-term-quick-create />
+
+  <button
+    type="button"
+    class="button button-icon"
+    [attr.aria-label]="isDark() ? 'Passer au thème clair' : 'Passer au thème sombre'"
+    (click)="toggleTheme()"
+  >
+    <app-icon [name]="isDark() ? 'sun' : 'moon'" [size]="15" />
+  </button>
+
+  @if (user(); as currentUser) {
     <div class="account">
-      <app-term-quick-create />
-      @if (user(); as currentUser) {
-        <span class="username">{{ currentUser.username }}</span>
-      }
-      <button type="button" class="button logout" [disabled]="isLoggingOut()" (click)="logout()">
-        Se déconnecter
+      <button
+        #accountButton
+        type="button"
+        class="avatar"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="isAccountOpen()"
+        [attr.aria-label]="'Compte ' + currentUser.username"
+        (click)="isAccountOpen.set(!isAccountOpen())"
+      >
+        {{ initials() }}
       </button>
+      @if (isAccountOpen()) {
+        <div class="account-menu" role="menu" aria-label="Compte">
+          <p class="account-name">{{ currentUser.username }}</p>
+          <button
+            type="button"
+            role="menuitem"
+            class="account-item"
+            [disabled]="isLoggingOut()"
+            (click)="logout()"
+          >
+            <app-icon name="logout" [size]="15" />Se déconnecter
+          </button>
+        </div>
+      }
     </div>
-  </div>
+  }
 </header>
 
 <main id="contenu" class="content" tabindex="-1">

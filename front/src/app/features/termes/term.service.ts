@@ -13,6 +13,10 @@ export interface TermSummary {
   expandedForm: string | null;
   // Début de la définition en texte brut.
   excerpt: string;
+  // Origine du terme : code de son UE, cours dont il est issu ; null s'il n'en a pas.
+  ueCode: string | null;
+  courseId: number | null;
+  courseTitle: string | null;
 }
 
 export interface Term {
@@ -37,6 +41,8 @@ export interface TermInput {
 export interface TermFilters {
   type?: TermType;
   ue?: string;
+  // Identifiant du cours dont les termes sont issus.
+  course?: number;
 }
 
 @Injectable({ providedIn: 'root' })

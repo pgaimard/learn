@@ -1,10 +1,22 @@
 <div class="page-header">
-  <h1>Tâches</h1>
-  @if (editing() !== 'new') {
-    <button type="button" class="button button-primary" (click)="open('new')">
-      Nouvelle tâche
-    </button>
-  }
+  <div class="heading">
+    <h1>Tâches</h1>
+    @if (!isLoading()) {
+      <span class="meta">{{ summary() }}</span>
+    }
+  </div>
+  <div class="chips" role="group" aria-label="Filtrer par UE">
+    @for (choice of ueFilters(); track choice.value) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-pressed]="ueFilter() === choice.value"
+        (click)="filterBy(choice.value)"
+      >
+        {{ choice.label }}
+      </button>
+    }
+  </div>
 </div>
 
 <div role="alert">
@@ -13,21 +25,8 @@
   }
 </div>
 
-@if (editing() === 'new') {
-  <section class="card new-task" aria-label="Nouvelle tâche">
-    <app-task-form
-      [ues]="ues()"
-      [defaultUeCode]="defaultUeCode()"
-      [errors]="formErrors()"
-      [isSaving]="isSaving()"
-      (saved)="save($event)"
-      (cancelled)="close()"
-    />
-  </section>
-}
-
-<ng-template #taskRow let-task>
-  @if (editing() === task) {
+@if (editing(); as task) {
+  <app-modal heading="Modifier la tâche" [wide]="true" (closed)="close()">
     <app-task-form
       [task]="task"
       [ues]="ues()"
@@ -36,105 +35,110 @@
       (saved)="save($event)"
       (cancelled)="close()"
     />
-  } @else {
-    <label class="task-main">
-      <input type="checkbox" [checked]="task.done" (change)="toggle(task)" />
-      <span class="task-title">{{ task.title }}</span>
-    </label>
-    <span class="task-detail">
-      @if (task.ue; as ue) {
-        <span class="task-ue">{{ ue.code }}</span>
-      }
-      @if (task.dueAt; as dueAt) {
-        <span [class.overdue]="isOverdue(task)">
-          {{ isOverdue(task) ? 'En retard :' : 'Pour le' }} {{ formatDateTime(dueAt) }}
-        </span>
-      }
-    </span>
-    <div class="task-actions">
-      <button
-        type="button"
-        class="button"
-        [attr.aria-label]="'Modifier la tâche ' + task.title"
-        (click)="open(task)"
-      >
-        Modifier
-      </button>
-      <button
-        type="button"
-        class="button button-danger"
-        [attr.aria-label]="'Supprimer la tâche ' + task.title"
-        (click)="remove(task)"
-      >
-        Supprimer
-      </button>
-    </div>
+  </app-modal>
+}
+
+<ng-template #taskRow let-task>
+  <label class="task-main">
+    <input type="checkbox" [checked]="task.done" (change)="toggle(task)" />
+    <span class="task-title">{{ task.title }}</span>
+  </label>
+  @if (task.ue; as ue) {
+    <span class="code-chip">{{ ue.code }}</span>
   }
+  @if (task.dueAt) {
+    <span class="due" [class.is-late]="isOverdue(task)">{{ dueLabel(task) }}</span>
+  } @else if (!task.done) {
+    <button
+      type="button"
+      class="due add-date"
+      [attr.aria-label]="'Ajouter une date à ' + task.title"
+      (click)="open(task)"
+    >
+      Date
+    </button>
+  }
+  <span class="task-actions">
+    <button
+      type="button"
+      class="button button-icon button-ghost"
+      [attr.aria-label]="'Modifier la tâche ' + task.title"
+      (click)="open(task)"
+    >
+      <app-icon name="pencil" />
+    </button>
+    <button
+      type="button"
+      class="button button-icon button-ghost"
+      [attr.aria-label]="'Supprimer la tâche ' + task.title"
+      (click)="remove(task)"
+    >
+      <app-icon name="trash" />
+    </button>
+  </span>
 </ng-template>
 
 @if (isLoading()) {
   <p>Chargement…</p>
 } @else {
-  <div class="filters">
-    <label for="task-ue-filter">UE</label>
-    <select
-      #ueField
-      id="task-ue-filter"
-      [value]="ueFilter()"
-      (change)="ueFilter.set(ueField.value)"
-    >
-      <option value="">Toutes</option>
-      @for (ue of ues(); track ue.id) {
-        <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
-      }
-      <option [value]="withoutUe">Sans UE</option>
-    </select>
-  </div>
+  <form class="quick-add" (submit)="addQuickly($event)">
+    <app-icon name="plus" />
+    <label class="visually-hidden" for="quick-task">Nouvelle tâche</label>
+    <input
+      id="quick-task"
+      type="text"
+      autocomplete="off"
+      maxlength="200"
+      placeholder="Ajouter une tâche, puis Entrée"
+      [formControl]="quickTitle"
+    />
+    <app-dropdown
+      compact
+      label="UE de la nouvelle tâche"
+      [options]="quickUeOptions()"
+      [value]="quickUe()"
+      (valueChange)="quickUe.set($event)"
+    />
+    <app-date-field
+      compact
+      fieldId="quick-task-due"
+      label="Échéance de la nouvelle tâche"
+      placeholder="Date"
+      [formControl]="quickDue"
+    />
+    <span class="kbd" aria-hidden="true">↵</span>
+  </form>
 
   @if (reminders().length > 0) {
-    <section class="card reminders" aria-labelledby="reminders-title">
-      <h2 id="reminders-title">À faire maintenant</h2>
-      <ul>
-        @for (task of reminders(); track task.id) {
-          <li>
-            {{ task.title }}
-            @if (task.dueAt; as dueAt) {
-              <span class="reminder-due">– pour le {{ formatDateTime(dueAt) }}</span>
-            }
-          </li>
-        }
-      </ul>
+    <section class="reminders" aria-labelledby="reminders-title">
+      <app-icon name="warning" [size]="16" />
+      <div>
+        <h2 id="reminders-title">À faire maintenant</h2>
+        <ul>
+          @for (task of reminders(); track task.id) {
+            <li>
+              {{ task.title }}
+              @if (task.dueAt; as dueAt) {
+                <span class="meta">· pour le {{ formatDateTime(dueAt) }}</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
     </section>
   }
 
   @if (todo().length === 0) {
     <p class="empty">Aucune tâche à faire.</p>
-  } @else {
-    <ul class="tasks" aria-label="Tâches à faire">
-      @for (task of todo(); track task.id) {
-        <li class="card task">
-          <ng-container
-            [ngTemplateOutlet]="taskRow"
-            [ngTemplateOutletContext]="{ $implicit: task }"
-          />
-        </li>
-      }
-    </ul>
   }
-
-  @if (done().length > 0) {
-    <button
-      type="button"
-      class="button toggle-done"
-      [attr.aria-expanded]="showDone()"
-      (click)="showDone.set(!showDone())"
-    >
-      {{ showDone() ? 'Masquer' : 'Afficher' }} les tâches faites ({{ done().length }})
-    </button>
-    @if (showDone()) {
-      <ul class="tasks is-done" aria-label="Tâches faites">
-        @for (task of done(); track task.id) {
-          <li class="card task">
+  @for (group of groups(); track group.key) {
+    <section [attr.aria-labelledby]="'tasks-' + group.key">
+      <h2 class="group" [class.is-late]="group.key === 'late'" [id]="'tasks-' + group.key">
+        {{ group.label }}<span class="count">{{ group.tasks.length }}</span>
+      </h2>
+      <ul class="list" [attr.aria-label]="group.label">
+        @for (task of group.tasks; track task.id) {
+          <li class="task">
             <ng-container
               [ngTemplateOutlet]="taskRow"
               [ngTemplateOutletContext]="{ $implicit: task }"
@@ -142,6 +146,34 @@
           </li>
         }
       </ul>
-    }
+    </section>
+  }
+
+  @if (done().length > 0) {
+    <section aria-labelledby="tasks-done">
+      <h2 class="group" id="tasks-done">
+        <button
+          type="button"
+          class="tool toggle-done"
+          [attr.aria-expanded]="showDone()"
+          (click)="showDone.set(!showDone())"
+        >
+          <app-icon [name]="showDone() ? 'chevron-down' : 'chevron-right'" />Faites
+        </button>
+        <span class="count">{{ done().length }}</span>
+      </h2>
+      @if (showDone()) {
+        <ul class="list is-done" aria-label="Tâches faites">
+          @for (task of done(); track task.id) {
+            <li class="task">
+              <ng-container
+                [ngTemplateOutlet]="taskRow"
+                [ngTemplateOutletContext]="{ $implicit: task }"
+              />
+            </li>
+          }
+        </ul>
+      }
+    </section>
   }
 }

@@ -1,15 +1,67 @@
-<div class="page-header">
-  <h1>Agenda</h1>
-  <nav class="weeks" aria-label="Semaine affichée">
-    <a class="button" [routerLink]="[]" [queryParams]="weekQuery(-1)">Semaine précédente</a>
-    <a class="button" [routerLink]="[]">Aujourd’hui</a>
-    <a class="button" [routerLink]="[]" [queryParams]="weekQuery(1)">Semaine suivante</a>
+<div class="bar">
+  <nav class="period" aria-label="Période affichée">
+    <a
+      class="button button-icon"
+      [routerLink]="[]"
+      [queryParams]="dateQuery(neighbour(-1))"
+      queryParamsHandling="merge"
+      [attr.aria-label]="view() === 'mois' ? 'Mois précédent' : 'Semaine précédente'"
+    >
+      <app-icon name="chevron-left" />
+    </a>
+    <a
+      class="button"
+      [routerLink]="[]"
+      [queryParams]="{ semaine: null }"
+      queryParamsHandling="merge"
+    >
+      Aujourd’hui
+    </a>
+    <a
+      class="button button-icon"
+      [routerLink]="[]"
+      [queryParams]="dateQuery(neighbour(1))"
+      queryParamsHandling="merge"
+      [attr.aria-label]="view() === 'mois' ? 'Mois suivant' : 'Semaine suivante'"
+    >
+      <app-icon name="chevron-right" />
+    </a>
   </nav>
-</div>
 
-<p class="period" aria-live="polite">
-  Du {{ formatDay(weekStart()) }} au {{ formatDay(weekEnd()) }} {{ weekEnd().getFullYear() }}
-</p>
+  <h1 aria-live="polite">
+    {{ heading().main }} <span>{{ heading().detail }}</span>
+  </h1>
+
+  <div class="views" role="group" aria-label="Vue">
+    @for (choice of views; track choice.value) {
+      <a
+        [routerLink]="[]"
+        [queryParams]="{ vue: choice.value }"
+        queryParamsHandling="merge"
+        [class.is-on]="view() === choice.value"
+        [attr.aria-current]="view() === choice.value ? 'true' : null"
+      >
+        {{ choice.label }}
+      </a>
+    }
+  </div>
+
+  <p class="keys" aria-hidden="true">
+    <span><span class="kbd">←</span> <span class="kbd">→</span> naviguer</span>
+    <span><span class="kbd">T</span> aujourd’hui</span>
+    <span
+      ><span class="kbd">S</span> <span class="kbd">M</span> <span class="kbd">L</span> vue</span
+    >
+  </p>
+
+  <button
+    type="button"
+    class="button button-primary new"
+    (click)="open({ kind: 'new', day: defaultDay() })"
+  >
+    <app-icon name="plus" />Événement
+  </button>
+</div>
 
 <div role="alert">
   @for (error of pageErrors(); track error) {
@@ -21,123 +73,316 @@
   <p class="notice" role="status">{{ notice() }}</p>
 }
 
-@if (isLoading()) {
-  <p>Chargement…</p>
-} @else {
-  <div class="filters">
-    <label for="agenda-ue-filter">UE</label>
-    <select
-      #ueField
-      id="agenda-ue-filter"
-      [value]="ueFilter()"
-      (change)="ueFilter.set(ueField.value)"
-    >
-      <option value="">Toutes</option>
-      @for (ue of ues(); track ue.id) {
-        <option [value]="ue.code">{{ ue.code }} – {{ ue.title }}</option>
+@if (editing(); as editing) {
+  <app-modal [heading]="modalHeading(editing)" [wide]="true" (closed)="open(null)">
+    @switch (editing.kind) {
+      @case ('new') {
+        <app-event-form
+          [day]="editing.day"
+          [ues]="ues()"
+          [errors]="formErrors()"
+          [isSaving]="isSaving()"
+          (saved)="save($event)"
+          (cancelled)="open(null)"
+        />
       }
-      <option [value]="withoutUe">Sans UE</option>
-    </select>
-  </div>
-
-  <ol class="days">
-    @for (day of days(); track day.date.getTime()) {
-      <li class="card day" [class.is-today]="isToday(day.date)">
-        <div class="day-header">
-          <h2>
-            {{ formatDay(day.date) }}
-            @if (isToday(day.date)) {
-              <span class="today">Aujourd’hui</span>
-            }
-          </h2>
-          @if (!isAdding(day.date)) {
-            <button
-              type="button"
-              class="button add"
-              [attr.aria-label]="'Ajouter un événement le ' + formatDay(day.date)"
-              (click)="open({ kind: 'new', day: day.date })"
-            >
-              Ajouter
-            </button>
-          }
-        </div>
-
-        @if (isAdding(day.date)) {
+      @case ('event') {
+        @if (editing.mode === 'edit') {
           <app-event-form
-            [day]="day.date"
+            [event]="editing.event"
             [ues]="ues()"
-            [defaultUeCode]="defaultUeCode()"
             [errors]="formErrors()"
             [isSaving]="isSaving()"
             (saved)="save($event)"
-            (cancelled)="open(null)"
+            (cancelled)="open({ kind: 'event', event: editing.event, mode: 'view' })"
+          />
+        } @else {
+          @if (editing.event.description) {
+            <p class="description">{{ editing.event.description }}</p>
+          }
+          <dl class="detail">
+            <div>
+              <dt>Type</dt>
+              <dd>
+                <span class="pill">
+                  {{ editing.event.type === 'deadline' ? 'Échéance' : 'Cours' }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>UE</dt>
+              <dd>
+                @if (editing.event.ue; as ue) {
+                  <span class="code-chip">{{ ue.code }}</span> {{ ue.title }}
+                } @else {
+                  Aucune
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>{{ editing.event.type === 'deadline' ? 'Échéance' : 'Début' }}</dt>
+              <dd>{{ formatDateTime(editing.event.startsAt) }}</dd>
+            </div>
+            @if (editing.event.endsAt !== editing.event.startsAt) {
+              <div>
+                <dt>Fin</dt>
+                <dd>{{ formatDateTime(editing.event.endsAt) }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      }
+      @case ('task') {
+        @if (editing.mode === 'edit') {
+          <app-task-form
+            [task]="editing.task"
+            [ues]="ues()"
+            [errors]="formErrors()"
+            [isSaving]="isSaving()"
+            (saved)="saveTask($event)"
+            (cancelled)="open({ kind: 'task', task: editing.task, mode: 'view' })"
+          />
+        } @else {
+          <dl class="detail">
+            <div>
+              <dt>État</dt>
+              <dd>
+                <span class="pill">{{ editing.task.done ? 'Tâche faite' : 'Tâche à faire' }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>UE</dt>
+              <dd>
+                @if (editing.task.ue; as ue) {
+                  <span class="code-chip">{{ ue.code }}</span> {{ ue.title }}
+                } @else {
+                  Aucune
+                }
+              </dd>
+            </div>
+            @if (editing.task.dueAt; as dueAt) {
+              <div>
+                <dt>Échéance</dt>
+                <dd>{{ formatDateTime(dueAt) }}</dd>
+              </div>
+            }
+            @if (editing.task.remindAt; as remindAt) {
+              <div>
+                <dt>Rappel</dt>
+                <dd>{{ formatDateTime(remindAt) }}</dd>
+              </div>
+            }
+          </dl>
+          <div role="alert">
+            @for (error of formErrors(); track error) {
+              <p class="form-error">{{ error }}</p>
+            }
+          </div>
+        }
+      }
+    }
+
+    <!-- En lecture, les actions sont dans la bande du bas ; en modification, le
+         formulaire porte les siennes. -->
+    @if (editing.kind === 'event' && editing.mode === 'view') {
+      <div modalFooter class="modal-footer">
+        <button
+          type="button"
+          class="button button-ghost button-danger modal-aside"
+          (click)="remove(editing.event)"
+        >
+          <app-icon name="trash" />Supprimer
+        </button>
+        <button type="button" class="button" (click)="open(null)">Fermer</button>
+        <button type="button" class="button button-primary" (click)="edit()">
+          <app-icon name="pencil" />Modifier
+        </button>
+      </div>
+    } @else if (editing.kind === 'task' && editing.mode === 'view') {
+      <div modalFooter class="modal-footer">
+        <button
+          type="button"
+          class="button button-ghost button-danger modal-aside"
+          (click)="removeTask(editing.task)"
+        >
+          <app-icon name="trash" />Supprimer
+        </button>
+        <button type="button" class="button" (click)="toggleTask(editing.task)">
+          <app-icon name="check" />{{
+            editing.task.done ? 'Remettre à faire' : 'Marquer comme faite'
+          }}
+        </button>
+        <button type="button" class="button button-primary" (click)="edit()">
+          <app-icon name="pencil" />Modifier
+        </button>
+      </div>
+    }
+  </app-modal>
+}
+
+@if (isLoading()) {
+  <p>Chargement…</p>
+} @else {
+  <div class="layout">
+    <aside class="side">
+      <app-mini-calendar
+        [date]="anchor()"
+        [items]="items()"
+        [now]="today"
+        [showWeek]="view() !== 'mois'"
+        (picked)="goTo($event)"
+      />
+
+      <fieldset class="filters">
+        <legend>UE affichées</legend>
+        @for (ue of ues(); track ue.id) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="!hiddenUes().has(ue.code)"
+              (change)="toggleUe(ue.code)"
+            />
+            <span [class]="'swatch ' + toneOf(ue.code)"></span>{{ ue.code }}
+          </label>
+        }
+        <label>
+          <input
+            type="checkbox"
+            [checked]="!hiddenUes().has(withoutUe)"
+            (change)="toggleUe(withoutUe)"
+          />
+          <span class="swatch tone-none"></span>Sans UE
+        </label>
+      </fieldset>
+
+      <fieldset class="filters">
+        <legend>Types</legend>
+        @for (kind of kinds; track kind.value) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="!hiddenKinds().has(kind.value)"
+              (change)="toggleKind(kind.value)"
+            />
+            @if (kind.value === 'deadline') {
+              <span class="swatch is-deadline"></span>
+            }
+            {{ kind.label }}
+          </label>
+        }
+      </fieldset>
+    </aside>
+
+    <div class="main">
+      @switch (view()) {
+        @case ('semaine') {
+          <app-week-grid
+            [weekStart]="weekStart()"
+            [items]="items()"
+            [now]="today"
+            (itemPicked)="show($event)"
+            (dayPicked)="open({ kind: 'new', day: $event })"
           />
         }
-
-        @if (day.entries.length === 0) {
-          <p class="nothing">Rien de prévu.</p>
-        } @else {
-          <ul class="entries">
-            @for (entry of day.entries; track $index) {
-              <li class="entry">
-                @if (entry.kind === 'task') {
-                  <span class="time">{{ formatTime(entry.time) }}</span>
-                  <a class="entry-title" routerLink="/taches" [class.is-done]="entry.task.done">
-                    {{ entry.task.title }}
-                  </a>
-                  <span class="badge badge-task">
-                    {{ entry.task.done ? 'Tâche faite' : 'Tâche' }}
-                  </span>
-                  @if (entry.task.ue; as ue) {
-                    <span class="ue">{{ ue.code }}</span>
-                  }
-                } @else if (isEditing(entry.event)) {
-                  <app-event-form
-                    [event]="entry.event"
-                    [ues]="ues()"
-                    [errors]="formErrors()"
-                    [isSaving]="isSaving()"
-                    (saved)="save($event)"
-                    (cancelled)="open(null)"
-                  />
-                } @else {
-                  <span class="time">
-                    {{ formatTime(entry.event.startsAt) }}
-                    @if (entry.event.endsAt !== entry.event.startsAt) {
-                      – {{ formatTime(entry.event.endsAt) }}
+        @case ('mois') {
+          <app-month-grid
+            [month]="month()"
+            [items]="items()"
+            [now]="today"
+            (itemPicked)="show($event)"
+            (dayPicked)="open({ kind: 'new', day: $event })"
+            (dayOpened)="goTo($event, 'semaine')"
+          />
+        }
+        @default {
+          <ol class="days">
+            @for (day of days(); track day.date.getTime()) {
+              <li class="card day" [class.is-today]="isToday(day.date)">
+                <div class="day-header">
+                  <h2>
+                    {{ formatDay(day.date) }}
+                    @if (isToday(day.date)) {
+                      <span class="today">Aujourd’hui</span>
                     }
-                  </span>
-                  <span class="entry-title">{{ entry.event.title }}</span>
-                  <span class="badge" [class.badge-deadline]="entry.event.type === 'deadline'">
-                    {{ entry.event.type === 'deadline' ? 'Échéance' : 'Cours' }}
-                  </span>
-                  @if (entry.event.ue; as ue) {
-                    <span class="ue">{{ ue.code }}</span>
-                  }
-                  <span class="entry-actions">
-                    <button
-                      type="button"
-                      class="button"
-                      [attr.aria-label]="'Modifier ' + entry.event.title"
-                      (click)="open({ kind: 'edit', event: entry.event })"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      type="button"
-                      class="button button-danger"
-                      [attr.aria-label]="'Supprimer ' + entry.event.title"
-                      (click)="remove(entry.event)"
-                    >
-                      Supprimer
-                    </button>
-                  </span>
+                  </h2>
+                  <button
+                    type="button"
+                    class="button button-icon button-ghost"
+                    [attr.aria-label]="'Ajouter un événement le ' + formatDay(day.date)"
+                    (click)="open({ kind: 'new', day: day.date })"
+                  >
+                    <app-icon name="plus" />
+                  </button>
+                </div>
+
+                @if (day.entries.length === 0) {
+                  <p class="nothing">Rien de prévu.</p>
+                } @else {
+                  <ul class="entries">
+                    @for (entry of day.entries; track $index) {
+                      <li class="entry">
+                        @if (entry.kind === 'task') {
+                          <span class="time">{{ formatTime(entry.time) }}</span>
+                          <button
+                            type="button"
+                            class="entry-title"
+                            [class.is-done]="entry.task.done"
+                            (click)="open({ kind: 'task', task: entry.task, mode: 'view' })"
+                          >
+                            {{ entry.task.title }}
+                          </button>
+                          @if (entry.task.ue; as ue) {
+                            <span class="code-chip">{{ ue.code }}</span>
+                          }
+                          <span class="pill">{{ entry.task.done ? 'Tâche faite' : 'Tâche' }}</span>
+                        } @else {
+                          <span class="time">
+                            {{ formatTime(entry.event.startsAt) }}
+                            @if (entry.event.endsAt !== entry.event.startsAt) {
+                              – {{ formatTime(entry.event.endsAt) }}
+                            }
+                          </span>
+                          <button
+                            type="button"
+                            class="entry-title"
+                            (click)="open({ kind: 'event', event: entry.event, mode: 'view' })"
+                          >
+                            {{ entry.event.title }}
+                          </button>
+                          @if (entry.event.ue; as ue) {
+                            <span class="code-chip">{{ ue.code }}</span>
+                          }
+                          <span class="pill">
+                            {{ entry.event.type === 'deadline' ? 'Échéance' : 'Cours' }}
+                          </span>
+                          <span class="entry-actions">
+                            <button
+                              type="button"
+                              class="button button-icon button-ghost"
+                              [attr.aria-label]="'Modifier ' + entry.event.title"
+                              (click)="open({ kind: 'event', event: entry.event, mode: 'edit' })"
+                            >
+                              <app-icon name="pencil" />
+                            </button>
+                            <button
+                              type="button"
+                              class="button button-icon button-ghost"
+                              [attr.aria-label]="'Supprimer ' + entry.event.title"
+                              (click)="remove(entry.event)"
+                            >
+                              <app-icon name="trash" />
+                            </button>
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
                 }
               </li>
             }
-          </ul>
+          </ol>
         }
-      </li>
-    }
-  </ol>
+      }
+    </div>
+  </div>
 }

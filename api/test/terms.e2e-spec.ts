@@ -182,6 +182,9 @@ describe('Termes', () => {
       label: 'Processus',
       expandedForm: null,
       excerpt: 'Programme en cours d’exécution.\npid_t pid = fork();',
+      ueCode: 'UTC502',
+      courseId,
+      courseTitle: 'Processus',
     });
   });
 
@@ -189,6 +192,15 @@ describe('Termes', () => {
     expect(await listLabels('?type=acronym')).toEqual(['PID']);
     expect(await listLabels('?ue=UTC502')).toEqual(['Processus']);
     expect(await listLabels('?ue=NFE108&type=acronym')).toEqual([]);
+  });
+
+  it('filtre par cours d’origine', async () => {
+    const fromCourse = await listLabels(`?course=${courseId}`);
+
+    expect(fromCourse.length).toBeGreaterThan(0);
+    expect(fromCourse).not.toEqual(await listLabels(''));
+    expect(await listLabels('?course=999999')).toEqual([]);
+    expect((await client('get', '/api/terms?course=abc')).status).toBe(400);
   });
 
   it('refuse un filtre invalide ou une UE inconnue', async () => {

@@ -7,6 +7,8 @@ export type EventType = 'course' | 'deadline';
 export interface AgendaEvent {
   id: number;
   title: string;
+  // Vide pour un événement sans description.
+  description: string;
   type: EventType;
   ue: { code: string; title: string } | null;
   // Dates au format ISO 8601 ; la fin égale le début pour un événement ponctuel.
@@ -21,6 +23,7 @@ export interface Occurrence {
 
 export interface EventDetails {
   title: string;
+  description: string;
   type: EventType;
   ueCode: string | null;
 }

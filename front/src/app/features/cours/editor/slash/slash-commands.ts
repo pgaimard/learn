@@ -1,11 +1,17 @@
 import { Editor } from '@tiptap/core';
-import { CALLOUT_KINDS, CALLOUT_LABELS } from '../../content/callout';
+import { IconName } from '../../../../core/ui/icon';
+import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../../content/callout';
 
 type Chain = ReturnType<Editor['chain']>;
 
 // Bloc proposé par le menu « / ».
+export type SlashGroup = 'Titres' | 'Encadrés' | 'Blocs';
+
 export interface SlashCommand {
   label: string;
+  // Rubrique sous laquelle le menu le range.
+  group: SlashGroup;
+  icon: IconName;
   // Autres mots par lesquels on peut le trouver.
   keywords: string[];
   // Transforme le paragraphe courant ou insère le bloc ; absent pour l'image, qui passe
@@ -13,57 +19,95 @@ export interface SlashCommand {
   apply?: (chain: Chain) => Chain;
 }
 
+export const CALLOUT_ICONS: Record<CalloutKind, IconName> = {
+  retenir: 'check',
+  change: 'change',
+  attention: 'warning',
+};
+
 export const IMAGE_COMMAND: SlashCommand = {
   label: 'Image',
+  group: 'Blocs',
+  icon: 'image',
   keywords: ['figure', 'photo', 'capture', 'schema'],
 };
 
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
     label: 'Section',
+    group: 'Titres',
+    icon: 'heading',
     keywords: ['titre', 'h2', 'chapitre'],
     apply: (chain) => chain.setHeading({ level: 2 }),
   },
   {
     label: 'Sous-section',
+    group: 'Titres',
+    icon: 'heading',
     keywords: ['titre', 'h3'],
     apply: (chain) => chain.setHeading({ level: 3 }),
   },
   {
     label: 'Sous-sous-section',
+    group: 'Titres',
+    icon: 'heading',
     keywords: ['titre', 'h4'],
     apply: (chain) => chain.setHeading({ level: 4 }),
   },
-  { label: 'Point', keywords: ['titre', 'h5'], apply: (chain) => chain.setHeading({ level: 5 }) },
+  {
+    label: 'Point',
+    group: 'Titres',
+    icon: 'heading',
+    keywords: ['titre', 'h5'],
+    apply: (chain) => chain.setHeading({ level: 5 }),
+  },
   // Les encadrés portent leur nom, comme dans la barre d'outils : « /retenir », « /attention ».
   ...CALLOUT_KINDS.map((kind): SlashCommand => ({
     label: CALLOUT_LABELS[kind],
+    group: 'Encadrés',
+    icon: CALLOUT_ICONS[kind],
     keywords: ['encadre', 'bloc', kind],
     apply: (chain) => chain.wrapIn('callout', { kind }),
   })),
   {
     label: 'Liste à puces',
+    group: 'Blocs',
+    icon: 'list-bullets',
     keywords: ['puce', 'liste'],
     apply: (chain) => chain.toggleBulletList(),
   },
   {
     label: 'Liste numérotée',
+    group: 'Blocs',
+    icon: 'list-numbers',
     keywords: ['numero', 'liste', 'ordonnee'],
     apply: (chain) => chain.toggleOrderedList(),
   },
-  { label: 'Citation', keywords: ['quote'], apply: (chain) => chain.setBlockquote() },
+  {
+    label: 'Citation',
+    group: 'Blocs',
+    icon: 'quote',
+    keywords: ['quote'],
+    apply: (chain) => chain.setBlockquote(),
+  },
   {
     label: 'Bloc de code',
+    group: 'Blocs',
+    icon: 'code-block',
     keywords: ['code', 'programme'],
     apply: (chain) => chain.setCodeBlock(),
   },
   {
     label: 'Tableau',
+    group: 'Blocs',
+    icon: 'table',
     keywords: ['table', 'grille'],
     apply: (chain) => chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
   },
   {
     label: 'Séparateur',
+    group: 'Blocs',
+    icon: 'rule',
     keywords: ['ligne', 'trait', 'hr'],
     apply: (chain) => chain.setHorizontalRule(),
   },

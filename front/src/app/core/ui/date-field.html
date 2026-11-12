@@ -1,0 +1,157 @@
+<button
+  #button
+  type="button"
+  class="trigger"
+  aria-haspopup="dialog"
+  [id]="fieldId()"
+  [class.is-open]="isOpen()"
+  [class.is-invalid]="invalid()"
+  [class.has-clear]="canClear()"
+  [disabled]="isDisabled()"
+  [attr.data-value]="current()"
+  [attr.aria-label]="label()"
+  [attr.aria-describedby]="describedByIds()"
+  [attr.aria-expanded]="isOpen()"
+  (click)="toggle()"
+>
+  <app-icon name="calendar" [size]="14" />
+  <span class="value" [class.is-empty]="!display()" [id]="valueId">{{
+    display() || placeholder()
+  }}</span>
+  <app-icon name="chevron-down" [size]="15" />
+</button>
+@if (canClear()) {
+  <button type="button" class="clear" aria-label="Effacer la date" (click)="clear()">
+    <app-icon name="close" [size]="10" />
+  </button>
+}
+
+@if (isOpen()) {
+  <div
+    #panel
+    class="panel"
+    role="dialog"
+    [class.aligns-end]="alignsEnd()"
+    [class.drops-up]="dropsUp()"
+    [attr.aria-label]="panelLabel()"
+  >
+    <div class="body">
+      @if (withTime()) {
+        <div class="shortcuts">
+          @for (shortcut of shortcuts(); track shortcut.label) {
+            <button type="button" class="row" (click)="pickDay(shortcut.date)">
+              {{ shortcut.label }}
+              <span class="hint">{{ shortcut.hint }}</span>
+            </button>
+          }
+          @if (clearable()) {
+            <button type="button" class="row is-quiet" (click)="clear()">Sans date</button>
+          }
+        </div>
+      }
+      <div class="calendar">
+        <div class="month">
+          <button
+            type="button"
+            class="button button-icon button-ghost"
+            aria-label="Mois précédent"
+            (click)="shiftMonth(-1)"
+          >
+            <app-icon name="chevron-left" />
+          </button>
+          <span aria-live="polite">{{ monthTitle() }}</span>
+          <button
+            type="button"
+            class="button button-icon button-ghost"
+            aria-label="Mois suivant"
+            (click)="shiftMonth(1)"
+          >
+            <app-icon name="chevron-right" />
+          </button>
+        </div>
+        <div class="days">
+          @for (weekday of weekdays; track $index) {
+            <span aria-hidden="true">{{ weekday }}</span>
+          }
+          @for (day of days(); track day.date.getTime()) {
+            <button
+              type="button"
+              class="day"
+              [class.is-outside]="day.isOutside"
+              [class.is-today]="day.isToday"
+              [class.is-selected]="day.isSelected"
+              [tabindex]="day.isFocusable ? 0 : -1"
+              [attr.aria-label]="day.label"
+              [attr.aria-pressed]="day.isSelected"
+              [attr.aria-current]="day.isToday ? 'date' : null"
+              (click)="pickDay(day.date)"
+              (keydown)="moveDay($event)"
+            >
+              {{ day.date.getDate() }}
+            </button>
+          }
+        </div>
+      </div>
+      @if (withTime()) {
+        <div class="times">
+          <div class="time-list" role="group" aria-label="Heure">
+            <h4>Heure</h4>
+            @for (hour of hours; track hour) {
+              <button
+                type="button"
+                class="row mono"
+                [class.is-selected]="hour === selected()?.getHours()"
+                [attr.aria-pressed]="hour === selected()?.getHours()"
+                (click)="pickHour(hour)"
+              >
+                {{ pad(hour) }}
+              </button>
+            }
+          </div>
+          <div class="time-list" role="group" aria-label="Minutes">
+            <h4>Min</h4>
+            @for (minute of minutes(); track minute) {
+              <button
+                type="button"
+                class="row mono"
+                [class.is-selected]="selected() !== null && minute === selected()?.getMinutes()"
+                [attr.aria-pressed]="selected() !== null && minute === selected()?.getMinutes()"
+                (click)="pickMinute(minute)"
+              >
+                {{ pad(minute) }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    <div class="footer">
+      <input
+        #typed
+        type="text"
+        class="typed"
+        autocomplete="off"
+        aria-label="Saisie au clavier"
+        [placeholder]="typedHint()"
+        [value]="typedText()"
+        [attr.aria-invalid]="isTypedInvalid()"
+        (change)="type(typed)"
+        (keydown.enter)="$event.preventDefault(); type(typed)"
+      />
+      <span class="footer-hint">ou taper la date</span>
+      @if (!withTime()) {
+        <button type="button" class="button button-ghost" (click)="pickDay(shortcuts()[0].date)">
+          Aujourd’hui
+        </button>
+      }
+      @if (clearable()) {
+        <button type="button" class="button button-ghost" (click)="clear()">Effacer</button>
+      }
+      @if (withTime()) {
+        <button type="button" class="button button-primary" (click)="closeAndFocus()">
+          Valider
+        </button>
+      }
+    </div>
+  </div>
+}

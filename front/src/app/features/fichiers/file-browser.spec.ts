@@ -26,6 +26,7 @@ describe('FileBrowser', () => {
     listFiles: vi.fn<FileService['listFiles']>(),
     createFolder: vi.fn<FileService['createFolder']>(),
     renameFolder: vi.fn<FileService['renameFolder']>(),
+    moveFolder: vi.fn<FileService['moveFolder']>(),
     removeFolder: vi.fn<FileService['removeFolder']>(),
     upload: vi.fn<FileService['upload']>(),
     updateFile: vi.fn<FileService['updateFile']>(),
@@ -280,5 +281,78 @@ describe('FileBrowser', () => {
 
     expect(drop.defaultPrevented).toBe(true);
     expect(service.upload).toHaveBeenCalledWith('UTC502', null, file);
+  });
+
+  describe('glisser-déposer', () => {
+    // Événement de glisser tel que le navigateur l'envoie, avec de quoi porter des données.
+    function drag(target: Element | null, type: string): Event {
+      const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), {
+        dataTransfer: { setData: vi.fn(), effectAllowed: 'none', types: [] },
+      });
+      target?.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    }
+
+    const fileRow = (): Element | null => element().querySelector('li.entry:not(.is-folder)');
+    const folderRow = (): Element | null => element().querySelector('li.entry.is-folder');
+    const pathLinks = (): Element[] => Array.from(element().querySelectorAll('.path a'));
+
+    it('déplace un fichier glissé sur un dossier', () => {
+      setup();
+      service.updateFile.mockReturnValue(of({ ...NOTES, folderId: 1 }));
+
+      drag(fileRow(), 'dragstart');
+      expect(fileRow()?.classList).toContain('is-dragged');
+      const over = drag(folderRow(), 'dragover');
+      expect(over.defaultPrevented).toBe(true);
+      expect(folderRow()?.classList).toContain('is-drop-target');
+
+      drag(folderRow(), 'drop');
+
+      expect(service.updateFile).toHaveBeenCalledWith(7, { folderId: 1 });
+      expect(text()).toContain('Déplacé vers « TD »');
+      expect(service.upload).not.toHaveBeenCalled();
+    });
+
+    it('remonte un dossier glissé sur le chemin', () => {
+      setup(1, []);
+      service.moveFolder.mockReturnValue(of({ id: 2, parentId: null, name: 'Corrigés' }));
+
+      drag(folderRow(), 'dragstart');
+      drag(pathLinks()[0], 'dragover');
+      drag(pathLinks()[0], 'drop');
+
+      expect(service.moveFolder).toHaveBeenCalledWith(2, null);
+    });
+
+    it('refuse un dépôt sans effet : là où l’élément se trouve déjà, ou un dossier sur lui-même', () => {
+      setup();
+
+      drag(fileRow(), 'dragstart');
+      expect(drag(pathLinks()[0], 'dragover').defaultPrevented).toBe(false);
+      drag(pathLinks()[0], 'drop');
+      drag(fileRow(), 'dragend');
+
+      drag(folderRow(), 'dragstart');
+      expect(drag(folderRow(), 'dragover').defaultPrevented).toBe(false);
+      drag(folderRow(), 'drop');
+
+      expect(service.updateFile).not.toHaveBeenCalled();
+      expect(service.moveFolder).not.toHaveBeenCalled();
+    });
+
+    it('affiche le refus de l’API', () => {
+      setup();
+      service.updateFile.mockReturnValue(
+        throwError(() => new ApiError(400, ['Ce dossier n’existe pas dans cette UE.'])),
+      );
+
+      drag(fileRow(), 'dragstart');
+      drag(folderRow(), 'dragover');
+      drag(folderRow(), 'drop');
+
+      expect(text()).toContain('Ce dossier n’existe pas dans cette UE.');
+    });
   });
 });
