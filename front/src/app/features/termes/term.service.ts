@@ -37,6 +37,8 @@ export interface TermInput {
 export interface TermFilters {
   type?: TermType;
   ue?: string;
+  // Identifiant du cours dont les termes sont issus.
+  course?: number;
 }
 
 @Injectable({ providedIn: 'root' })

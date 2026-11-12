@@ -203,6 +203,39 @@ describe('CourseEditPage', () => {
     expect(await fixture.componentInstance.canLeave()).toBe(false);
   });
 
+  it('affiche le plan du chapitre et le tient à jour pendant la saisie', async () => {
+    service.get.mockReturnValue(
+      of({
+        ...COURSE,
+        content: {
+          type: 'doc',
+          content: [
+            {
+              type: 'heading',
+              attrs: { level: 2, pinned: false },
+              content: [{ type: 'text', text: '1. Notion' }],
+            },
+            { type: 'paragraph', attrs: { pinned: false }, content: [{ type: 'text', text: 'x' }] },
+          ],
+        },
+      }),
+    );
+    await setup();
+    const plan = (): string[] =>
+      Array.from(element().querySelectorAll('.plan button')).map((entry) =>
+        (entry.textContent ?? '').trim(),
+      );
+
+    expect(plan()).toEqual(['1. Notion']);
+
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    content.editor()?.chain().selectAll().setHeading({ level: 3 }).run();
+    fixture.detectChanges();
+
+    expect(plan()).toEqual(['1. Notion', 'x']);
+  });
+
   it('pose un lien avec l’adresse saisie dans la modale', async () => {
     await setup();
     dialog.prompt.mockResolvedValue(' https://www.cnam.fr ');

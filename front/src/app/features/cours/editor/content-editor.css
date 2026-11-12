@@ -39,6 +39,29 @@ app-editor-toolbar {
   background: var(--color-surface);
 }
 
+/* Plan du chapitre à gauche de la feuille, sur grand écran seulement. */
+.plan {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .body.has-outline {
+    display: grid;
+    grid-template-columns: 13.75rem minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .plan {
+    position: sticky;
+    /* Sous l'en-tête et la barre d'outils, restés affichés. */
+    top: calc(var(--sticky-top) + 4.5rem);
+    display: block;
+    max-height: calc(100vh - var(--sticky-top) - 5.5rem);
+    overflow-y: auto;
+  }
+}
+
 @media (max-width: 40rem) {
   .sheet {
     padding: 1.25rem;

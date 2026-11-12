@@ -66,6 +66,11 @@ export class TermsService {
       const ue = await this.findUe(filters.ue, NotFoundException);
       query.andWhere('term.ue_id = :ueId', { ueId: ue.id });
     }
+    if (filters.course !== undefined) {
+      query.andWhere('term.course_id = :courseId', {
+        courseId: filters.course,
+      });
+    }
     return query.getRawMany<TermSummary>();
   }
 

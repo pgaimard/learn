@@ -191,6 +191,15 @@ describe('Termes', () => {
     expect(await listLabels('?ue=NFE108&type=acronym')).toEqual([]);
   });
 
+  it('filtre par cours d’origine', async () => {
+    const fromCourse = await listLabels(`?course=${courseId}`);
+
+    expect(fromCourse.length).toBeGreaterThan(0);
+    expect(fromCourse).not.toEqual(await listLabels(''));
+    expect(await listLabels('?course=999999')).toEqual([]);
+    expect((await client('get', '/api/terms?course=abc')).status).toBe(400);
+  });
+
   it('refuse un filtre invalide ou une UE inconnue', async () => {
     expect((await client('get', '/api/terms?type=note')).status).toBe(400);
     expect((await client('get', '/api/terms?tri=date')).status).toBe(400);

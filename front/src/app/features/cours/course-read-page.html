@@ -1,6 +1,6 @@
 <nav class="breadcrumb" aria-label="Fil d’Ariane">
   <a routerLink="/">Mes UE</a>
-  <span aria-hidden="true">›</span>
+  <span aria-hidden="true">/</span>
   <a [routerLink]="['/ue', code()]">{{ code() }}</a>
 </nav>
 
@@ -11,51 +11,74 @@
 </div>
 
 @if (course(); as course) {
+  <div class="page-header">
+    <div class="heading">
+      <h1>{{ course.title }}</h1>
+      <p class="meta">
+        <span class="code-chip">{{ code() }}</span>
+        {{ sectionCount() }} {{ sectionCount() > 1 ? 'sections' : 'section' }} · modifié le
+        {{ course.updatedAt | date: 'dd/MM/yyyy' }}
+      </p>
+    </div>
+    <div class="header-actions">
+      @if (isSheet()) {
+        <a class="button" [routerLink]="[]">Cours complet</a>
+      } @else {
+        <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">Fiche de révision</a>
+      }
+      <a
+        class="button button-primary"
+        [routerLink]="['/ue', code(), 'cours', course.id, 'edition']"
+      >
+        <app-icon name="pencil" />Modifier
+      </a>
+    </div>
+  </div>
+
   <div class="reading">
-    @if (outline().length > 0) {
-      <nav class="outline" aria-label="Sommaire">
-        <details open>
-          <summary>Sommaire</summary>
-          <ol>
-            @for (entry of outline(); track entry.index) {
-              <li [class]="'level-' + entry.level">
-                <button type="button" (click)="goTo(entry.index)">{{ entry.text }}</button>
-              </li>
-            }
-          </ol>
-        </details>
-      </nav>
-    }
+    <aside class="side outline">
+      @if (outline().length > 0) {
+        <app-course-outline
+          [entries]="outline()"
+          [activeIndex]="activeHeading()"
+          (picked)="goTo($event)"
+        />
+      }
+    </aside>
 
     <article class="article">
-      <div class="page-header">
-        <h1>{{ course.title }}</h1>
-        <div class="header-actions">
-          @if (isSheet()) {
-            <a class="button" [routerLink]="[]">Cours complet</a>
-          } @else {
-            <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">
-              Fiche de révision
-            </a>
-          }
-          <a class="button" [routerLink]="['/ue', code(), 'cours', course.id, 'edition']">
-            Modifier
-          </a>
-        </div>
-      </div>
       @if (isSheet()) {
         <p class="sheet-note" role="status">
           Fiche de révision : les encadrés « À retenir » et les blocs épinglés.
         </p>
       }
       @if (isSheetEmpty()) {
-        <p class="sheet-empty">
+        <p class="empty sheet-empty">
           La fiche est vide. Ajoutez un encadré « À retenir », ou épinglez un bloc depuis son menu
           en modifiant le cours.
         </p>
       }
       <app-course-content [content]="course.content" [sheet]="isSheet()" />
     </article>
+
+    <aside class="side terms" aria-labelledby="course-terms-title">
+      @if (terms().length > 0) {
+        <h2 id="course-terms-title">Termes du chapitre</h2>
+        <ul>
+          @for (term of shownTerms(); track term.id) {
+            <li>
+              <a [routerLink]="[termPath(term), term.id]">{{ term.label }}</a>
+              <span>{{ term.expandedForm || term.excerpt }}</span>
+            </li>
+          }
+        </ul>
+        @if (terms().length > shownTerms().length) {
+          <a class="all-terms" [routerLink]="['/ue', code()]" [queryParams]="{ onglet: 'termes' }">
+            Voir les {{ terms().length }} termes
+          </a>
+        }
+      }
+    </aside>
   </div>
 } @else if (errors().length === 0) {
   <p>Chargement…</p>
