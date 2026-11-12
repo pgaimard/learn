@@ -1,6 +1,8 @@
 <!-- (close) : fermeture par Échap, traitée comme une annulation. -->
 <dialog
   #dialog
+  appBackdropClick
+  (backdropClick)="dismiss()"
   class="modal"
   aria-labelledby="dialog-title"
   [attr.aria-describedby]="request()?.kind === 'confirm' ? 'dialog-message' : null"

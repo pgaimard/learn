@@ -108,6 +108,35 @@ describe('DialogHost', () => {
     expect(await answer).toBe(false);
   });
 
+  // Clic enfoncé et relâché sur le fond, en dehors du cadre de la fenêtre.
+  function clickOutside(): void {
+    const dialog = element().querySelector('dialog') as HTMLDialogElement;
+    dialog.getBoundingClientRect = () => new DOMRect(100, 100, 200, 200);
+    for (const type of ['mousedown', 'click']) {
+      dialog.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: 20, clientY: 20 }));
+    }
+    fixture.detectChanges();
+  }
+
+  it('abandonne une saisie par un clic en dehors', async () => {
+    const answer = service.prompt({ title: 'Lien', label: 'Adresse', initialValue: '' });
+    fixture.detectChanges();
+
+    clickOutside();
+
+    expect(await answer).toBeNull();
+  });
+
+  it('garde une confirmation ouverte après un clic en dehors : la réponse est obligatoire', async () => {
+    const answer = ask();
+
+    clickOutside();
+
+    expect(element().querySelector('dialog')?.hasAttribute('open')).toBe(true);
+    buttons()[1].click();
+    expect(await answer).toBe(true);
+  });
+
   it('traite la fermeture par Échap comme une annulation', async () => {
     const answer = ask();
 

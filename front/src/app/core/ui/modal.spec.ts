@@ -55,4 +55,20 @@ describe('Modal', () => {
     expect(host.querySelector('dialog')).toBeNull();
     host.remove();
   });
+
+  it('se ferme par un clic en dehors', async () => {
+    const fixture = TestBed.createComponent(Host);
+    const host = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const dialog = host.querySelector('dialog') as HTMLDialogElement;
+    dialog.getBoundingClientRect = () => new DOMRect(100, 100, 200, 200);
+
+    for (const type of ['mousedown', 'click']) {
+      dialog.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: 20, clientY: 20 }));
+    }
+    fixture.detectChanges();
+
+    expect(host.querySelector('dialog')).toBeNull();
+  });
 });
