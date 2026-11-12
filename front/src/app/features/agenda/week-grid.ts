@@ -37,7 +37,9 @@ export class WeekGrid {
     { length: DAY_END_HOUR - DAY_START_HOUR },
     (_, index) => `${String(DAY_START_HOUR + index).padStart(2, '0')}:00`,
   );
-  protected readonly gridHeight = (DAY_END_HOUR - DAY_START_HOUR) * HOUR_PX;
+  // Les positions sont calculées pour une heure de 40 px ; la feuille de style les
+  // rapporte à la hauteur réelle d'une heure, qui suit celle de la fenêtre.
+  protected readonly hourPx = HOUR_PX;
   protected readonly days = computed(() =>
     weekDays(this.weekStart()).map((date) => {
       const isToday = isSameDay(date, this.now());

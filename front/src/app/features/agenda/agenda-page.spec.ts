@@ -324,9 +324,9 @@ describe('AgendaPage', () => {
       expect(text(course?.querySelector('.ue') ?? null)).toBe('UTC502');
       expect(course?.querySelector('.description')?.textContent).toBe('Salle 31.\nApporter le TD.');
       expect(course?.querySelector<HTMLElement>('.description')?.style.webkitLineClamp).toBe('4');
-      // 18 h, dix heures après l'ouverture de la grille à 8 h, quarante pixels par heure.
-      expect(course?.style.top).toBe('400px');
-      expect(course?.style.height).toBe('120px');
+      // 18 h, dix heures après l'ouverture de la grille à 8 h, pour trois heures.
+      expect(course?.style.getPropertyValue('--top')).toBe('10');
+      expect(course?.style.getPropertyValue('--height')).toBe('3');
       expect(text(columns[1].querySelector('.block.is-task'))).toBe('Rendre le TP');
       expect(columns[4].querySelector('.block.is-deadline')).not.toBeNull();
     });

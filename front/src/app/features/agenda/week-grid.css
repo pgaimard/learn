@@ -1,4 +1,7 @@
 :host {
+  /* Hauteur d'une heure. */
+  --hour: 2.5rem;
+
   display: block;
   /* Sur un écran étroit, la grille défile dans son cadre. */
   overflow-x: auto;
@@ -55,13 +58,19 @@
   color: var(--color-on-accent);
 }
 
+.body {
+  height: calc(var(--hours) * var(--hour));
+}
+
 .hours {
   display: flex;
   flex-direction: column;
 }
 
 .hours span {
-  height: 2.5rem;
+  /* Marge comprise : chaque heure a exactement la hauteur d'une ligne de la grille. */
+  box-sizing: border-box;
+  height: var(--hour);
   padding: 2px 0.375rem 0 0;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
@@ -74,7 +83,7 @@
   position: relative;
   border-left: 1px solid var(--color-border-soft);
   background-image: linear-gradient(var(--color-border-soft) 1px, transparent 1px);
-  background-size: 100% 2.5rem;
+  background-size: 100% var(--hour);
 }
 
 .day.is-today {
@@ -83,6 +92,8 @@
 
 .block {
   position: absolute;
+  top: calc(var(--top) * var(--hour));
+  height: calc(var(--height) * var(--hour));
   /* En colonne : le contenu part du haut de la carte. */
   display: flex;
   flex-direction: column;
@@ -176,6 +187,7 @@
 
 .now {
   position: absolute;
+  top: calc(var(--top) * var(--hour));
   right: 0;
   left: 0;
   height: 2px;
@@ -192,4 +204,13 @@
   border-radius: 50%;
   background: var(--color-danger);
   content: '';
+}
+
+/* Grand écran : la journée, de 8 h à 22 h, tient dans la hauteur de la fenêtre. Sont
+   retranchés l'en-tête de l'application, la barre de l'agenda, la ligne des jours et une
+   marge sous la grille. */
+@media (min-width: 62.5rem) {
+  :host {
+    --hour: max(2.5rem, calc((100dvh - 11.5rem) / 14));
+  }
 }
