@@ -15,7 +15,7 @@
   }
 </div>
 
-<div class="body" [style.height.px]="gridHeight">
+<div class="body" [style.--hours]="hours.length">
   <div class="hours" aria-hidden="true">
     @for (hour of hours; track hour) {
       <span>{{ hour }}</span>
@@ -30,8 +30,8 @@
           [class.is-deadline]="block.item.kind === 'deadline'"
           [class.is-task]="block.item.kind === 'task'"
           [class.is-done]="block.item.task?.done"
-          [style.top.px]="block.top"
-          [style.height.px]="block.height"
+          [style.--top]="block.top / hourPx"
+          [style.--height]="block.height / hourPx"
           [style.left.%]="(100 * block.column) / block.columns"
           [style.width.%]="100 / block.columns"
           [attr.aria-label]="
@@ -67,7 +67,7 @@
         </button>
       }
       @if (day.now !== null) {
-        <div class="now" aria-hidden="true" [style.top.px]="day.now"></div>
+        <div class="now" aria-hidden="true" [style.--top]="day.now / hourPx"></div>
       }
     </div>
   }
