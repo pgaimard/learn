@@ -93,6 +93,30 @@
 /* Trois colonnes sur grand écran : sommaire, cours, termes. Les colonnes latérales
    restent affichées pendant la lecture. */
 @media (min-width: 64rem) {
+  /* Le titre et ses boutons (« Fiche de révision », « Modifier ») restent affichés sous
+     l'en-tête de l'application pendant la lecture. */
+  :host {
+    --page-bar: 4.5rem;
+  }
+
+  .page-header {
+    position: sticky;
+    top: var(--sticky-top);
+    z-index: 1;
+    box-sizing: border-box;
+    min-height: var(--page-bar);
+    margin: 0 -1.5rem 0.5rem;
+    padding: 0.625rem 1.5rem;
+    background: var(--color-background);
+  }
+
+  /* Un titre long tient sur une ligne, pour que la barre garde sa hauteur. */
+  .heading h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .reading {
     grid-template-columns: 13.75rem minmax(0, var(--reading-width)) 12.5rem;
     align-items: start;
@@ -100,8 +124,8 @@
 
   .side {
     position: sticky;
-    top: calc(var(--sticky-top) + 1rem);
-    max-height: calc(100vh - var(--sticky-top) - 2rem);
+    top: calc(var(--sticky-top) + var(--page-bar) + 0.5rem);
+    max-height: calc(100vh - var(--sticky-top) - var(--page-bar) - 1.5rem);
     overflow-y: auto;
   }
 }

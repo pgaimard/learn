@@ -210,4 +210,21 @@ describe('CourseReadPage', () => {
 
     expect(element().querySelector('.outline .is-current')?.textContent.trim()).toBe('3. Annexe');
   });
+
+  it('garde marqué le titre choisi dans le sommaire, jusqu’à ce que l’utilisateur fasse défiler', async () => {
+    await setup(COURSE);
+    setPageHeight(5000);
+    const entries = Array.from(element().querySelectorAll<HTMLButtonElement>('.outline button'));
+    const current = (): string | undefined =>
+      element().querySelector('.outline .is-current')?.textContent.trim();
+
+    entries[2].click();
+    // Le défilement vers le titre passe par d'autres sections sans changer le marquage.
+    scrollWithHeadingsAt([40, 300, 500, 900]);
+    expect(current()).toBe('2.1 fork');
+
+    window.dispatchEvent(new Event('wheel'));
+    scrollWithHeadingsAt([40, 300, 500, 900]);
+    expect(current()).toBe('1. Notion');
+  });
 });
