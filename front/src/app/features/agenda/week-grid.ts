@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import {
   AgendaItem,
+  DayBlock,
   DAY_END_HOUR,
   DAY_START_HOUR,
   HOUR_PX,
@@ -9,6 +10,9 @@ import {
 } from './calendar';
 import { formatDay, isSameDay, weekDays } from './week';
 
+// Hauteur du titre, de l'heure et des marges d'une carte, puis d'une ligne de texte.
+const HEADER_PX = 40;
+const LINE_PX = 15;
 const WEEKDAY = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
 
 // Vue Semaine : sept colonnes sur une grille horaire, chaque élément à son heure.
@@ -47,4 +51,12 @@ export class WeekGrid {
       };
     }),
   );
+
+  // Nombre de lignes de description qui tiennent sous le titre et l'heure d'une carte ;
+  // le reste est coupé par des points de suspension.
+  protected descriptionLines(block: DayBlock): number {
+    // Une ligne est gardée pour la pastille de l'UE, qui peut passer sous l'heure.
+    const header = HEADER_PX + (block.item.ueCode === null ? 0 : LINE_PX);
+    return Math.max(0, Math.floor((block.height - header) / LINE_PX));
+  }
 }

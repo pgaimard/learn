@@ -17,6 +17,8 @@ export interface AgendaItem {
   key: string;
   kind: 'course' | 'deadline' | 'task';
   title: string;
+  // Description d'un événement ; vide pour une tâche ou un événement sans description.
+  description: string;
   start: Date;
   end: Date;
   ueCode: string | null;
@@ -59,6 +61,7 @@ export function toAgendaItems(
       key: `event-${event.id}`,
       kind: isDeadline ? 'deadline' : 'course',
       title: event.title,
+      description: event.description,
       start: new Date(event.startsAt),
       end: new Date(event.endsAt),
       ueCode: event.ue?.code ?? null,
@@ -79,6 +82,7 @@ export function toAgendaItems(
             key: `task-${task.id}`,
             kind: 'task',
             title: task.title,
+            description: '',
             start: new Date(task.dueAt),
             end: new Date(task.dueAt),
             ueCode: task.ue?.code ?? null,

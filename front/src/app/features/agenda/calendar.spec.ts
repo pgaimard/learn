@@ -14,6 +14,7 @@ function item(kind: AgendaItem['kind'], start: Date, end: Date = start): AgendaI
     key: `${kind}-${start.getTime()}`,
     kind,
     title: kind,
+    description: '',
     start,
     end,
     ueCode: null,

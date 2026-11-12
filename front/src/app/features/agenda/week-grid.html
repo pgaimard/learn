@@ -42,9 +42,27 @@
           "
           (click)="itemPicked.emit(block.item)"
         >
-          <b>{{ block.item.title }}</b>
-          @if (block.item.kind !== 'task') {
-            <span>{{ block.item.time }}</span>
+          <!-- La pastille de l'UE suit l'heure ; une tâche n'a pas de ligne d'heure. -->
+          @if (block.item.kind === 'task') {
+            <span class="row">
+              <b>{{ block.item.title }}</b>
+              @if (block.item.ueCode; as ueCode) {
+                <span class="ue">{{ ueCode }}</span>
+              }
+            </span>
+          } @else {
+            <b>{{ block.item.title }}</b>
+            <span class="row">
+              <span class="time">{{ block.item.time }}</span>
+              @if (block.item.ueCode; as ueCode) {
+                <span class="ue">{{ ueCode }}</span>
+              }
+            </span>
+          }
+          @if (block.item.description && descriptionLines(block); as lines) {
+            <span class="description" [style.-webkit-line-clamp]="lines">{{
+              block.item.description
+            }}</span>
           }
         </button>
       }

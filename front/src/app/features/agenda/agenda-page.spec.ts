@@ -305,7 +305,11 @@ describe('AgendaPage', () => {
       const columns = Array.from(element().querySelectorAll('app-week-grid .day'));
       expect(columns).toHaveLength(7);
       const course = columns[1].querySelector<HTMLElement>('button.block:not(.is-task)');
-      expect(text(course)).toBe('Cours systèmes18:00 – 21:00');
+      expect(text(course?.querySelector('b') ?? null)).toBe('Cours systèmes');
+      // La pastille de l'UE, puis la description sous le titre et l'heure.
+      expect(text(course?.querySelector('.ue') ?? null)).toBe('UTC502');
+      expect(course?.querySelector('.description')?.textContent).toBe('Salle 31.\nApporter le TD.');
+      expect(course?.querySelector<HTMLElement>('.description')?.style.webkitLineClamp).toBe('4');
       // 18 h, dix heures après l'ouverture de la grille à 8 h, quarante pixels par heure.
       expect(course?.style.top).toBe('400px');
       expect(course?.style.height).toBe('120px');
