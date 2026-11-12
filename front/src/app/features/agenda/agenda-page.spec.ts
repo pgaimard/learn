@@ -13,6 +13,7 @@ const UES = [{ id: 1, code: 'UTC502', title: 'Systèmes', description: '', posit
 const COURSE: AgendaEvent = {
   id: 4,
   title: 'Cours systèmes',
+  description: 'Salle 31.\nApporter le TD.',
   type: 'course',
   ue: { code: 'UTC502', title: 'Systèmes' },
   startsAt: new Date(2026, 10, 17, 18, 0).toISOString(),
@@ -21,6 +22,7 @@ const COURSE: AgendaEvent = {
 const DEADLINE: AgendaEvent = {
   id: 5,
   title: 'Rendu du projet',
+  description: '',
   type: 'deadline',
   ue: null,
   startsAt: new Date(2026, 10, 20, 23, 0).toISOString(),
@@ -180,6 +182,7 @@ describe('AgendaPage', () => {
     );
 
     fill('event-title', ' TD systèmes ');
+    fill('event-description', ' Chapitre 3 ');
     pickOption(fixture, '#event-ue', 'UTC502');
     fill('event-start', '2026-11-18T18:00');
     fill('event-end', '2026-11-18T20:00');
@@ -187,7 +190,12 @@ describe('AgendaPage', () => {
     submit();
 
     const [details, occurrences] = eventService.create.mock.calls[0];
-    expect(details).toEqual({ title: 'TD systèmes', type: 'course', ueCode: 'UTC502' });
+    expect(details).toEqual({
+      title: 'TD systèmes',
+      description: 'Chapitre 3',
+      type: 'course',
+      ueCode: 'UTC502',
+    });
     expect(occurrences).toEqual(
       [18, 25, 2].map((day, index) => ({
         startsAt: new Date(2026, index < 2 ? 10 : 11, day, 18, 0).toISOString(),
@@ -211,7 +219,7 @@ describe('AgendaPage', () => {
 
     const moment = new Date(2026, 10, 16, 14, 0).toISOString();
     expect(eventService.create).toHaveBeenCalledWith(
-      { title: 'Examen blanc', type: 'deadline', ueCode: null },
+      { title: 'Examen blanc', description: '', type: 'deadline', ueCode: null },
       [{ startsAt: moment, endsAt: moment }],
     );
   });
@@ -239,6 +247,7 @@ describe('AgendaPage', () => {
 
     expect(eventService.update).toHaveBeenCalledWith(4, {
       title: 'Cours déplacé',
+      description: 'Salle 31.\nApporter le TD.',
       type: 'course',
       ueCode: 'UTC502',
       startsAt: COURSE.startsAt,
@@ -323,6 +332,9 @@ describe('AgendaPage', () => {
 
       const modal = (): Element | null => element().querySelector('dialog');
       expect(text(modal()?.querySelector('h2') ?? null)).toBe('Cours systèmes');
+      expect(modal()?.querySelector('.description')?.textContent).toBe(
+        'Salle 31.\nApporter le TD.',
+      );
       expect(text(modal()?.querySelector('.detail') ?? null)).toContain('Type Cours');
       expect(text(modal()?.querySelector('.detail') ?? null)).toContain('UTC502');
       expect(text(modal()?.querySelector('.detail') ?? null)).toMatch(/Début.*18:00/);

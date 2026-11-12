@@ -28,6 +28,10 @@ export class AgendaEvent {
   @Column({ type: 'text' })
   title!: string;
 
+  // Vide pour un événement sans description.
+  @Column({ type: 'text', default: '' })
+  description!: string;
+
   @Column({ type: 'text' })
   type!: EventType;
 

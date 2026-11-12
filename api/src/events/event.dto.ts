@@ -25,6 +25,7 @@ const END_MESSAGE =
 const TYPE_MESSAGE = 'Le type doit être « course » ou « deadline ».';
 
 export const MAX_OCCURRENCES = 60;
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 export class OccurrenceDto {
   @IsISO8601(DATE_OPTIONS, { message: START_MESSAGE })
@@ -40,6 +41,15 @@ class EventDetailsDto {
   @IsNotEmpty({ message: 'Le titre est requis.' })
   @MaxLength(200, { message: 'Le titre ne doit pas dépasser 200 caractères.' })
   title!: string;
+
+  // Absente : vide à la création, inchangée à la modification.
+  @IsOptional()
+  @Transform(trim)
+  @IsString({ message: 'La description doit être un texte.' })
+  @MaxLength(MAX_DESCRIPTION_LENGTH, {
+    message: `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères.`,
+  })
+  description?: string;
 
   @IsIn(EVENT_TYPES, { message: TYPE_MESSAGE })
   type!: EventType;

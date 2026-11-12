@@ -61,6 +61,7 @@ export class EventsService {
     const events = input.occurrences.map((occurrence) =>
       this.events.create({
         title: input.title,
+        description: input.description ?? '',
         type: input.type,
         ueId,
         ...toPeriod(occurrence.startsAt, occurrence.endsAt),
@@ -82,6 +83,7 @@ export class EventsService {
       { id },
       {
         title: changes.title ?? event.title,
+        description: changes.description ?? event.description,
         type: changes.type ?? event.type,
         ueId: await this.resolveUeId(changes.ueCode, event.ueId),
         ...toPeriod(

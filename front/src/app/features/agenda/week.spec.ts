@@ -17,6 +17,7 @@ function event(id: number, start: Date, end: Date): AgendaEvent {
   return {
     id,
     title: `Événement ${id}`,
+    description: '',
     type: 'course',
     ue: null,
     startsAt: start.toISOString(),

@@ -29,7 +29,12 @@ describe('EventService', () => {
   });
 
   it('crée les occurrences, modifie et supprime un événement', () => {
-    const details = { title: 'Cours', type: 'course' as const, ueCode: 'UTC502' };
+    const details = {
+      title: 'Cours',
+      description: 'Salle 31',
+      type: 'course' as const,
+      ueCode: 'UTC502',
+    };
     const occurrence = { startsAt: '2026-11-17T18:00:00.000Z', endsAt: '2026-11-17T21:00:00.000Z' };
 
     service.create(details, [occurrence]).subscribe();
