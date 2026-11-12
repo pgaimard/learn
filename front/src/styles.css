@@ -35,6 +35,11 @@
   --color-syntax-keyword: light-dark(#a31d5f, #f58bb8);
   --color-syntax-value: light-dark(#075e8c, #74c0f0);
   --color-syntax-comment: light-dark(#6b7280, #8c95a6);
+  /* Couleurs des UE dans le planning : trait et fond, quatre teintes en boucle. */
+  --color-tone-2: light-dark(#6d3fc0, #b99cf5);
+  --color-tone-2-soft: light-dark(#efe9fb, #241a3d);
+  --color-tone-3: light-dark(#a31d5f, #f58bb8);
+  --color-tone-3-soft: light-dark(#fbe8f1, #3a1528);
   --color-backdrop: rgb(0 0 0 / 45%);
   --shadow-popover: 0 10px 30px rgb(0 0 0 / 18%);
   --shadow-bar: 0 4px 14px light-dark(rgb(15 23 42 / 10%), rgb(0 0 0 / 45%));
@@ -624,4 +629,31 @@ input[type='radio'] {
 
 .empty {
   color: var(--color-text-muted);
+}
+
+/* Teintes d'UE du planning : chaque élément lit --tone et --tone-soft. */
+
+.tone-0 {
+  --tone: var(--color-accent);
+  --tone-soft: var(--color-accent-soft);
+}
+
+.tone-1 {
+  --tone: var(--color-callout-change);
+  --tone-soft: var(--color-callout-change-soft);
+}
+
+.tone-2 {
+  --tone: var(--color-tone-2);
+  --tone-soft: var(--color-tone-2-soft);
+}
+
+.tone-3 {
+  --tone: var(--color-tone-3);
+  --tone-soft: var(--color-tone-3-soft);
+}
+
+.tone-none {
+  --tone: var(--color-text-muted);
+  --tone-soft: var(--color-raised);
 }

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { pickOption } from '../../core/ui/dropdown.testing';
 import { DialogService } from '../../core/dialog/dialog.service';
@@ -55,7 +55,8 @@ describe('AgendaPage', () => {
     fixture.detectChanges();
   }
 
-  function setup(week = '2026-11-16'): void {
+  // Les tests historiques portent sur la vue Liste ; les vues en grille ont les leurs.
+  function setup(week = '2026-11-16', view = 'liste'): void {
     eventService.list.mockReturnValue(of([COURSE, DEADLINE]));
     taskService.list.mockReturnValue(of([TASK]));
     TestBed.configureTestingModule({
@@ -69,6 +70,7 @@ describe('AgendaPage', () => {
     });
     fixture = TestBed.createComponent(AgendaPage);
     fixture.componentRef.setInput('semaine', week);
+    fixture.componentRef.setInput('vue', view);
     fixture.detectChanges();
   }
 
@@ -81,7 +83,7 @@ describe('AgendaPage', () => {
   }
 
   function days(): HTMLElement[] {
-    return Array.from(element().querySelectorAll<HTMLElement>('.day'));
+    return Array.from(element().querySelectorAll<HTMLElement>('li.day'));
   }
 
   function click(label: string): void {
@@ -90,6 +92,15 @@ describe('AgendaPage', () => {
         (button) =>
           button.textContent.trim() === label || button.getAttribute('aria-label') === label,
       )
+      ?.click();
+    fixture.detectChanges();
+  }
+
+  // Coche ou décoche un filtre du panneau latéral, désigné par son libellé.
+  function toggleFilter(label: string): void {
+    Array.from(element().querySelectorAll<HTMLLabelElement>('.filters label'))
+      .find((candidate) => text(candidate) === label)
+      ?.querySelector('input')
       ?.click();
     fixture.detectChanges();
   }
@@ -113,14 +124,15 @@ describe('AgendaPage', () => {
   it('charge la semaine demandée, du lundi au lundi suivant', () => {
     setup('2026-11-18');
 
-    expect(eventService.list).toHaveBeenCalledWith(new Date(2026, 10, 16), new Date(2026, 10, 23));
+    // Une seule lecture couvre la semaine et les six semaines du mois affiché.
+    const from = new Date(2026, 9, 26);
+    const to = new Date(2026, 11, 7);
+    expect(eventService.list).toHaveBeenCalledWith(from, to);
     expect(taskService.list).toHaveBeenCalledWith({
-      dueFrom: new Date(2026, 10, 16).toISOString(),
-      dueTo: new Date(2026, 10, 23).toISOString(),
+      dueFrom: from.toISOString(),
+      dueTo: to.toISOString(),
     });
-    expect(text(element().querySelector('.period'))).toBe(
-      'Du lundi 16 novembre au dimanche 22 novembre 2026',
-    );
+    expect(text(element().querySelector('h1'))).toBe('16 – 22 novembre 2026 · semaine 47');
   });
 
   it('range les événements et les tâches dans leur jour, par heure', () => {
@@ -130,14 +142,14 @@ describe('AgendaPage', () => {
     expect(text(days()[0])).toContain('Rien de prévu.');
     const tuesday = Array.from(days()[1].querySelectorAll('.entry')).map((entry) => text(entry));
     expect(tuesday[0]).toContain('12:00 Rendre le TP Tâche');
-    expect(tuesday[1]).toContain('18:00 – 21:00 Cours systèmes Cours UTC502');
+    expect(tuesday[1]).toContain('18:00 – 21:00 Cours systèmesUTC502 Cours');
     expect(text(days()[4])).toContain('23:00 Rendu du projet Échéance');
   });
 
   it('mène aux semaines voisines par l’adresse', () => {
     setup();
 
-    const links = Array.from(element().querySelectorAll('.weeks a')).map((link) =>
+    const links = Array.from(element().querySelectorAll('.period a')).map((link) =>
       link.getAttribute('href'),
     );
     expect(links).toEqual(['/?semaine=2026-11-09', '/', '/?semaine=2026-11-23']);
@@ -146,11 +158,13 @@ describe('AgendaPage', () => {
   it('filtre par UE', () => {
     setup();
 
-    pickOption(fixture, '#agenda-ue-filter', 'UTC502');
+    toggleFilter('UTC502');
 
+    expect(text(element().querySelector('.days'))).not.toContain('Cours systèmes');
+    expect(text()).toContain('Rendre le TP');
+
+    toggleFilter('UTC502');
     expect(text()).toContain('Cours systèmes');
-    expect(text()).not.toContain('Rendu du projet');
-    expect(text()).not.toContain('Rendre le TP');
   });
 
   it('crée un cours répété chaque semaine et annonce le nombre d’événements', () => {
@@ -258,5 +272,129 @@ describe('AgendaPage', () => {
     click('Supprimer Cours systèmes');
     await settle();
     expect(eventService.remove).toHaveBeenCalledWith(4);
+  });
+
+  it('masque un type d’élément à la demande', () => {
+    setup();
+
+    toggleFilter('Tâches datées');
+    expect(text()).not.toContain('Rendre le TP');
+    expect(text()).toContain('Rendu du projet');
+
+    toggleFilter('Échéances');
+    expect(text()).not.toContain('Rendu du projet');
+    expect(text()).toContain('Cours systèmes');
+  });
+
+  describe('vue Semaine', () => {
+    it('place chaque élément dans la colonne de son jour, à son heure', () => {
+      setup('2026-11-16', 'semaine');
+
+      const columns = Array.from(element().querySelectorAll('app-week-grid .day'));
+      expect(columns).toHaveLength(7);
+      const course = columns[1].querySelector<HTMLElement>('button.block');
+      expect(text(course)).toBe('Cours systèmes18:00 – 21:00');
+      // 18 h, dix heures après l'ouverture de la grille à 8 h, quarante pixels par heure.
+      expect(course?.style.top).toBe('400px');
+      expect(course?.style.height).toBe('120px');
+      expect(columns[1].querySelector('a.block')?.getAttribute('href')).toBe('/taches');
+      expect(columns[4].querySelector('.block.is-deadline')).not.toBeNull();
+    });
+
+    it('ouvre un événement pour le modifier, et un jour pour y créer', () => {
+      setup('2026-11-16', 'semaine');
+
+      click('Modifier Cours systèmes, 18:00 – 21:00');
+      expect(element().querySelector<HTMLInputElement>('#event-title')?.value).toBe(
+        'Cours systèmes',
+      );
+
+      click('Fermer la fenêtre');
+      click('Ajouter un événement le jeudi 19 novembre');
+      expect(element().querySelector<HTMLInputElement>('#event-start')?.value).toBe(
+        '2026-11-19T09:00',
+      );
+    });
+  });
+
+  describe('vue Mois', () => {
+    it('affiche le mois en six semaines, avec les éléments dans leur jour', () => {
+      setup('2026-11-16', 'mois');
+
+      expect(text(element().querySelector('h1'))).toBe('novembre 2026');
+      const cells = Array.from(element().querySelectorAll('app-month-grid .cell'));
+      expect(cells).toHaveLength(42);
+      // Le 17 novembre est le vingt-troisième jour d'une grille qui commence le 26 octobre.
+      expect(text(cells[22])).toBe('17 Rendre le TP 18:00 Cours systèmes');
+      expect(cells[0].classList).toContain('is-outside');
+    });
+
+    it('affiche le mois du jour désigné, même si sa semaine commence le mois d’avant', () => {
+      // Le 1er décembre 2026 est un mardi : sa semaine commence le lundi 30 novembre.
+      setup('2026-12-01', 'mois');
+
+      expect(text(element().querySelector('h1'))).toBe('décembre 2026');
+      expect(text(element().querySelector('app-mini-calendar .title'))).toBe('décembre 2026');
+    });
+
+    it('mène aux mois voisins', () => {
+      setup('2026-11-16', 'mois');
+
+      const links = Array.from(element().querySelectorAll('.period a')).map((link) =>
+        link.getAttribute('href'),
+      );
+      expect(links).toEqual(['/?semaine=2026-10-01', '/', '/?semaine=2026-12-01']);
+    });
+  });
+
+  describe('raccourcis et petit calendrier', () => {
+    // Paramètres d'adresse demandés à chaque navigation.
+    function navigations(): { queries: () => unknown[] } {
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      return { queries: () => navigate.mock.calls.map((call) => call[1]?.queryParams) };
+    }
+
+    function press(key: string, target: EventTarget = document): void {
+      target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    }
+
+    it('change de période et de vue au clavier', () => {
+      setup();
+      const navigate = navigations();
+
+      press('ArrowRight');
+      press('m');
+      press('t');
+
+      expect(navigate.queries()).toEqual([
+        { semaine: '2026-11-23', vue: 'liste' },
+        { semaine: '2026-11-16', vue: 'mois' },
+        { semaine: null, vue: 'liste' },
+      ]);
+    });
+
+    it('laisse les touches à la saisie et au formulaire ouvert', () => {
+      setup();
+      const navigate = navigations();
+      const field = document.createElement('input');
+      document.body.append(field);
+
+      press('m', field);
+      click('Ajouter un événement le lundi 16 novembre');
+      press('ArrowLeft');
+
+      expect(navigate.queries()).toEqual([]);
+      field.remove();
+    });
+
+    it('va au jour choisi dans le petit calendrier, dont la semaine est mise en avant', () => {
+      setup();
+      const navigate = navigations();
+
+      expect(element().querySelectorAll('app-mini-calendar .is-in-week')).toHaveLength(7);
+      click('mardi 3 novembre');
+
+      expect(navigate.queries()).toEqual([{ semaine: '2026-11-03', vue: 'liste' }]);
+    });
   });
 });

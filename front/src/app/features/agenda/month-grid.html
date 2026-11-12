@@ -1,0 +1,56 @@
+<div class="head" aria-hidden="true">
+  @for (weekday of weekdays; track weekday) {
+    <div>{{ weekday }}</div>
+  }
+</div>
+
+<div class="grid">
+  @for (day of days(); track day.date.getTime()) {
+    <div
+      class="cell"
+      [class.is-outside]="day.isOutside"
+      [class.is-weekend]="day.isWeekend"
+      [class.is-today]="day.isToday"
+    >
+      <button
+        type="button"
+        class="number"
+        [attr.aria-label]="'Ajouter un événement le ' + day.label"
+        [attr.aria-current]="day.isToday ? 'date' : null"
+        (click)="dayPicked.emit(day.date)"
+      >
+        {{ day.date.getDate() }}
+      </button>
+      @for (item of day.shown; track item.key) {
+        @if (item.event; as event) {
+          <button
+            type="button"
+            [class]="'chip ' + item.tone"
+            [class.is-deadline]="item.kind === 'deadline'"
+            [attr.aria-label]="'Modifier ' + item.title + ', ' + item.time"
+            (click)="eventPicked.emit(event)"
+          >
+            @if (item.kind === 'course') {
+              <i>{{ item.time.slice(0, 5) }}</i>
+            }
+            {{ item.title }}
+          </button>
+        } @else {
+          <a
+            routerLink="/taches"
+            class="chip is-task"
+            [class.is-done]="item.task?.done"
+            [attr.aria-label]="'Tâche : ' + item.title"
+          >
+            {{ item.title }}
+          </a>
+        }
+      }
+      @if (day.hidden > 0) {
+        <button type="button" class="more" (click)="dayOpened.emit(day.date)">
+          +{{ day.hidden }} {{ day.hidden > 1 ? 'autres' : 'autre' }}
+        </button>
+      }
+    </div>
+  }
+</div>
