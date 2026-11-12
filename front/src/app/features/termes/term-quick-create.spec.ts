@@ -28,9 +28,10 @@ describe('TermQuickCreate', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  // Un bouton se désigne par son nom accessible : aria-label s'il en a un, sinon son texte.
   function click(label: string): void {
     Array.from(element().querySelectorAll('button'))
-      .find((button) => button.textContent.trim() === label)
+      .find((button) => (button.getAttribute('aria-label') ?? button.textContent.trim()) === label)
       ?.click();
     fixture.detectChanges();
   }

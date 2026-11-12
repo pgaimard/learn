@@ -1,4 +1,6 @@
-<button type="button" class="button open" (click)="open()">Nouveau terme</button>
+<button type="button" class="button" aria-label="Nouveau terme" (click)="open()">
+  <app-icon name="plus" />Terme
+</button>
 
 <dialog #dialog aria-labelledby="quick-term-title" (close)="isOpen.set(false)">
   @if (isOpen()) {

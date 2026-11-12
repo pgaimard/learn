@@ -1,12 +1,14 @@
 <form role="search" (submit)="submit($event)">
   <label class="visually-hidden" for="search-field">Rechercher dans les cours et les termes</label>
+  <app-icon name="search" />
   <input
     #field
     id="search-field"
     type="search"
     autocomplete="off"
-    placeholder="Rechercher (Ctrl+K)"
+    placeholder="Rechercher un cours, un terme, un fichier"
     maxlength="100"
     [formControl]="query"
   />
+  <span class="kbd" aria-hidden="true">{{ shortcut }}</span>
 </form>

@@ -39,6 +39,22 @@ describe('LoginPage', () => {
     return (fixture.nativeElement as HTMLElement).textContent;
   }
 
+  it('affiche puis masque le mot de passe à la demande', () => {
+    setup(of({ username: 'pierre' }));
+    const host = fixture.nativeElement as HTMLElement;
+    const field = host.querySelector('#password') as HTMLInputElement;
+    const reveal = host.querySelector('.reveal') as HTMLButtonElement;
+
+    reveal.click();
+    fixture.detectChanges();
+    expect(field.type).toBe('text');
+    expect(reveal.getAttribute('aria-label')).toBe('Masquer le mot de passe');
+
+    reveal.click();
+    fixture.detectChanges();
+    expect(field.type).toBe('password');
+  });
+
   it('connecte puis ouvre l’accueil', () => {
     setup(of({ username: 'pierre' }));
     fill('username', 'pierre');
