@@ -10,7 +10,13 @@ export class CreateFolderDto {
   parentId?: number | null;
 }
 
-export class RenameFolderDto {
+// Renommage, déplacement, ou les deux ; parentId null place le dossier à la racine.
+export class UpdateFolderDto {
+  @IsOptional()
   @IsEntryName()
-  name!: string;
+  name?: string;
+
+  @IsOptional()
+  @IsInt({ message: 'Le dossier parent doit être désigné par son numéro.' })
+  parentId?: number | null;
 }

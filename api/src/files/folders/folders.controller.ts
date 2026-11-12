@@ -11,7 +11,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { CreateFolderDto, RenameFolderDto } from './folder.dto.js';
+import { CreateFolderDto, UpdateFolderDto } from './folder.dto.js';
 import { FolderSummary, FoldersService } from './folders.service.js';
 
 // Un identifiant non numérique désigne un dossier qui n'existe pas.
@@ -37,11 +37,11 @@ export class FoldersController {
   }
 
   @Patch('folders/:id')
-  rename(
+  update(
     @Param('id', parseId) id: number,
-    @Body() input: RenameFolderDto,
+    @Body() changes: UpdateFolderDto,
   ): Promise<FolderSummary> {
-    return this.foldersService.rename(id, input.name);
+    return this.foldersService.update(id, changes);
   }
 
   @Delete('folders/:id')

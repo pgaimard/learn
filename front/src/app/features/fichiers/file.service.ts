@@ -36,6 +36,11 @@ export class FileService {
     return this.http.patch<Folder>(`/api/folders/${id}`, { name });
   }
 
+  // Déplace un dossier dans un autre ; null pour la racine de l'UE.
+  moveFolder(id: number, parentId: number | null): Observable<Folder> {
+    return this.http.patch<Folder>(`/api/folders/${id}`, { parentId });
+  }
+
   removeFolder(id: number): Observable<void> {
     return this.http.delete<void>(`/api/folders/${id}`);
   }
