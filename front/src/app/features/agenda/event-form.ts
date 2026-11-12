@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DateField } from '../../core/ui/date-field';
 import { Dropdown } from '../../core/ui/dropdown';
 import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { fromLocalInput, toLocalInput } from '../taches/task-dates';
@@ -27,7 +28,7 @@ const HOUR_MS = 60 * 60 * 1000;
 
 @Component({
   selector: 'app-event-form',
-  imports: [Dropdown, Segmented, ReactiveFormsModule],
+  imports: [DateField, Dropdown, Segmented, ReactiveFormsModule],
   templateUrl: './event-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -8,6 +8,7 @@ import {
   output,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DateField } from '../../core/ui/date-field';
 import { Dropdown } from '../../core/ui/dropdown';
 import { ueOptions } from '../ue/ue-options';
 import { Ue } from '../ue/ue.service';
@@ -16,7 +17,7 @@ import { Task, TaskInput } from './task.service';
 
 @Component({
   selector: 'app-task-form',
-  imports: [Dropdown, ReactiveFormsModule],
+  imports: [DateField, Dropdown, ReactiveFormsModule],
   templateUrl: './task-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,383 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+:host(.is-compact) {
+  display: inline-block;
+}
+
+.trigger {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 1.875rem;
+  padding: 0 0.4375rem 0 0.5625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-background);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.78125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.trigger.is-open {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.trigger.is-invalid {
+  border-color: var(--color-danger);
+}
+
+/* La place du bouton d'effacement, posé par-dessus. */
+.trigger.has-clear {
+  padding-right: 1.875rem;
+}
+
+.trigger.has-clear > app-icon:last-child {
+  display: none;
+}
+
+.trigger app-icon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+:host(.is-compact) .trigger {
+  width: auto;
+  height: 1.5rem;
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value.is-empty {
+  color: var(--color-text-muted);
+}
+
+.clear {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.4375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-raised);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+:host(.is-compact) .clear {
+  top: 0.1875rem;
+}
+
+.clear:hover {
+  color: var(--color-text);
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.3125rem);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100vw - 1rem);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+  font-size: 0.78125rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panel.aligns-end {
+  right: 0;
+  left: auto;
+}
+
+.panel.drops-up {
+  top: auto;
+  bottom: calc(100% + 0.3125rem);
+}
+
+.body {
+  display: flex;
+}
+
+.shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 9.25rem;
+  padding: 0.5rem 0.375rem;
+  border-right: 1px solid var(--color-border-soft);
+}
+
+.row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 1.6875rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.78125rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.row:hover,
+.day:hover {
+  background: var(--color-raised);
+}
+
+.row.is-quiet,
+.hint {
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: 0.6875rem;
+}
+
+.row.is-selected,
+.row.is-selected:hover,
+.day.is-selected,
+.day.is-selected:hover {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.row.is-selected .hint {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.calendar {
+  width: 14.375rem;
+  padding: 0.5rem 0.625rem 0.625rem;
+}
+
+.month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.month .button {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 1px;
+}
+
+.days span,
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+}
+
+.days span {
+  color: var(--color-text-muted);
+  font-size: 0.65625rem;
+  font-weight: 600;
+}
+
+.day {
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.day.is-outside {
+  color: var(--color-text-muted);
+  opacity: 0.55;
+}
+
+.day.is-today {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.day.is-selected {
+  box-shadow: none;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.times {
+  display: flex;
+  border-left: 1px solid var(--color-border-soft);
+}
+
+.time-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 3.375rem;
+  height: 15.375rem;
+  padding: 0.5rem 0.3125rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.time-list + .time-list {
+  border-left: 1px solid var(--color-border-soft);
+}
+
+.time-list .row {
+  justify-content: center;
+}
+
+/* Le titre de la colonne reste visible pendant le défilement des heures. */
+.time-list h4 {
+  position: sticky;
+  top: -0.5rem;
+  margin: -0.5rem 0 0;
+  padding: 0.5rem 0 0.1875rem;
+  background: var(--color-surface);
+}
+
+h4 {
+  margin: 0 0 0.1875rem;
+  color: var(--color-text-muted);
+  font-size: 0.65625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.durations {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 11rem;
+  padding: 0.5rem 0.3125rem;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-background);
+}
+
+.footer .typed {
+  box-sizing: border-box;
+  width: 9.375rem;
+  height: 1.75rem;
+  padding: 0 0.5625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: none;
+  background: var(--color-surface);
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.footer .typed:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.footer .typed[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.footer-hint {
+  flex: 1;
+  color: var(--color-text-muted);
+  font-size: 0.71875rem;
+  white-space: nowrap;
+}
+
+/* Écran étroit : les raccourcis passent au-dessus, l'heure en dessous du calendrier. */
+@media (max-width: 34rem) {
+  .body {
+    flex-direction: column;
+  }
+
+  .shortcuts {
+    flex-flow: row wrap;
+    width: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+
+  .calendar {
+    width: auto;
+  }
+
+  .times {
+    border-top: 1px solid var(--color-border-soft);
+    border-left: 0;
+  }
+
+  .time-list {
+    flex: 1;
+    height: 7.5rem;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+  }
+
+  .footer-hint {
+    display: none;
+  }
+}

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { dateValue, setDate } from '../../core/ui/date-field.testing';
 import { pickOption } from '../../core/ui/dropdown.testing';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
@@ -177,16 +178,14 @@ describe('AgendaPage', () => {
     setup();
     eventService.create.mockReturnValue(of([COURSE, COURSE, COURSE]));
     click('Ajouter un événement le mercredi 18 novembre');
-    expect(element().querySelector<HTMLInputElement>('#event-start')?.value).toBe(
-      '2026-11-18T09:00',
-    );
+    expect(dateValue(fixture, '#event-start')).toBe('2026-11-18T09:00');
 
     fill('event-title', ' TD systèmes ');
     fill('event-description', ' Chapitre 3 ');
     pickOption(fixture, '#event-ue', 'UTC502');
-    fill('event-start', '2026-11-18T18:00');
-    fill('event-end', '2026-11-18T20:00');
-    fill('event-repeat', '2026-12-02');
+    setDate(fixture, '#event-start', '2026-11-18T18:00');
+    setDate(fixture, '#event-end', '2026-11-18T20:00');
+    setDate(fixture, '#event-repeat', '2026-12-02');
     submit();
 
     const [details, occurrences] = eventService.create.mock.calls[0];
@@ -214,7 +213,7 @@ describe('AgendaPage', () => {
     fill('event-title', 'Examen blanc');
     click('Échéance');
     expect(element().querySelector('#event-end')).toBeNull();
-    fill('event-start', '2026-11-16T14:00');
+    setDate(fixture, '#event-start', '2026-11-16T14:00');
     submit();
 
     const moment = new Date(2026, 10, 16, 14, 0).toISOString();
@@ -229,7 +228,7 @@ describe('AgendaPage', () => {
     click('Ajouter un événement le lundi 16 novembre');
 
     fill('event-title', 'Cours');
-    fill('event-end', '2026-11-16T08:00');
+    setDate(fixture, '#event-end', '2026-11-16T08:00');
     submit();
 
     expect(eventService.create).not.toHaveBeenCalled();
@@ -319,9 +318,7 @@ describe('AgendaPage', () => {
 
       click('Ajouter un événement le jeudi 19 novembre');
 
-      expect(element().querySelector<HTMLInputElement>('#event-start')?.value).toBe(
-        '2026-11-19T09:00',
-      );
+      expect(dateValue(fixture, '#event-start')).toBe('2026-11-19T09:00');
     });
 
     it('montre le détail d’un événement, puis le modifie dans la même fenêtre', () => {

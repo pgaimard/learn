@@ -24,15 +24,15 @@
   <div class="form-row">
     <div class="field field-grow">
       <label for="task-due">Échéance</label>
-      <input id="task-due" type="datetime-local" formControlName="dueAt" />
+      <app-date-field fieldId="task-due" formControlName="dueAt" />
     </div>
     <div class="field field-grow">
       <label for="task-remind">Rappel</label>
-      <input
-        id="task-remind"
-        type="datetime-local"
+      <app-date-field
+        fieldId="task-remind"
         formControlName="remindAt"
-        aria-describedby="task-remind-hint"
+        placeholder="Sans rappel"
+        describedBy="task-remind-hint"
       />
       <p id="task-remind-hint" class="field-hint">
         À partir de ce moment, la tâche est signalée dans l’application.

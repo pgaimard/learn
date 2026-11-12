@@ -11,6 +11,7 @@ import {
 import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { DateField } from '../../core/ui/date-field';
 import { Dropdown } from '../../core/ui/dropdown';
 import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
@@ -26,7 +27,7 @@ const WITHOUT_UE = '-';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [Dropdown, Icon, Modal, NgTemplateOutlet, ReactiveFormsModule, TaskForm],
+  imports: [DateField, Dropdown, Icon, Modal, NgTemplateOutlet, ReactiveFormsModule, TaskForm],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +57,6 @@ export class TasksPage implements OnInit {
   protected readonly quickTitle = new FormControl('', { nonNullable: true });
   protected readonly quickUe = signal('');
   protected readonly quickDue = new FormControl('', { nonNullable: true });
-  protected readonly isQuickDateShown = signal(false);
   protected readonly quickUeOptions = computed(() =>
     ueOptions(this.ues(), [{ value: '', label: 'UE' }]),
   );
@@ -129,7 +129,6 @@ export class TasksPage implements OnInit {
           this.isSaving.set(false);
           this.quickTitle.reset();
           this.quickDue.reset();
-          this.isQuickDateShown.set(false);
           this.load();
         },
         error: (error: ApiError) => {

@@ -99,14 +99,13 @@
       [value]="quickUe()"
       (valueChange)="quickUe.set($event)"
     />
-    @if (isQuickDateShown()) {
-      <label class="visually-hidden" for="quick-task-due">Échéance de la nouvelle tâche</label>
-      <input id="quick-task-due" class="quick-due" type="datetime-local" [formControl]="quickDue" />
-    } @else {
-      <button type="button" class="tool tool-outlined" (click)="isQuickDateShown.set(true)">
-        Date
-      </button>
-    }
+    <app-date-field
+      compact
+      fieldId="quick-task-due"
+      label="Échéance de la nouvelle tâche"
+      placeholder="Date"
+      [formControl]="quickDue"
+    />
     <span class="kbd" aria-hidden="true">↵</span>
   </form>
 
