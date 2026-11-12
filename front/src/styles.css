@@ -37,6 +37,7 @@
   --color-syntax-comment: light-dark(#6b7280, #8c95a6);
   --color-backdrop: rgb(0 0 0 / 45%);
   --shadow-popover: 0 10px 30px rgb(0 0 0 / 18%);
+  --shadow-bar: 0 4px 14px light-dark(rgb(15 23 42 / 10%), rgb(0 0 0 / 45%));
 
   --font-text: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;

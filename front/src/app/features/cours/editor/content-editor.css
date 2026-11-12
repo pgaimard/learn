@@ -16,6 +16,8 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
   background: var(--color-surface);
+  /* Ombre portée : la barre se détache du texte qui défile dessous. */
+  box-shadow: var(--shadow-bar);
 }
 
 app-editor-toolbar {
