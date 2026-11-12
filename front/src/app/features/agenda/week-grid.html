@@ -24,36 +24,29 @@
   @for (day of days(); track day.date.getTime()) {
     <div class="day" [class.is-today]="day.isToday">
       @for (block of day.blocks; track block.item.key) {
-        @if (block.item.event; as event) {
-          <button
-            type="button"
-            class="block"
-            [class]="'block ' + block.item.tone"
-            [class.is-deadline]="block.item.kind === 'deadline'"
-            [style.top.px]="block.top"
-            [style.height.px]="block.height"
-            [style.left.%]="(100 * block.column) / block.columns"
-            [style.width.%]="100 / block.columns"
-            [attr.aria-label]="'Modifier ' + block.item.title + ', ' + block.item.time"
-            (click)="eventPicked.emit(event)"
-          >
-            <b>{{ block.item.title }}</b>
+        <button
+          type="button"
+          [class]="'block ' + block.item.tone"
+          [class.is-deadline]="block.item.kind === 'deadline'"
+          [class.is-task]="block.item.kind === 'task'"
+          [class.is-done]="block.item.task?.done"
+          [style.top.px]="block.top"
+          [style.height.px]="block.height"
+          [style.left.%]="(100 * block.column) / block.columns"
+          [style.width.%]="100 / block.columns"
+          [attr.aria-label]="
+            (block.item.kind === 'task' ? 'Tâche : ' : '') +
+            block.item.title +
+            ', ' +
+            block.item.time
+          "
+          (click)="itemPicked.emit(block.item)"
+        >
+          <b>{{ block.item.title }}</b>
+          @if (block.item.kind !== 'task') {
             <span>{{ block.item.time }}</span>
-          </button>
-        } @else {
-          <a
-            routerLink="/taches"
-            [class]="'block is-task ' + block.item.tone"
-            [class.is-done]="block.item.task?.done"
-            [style.top.px]="block.top"
-            [style.height.px]="block.height"
-            [style.left.%]="(100 * block.column) / block.columns"
-            [style.width.%]="100 / block.columns"
-            [attr.aria-label]="'Tâche : ' + block.item.title + ', ' + block.item.time"
-          >
-            <b>{{ block.item.title }}</b>
-          </a>
-        }
+          }
+        </button>
       }
       @if (day.now !== null) {
         <div class="now" aria-hidden="true" [style.top.px]="day.now"></div>

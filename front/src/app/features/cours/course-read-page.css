@@ -121,19 +121,6 @@
     background: var(--color-background);
   }
 
-  /* Fondu sous la barre : le texte qui défile s'efface en arrivant dessous, au lieu
-     d'être coupé net. */
-  .page-header::after {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    left: 0;
-    height: 1.5rem;
-    background: linear-gradient(var(--color-background), transparent);
-    content: '';
-    pointer-events: none;
-  }
-
   /* Un titre long tient sur une ligne, pour que la barre garde sa hauteur. */
   .heading h1 {
     overflow: hidden;

@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { AgendaItem, itemsOfDay, monthGrid } from './calendar';
-import { AgendaEvent } from './event.service';
 import { formatDay, isSameDay } from './week';
 
 // Éléments montrés dans une case avant « +N autres ».
@@ -11,7 +9,6 @@ const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 // Vue Mois : six semaines, les éléments de chaque jour en pastilles.
 @Component({
   selector: 'app-month-grid',
-  imports: [RouterLink],
   templateUrl: './month-grid.html',
   styleUrl: './month-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,7 +19,8 @@ export class MonthGrid {
   readonly items = input.required<AgendaItem[]>();
   readonly now = input.required<Date>();
 
-  readonly eventPicked = output<AgendaEvent>();
+  // Élément dont ouvrir le détail : événement ou tâche.
+  readonly itemPicked = output<AgendaItem>();
   // Jour où créer un événement.
   readonly dayPicked = output<Date>();
   // Jour dont on veut tout voir : la page ouvre sa semaine.

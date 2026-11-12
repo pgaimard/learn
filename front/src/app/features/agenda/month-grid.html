@@ -22,29 +22,22 @@
         {{ day.date.getDate() }}
       </button>
       @for (item of day.shown; track item.key) {
-        @if (item.event; as event) {
-          <button
-            type="button"
-            [class]="'chip ' + item.tone"
-            [class.is-deadline]="item.kind === 'deadline'"
-            [attr.aria-label]="'Modifier ' + item.title + ', ' + item.time"
-            (click)="eventPicked.emit(event)"
-          >
-            @if (item.kind === 'course') {
-              <i>{{ item.time.slice(0, 5) }}</i>
-            }
-            {{ item.title }}
-          </button>
-        } @else {
-          <a
-            routerLink="/taches"
-            class="chip is-task"
-            [class.is-done]="item.task?.done"
-            [attr.aria-label]="'Tâche : ' + item.title"
-          >
-            {{ item.title }}
-          </a>
-        }
+        <button
+          type="button"
+          [class]="'chip ' + item.tone"
+          [class.is-deadline]="item.kind === 'deadline'"
+          [class.is-task]="item.kind === 'task'"
+          [class.is-done]="item.task?.done"
+          [attr.aria-label]="
+            (item.kind === 'task' ? 'Tâche : ' : '') + item.title + ', ' + item.time
+          "
+          (click)="itemPicked.emit(item)"
+        >
+          @if (item.kind === 'course') {
+            <i>{{ item.time.slice(0, 5) }}</i>
+          }
+          {{ item.title }}
+        </button>
       }
       @if (day.hidden > 0) {
         <button type="button" class="more" (click)="dayOpened.emit(day.date)">

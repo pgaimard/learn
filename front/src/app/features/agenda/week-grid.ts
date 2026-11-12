@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import {
   AgendaItem,
   DAY_END_HOUR,
@@ -8,7 +7,6 @@ import {
   layoutDay,
   nowOffset,
 } from './calendar';
-import { AgendaEvent } from './event.service';
 import { formatDay, isSameDay, weekDays } from './week';
 
 const WEEKDAY = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
@@ -16,7 +14,6 @@ const WEEKDAY = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
 // Vue Semaine : sept colonnes sur une grille horaire, chaque élément à son heure.
 @Component({
   selector: 'app-week-grid',
-  imports: [RouterLink],
   templateUrl: './week-grid.html',
   styleUrl: './week-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,8 +24,9 @@ export class WeekGrid {
   // Instant présent : marque le jour et trace la ligne de l'heure.
   readonly now = input.required<Date>();
 
-  // Événement à ouvrir, ou jour où en créer un ; la page s'en charge.
-  readonly eventPicked = output<AgendaEvent>();
+  // Jour où créer un événement ; la page s'en charge.
+  // Élément dont ouvrir le détail : événement ou tâche.
+  readonly itemPicked = output<AgendaItem>();
   readonly dayPicked = output<Date>();
 
   protected readonly hours = Array.from(

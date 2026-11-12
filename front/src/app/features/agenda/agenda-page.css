@@ -91,8 +91,28 @@ h1 span {
   font-size: 0.78125rem;
 }
 
-.delete {
-  margin-top: 0.75rem;
+.detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0.25rem 0 0;
+}
+
+.detail dt {
+  margin-bottom: 0.125rem;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail dd {
+  margin: 0;
+}
+
+.detail dd::first-letter {
+  text-transform: uppercase;
 }
 
 .layout {
@@ -217,8 +237,18 @@ h1 span {
 
 .entry-title {
   flex: 1 1 10rem;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--color-text);
+  font: inherit;
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.entry-title:hover {
+  color: var(--color-accent);
 }
 
 .entry-title.is-done {
