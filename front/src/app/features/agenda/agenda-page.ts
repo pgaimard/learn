@@ -21,7 +21,6 @@ import { Ue, UeService } from '../ue/ue.service';
 import {
   AgendaItem,
   addMonths,
-  isoWeekNumber,
   itemsOfDay,
   monthGrid,
   startOfMonth,
@@ -134,7 +133,7 @@ export class AgendaPage {
     const startMonth = start.getMonth() === end.getMonth() ? '' : ` ${MONTH_LABEL.format(start)}`;
     return {
       main: `${start.getDate()}${startMonth} – ${end.getDate()} ${MONTH_LABEL.format(end)}`,
-      detail: `${end.getFullYear()} · semaine ${isoWeekNumber(start)}`,
+      detail: String(end.getFullYear()),
     };
   });
   protected readonly editing = signal<Editing>(null);

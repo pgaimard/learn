@@ -42,13 +42,6 @@ export function monthGrid(date: Date): Date[] {
   return Array.from({ length: 42 }, (_, index) => addDays(first, index));
 }
 
-// Numéro de semaine ISO 8601 : la semaine 1 est celle du premier jeudi de l'année.
-export function isoWeekNumber(date: Date): number {
-  const thursday = addDays(startOfWeek(date), 3);
-  const firstThursday = addDays(startOfWeek(new Date(thursday.getFullYear(), 0, 4)), 3);
-  return 1 + Math.round((thursday.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
-}
-
 // Couleur d'une UE : son rang dans la liste des UE, en boucle.
 export function toneOf(ueCode: string | null, ueCodes: string[]): string {
   const rank = ueCode === null ? -1 : ueCodes.indexOf(ueCode);

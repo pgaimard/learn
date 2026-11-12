@@ -152,6 +152,11 @@ app-search-box {
   outline: none;
 }
 
+/* La lecture d'un cours a trois colonnes : elle dispose d'une page plus large. */
+.content:has(app-course-read-page) {
+  max-width: var(--page-width-wide);
+}
+
 /* Sur grand écran l'en-tête reste affiché : la recherche est toujours à portée,
    et y placer le curseur ne fait pas perdre la position de lecture. */
 @media (min-width: 64rem) {
