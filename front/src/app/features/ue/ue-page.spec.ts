@@ -79,7 +79,9 @@ describe('UePage', () => {
 
   it('affiche les termes de l’UE dans leur onglet', () => {
     setup();
-    expect(element().textContent).toContain('Termes (1)');
+    expect(element().querySelector('.tabs')?.textContent.replace(/\s+/g, ' ')).toContain(
+      'Termes 1',
+    );
     expect(element().querySelector('.term-label')).toBeNull();
 
     fixture.componentRef.setInput('onglet', 'termes');
@@ -87,7 +89,7 @@ describe('UePage', () => {
 
     expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
     expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
-    expect(element().querySelector('.course-list')).toBeNull();
+    expect(element().querySelector('ol.list')).toBeNull();
     expect(element().querySelector('.term-actions a')?.getAttribute('href')).toBe(
       '/glossaire/4/edition',
     );

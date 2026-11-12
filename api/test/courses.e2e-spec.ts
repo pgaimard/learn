@@ -206,6 +206,18 @@ describe('Cours', () => {
     expect(courses[0]).not.toHaveProperty('content');
   });
 
+  it('compte les sections de chaque cours : ses titres de premier niveau', async () => {
+    const response = await client('get', '/api/ues/UTC502/courses');
+
+    const sections = (
+      response.body as (Course & { sectionCount: number })[]
+    ).map((course) => [course.title, course.sectionCount]);
+    expect(sections).toEqual([
+      ['Introduction', 0],
+      ['Processus', 1],
+    ]);
+  });
+
   it('enregistre un nouveau contenu et met à jour le texte brut', async () => {
     const response = await client('patch', `/api/courses/${courseId}`).send({
       content: CONTENT,

@@ -18,12 +18,36 @@ export function moveItem<T>(items: readonly T[], { from, to }: SortChange): T[] 
   return moved;
 }
 
+interface Pointer {
+  clientX: number;
+  clientY: number;
+}
+
+// Un élément précède-t-il la souris dans l'ordre de lecture ? En liste, son milieu est
+// au-dessus d'elle. En grille, il est sur une rangée plus haute, ou sur la même rangée
+// avec son milieu à gauche.
+export function precedes(
+  box: Pick<DOMRect, 'top' | 'bottom' | 'left' | 'width' | 'height'>,
+  pointer: Pointer,
+  grid: boolean,
+): boolean {
+  if (!grid) {
+    return pointer.clientY > box.top + box.height / 2;
+  }
+  return (
+    pointer.clientY > box.bottom ||
+    (pointer.clientY >= box.top && pointer.clientX > box.left + box.width / 2)
+  );
+}
+
 // Liste dont les éléments se réordonnent en les faisant glisser par leur poignée,
 // ou au clavier depuis la poignée. La liste elle-même ne change rien : elle annonce
 // le déplacement demandé, que la page applique.
-@Directive({ selector: '[appSortableList]' })
+@Directive({ selector: '[appSortableList]', host: { '[class.is-grid]': 'appSortableGrid()' } })
 export class SortableList {
   readonly sorted = output<SortChange>();
+  // Éléments disposés en grille (plusieurs par rangée) plutôt qu'en liste.
+  readonly appSortableGrid = input(false);
 
   // Rang de l'élément en cours de déplacement.
   readonly dragged = signal<number | null>(null);
@@ -79,7 +103,7 @@ export class SortableList {
     event.preventDefault();
     let boundary = 0;
     for (const item of this.items) {
-      if (event.clientY > item.middle()) {
+      if (item.isBefore(event, this.appSortableGrid())) {
         boundary += 1;
       }
     }
@@ -136,10 +160,8 @@ export class SortableItem {
     this.list.sorted.emit({ from: this.index(), to: this.index() + step });
   }
 
-  // Hauteur du milieu de l'élément dans la fenêtre.
-  middle(): number {
-    const box = this.element.nativeElement.getBoundingClientRect();
-    return box.top + box.height / 2;
+  isBefore(pointer: Pointer, grid: boolean): boolean {
+    return precedes(this.element.nativeElement.getBoundingClientRect(), pointer, grid);
   }
 
   protected isTarget(offset: 0 | 1): boolean {

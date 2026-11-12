@@ -7,7 +7,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { SessionService } from '../core/auth/session.service';
 import { LOGIN_URL } from '../core/http/api-error.interceptor';
 import { ThemeService } from '../core/theme/theme.service';
@@ -44,6 +46,14 @@ export class Shell {
   protected readonly user = this.session.user;
   protected readonly initials = computed(() => (this.user()?.username ?? '').slice(0, 2));
   protected readonly isDark = computed(() => this.themeService.theme() === 'dark');
+  // Les pages d'une UE et de ses cours restent sous « Mes UE » dans la navigation.
+  protected readonly isInUe = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this.router.url.startsWith('/ue/')),
+    ),
+    { initialValue: this.router.url.startsWith('/ue/') },
+  );
   protected readonly isAccountOpen = signal(false);
   protected readonly isLoggingOut = signal(false);
 

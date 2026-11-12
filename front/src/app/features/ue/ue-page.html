@@ -1,5 +1,7 @@
 <nav class="breadcrumb" aria-label="Fil d’Ariane">
   <a routerLink="/">Mes UE</a>
+  <span aria-hidden="true">/</span>
+  <span>{{ code() }}</span>
 </nav>
 
 <div role="alert">
@@ -10,24 +12,23 @@
 
 @if (ue(); as ue) {
   <header class="ue-header">
-    <h1>
-      <span class="ue-code">{{ ue.code }}</span> {{ ue.title }}
-    </h1>
+    <span class="code-chip">{{ ue.code }}</span>
+    <h1>{{ ue.title }}</h1>
     @if (ue.description) {
-      <p class="ue-description">{{ ue.description }}</p>
+      <p class="meta ue-description">{{ ue.description }}</p>
     }
   </header>
 
   <nav class="tabs" aria-label="Contenu de l’UE">
     <a [routerLink]="[]" [attr.aria-current]="tab() === 'cours' ? 'page' : null">
-      Cours ({{ courses().length }})
+      Cours <span class="meta">{{ courses().length }}</span>
     </a>
     <a
       [routerLink]="[]"
       [queryParams]="{ onglet: 'termes' }"
       [attr.aria-current]="tab() === 'termes' ? 'page' : null"
     >
-      Termes ({{ terms().length }})
+      Termes <span class="meta">{{ terms().length }}</span>
     </a>
     <a
       [routerLink]="[]"
@@ -35,45 +36,52 @@
       [attr.aria-current]="tab() === 'fichiers' ? 'page' : null"
     >
       Fichiers
+      @if (ue.counts; as counts) {
+        <span class="meta">{{ counts.files }}</span>
+      }
     </a>
   </nav>
 
   @if (tab() === 'cours') {
-    <div class="page-header">
-      <h2>Cours</h2>
+    <div class="page-header toolbar">
+      <span class="meta">
+        @if (courses().length > 1) {
+          Glisser une ligne pour changer l’ordre
+        }
+      </span>
       <div class="header-actions">
         <a class="button" routerLink="/import">Importer un paquet</a>
-        @if (!isCreating()) {
-          <button type="button" class="button button-primary" (click)="openForm()">
-            Nouveau cours
-          </button>
-        }
+        <button type="button" class="button button-primary" (click)="openForm()">
+          <app-icon name="plus" />Nouveau cours
+        </button>
       </div>
     </div>
 
     @if (isCreating()) {
-      <section class="card new-course" aria-label="Nouveau cours">
+      <app-modal heading="Nouveau cours" (closed)="closeForm()">
         <form [formGroup]="form" (ngSubmit)="createCourse()" novalidate>
-          <div class="form-row">
-            <div class="field field-grow">
-              <label for="course-title">Titre du chapitre</label>
-              <input
-                id="course-title"
-                type="text"
-                formControlName="title"
-                [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
-                [attr.aria-describedby]="
-                  form.controls.title.touched && form.controls.title.invalid
-                    ? 'course-title-error'
-                    : null
-                "
-              />
-              @if (form.controls.title.touched && form.controls.title.invalid) {
-                <p id="course-title-error" class="field-error">
-                  Le titre est requis (200 caractères au plus).
-                </p>
-              }
-            </div>
+          <div class="field">
+            <label for="course-title">Titre du chapitre</label>
+            <input
+              id="course-title"
+              type="text"
+              formControlName="title"
+              [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+              [attr.aria-describedby]="
+                form.controls.title.touched && form.controls.title.invalid
+                  ? 'course-title-error'
+                  : 'course-title-hint'
+              "
+            />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <p id="course-title-error" class="field-error">
+                Le titre est requis (200 caractères au plus).
+              </p>
+            }
+            <p id="course-title-hint" class="field-hint">
+              Créé dans <span class="code-chip">{{ ue.code }}</span> en position
+              {{ courses().length + 1 }}. Pour un cours réécrit, préférer « Importer un paquet ».
+            </p>
           </div>
 
           <div role="alert">
@@ -84,20 +92,20 @@
 
           <div class="form-actions">
             <button type="submit" class="button button-primary" [disabled]="isSaving()">
-              Créer le cours
+              Créer et éditer
             </button>
             <button type="button" class="button" (click)="closeForm()">Annuler</button>
           </div>
         </form>
-      </section>
+      </app-modal>
     }
 
-    @if (courses().length === 0 && !isCreating()) {
+    @if (courses().length === 0) {
       <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
     } @else {
-      <ol class="course-list" appSortableList (sorted)="reorderCourses($event)">
+      <ol class="list" appSortableList (sorted)="reorderCourses($event)">
         @for (course of courses(); track course.id) {
-          <li class="card course" [appSortableItem]="$index" [appSortableLast]="$last">
+          <li class="list-row course" [appSortableItem]="$index" [appSortableLast]="$last">
             <button
               type="button"
               class="sort-handle"
@@ -107,13 +115,21 @@
               "
               title="Glisser pour réordonner"
             >
-              ⋮⋮
+              <app-icon name="grip" />
             </button>
-            <span class="course-position">{{ $index + 1 }}</span>
-            <a class="course-title" [routerLink]="['/ue', ue.code, 'cours', course.id]">
+            <span class="list-row-number course-position">{{ $index + 1 }}</span>
+            <a
+              class="list-row-title course-title"
+              [routerLink]="['/ue', ue.code, 'cours', course.id]"
+            >
               {{ course.title }}
             </a>
-            <span class="course-date">modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}</span>
+            @if (course.sectionCount; as sections) {
+              <span class="pill">{{ sections }} {{ sections > 1 ? 'sections' : 'section' }}</span>
+            }
+            <span class="meta course-date">
+              modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}
+            </span>
           </li>
         }
       </ol>

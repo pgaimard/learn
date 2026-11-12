@@ -8,6 +8,8 @@ export interface CourseSummary {
   title: string;
   position: number;
   updatedAt: string;
+  // Nombre de titres de premier niveau ; présent dans les listes de cours.
+  sectionCount?: number;
 }
 
 export interface Course extends CourseSummary {

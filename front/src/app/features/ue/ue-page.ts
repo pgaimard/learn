@@ -14,6 +14,8 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { Icon } from '../../core/ui/icon';
+import { Modal } from '../../core/ui/modal';
 import { createOrderSaver } from '../../core/sortable/order-saver';
 import {
   moveItem,
@@ -33,6 +35,8 @@ import { Ue, UeService } from './ue.service';
   imports: [
     DatePipe,
     FileBrowser,
+    Icon,
+    Modal,
     ReactiveFormsModule,
     RouterLink,
     SortableHandle,

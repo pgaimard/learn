@@ -1,8 +1,8 @@
 <div class="page-header">
   <h1>Mes UE</h1>
-  @if (editing() !== 'new') {
-    <button type="button" class="button button-primary" (click)="open('new')">Nouvelle UE</button>
-  }
+  <button type="button" class="button button-primary" (click)="open('new')">
+    <app-icon name="plus" />Nouvelle UE
+  </button>
 </div>
 
 <div role="alert">
@@ -11,77 +11,95 @@
   }
 </div>
 
-@if (editing() === 'new') {
-  <section class="card" aria-label="Nouvelle UE">
+@if (editing(); as target) {
+  <app-modal [heading]="target === 'new' ? 'Nouvelle UE' : 'Modifier l’UE'" (closed)="close()">
     <app-ue-form
+      [ue]="target === 'new' ? null : target"
       [errors]="formErrors()"
       [isSaving]="isSaving()"
       (saved)="save($event)"
       (cancelled)="close()"
     />
-  </section>
+  </app-modal>
 }
 
 @if (isLoading()) {
   <p>Chargement…</p>
-} @else if (ues().length === 0 && editing() !== 'new') {
+} @else if (ues().length === 0) {
   <p class="empty">Aucune UE pour l’instant. Commencez par en créer une.</p>
 } @else {
-  <ul class="ue-list" appSortableList (sorted)="reorder($event)">
+  <ul class="ue-grid" appSortableList [appSortableGrid]="true" (sorted)="reorder($event)">
     @for (ue of ues(); track ue.id) {
-      <li class="card" [appSortableItem]="$index" [appSortableLast]="$last">
-        @if (editing() === ue) {
-          <app-ue-form
-            [ue]="ue"
-            [errors]="formErrors()"
-            [isSaving]="isSaving()"
-            (saved)="save($event)"
-            (cancelled)="close()"
-          />
-        } @else {
-          <div class="ue">
+      <li class="card ue" [appSortableItem]="$index" [appSortableLast]="$last">
+        <div class="ue-top">
+          <button
+            type="button"
+            class="sort-handle"
+            appSortableHandle
+            [attr.aria-label]="
+              'Déplacer l’UE ' + ue.code + ' : faire glisser, ou flèches haut et bas'
+            "
+            title="Glisser pour réordonner"
+          >
+            <app-icon name="grip" />
+          </button>
+          <span class="code-chip">{{ ue.code }}</span>
+          <span class="ue-actions">
             <button
               type="button"
-              class="sort-handle"
-              appSortableHandle
-              [attr.aria-label]="
-                'Déplacer l’UE ' + ue.code + ' : faire glisser, ou flèches haut et bas'
-              "
-              title="Glisser pour réordonner"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Modifier l’UE ' + ue.code"
+              (click)="open(ue)"
             >
-              ⋮⋮
+              <app-icon name="pencil" />
             </button>
-            <div class="ue-text">
-              <h2>
-                <a [routerLink]="['/ue', ue.code]">
-                  <span class="ue-code">{{ ue.code }}</span> {{ ue.title }}
-                </a>
-              </h2>
-              @if (ue.description) {
-                <p class="ue-description">{{ ue.description }}</p>
-              }
-            </div>
-            <div class="ue-actions">
-              <button
-                type="button"
-                class="button"
-                [attr.aria-label]="'Modifier l’UE ' + ue.code"
-                (click)="open(ue)"
-              >
-                Modifier
-              </button>
-              <button
-                type="button"
-                class="button button-danger"
-                [attr.aria-label]="'Supprimer l’UE ' + ue.code"
-                (click)="remove(ue)"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Supprimer l’UE ' + ue.code"
+              (click)="remove(ue)"
+            >
+              <app-icon name="trash" />
+            </button>
+          </span>
+        </div>
+        <h2>
+          <a [routerLink]="['/ue', ue.code]">{{ ue.title }}</a>
+        </h2>
+        @if (ue.description) {
+          <p class="meta ue-description">{{ ue.description }}</p>
+        }
+        @if (ue.counts; as counts) {
+          <p class="ue-counts">
+            <span class="pill">{{ plural(counts.courses, 'cours', 'cours') }}</span>
+            <span class="pill">{{ plural(counts.terms, 'terme', 'termes') }}</span>
+            <span class="pill">{{ plural(counts.files, 'fichier', 'fichiers') }}</span>
+          </p>
         }
       </li>
     }
   </ul>
+
+  <section class="week" aria-labelledby="week-title">
+    <div class="page-header week-header">
+      <h2 id="week-title">Cette semaine</h2>
+      <a routerLink="/agenda">Ouvrir l’agenda</a>
+    </div>
+    @if (weekEntries().length === 0) {
+      <p class="empty">Rien de prévu cette semaine.</p>
+    } @else {
+      <ul class="list">
+        @for (entry of weekEntries(); track entry.key) {
+          <li class="list-row">
+            <span class="week-day">{{ entry.day }}</span>
+            <span class="list-row-title">{{ entry.title }}</span>
+            @if (entry.ueCode) {
+              <span class="code-chip">{{ entry.ueCode }}</span>
+            }
+            <span class="pill">{{ entry.kind }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
 }
