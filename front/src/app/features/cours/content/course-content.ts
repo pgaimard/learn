@@ -194,6 +194,19 @@ export class CourseContent {
     return true;
   }
 
+  // Rang du dernier titre passé au-dessus de la hauteur donnée (dans la fenêtre) : celui
+  // de la section en cours de lecture. null avant le premier titre.
+  headingIndexAbove(limit: number): number | null {
+    const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
+    let current: number | null = null;
+    headings.forEach((heading, index) => {
+      if (heading.getBoundingClientRect().top <= limit) {
+        current = index;
+      }
+    });
+    return current;
+  }
+
   scrollToHeading(index: number): void {
     const headings = this.host.nativeElement.querySelectorAll<HTMLElement>('h2, h3, h4, h5');
     const heading = headings.item(index) as HTMLElement | null;

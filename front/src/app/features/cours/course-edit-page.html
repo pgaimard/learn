@@ -11,6 +11,7 @@
     <app-content-editor
       [content]="course.content"
       label="Contenu du cours"
+      [outline]="true"
       (edited)="markDirty()"
       (imageAdded)="addImage($event)"
     >
