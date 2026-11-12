@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
+import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { CourseContent } from './content/course-content';
 import { CourseEditPage } from './course-edit-page';
 import { Course, CourseService } from './course.service';
@@ -318,6 +319,11 @@ describe('CourseEditPage', () => {
       image.getAttribute('src'),
     );
     expect(sources).toEqual(['/api/courses/7/images/4', '/api/courses/7/images/5']);
+    // En édition, un clic sélectionne l'image : il ne l'ouvre pas en grand.
+    const image = element().querySelector('figure img') as HTMLImageElement;
+    image.click();
+    expect(image.hasAttribute('tabindex')).toBe(false);
+    expect(TestBed.inject(ImageViewerService).image()).toBeNull();
   });
 
   it('affiche le refus de l’API quand l’image n’est pas acceptée', async () => {

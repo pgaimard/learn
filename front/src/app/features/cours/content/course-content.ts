@@ -12,6 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { ImageViewerService } from '../../../core/ui/image-viewer.service';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
@@ -24,7 +25,12 @@ import { createCourseExtensions } from './course-extensions';
 @Component({
   selector: 'app-course-content',
   template: '',
-  host: { class: 'course-content', '[class.is-editable]': 'editable()' },
+  host: {
+    class: 'course-content',
+    '[class.is-editable]': 'editable()',
+    '(click)': 'zoom($event)',
+    '(keydown.enter)': 'zoom($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseContent {
@@ -58,6 +64,7 @@ export class CourseContent {
   );
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly imageViewer = inject(ImageViewerService);
 
   constructor() {
     afterNextRender(() => {
@@ -134,6 +141,22 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  // En lecture, un clic (ou Entrée) sur l'image d'une figure l'ouvre en grand.
+  protected zoom(event: Event): void {
+    const image = event.target;
+    if (this.editable() || !(image instanceof HTMLImageElement)) {
+      return;
+    }
+    const figure = image.closest('figure');
+    if (figure) {
+      this.imageViewer.open({
+        src: image.getAttribute('src') ?? '',
+        alt: image.alt,
+        caption: figure.querySelector('figcaption')?.textContent.trim() ?? '',
+      });
+    }
   }
 
   // Ouvre le choix de fichiers du navigateur ; les images choisies suivent le même

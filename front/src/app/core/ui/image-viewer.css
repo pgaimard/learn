@@ -1,0 +1,30 @@
+/* La fenêtre prend la taille de l'image, dans la limite de l'écran. */
+.modal {
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+}
+
+h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-body {
+  display: flex;
+  justify-content: center;
+}
+
+img {
+  display: block;
+  /* L'image occupe la largeur disponible, sans dépasser la hauteur de l'écran. */
+  width: min(72rem, calc(100vw - 4rem));
+  height: auto;
+  max-height: calc(100vh - 8rem);
+  object-fit: contain;
+  border-radius: 8px;
+  /* Les schémas sont dessinés pour un fond clair, quel que soit le thème. */
+  background: #ffffff;
+}
