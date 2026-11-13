@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { ContentNode } from './content/content-node';
+import { CourseContent } from './content/course-content';
 import { TermService, TermSummary } from '../termes/term.service';
 import { CourseReadPage } from './course-read-page';
 import { Course, CourseService } from './course.service';
@@ -49,7 +51,12 @@ describe('CourseReadPage', () => {
 
   const listTerms = vi.fn<TermService['list']>();
 
-  async function setup(shown: Course, view?: string, terms: TermSummary[] = []): Promise<void> {
+  async function setup(
+    shown: Course,
+    view?: string,
+    terms: TermSummary[] = [],
+    bloc?: string,
+  ): Promise<void> {
     listTerms.mockReset().mockReturnValue(of(terms));
     TestBed.configureTestingModule({
       providers: [
@@ -62,6 +69,7 @@ describe('CourseReadPage', () => {
     fixture.componentRef.setInput('code', 'UTC502');
     fixture.componentRef.setInput('id', '7');
     fixture.componentRef.setInput('vue', view);
+    fixture.componentRef.setInput('bloc', bloc);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -113,6 +121,53 @@ describe('CourseReadPage', () => {
     panel.querySelector('button')?.click();
     fixture.detectChanges();
     expect(panel.classList.contains('is-open')).toBe(false);
+  });
+
+  it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {
+    await setup(COURSE);
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    // jsdom ne calcule pas de mise en page : le clic vise le cinquième bloc.
+    content.blockIndexAt = () => 4;
+    const rightClick = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    element().querySelector('.article p')?.dispatchEvent(rightClick);
+    fixture.detectChanges();
+
+    expect(rightClick.defaultPrevented).toBe(true);
+    expect(link('Modifier ici')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/edition?bloc=4');
+
+    document.body.click();
+    fixture.detectChanges();
+    expect(link('Modifier ici')).toBeUndefined();
+  });
+
+  it('reprend la lecture au bloc demandé au retour de l’édition (?bloc=n)', async () => {
+    const scrolled: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = function (this: Element): void {
+      scrolled.push((this.textContent ?? '').trim());
+    };
+
+    await setup(COURSE, undefined, [], '4');
+
+    expect(scrolled).toEqual(['Détails.']);
+    if (original) {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', original);
+    } else {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
+  });
+
+  it('laisse le menu du navigateur hors du cours', async () => {
+    await setup(COURSE);
+    const rightClick = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    element().querySelector('h1')?.dispatchEvent(rightClick);
+    fixture.detectChanges();
+
+    expect(rightClick.defaultPrevented).toBe(false);
+    expect(link('Modifier ici')).toBeUndefined();
   });
 
   it('ouvre en grand l’image d’une figure, au clic comme au clavier', async () => {

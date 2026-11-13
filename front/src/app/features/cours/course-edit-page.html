@@ -12,6 +12,7 @@
       [content]="course.content"
       label="Contenu du cours"
       [outline]="true"
+      [startBlock]="startBlock()"
       (edited)="markDirty()"
       (imageAdded)="addImage($event)"
     >
@@ -25,7 +26,14 @@
             Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
-        <a class="button" [routerLink]="['/ue', code(), 'cours', course.id]">Terminer</a>
+        <!-- Venu de la lecture par « Modifier ici », on y retourne au même endroit. -->
+        <a
+          class="button"
+          [routerLink]="['/ue', code(), 'cours', course.id]"
+          [queryParams]="startBlock() === null ? {} : { bloc: startBlock() }"
+        >
+          Terminer
+        </a>
         <button
           type="button"
           class="button button-primary"

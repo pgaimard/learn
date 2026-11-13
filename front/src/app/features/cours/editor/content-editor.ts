@@ -50,6 +50,8 @@ export class ContentEditor {
 
   // Plan du chapitre à gauche de la feuille, pour un texte long et structuré.
   readonly outline = input(false);
+  // Rang du bloc où placer le curseur à l'ouverture ; null pour ne pas le placer.
+  readonly startBlock = input<number | null>(null);
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();

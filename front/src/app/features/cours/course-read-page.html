@@ -59,7 +59,7 @@
       }
     </aside>
 
-    <article class="article">
+    <article #article class="article">
       @if (isSheet()) {
         <p class="sheet-note" role="status">
           Fiche de révision : les encadrés « À retenir » et les blocs épinglés.
@@ -71,7 +71,11 @@
           en modifiant le cours.
         </p>
       }
-      <app-course-content [content]="course.content" [sheet]="isSheet()" />
+      <app-course-content
+        [content]="course.content"
+        [sheet]="isSheet()"
+        [startBlock]="startBlock()"
+      />
     </article>
 
     <aside class="side terms" aria-labelledby="course-terms-title">
@@ -93,6 +97,20 @@
       }
     </aside>
   </div>
+
+  @if (contextMenu(); as menu) {
+    <div class="context-menu" role="menu" [style.top.px]="menu.top" [style.left.px]="menu.left">
+      <a
+        #menuItem
+        role="menuitem"
+        class="menu-item"
+        [routerLink]="['/ue', code(), 'cours', course.id, 'edition']"
+        [queryParams]="menu.block === null ? {} : { bloc: menu.block }"
+      >
+        <app-icon name="pencil" [size]="15" />Modifier ici
+      </a>
+    </div>
+  }
 } @else if (errors().length === 0) {
   <p>Chargement…</p>
 }
