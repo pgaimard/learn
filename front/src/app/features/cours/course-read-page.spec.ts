@@ -51,7 +51,12 @@ describe('CourseReadPage', () => {
 
   const listTerms = vi.fn<TermService['list']>();
 
-  async function setup(shown: Course, view?: string, terms: TermSummary[] = []): Promise<void> {
+  async function setup(
+    shown: Course,
+    view?: string,
+    terms: TermSummary[] = [],
+    bloc?: string,
+  ): Promise<void> {
     listTerms.mockReset().mockReturnValue(of(terms));
     TestBed.configureTestingModule({
       providers: [
@@ -64,6 +69,7 @@ describe('CourseReadPage', () => {
     fixture.componentRef.setInput('code', 'UTC502');
     fixture.componentRef.setInput('id', '7');
     fixture.componentRef.setInput('vue', view);
+    fixture.componentRef.setInput('bloc', bloc);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -134,6 +140,23 @@ describe('CourseReadPage', () => {
     document.body.click();
     fixture.detectChanges();
     expect(link('Modifier ici')).toBeUndefined();
+  });
+
+  it('reprend la lecture au bloc demandé au retour de l’édition (?bloc=n)', async () => {
+    const scrolled: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = function (this: Element): void {
+      scrolled.push((this.textContent ?? '').trim());
+    };
+
+    await setup(COURSE, undefined, [], '4');
+
+    expect(scrolled).toEqual(['Détails.']);
+    if (original) {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', original);
+    } else {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
   });
 
   it('laisse le menu du navigateur hors du cours', async () => {

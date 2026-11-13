@@ -51,6 +51,9 @@ export class CourseReadPage {
   readonly id = input.required<string>();
   // Paramètre de requête ?vue=fiche : le cours réduit à sa fiche de révision.
   readonly vue = input<string>();
+  // Paramètre de requête ?bloc=n : rang du bloc où reprendre la lecture, au retour de
+  // l'édition ouverte par « Modifier ici ».
+  readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
   private readonly termService = inject(TermService);
@@ -62,6 +65,10 @@ export class CourseReadPage {
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly isSheet = computed(() => this.vue() === 'fiche');
+  protected readonly startBlock = computed(() => {
+    const rank = Number(this.bloc());
+    return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
+  });
   // Sommaire du cours, réduit aux titres de la fiche quand elle est affichée.
   protected readonly outline = computed(() => {
     const course = this.course();

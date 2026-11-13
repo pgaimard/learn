@@ -179,6 +179,11 @@ describe('CourseEditPage', () => {
     const content = fixture.debugElement.query(By.directive(CourseContent))
       .componentInstance as CourseContent;
     expect(content.editor()?.state.selection.$from.index(0)).toBe(1);
+    // « Terminer » ramène la lecture au même endroit.
+    const finish = Array.from(element().querySelectorAll('a')).find(
+      (link) => (link.textContent ?? '').trim() === 'Terminer',
+    );
+    expect(finish?.getAttribute('href')).toBe('/ue/UTC502/cours/7?bloc=1');
     service.get.mockReturnValue(of(COURSE));
   });
 

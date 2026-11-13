@@ -40,7 +40,8 @@ export class CourseContent {
   readonly label = input('Contenu du cours');
   // Réduit l'affichage à la fiche de révision du cours.
   readonly sheet = input(false);
-  // Rang du bloc de premier niveau où placer le curseur à l'ouverture (édition).
+  // Rang du bloc de premier niveau à amener au milieu de l'écran à l'ouverture ; en
+  // édition, le curseur s'y place.
   readonly startBlock = input<number | null>(null);
 
   // Émis à chaque modification faite par l'utilisateur.
@@ -199,7 +200,7 @@ export class CourseContent {
     return Math.min(doc.resolve(found.pos).index(0), doc.childCount - 1);
   }
 
-  // Place le curseur au début du bloc de ce rang et l'amène au milieu de l'écran.
+  // Amène le bloc de ce rang au milieu de l'écran ; en édition, y place le curseur.
   private focusBlock(index: number | null): void {
     const editor = this.editor();
     if (!editor || index === null || index < 0 || index >= editor.state.doc.childCount) {
@@ -209,7 +210,9 @@ export class CourseContent {
     for (let rank = 0; rank < index; rank++) {
       pos += editor.state.doc.child(rank).nodeSize;
     }
-    editor.commands.focus(pos + 1, { scrollIntoView: false });
+    if (editor.isEditable) {
+      editor.commands.focus(pos + 1, { scrollIntoView: false });
+    }
     const block = editor.view.nodeDOM(pos);
     if (block instanceof HTMLElement && typeof block.scrollIntoView === 'function') {
       block.scrollIntoView({ block: 'center' });

@@ -71,7 +71,11 @@
           en modifiant le cours.
         </p>
       }
-      <app-course-content [content]="course.content" [sheet]="isSheet()" />
+      <app-course-content
+        [content]="course.content"
+        [sheet]="isSheet()"
+        [startBlock]="startBlock()"
+      />
     </article>
 
     <aside class="side terms" aria-labelledby="course-terms-title">
