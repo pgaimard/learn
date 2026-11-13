@@ -195,6 +195,26 @@
   outline-offset: 2px;
 }
 
+/* Terme du dictionnaire ou du glossaire cité dans le texte, cliquable en lecture : un
+   soulignement discret, pour ne pas hacher la lecture. */
+.course-content .term-mention {
+  text-decoration: underline dotted var(--color-text-muted);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.course-content .term-mention:hover {
+  text-decoration-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.course-content .term-mention:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Encadrés typés : le libellé vient du type, pas du texte du cours. */
 
 .course-content .callout {

@@ -53,6 +53,21 @@ aucune syntaxe à écrire : il suffit de rédiger le renvoi comme ci-dessous.
 - Un renvoi ne désigne qu'une section du même cours. Pour citer un autre chapitre, écrire son
   titre plutôt que « chapitre 3 », qui mènerait à la section 3 du cours en cours de lecture.
 
+### Termes cliquables dans le texte
+
+En lecture, l'application rend cliquable, dans le texte du cours, chaque terme présent dans le
+dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à
+écrire, et le terme n'a pas besoin de venir du même paquet.
+
+- Le terme est reconnu par son `libelle`, en mot entier : écrire dans le cours le libellé tel
+  qu'il figure dans `termes.json`. « processus » est reconnu pour le libellé « Processus » ;
+  un pluriel ou une autre forme (« ordonnanceurs » pour « Ordonnanceur ») ne l'est pas.
+- Une définition est reconnue sans tenir compte des majuscules ; un acronyme l'est avec ses
+  majuscules exactes (« PCB », pas « pcb »).
+- Quand deux libellés se recouvrent, le plus long l'emporte (« commutation de contexte » plutôt
+  que « contexte »).
+- Rien n'est reconnu dans les titres ni dans le code.
+
 Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
 (définition, acronyme défini, acronyme seul, définition riche) :
 

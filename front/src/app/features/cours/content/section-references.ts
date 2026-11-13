@@ -44,7 +44,7 @@ function numberedHeadings(doc: ProseMirrorNode): Map<string, number> {
 }
 
 // Texte d'un bloc, caractère pour position : le code et les sauts de ligne sont neutralisés.
-function searchableText(block: ProseMirrorNode): string {
+export function searchableText(block: ProseMirrorNode): string {
   let text = '';
   block.forEach((child) => {
     const isPlain = child.isText && !child.marks.some((mark) => mark.type.name === 'code');

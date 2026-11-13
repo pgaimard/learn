@@ -50,6 +50,7 @@ describe('CourseReadPage', () => {
   let fixture: ComponentFixture<CourseReadPage>;
 
   const listTerms = vi.fn<TermService['list']>();
+  const getTerm = vi.fn<TermService['get']>();
 
   async function setup(
     shown: Course,
@@ -62,7 +63,7 @@ describe('CourseReadPage', () => {
       providers: [
         provideRouter([]),
         { provide: CourseService, useValue: { get: () => of(shown) } },
-        { provide: TermService, useValue: { list: listTerms } },
+        { provide: TermService, useValue: { list: listTerms, get: getTerm } },
       ],
     });
     fixture = TestBed.createComponent(CourseReadPage);
@@ -145,6 +146,41 @@ describe('CourseReadPage', () => {
     expect(button('Revenir à ma lecture')).toBeUndefined();
     scrollTo.mockRestore();
     Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  });
+
+  it('ouvre dans une fenêtre la définition d’un terme cité dans le texte', async () => {
+    const pcb: TermSummary = {
+      id: 3,
+      type: 'acronym',
+      label: 'PCB',
+      expandedForm: 'Process Control Block',
+      excerpt: '',
+      ueCode: null,
+      courseId: null,
+      courseTitle: null,
+    };
+    getTerm.mockReturnValue(
+      of({
+        id: 3,
+        type: 'acronym',
+        label: 'PCB',
+        expandedForm: 'Process Control Block',
+        content: { type: 'doc', content: [paragraph('Bloc de contrôle du processus.')] },
+        ue: null,
+        course: null,
+      }),
+    );
+    await setup(course(paragraph('Le PCB est mis à jour.')), undefined, [pcb]);
+
+    element().querySelector<HTMLElement>('.term-mention')?.click();
+    fixture.detectChanges();
+
+    expect(getTerm).toHaveBeenCalledWith(3);
+    const dialog = element().querySelector('dialog') as HTMLElement;
+    expect(dialog.querySelector('h2')?.textContent).toBe('PCB');
+    expect(dialog.textContent).toContain('Process Control Block');
+    expect(dialog.textContent).toContain('Bloc de contrôle du processus.');
+    expect(link('Ouvrir dans le glossaire')?.getAttribute('href')).toBe('/glossaire/3');
   });
 
   it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {

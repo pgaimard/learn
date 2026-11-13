@@ -75,7 +75,9 @@
         [content]="course.content"
         [sheet]="isSheet()"
         [startBlock]="startBlock()"
+        [terms]="allTerms()"
         (sectionReferenced)="followReference($event)"
+        (termOpened)="openTerm($event)"
       />
     </article>
 
@@ -98,6 +100,23 @@
       }
     </aside>
   </div>
+
+  @if (shownTerm(); as term) {
+    <!-- Terme cité dans le texte : sa définition complète, sans quitter le cours. -->
+    <app-modal [heading]="term.label" [wide]="true" (closed)="shownTerm.set(null)">
+      <div class="term-definition">
+        @if (term.expandedForm; as expandedForm) {
+          <p class="expanded-form">{{ expandedForm }}</p>
+        }
+        <app-course-content [content]="term.content" label="Définition" />
+      </div>
+      <div modalFooter class="modal-footer">
+        <a class="button" [routerLink]="[termPath(term), term.id]">
+          Ouvrir dans le {{ term.type === 'acronym' ? 'glossaire' : 'dictionnaire' }}
+        </a>
+      </div>
+    </app-modal>
+  }
 
   @if (returnPosition() !== null) {
     <!-- Un renvoi vient d'être suivi : ce bouton ramène à l'endroit quitté. -->

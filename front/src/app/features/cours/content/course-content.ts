@@ -19,6 +19,7 @@ import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { setSheetView } from '../revision/revision-sheet-view';
 import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
+import { MentionTerm, setMentionTerms } from './term-mentions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
 // en lecture et en édition, et le contenu n'est jamais injecté comme du HTML.
@@ -44,12 +45,17 @@ export class CourseContent {
   // édition, le curseur s'y place.
   readonly startBlock = input<number | null>(null);
 
+  // Termes à rendre cliquables dans le texte, en lecture.
+  readonly terms = input<MentionTerm[]>([]);
+
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
   // Émis pour chaque image collée ou déposée ; l'envoi est fait par la page.
   readonly imageReceived = output<File>();
   // Émis en lecture quand un renvoi vers une section est suivi : le rang du titre visé.
   readonly sectionReferenced = output<number>();
+  // Émis en lecture quand un terme cité dans le texte est choisi : son identifiant.
+  readonly termOpened = output<number>();
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
@@ -144,14 +150,21 @@ export class CourseContent {
       }
     });
     effect(() => {
+      const terms = this.terms();
+      const view = this.editor()?.view;
+      if (view) {
+        setMentionTerms(view, terms);
+      }
+    });
+    effect(() => {
       const editable = this.editable();
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
   }
 
-  // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ou ouvre en grand
-  // l'image d'une figure.
+  // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ouvre la définition
+  // d'un terme cité, ou ouvre en grand l'image d'une figure.
   protected activate(event: Event): void {
     const image = event.target;
     if (this.editable() || !(image instanceof Element)) {
@@ -161,6 +174,12 @@ export class CourseContent {
     if (reference) {
       event.preventDefault();
       this.sectionReferenced.emit(Number(reference.dataset['heading']));
+      return;
+    }
+    const mention = image.closest<HTMLElement>('.term-mention');
+    if (mention) {
+      event.preventDefault();
+      this.termOpened.emit(Number(mention.dataset['termId']));
       return;
     }
     if (!(image instanceof HTMLImageElement)) {
