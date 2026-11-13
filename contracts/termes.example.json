@@ -14,5 +14,10 @@
     "type": "acronyme",
     "libelle": "PID",
     "forme_developpee": "Process Identifier"
+  },
+  {
+    "type": "definition",
+    "libelle": "Commutation de contexte",
+    "definition": "Passage du processeur d'un processus à un autre : le noyau sauvegarde le contexte du premier et restaure celui du second.\n\n![Deux processus qui se partagent le processeur](images/def-commutation-01.svg \"Commutation entre deux processus\")\n\n| Étape | Action du noyau |\n|-------|-----------------|\n| 1     | Sauvegarde des registres dans le PCB |\n| 2     | Choix du processus suivant |\n| 3     | Restauration de son contexte |\n\n> [!attention]\n> Une commutation coûte du temps processeur sans faire avancer aucun programme."
   }
 ]

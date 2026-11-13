@@ -21,8 +21,11 @@ import {
   prepareImage,
 } from '../images/course-images.service.js';
 import { markdownToContent } from './markdown-to-content.js';
+import { TermImage } from '../../terms/images/term-image.entity.js';
+import { TermImagesService } from '../../terms/images/term-images.service.js';
 import { CourseMetadata, parseFrontMatter } from './parse-front-matter.js';
 import { ParsedTerm, parseTerms } from './parse-terms.js';
+import { findAltText, placeImages } from './place-images.js';
 import { PackageFiles } from './read-package.js';
 import {
   insertTerms,
@@ -38,6 +41,8 @@ export interface ImportPreview {
   sectionCount: number;
   imageCount: number;
   termCount: number;
+  // Images des définitions que l'import créera.
+  termImageCount: number;
   // Termes de termes.json que l'import créera, et ceux déjà présents qu'il laissera tels quels.
   newTerms: TermReference[];
   duplicateTerms: TermReference[];
@@ -45,10 +50,18 @@ export interface ImportPreview {
   existingCourse: { id: number; title: string } | null;
 }
 
+// Fichiers écrits sur disque pendant un import, à effacer s'il échoue.
+interface WrittenImages {
+  course: CourseImage[];
+  term: TermImage[];
+}
+
 interface AnalysedPackage {
   metadata: CourseMetadata;
   document: ContentNode;
   images: Map<string, Buffer>;
+  // Images référencées par les définitions de termes.json.
+  termImages: Map<string, Buffer>;
   sectionCount: number;
   terms: ParsedTerm[];
 }
@@ -61,6 +74,7 @@ export class CourseImportService {
     private readonly ueService: UeService,
     private readonly imagesService: CourseImagesService,
     private readonly coursesService: CoursesService,
+    private readonly termImagesService: TermImagesService,
   ) {}
 
   async preview(files: PackageFiles): Promise<ImportPreview> {
@@ -73,6 +87,10 @@ export class CourseImportService {
       sectionCount: analysed.sectionCount,
       imageCount: analysed.images.size,
       termCount: analysed.terms.length,
+      termImageCount: terms.fresh.reduce(
+        (count, term) => count + term.imagePaths.length,
+        0,
+      ),
       newTerms: terms.fresh.map(toReference),
       duplicateTerms: terms.duplicates.map(toReference),
       existingCourse: existing
@@ -90,7 +108,7 @@ export class CourseImportService {
         `Le chapitre « ${existing.title} » existe déjà dans ${ue.code} : confirmez son remplacement.`,
       );
     }
-    const written: CourseImage[] = [];
+    const written: WrittenImages = { course: [], term: [] };
     try {
       // Cours, images, contenu et termes sont enregistrés ensemble ou pas du tout.
       const { courseId, obsolete } = await this.dataSource.transaction(
@@ -102,7 +120,8 @@ export class CourseImportService {
         relations: { ue: true },
       });
     } catch (error) {
-      await this.imagesService.removeFiles(written);
+      await this.imagesService.removeFiles(written.course);
+      await this.termImagesService.removeFiles(written.term);
       throw error;
     }
   }
@@ -112,7 +131,7 @@ export class CourseImportService {
     ue: Ue,
     existing: Course | null,
     analysed: AnalysedPackage,
-    written: CourseImage[],
+    written: WrittenImages,
   ): Promise<{ courseId: number; obsolete: CourseImage[] }> {
     const { metadata } = analysed;
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
@@ -126,7 +145,7 @@ export class CourseImportService {
         findAltText(analysed.document, path),
         manager,
       );
-      written.push(image);
+      written.course.push(image);
       sources.set(path, buildImageSource('courses', course.id, image.id));
     }
     const content = placeImages(analysed.document, sources);
@@ -136,10 +155,24 @@ export class CourseImportService {
     course.plainText = extractPlainText(content);
     await manager.save(course);
     const terms = await sortTerms(manager, analysed.terms);
-    await insertTerms(manager, terms.fresh, {
-      ueId: ue.id,
-      courseId: course.id,
-    });
+    await insertTerms(
+      manager,
+      terms.fresh,
+      { ueId: ue.id, courseId: course.id },
+      {
+        files: analysed.termImages,
+        upload: async (termId, data, altText) => {
+          const image = await this.termImagesService.upload(
+            termId,
+            data,
+            altText,
+            manager,
+          );
+          written.term.push(image);
+          return image.id;
+        },
+      },
+    );
     return { courseId: course.id, obsolete };
   }
 
@@ -209,19 +242,37 @@ function throwIfAny(errors: string[]): void {
 function analyse(files: PackageFiles): AnalysedPackage {
   const header = parseFrontMatter(files.markdown);
   const converted = markdownToContent(header.body, header.lineOffset);
-  const images = new Map<string, Buffer>();
   const errors = [...header.errors, ...converted.errors];
-  for (const path of converted.imagePaths) {
+  const checked = new Set<string>();
+  // Relève l'image d'un chemin du paquet ; chaque fichier n'est vérifié qu'une fois.
+  const collect = (
+    path: string,
+    referrer: string,
+    target: Map<string, Buffer>,
+  ): void => {
     const data = files.images.get(path);
     if (!data) {
-      errors.push(`cours.md référence « ${path} », absent du paquet.`);
-    } else {
-      images.set(path, data);
+      errors.push(`${referrer} référence « ${path} », absent du paquet.`);
+      return;
+    }
+    target.set(path, data);
+    if (!checked.has(path)) {
+      checked.add(path);
       errors.push(...checkImage(path, data));
     }
+  };
+  const images = new Map<string, Buffer>();
+  for (const path of converted.imagePaths) {
+    collect(path, 'cours.md', images);
   }
   const terms = parseTerms(files.terms);
   errors.push(...terms.errors);
+  const termImages = new Map<string, Buffer>();
+  for (const term of terms.terms) {
+    for (const path of term.imagePaths) {
+      collect(path, `termes.json, « ${term.label} »`, termImages);
+    }
+  }
   if (!header.metadata || errors.length > 0) {
     throw new BadRequestException(errors.slice(0, 10));
   }
@@ -229,6 +280,7 @@ function analyse(files: PackageFiles): AnalysedPackage {
     metadata: header.metadata,
     document: converted.document,
     images,
+    termImages,
     sectionCount: converted.sectionCount,
     terms: terms.terms,
   };
@@ -243,37 +295,4 @@ function checkImage(path: string, data: Buffer): string[] {
       error instanceof HttpException ? error.message : 'fichier illisible.';
     return [`${path} : ${reason}`];
   }
-}
-
-function findAltText(node: ContentNode, path: string): string {
-  if (node.type === 'figure' && node.attrs?.['src'] === path) {
-    return typeof node.attrs['alt'] === 'string' ? node.attrs['alt'] : '';
-  }
-  for (const child of node.content ?? []) {
-    const altText = findAltText(child, path);
-    if (altText) {
-      return altText;
-    }
-  }
-  return '';
-}
-
-// Remplace, dans chaque figure, le chemin du paquet par l'adresse de l'image enregistrée.
-function placeImages(
-  node: ContentNode,
-  sources: Map<string, string>,
-): ContentNode {
-  if (node.type === 'figure') {
-    const path = String(node.attrs?.['src']);
-    return {
-      ...node,
-      attrs: { ...node.attrs, src: sources.get(path) ?? path },
-    };
-  }
-  return node.content
-    ? {
-        ...node,
-        content: node.content.map((child) => placeImages(child, sources)),
-      }
-    : node;
 }

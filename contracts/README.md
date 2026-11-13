@@ -19,7 +19,8 @@ plus ancien qui ne le porte pas reste valide, et le bloc n'est alors pas épingl
 Un paquet de cours est une archive `.zip` qui contient :
 
 - `cours.md` : le cours en Markdown, dont `cours.example.md` montre toutes les constructions acceptées ;
-- `images/` : un fichier par figure (`fig-01.svg`, `fig-02.png`…), en SVG, PNG ou JPEG ;
+- `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
+  (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
 - `termes.json` (facultatif) : la liste des entrées du glossaire du chapitre.
 
 Règles de `cours.md` :
@@ -35,15 +36,45 @@ Règles de `cours.md` :
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
 
-Règles de `termes.json`, dont `termes.example.json` montre les trois formes d'entrée :
+Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
+(définition, acronyme défini, acronyme seul, définition riche) :
 
 - une liste de 500 entrées au plus, chacune avec `type` (`definition` ou `acronyme`) et `libelle` ;
 - `forme_developpee` est obligatoire pour un acronyme et interdite pour une définition ;
-- `definition` est du Markdown, avec les mêmes constructions que `cours.md` sauf les images ;
-  elle est obligatoire pour une définition, facultative pour un acronyme ;
+- `definition` est du Markdown de 10 000 caractères au plus, avec les mêmes constructions que
+  `cours.md`, images comprises ; elle est obligatoire pour une définition, facultative pour un
+  acronyme ;
 - toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
 - un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
   est signalé à l'aperçu et laissé tel quel à l'import.
+
+### Définition riche
+
+Une définition (ou la définition d'un acronyme) peut être un mini-cours : paragraphes, listes,
+tableaux, blocs de code, citations, encadrés `[!retenir]`, `[!change]`, `[!attention]`, titres de
+niveau 2 à 5, et images. Dans le JSON, les sauts de ligne du Markdown s'écrivent `\n` et un bloc
+est séparé du suivant par une ligne vide (`\n\n`).
+
+Un schéma ou une image s'insère comme dans `cours.md` :
+
+```markdown
+![Texte alternatif](images/def-commutation-01.svg "Légende facultative")
+```
+
+- l'image est seule dans son paragraphe ;
+- son fichier est dans le dossier `images/` du paquet, avec ceux du cours. Le nom est libre
+  (lettres sans accent, chiffres, `.`, `_`, `-`) ; le préfixe `def-` suivi du terme évite toute
+  collision avec les figures du cours ;
+- formats SVG, PNG ou JPEG, 5 Mo au plus par image ; un SVG est assaini à l'import (scripts et
+  contenus externes retirés) ;
+- une image référencée mais absente du paquet, ou d'un format refusé, fait refuser tout le paquet
+  avec un message qui nomme le terme et le fichier ;
+- un même fichier peut servir au cours et à une ou plusieurs définitions : chacun en reçoit sa copie ;
+- les images d'un terme déjà présent dans l'application ne sont pas importées, puisque ce terme
+  est laissé tel quel.
+
+Un paquet sans image de définition reste valide : rien n'est à changer dans les paquets existants.
+Le Markdown collé, sans paquet, ne transporte toujours ni image ni terme.
 
 `termes.example.json` est lu par les tests de l'API (`parse-terms.spec.ts`,
 `course-imports.e2e-spec.ts`).
