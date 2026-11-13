@@ -72,7 +72,7 @@ describe('CourseReadPage', () => {
   }
 
   function outline(): string[] {
-    return Array.from(element().querySelectorAll('.outline button')).map((entry) =>
+    return Array.from(element().querySelectorAll('.outline nav button')).map((entry) =>
       (entry.textContent ?? '').trim(),
     );
   }
@@ -242,7 +242,9 @@ describe('CourseReadPage', () => {
   it('garde marqué le titre choisi dans le sommaire, jusqu’à ce que l’utilisateur fasse défiler', async () => {
     await setup(COURSE);
     setPageHeight(5000);
-    const entries = Array.from(element().querySelectorAll<HTMLButtonElement>('.outline button'));
+    const entries = Array.from(
+      element().querySelectorAll<HTMLButtonElement>('.outline nav button'),
+    );
     const current = (): string | undefined =>
       element().querySelector('.outline .is-current')?.textContent.trim();
 
