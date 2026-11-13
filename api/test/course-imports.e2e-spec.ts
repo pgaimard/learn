@@ -62,9 +62,14 @@ describe('Import d’un paquet de cours', () => {
     );
   }
 
-  function importPackage(zip: Buffer, replace = false): request.Test {
+  function importPackage(
+    zip: Buffer,
+    replace = false,
+    replaceTerms = false,
+  ): request.Test {
     return client('post', '/api/course-imports')
       .field('replace', String(replace))
+      .field('replaceTerms', String(replaceTerms))
       .attach('file', zip, 'paquet.zip');
   }
 
@@ -314,6 +319,87 @@ describe('Import d’un paquet de cours', () => {
       'PCB',
     ]);
     expect(stored[0].plain_text).toContain('Programme en cours d');
+  });
+
+  it('remplace sur demande la définition et les images des termes déjà présents', async () => {
+    const terms = JSON.stringify([
+      {
+        type: 'definition',
+        libelle: 'COMMUTATION DE CONTEXTE',
+        definition: 'Version revue.\n\n![Nouveau schéma](images/def-revu.svg)',
+      },
+      {
+        type: 'acronyme',
+        libelle: 'PID',
+        forme_developpee: 'Process IDentifier',
+        definition: 'Numéro du processus.',
+      },
+    ]);
+    const zip = createZip({
+      'cours.md': MARKDOWN.replace('notions de base', 'révision'),
+      'images/fig-01.svg': SVG,
+      'images/def-revu.svg': SVG,
+      'termes.json': terms,
+    });
+    const filesBefore = storedFiles();
+
+    const imported = await importPackage(zip, false, true);
+
+    expect(imported.status).toBe(201);
+    const rows = await app.get(DataSource).query<
+      {
+        id: number;
+        label: string;
+        expanded_form: string | null;
+        plain_text: string;
+        content: Course['content'];
+        course_title: string;
+      }[]
+    >(
+      `SELECT term.id, term.label, term.expanded_form, term.plain_text, term.content,
+              course.title AS course_title
+         FROM terms term JOIN courses course ON course.id = term.course_id
+        WHERE term.label IN ('Commutation de contexte', 'PID')
+        ORDER BY term.label`,
+    );
+    // Le libellé garde sa casse d'origine ; le reste vient du paquet.
+    expect(rows).toMatchObject([
+      {
+        label: 'Commutation de contexte',
+        plain_text: expect.stringContaining('Version revue.') as string,
+        course_title: 'Les processus : révision',
+      },
+      {
+        label: 'PID',
+        expanded_form: 'Process IDentifier',
+        plain_text: 'Numéro du processus.',
+      },
+    ]);
+    const figure = rows[0].content.content?.[1];
+    expect(figure?.attrs?.['alt']).toBe('Nouveau schéma');
+    const served = await client('get', String(figure?.attrs?.['src']));
+    expect(served.status).toBe(200);
+    const images = await app
+      .get(DataSource)
+      .query<object[]>('SELECT id FROM term_images WHERE term_id = $1', [
+        rows[0].id,
+      ]);
+    expect(images).toHaveLength(1);
+    // L'ancienne image du terme est effacée ; s'ajoutent celle du cours et la nouvelle.
+    const filesAfter = storedFiles();
+    expect(filesAfter).toHaveLength(filesBefore.length + 1);
+    expect(
+      filesBefore.filter((name) => !filesAfter.includes(name)),
+    ).toHaveLength(1);
+    await client('delete', `/api/courses/${(imported.body as Course).id}`);
+  });
+
+  it('refuse une valeur invalide pour le remplacement des termes', async () => {
+    const response = await client('post', '/api/course-imports')
+      .field('replaceTerms', 'peut-être')
+      .attach('file', validPackage(), 'paquet.zip');
+
+    expect(response.status).toBe(400);
   });
 
   it('laisse le cours importé entièrement modifiable', async () => {

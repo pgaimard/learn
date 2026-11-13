@@ -26,11 +26,12 @@ describe('CourseImportService', () => {
   });
 
   it('importe un paquet en transmettant la confirmation de remplacement', () => {
-    service.import({ kind: 'package', file }, true).subscribe();
+    service.import({ kind: 'package', file }, true, true).subscribe();
 
     const body = http.expectOne('/api/course-imports').request.body as FormData;
     expect(body.get('file')).toBe(file);
     expect(body.get('replace')).toBe('true');
+    expect(body.get('replaceTerms')).toBe('true');
   });
 
   it('envoie le Markdown collé en JSON', () => {

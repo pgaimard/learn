@@ -17,7 +17,7 @@ export interface ImportPreview {
   termCount: number;
   // Images des définitions que l'import créera.
   termImageCount: number;
-  // Termes que l'import créera, et ceux déjà présents qu'il laissera tels quels.
+  // Termes que l'import créera, et ceux déjà présents : laissés tels quels, ou remplacés sur demande.
   newTerms: ImportedTerm[];
   duplicateTerms: ImportedTerm[];
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
@@ -42,7 +42,8 @@ export class CourseImportService {
     return this.http.post<ImportPreview>('/api/course-imports/preview', form);
   }
 
-  import(source: ImportSource, replace: boolean): Observable<Course> {
+  // replaceTerms : remplacer aussi la définition des termes déjà présents (paquet seulement).
+  import(source: ImportSource, replace: boolean, replaceTerms = false): Observable<Course> {
     if (source.kind === 'markdown') {
       return this.http.post<Course>('/api/course-imports/markdown', {
         markdown: source.markdown,
@@ -52,6 +53,7 @@ export class CourseImportService {
     const form = new FormData();
     form.append('file', source.file);
     form.append('replace', String(replace));
+    form.append('replaceTerms', String(replaceTerms));
     return this.http.post<Course>('/api/course-imports', form);
   }
 }

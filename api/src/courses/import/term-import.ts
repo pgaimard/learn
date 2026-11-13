@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
+import { TermImage } from '../../terms/images/term-image.entity.js';
 import { Term } from '../../terms/term.entity.js';
 import type { TermType } from '../../terms/term.entity.js';
 import { buildImageSource } from '../content/collect-figures.js';
@@ -89,6 +90,49 @@ export async function insertTerms(
       );
     }
   }
+}
+
+// Remplace la définition, la forme développée et l'origine des termes déjà présents ;
+// leur libellé reste tel qu'il a été saisi. Renvoie leurs anciennes images, dont les
+// fichiers restent à effacer une fois la transaction validée.
+export async function replaceTerms(
+  manager: EntityManager,
+  terms: ParsedTerm[],
+  origin: { ueId: number; courseId: number },
+  images: TermImageWriter,
+): Promise<TermImage[]> {
+  const obsolete: TermImage[] = [];
+  for (const term of terms) {
+    const existing = await manager
+      .createQueryBuilder(Term, 'term')
+      .select('term.id')
+      .where('term.type = :type', { type: term.type })
+      .andWhere('lower(term.label) = lower(:label)', { label: term.label })
+      .getOne();
+    if (!existing) {
+      continue;
+    }
+    obsolete.push(
+      ...(await manager.findBy(TermImage, { termId: existing.id })),
+    );
+    await manager.delete(TermImage, { termId: existing.id });
+    const content = await storeImages(existing.id, term, images);
+    await manager.query(
+      `UPDATE terms
+          SET expanded_form = $1, content = $2::jsonb, plain_text = $3,
+              ue_id = $4, course_id = $5, updated_at = now()
+        WHERE id = $6`,
+      [
+        term.expandedForm,
+        JSON.stringify(content),
+        extractPlainText(content),
+        origin.ueId,
+        origin.courseId,
+        existing.id,
+      ],
+    );
+  }
+  return obsolete;
 }
 
 // Enregistre les images d'une définition et renvoie celle-ci avec leurs adresses.

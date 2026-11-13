@@ -10,6 +10,13 @@ export class PackageImportDto {
   @Transform(toBoolean)
   @IsBoolean({ message: 'Le remplacement doit valoir vrai ou faux.' })
   replace?: boolean;
+
+  @IsOptional()
+  @Transform(toBoolean)
+  @IsBoolean({
+    message: 'Le remplacement des termes doit valoir vrai ou faux.',
+  })
+  replaceTerms?: boolean;
 }
 
 export class MarkdownPreviewDto {

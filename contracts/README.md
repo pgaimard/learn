@@ -46,7 +46,9 @@ Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'
   acronyme ;
 - toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
 - un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
-  est signalé à l'aperçu et laissé tel quel à l'import.
+  est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
+  définition par celle du paquet », sa définition, sa forme développée et ses images sont
+  remplacées par celles du paquet, et il est rattaché au cours importé. Son libellé ne change pas.
 
 ### Définition riche
 
@@ -70,8 +72,8 @@ Un schéma ou une image s'insère comme dans `cours.md` :
 - une image référencée mais absente du paquet, ou d'un format refusé, fait refuser tout le paquet
   avec un message qui nomme le terme et le fichier ;
 - un même fichier peut servir au cours et à une ou plusieurs définitions : chacun en reçoit sa copie ;
-- les images d'un terme déjà présent dans l'application ne sont pas importées, puisque ce terme
-  est laissé tel quel.
+- les images d'un terme déjà présent dans l'application ne sont importées que si l'on demande le
+  remplacement de sa définition ; ses anciennes images sont alors supprimées.
 
 Un paquet sans image de définition reste valide : rien n'est à changer dans les paquets existants.
 Le Markdown collé, sans paquet, ne transporte toujours ni image ni terme.
