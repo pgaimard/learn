@@ -123,6 +123,30 @@ describe('CourseReadPage', () => {
     expect(panel.classList.contains('is-open')).toBe(false);
   });
 
+  it('suit un renvoi vers une section et propose de revenir à l’endroit quitté', async () => {
+    await setup(
+      course(heading(2, '1. Notion'), paragraph('Détails en section 2.'), heading(2, '2. Suite')),
+    );
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    Object.defineProperty(window, 'scrollY', { value: 420, configurable: true });
+    const button = (label: string): HTMLButtonElement | undefined =>
+      Array.from(element().querySelectorAll('button')).find(
+        (candidate) => (candidate.textContent ?? '').trim() === label,
+      );
+    expect(button('Revenir à ma lecture')).toBeUndefined();
+
+    element().querySelector<HTMLElement>('.section-ref')?.click();
+    fixture.detectChanges();
+    expect(element().querySelector('.outline .is-current')?.textContent.trim()).toBe('2. Suite');
+
+    button('Revenir à ma lecture')?.click();
+    fixture.detectChanges();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 420, behavior: 'smooth' });
+    expect(button('Revenir à ma lecture')).toBeUndefined();
+    scrollTo.mockRestore();
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  });
+
   it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {
     await setup(COURSE);
     const content = fixture.debugElement.query(By.directive(CourseContent))

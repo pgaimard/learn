@@ -177,6 +177,24 @@
   font-size: 0.78125rem;
 }
 
+/* Renvoi vers une section du cours, cliquable en lecture. */
+.course-content .section-ref {
+  color: var(--color-accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.course-content .section-ref:hover {
+  text-decoration-style: solid;
+}
+
+.course-content .section-ref:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Encadrés typés : le libellé vient du type, pas du texte du cours. */
 
 .course-content .callout {

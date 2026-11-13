@@ -75,6 +75,7 @@
         [content]="course.content"
         [sheet]="isSheet()"
         [startBlock]="startBlock()"
+        (sectionReferenced)="followReference($event)"
       />
     </article>
 
@@ -97,6 +98,24 @@
       }
     </aside>
   </div>
+
+  @if (returnPosition() !== null) {
+    <!-- Un renvoi vient d'être suivi : ce bouton ramène à l'endroit quitté. -->
+    <div class="return-bar">
+      <button type="button" class="button button-primary" (click)="goBack()">
+        <app-icon name="undo" />Revenir à ma lecture
+      </button>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        aria-label="Rester ici"
+        title="Rester ici"
+        (click)="returnPosition.set(null)"
+      >
+        <app-icon name="close" [size]="15" />
+      </button>
+    </div>
+  }
 
   @if (contextMenu(); as menu) {
     <div class="context-menu" role="menu" [style.top.px]="menu.top" [style.left.px]="menu.left">

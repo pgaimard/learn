@@ -36,6 +36,23 @@ Règles de `cours.md` :
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
 
+### Renvois vers une section
+
+En lecture, l'application rend cliquable un renvoi vers une section du même cours. Il n'y a
+aucune syntaxe à écrire : il suffit de rédiger le renvoi comme ci-dessous.
+
+- Les titres portent leur numéro au début de leur texte : `## 3. Ordonnancement`,
+  `### 3.4 Tourniquet`. Un titre sans numéro ne peut pas être la cible d'un renvoi.
+- Dans le texte, le numéro est précédé de l'un de ces mots : « section », « § », « partie »,
+  « chapitre », « voir », « cf. », « réf. » (au singulier ou au pluriel, avec ou sans majuscule).
+  Exemples : « voir section 3.4 », « cf. 3.4 », « (réf. 3.4) », « § 3.4 », « sections 3.4 et 3.5 ».
+- Le numéro cité est exactement celui du titre : « 3.4 » mène au titre qui commence par « 3.4 ».
+  S'il ne correspond à aucun titre du cours, le texte reste du texte.
+- Un numéro sans l'un de ces mots devant lui n'est pas un renvoi (« 3.4 GHz », « version 2.1 »).
+  Rien n'est reconnu dans les titres ni dans le code.
+- Un renvoi ne désigne qu'une section du même cours. Pour citer un autre chapitre, écrire son
+  titre plutôt que « chapitre 3 », qui mènerait à la section 3 du cours en cours de lecture.
+
 Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
 (définition, acronyme défini, acronyme seul, définition riche) :
 

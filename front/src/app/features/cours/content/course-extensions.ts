@@ -12,6 +12,7 @@ import { RevisionPin } from '../revision/revision-pin';
 import { RevisionSheetView } from '../revision/revision-sheet-view';
 import { Callout } from './callout';
 import { Figure } from './figure';
+import { SectionReferences } from './section-references';
 
 const lowlight = createLowlight(common);
 
@@ -40,6 +41,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     Figure,
     Callout,
     SectionFolding,
+    SectionReferences,
     RevisionPin,
     RevisionSheetView,
     ...(tools
