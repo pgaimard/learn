@@ -394,15 +394,15 @@
   pointer-events: none;
 }
 
-/* Chapitres : bouton de pliage carré dans la marge, à gauche du titre, pour que le
-   titre reste aligné sur le texte ; contenu replié caché. */
+/* Chapitres : bouton de pliage carré, large autour de son chevron, dans la marge à
+   gauche du titre, pour que le titre reste aligné sur le texte ; contenu replié caché. */
 
 .course-content .fold-toggle {
-  --fold-size: 1.25rem;
+  --fold-size: 1.5rem;
   position: absolute;
   /* Centré sur la première ligne du titre. */
   top: calc((1.25em - var(--fold-size)) / 2);
-  left: -1.625rem;
+  left: -1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -418,11 +418,18 @@
   user-select: none;
 }
 
-/* En édition, la poignée de bloc occupe déjà le bord du texte : le bouton se place
-   plus à gauche, un peu plus petit, toujours carré. */
+/* En édition, la poignée de bloc occupe déjà le bord du texte : le bouton, de même
+   taille, se place plus à gauche. */
 .course-content.is-editable .fold-toggle {
-  --fold-size: 1rem;
-  left: -2.75rem;
+  left: -3.375rem;
+}
+
+/* Écran étroit : la marge est réduite, le bouton reste au bord du texte. */
+@media (max-width: 40rem) {
+  .course-content .fold-toggle,
+  .course-content.is-editable .fold-toggle {
+    left: -1.625rem;
+  }
 }
 
 /* Chevron : deux traits fins, vers le bas ; il pivote vers la droite quand le chapitre
