@@ -20,7 +20,6 @@ export class TermImagesService {
   constructor(
     @InjectRepository(TermImage)
     private readonly images: Repository<TermImage>,
-    @InjectRepository(Term) private readonly terms: Repository<Term>,
     private readonly storage: ImageStorageService,
   ) {}
 
@@ -28,16 +27,17 @@ export class TermImagesService {
     termId: number,
     data: Buffer,
     altText: string,
+    manager: EntityManager = this.images.manager,
   ): Promise<TermImage> {
-    if (!(await this.terms.existsBy({ id: termId }))) {
+    if (!(await manager.existsBy(Term, { id: termId }))) {
       throw new NotFoundException('Ce terme n’existe pas.');
     }
     const { content, mimeType } = prepareImage(data);
     const storageName = `${randomUUID()}.${IMAGE_EXTENSIONS[mimeType]}`;
     await this.storage.write(storageName, content);
     try {
-      return await this.images.save(
-        this.images.create({
+      return await manager.save(
+        manager.create(TermImage, {
           termId,
           storageName,
           mimeType,

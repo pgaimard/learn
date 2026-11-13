@@ -17,6 +17,7 @@ import { TermsService } from './terms.service.js';
   ],
   controllers: [TermsController, TermImagesController],
   providers: [TermsService, TermImagesService],
-  exports: [TermsService],
+  // TermImagesService : l'import d'un paquet enregistre les images des définitions.
+  exports: [TermsService, TermImagesService],
 })
 export class TermsModule {}

@@ -69,7 +69,7 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - **Format du paquet de cours** (contrat entre Claude et l'application, à respecter strictement des deux côtés) :
   - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 5 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`). Images référencées par chemin relatif, avec légende.
   - `images/` : un fichier par figure (SVG pour les schémas redessinés, PNG ou JPEG pour les figures d'origine et captures), nommé de façon stable (`fig-01.svg`, `fig-02.png`).
-  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, sans image), importées dans les Termes en signalant les doublons au lieu de les écraser.
+  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, dont les images sont des fichiers du dossier `images/`), importées dans les Termes en signalant les doublons au lieu de les écraser.
 - **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images et de termes détectés) ; réimporter un chapitre existant propose de le remplacer ; un paquet invalide est refusé avec un message précis.
 - **Import simple** : coller du Markdown seul reste possible pour un contenu sans image.
 - **Fichiers** : envoi, téléchargement, renommage, déplacement, suppression, dans une arborescence de dossiers par UE.

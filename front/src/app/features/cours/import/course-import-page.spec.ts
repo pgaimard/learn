@@ -13,6 +13,7 @@ const PREVIEW: ImportPreview = {
   sectionCount: 2,
   imageCount: 1,
   termCount: 3,
+  termImageCount: 2,
   newTerms: [
     { type: 'definition', label: 'Processus' },
     { type: 'acronym', label: 'PCB' },
@@ -71,6 +72,7 @@ describe('CourseImportPage', () => {
     const text = element().textContent;
     expect(text).toContain('Les processus');
     expect(text).toContain('UTC502');
+    expect(text).toContain('Images des définitions');
   });
 
   it('annonce les termes à ajouter et ceux déjà présents', () => {
@@ -130,7 +132,14 @@ describe('CourseImportPage', () => {
 
   it('analyse du Markdown collé', () => {
     service.preview.mockReturnValue(
-      of({ ...PREVIEW, imageCount: 0, termCount: 0, newTerms: [], duplicateTerms: [] }),
+      of({
+        ...PREVIEW,
+        imageCount: 0,
+        termCount: 0,
+        termImageCount: 0,
+        newTerms: [],
+        duplicateTerms: [],
+      }),
     );
     setup();
     click('Markdown collé');
@@ -146,6 +155,7 @@ describe('CourseImportPage', () => {
       kind: 'markdown',
       markdown: '---\nue: UTC502\n---\n## Titre',
     });
+    expect(element().textContent).not.toContain('Images des définitions');
   });
 
   it('annule l’aperçu sans importer', () => {

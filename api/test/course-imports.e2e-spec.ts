@@ -29,6 +29,7 @@ function validPackage(extra: Record<string, Buffer | string> = {}): Buffer {
   return createZip({
     'cours.md': MARKDOWN,
     'images/fig-01.svg': SVG,
+    'images/def-commutation-01.svg': SVG,
     'termes.json': TERMS,
     ...extra,
   });
@@ -117,11 +118,13 @@ describe('Import d’un paquet de cours', () => {
       position: 3,
       sectionCount: 2,
       imageCount: 1,
-      termCount: 3,
+      termCount: 4,
+      termImageCount: 1,
       newTerms: [
         { type: 'definition', label: 'Processus' },
         { type: 'acronym', label: 'PCB' },
         { type: 'acronym', label: 'PID' },
+        { type: 'definition', label: 'Commutation de contexte' },
       ],
       duplicateTerms: [],
       existingCourse: null,
@@ -190,7 +193,88 @@ describe('Import d’un paquet de cours', () => {
         plain_text: '',
         ...origin,
       },
+      {
+        type: 'definition',
+        label: 'Commutation de contexte',
+        expanded_form: null,
+        plain_text: expect.stringContaining(
+          'Sauvegarde des registres',
+        ) as string,
+        ...origin,
+      },
     ]);
+  });
+
+  it('enregistre l’image d’une définition riche, assainie et rattachée au terme', async () => {
+    const terms = (await client('get', '/api/terms?type=definition')).body as {
+      id: number;
+      label: string;
+    }[];
+    const { id } = terms.find(
+      (term) => term.label === 'Commutation de contexte',
+    ) ?? { id: 0 };
+    const term = (await client('get', `/api/terms/${id}`)).body as Course;
+
+    expect(term.content.content?.map((block) => block.type)).toEqual([
+      'paragraph',
+      'figure',
+      'table',
+      'callout',
+    ]);
+    const figure = term.content.content?.[1];
+    expect(figure?.attrs).toEqual({
+      src: expect.stringMatching(
+        new RegExp(`^/api/terms/${id}/images/\\d+$`),
+      ) as string,
+      alt: 'Deux processus qui se partagent le processeur',
+    });
+    const served = await client('get', String(figure?.attrs?.['src'])).buffer(
+      true,
+    );
+    expect(served.status).toBe(200);
+    expect((served.body as Buffer).toString('utf8')).not.toContain('onload');
+    // Le terme importé reste modifiable : sa définition est acceptée telle quelle.
+    const saved = await client('patch', `/api/terms/${id}`).send({
+      content: term.content,
+    });
+    expect(saved.status).toBe(200);
+    expect(storedFiles()).toHaveLength(2);
+  });
+
+  it('importe toujours un paquet à l’ancien format, sans image de définition', async () => {
+    const zip = createZip({
+      'cours.md': MARKDOWN.replace('notions de base', 'ancien format'),
+      'images/fig-01.svg': SVG,
+      'termes.json': JSON.stringify([
+        { type: 'definition', libelle: 'Fil', definition: 'Texte **simple**.' },
+      ]),
+    });
+
+    const previewed = await preview(zip);
+    const imported = await importPackage(zip);
+
+    expect(previewed.body).toMatchObject({ termCount: 1, termImageCount: 0 });
+    expect(imported.status).toBe(201);
+    // Les tests suivants comptent les cours et les termes : celui-ci n'en laisse pas.
+    await client('delete', `/api/courses/${(imported.body as Course).id}`);
+    await app.get(DataSource).query(`DELETE FROM terms WHERE label = 'Fil'`);
+  });
+
+  it('n’enregistre pas les images d’un terme déjà présent', async () => {
+    const zip = validPackage({
+      'cours.md': MARKDOWN.replace('notions de base', 'réimport'),
+    });
+
+    const previewed = await preview(zip);
+    const imported = await importPackage(zip);
+
+    expect(previewed.body).toMatchObject({
+      termImageCount: 0,
+      newTerms: [],
+    });
+    expect(imported.status).toBe(201);
+    await client('delete', `/api/courses/${(imported.body as Course).id}`);
+    expect(storedFiles()).toHaveLength(2);
   });
 
   it('signale les termes déjà présents et ne les écrase pas', async () => {
@@ -226,6 +310,7 @@ describe('Import d’un paquet de cours', () => {
       'Processus',
       'PCB',
       'PID',
+      'Commutation de contexte',
       'PCB',
     ]);
     expect(stored[0].plain_text).toContain('Programme en cours d');
@@ -275,7 +360,8 @@ describe('Import d’un paquet de cours', () => {
     expect(course.position).toBe(1);
     expect(JSON.stringify(course.content)).toContain('Ordonnancement revu');
     expect(await countCourses()).toBe(1);
-    expect(storedFiles()).toHaveLength(1);
+    // L'image du chapitre remplacé, et celle de la définition importée la première fois.
+    expect(storedFiles()).toHaveLength(2);
   });
 
   it('accepte un paquet créé en compressant un dossier', async () => {
@@ -387,6 +473,20 @@ describe('Import d’un paquet de cours', () => {
         'termes.json': JSON.stringify([{ type: 'acronyme', libelle: 'CPU' }]),
       }),
       /termes\.json, entrée 1 : « forme_developpee » est requise/,
+    ],
+    [
+      'une image de définition absente',
+      createZip({
+        'cours.md': MARKDOWN,
+        'images/fig-01.svg': SVG,
+        'termes.json': TERMS,
+      }),
+      /termes\.json, « Commutation de contexte » référence « images\/def-commutation-01\.svg », absent du paquet/,
+    ],
+    [
+      'une image de définition qui n’en est pas une',
+      validPackage({ 'images/def-commutation-01.svg': '<html></html>' }),
+      /images\/def-commutation-01\.svg : Format non pris en charge/,
     ],
     [
       'un termes.json illisible',

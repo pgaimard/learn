@@ -15,6 +15,8 @@ export interface ImportPreview {
   sectionCount: number;
   imageCount: number;
   termCount: number;
+  // Images des définitions que l'import créera.
+  termImageCount: number;
   // Termes que l'import créera, et ceux déjà présents qu'il laissera tels quels.
   newTerms: ImportedTerm[];
   duplicateTerms: ImportedTerm[];

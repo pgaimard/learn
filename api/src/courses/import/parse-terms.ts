@@ -1,13 +1,17 @@
 import type { TermType } from '../../terms/term.entity.js';
 import { ContentNode, EMPTY_CONTENT } from '../content/content-node.js';
 import { validateContent } from '../content/validate-content.js';
-import { markdownToContent } from './markdown-to-content.js';
+import { buildImageSource } from '../content/collect-figures.js';
+import { ConvertedMarkdown, markdownToContent } from './markdown-to-content.js';
+import { placeImages } from './place-images.js';
 
 export interface ParsedTerm {
   type: TermType;
   label: string;
   expandedForm: string | null;
+  // Définition ; la source de ses figures est encore le chemin dans le paquet.
   content: ContentNode;
+  imagePaths: string[];
 }
 
 export interface ParsedTerms {
@@ -24,6 +28,20 @@ const TYPES: Record<string, TermType> = {
   definition: 'definition',
   acronyme: 'acronym',
 };
+
+type Definition = Pick<ParsedTerm, 'content' | 'imagePaths'>;
+
+const NO_DEFINITION: Definition = { content: EMPTY_CONTENT, imagePaths: [] };
+
+// La liste blanche n'accepte que l'adresse d'une image enregistrée : pour vérifier la
+// définition avant l'import, chaque chemin du paquet est remplacé par une adresse fictive.
+function withPlaceholders(converted: ConvertedMarkdown): ContentNode {
+  const placeholder = buildImageSource('terms', 0, 0);
+  return placeImages(
+    converted.document,
+    new Map(converted.imagePaths.map((path) => [path, placeholder])),
+  );
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -70,11 +88,11 @@ class EntryParser {
       );
     }
     const expandedForm = this.readExpandedForm(type, entry['forme_developpee']);
-    const content = this.readDefinition(type, entry['definition']);
+    const definition = this.readDefinition(type, entry['definition']);
     if (!label || this.errors.length > 0) {
       return null;
     }
-    return { type, label, expandedForm, content };
+    return { type, label, expandedForm, ...definition };
   }
 
   private readExpandedForm(type: TermType, value: unknown): string | null {
@@ -91,32 +109,30 @@ class EntryParser {
     return expandedForm ?? null;
   }
 
-  private readDefinition(type: TermType, value: unknown): ContentNode {
+  private readDefinition(type: TermType, value: unknown): Definition {
     const definition = readText(value, MAX_DEFINITION_LENGTH);
     if (definition === undefined) {
       this.fail(
         `« definition » doit être un texte de ${MAX_DEFINITION_LENGTH} caractères au plus.`,
       );
-      return EMPTY_CONTENT;
+      return NO_DEFINITION;
     }
     if (definition === null) {
       if (type === 'definition') {
         this.fail('« definition » est requise pour une définition.');
       }
-      return EMPTY_CONTENT;
+      return NO_DEFINITION;
     }
     const converted = markdownToContent(definition, 0, this.source());
     this.errors.push(...converted.errors);
-    if (converted.imagePaths.length > 0) {
-      this.fail('une définition importée ne peut pas contenir d’image.');
-    } else if (converted.errors.length === 0) {
+    if (converted.errors.length === 0) {
       this.errors.push(
-        ...validateContent(converted.document).map(
+        ...validateContent(withPlaceholders(converted)).map(
           (error) => `${this.source()} : ${error}`,
         ),
       );
     }
-    return converted.document;
+    return { content: converted.document, imagePaths: converted.imagePaths };
   }
 
   private source(): string {

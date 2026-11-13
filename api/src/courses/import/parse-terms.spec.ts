@@ -25,6 +25,7 @@ describe('parseTerms', () => {
       ['definition', 'Processus', null],
       ['acronym', 'PCB', 'Process Control Block'],
       ['acronym', 'PID', 'Process Identifier'],
+      ['definition', 'Commutation de contexte', null],
     ]);
     expect(terms[0].content.content?.map((block) => block.type)).toEqual([
       'paragraph',
@@ -34,6 +35,32 @@ describe('parseTerms', () => {
     expect(terms[2].content).toEqual({
       type: 'doc',
       content: [{ type: 'paragraph' }],
+    });
+    expect(terms.map((term) => term.imagePaths)).toEqual([
+      [],
+      [],
+      [],
+      ['images/def-commutation-01.svg'],
+    ]);
+  });
+
+  it('lit une définition riche : image, tableau et encadré', () => {
+    const { content } = parseTerms(EXAMPLE).terms[3];
+
+    expect(content.content?.map((block) => block.type)).toEqual([
+      'paragraph',
+      'figure',
+      'table',
+      'callout',
+    ]);
+    // La source reste le chemin du paquet : l'import la remplace par l'adresse de l'image.
+    expect(content.content?.[1]).toEqual({
+      type: 'figure',
+      attrs: {
+        src: 'images/def-commutation-01.svg',
+        alt: 'Deux processus qui se partagent le processeur',
+      },
+      content: [{ type: 'text', text: 'Commutation entre deux processus' }],
     });
   });
 
@@ -101,13 +128,22 @@ describe('parseTerms', () => {
       /clé « formeDeveloppee » non reconnue/,
     ],
     [
-      'une image',
+      'une image hors du dossier images/',
       {
         type: 'definition',
         libelle: 'X',
-        definition: '![Schéma](images/fig-01.svg)',
+        definition: '![Schéma](https://exemple.fr/schema.svg)',
       },
-      /ne peut pas contenir d’image/,
+      /termes\.json, entrée 1, ligne 1 : image « https:\/\/exemple\.fr\/schema\.svg » refusée/,
+    ],
+    [
+      'une image au milieu d’une phrase',
+      {
+        type: 'definition',
+        libelle: 'X',
+        definition: 'Voir ![Schéma](images/fig-01.svg) ci-contre.',
+      },
+      /une image doit être seule dans son paragraphe/,
     ],
     [
       'un Markdown non pris en charge',
