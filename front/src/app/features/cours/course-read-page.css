@@ -144,6 +144,23 @@
   }
 }
 
+/* Retour à la lecture après un renvoi : au bas de l'écran, au milieu. */
+.return-bar {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+}
+
 /* Menu du clic droit, à l'endroit de la souris. */
 .context-menu {
   position: fixed;

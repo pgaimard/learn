@@ -98,6 +98,8 @@ export class CourseReadPage {
     left: number;
     block: number | null;
   } | null>(null);
+  // Hauteur de page quittée en suivant un renvoi vers une section ; null sinon.
+  protected readonly returnPosition = signal<number | null>(null);
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
@@ -166,7 +168,26 @@ export class CourseReadPage {
     this.contentView()?.scrollToHeading(index);
   }
 
+  // Suit un renvoi vers une section, en retenant d'où l'on part : plusieurs renvois
+  // suivis à la file ramènent au premier endroit quitté.
+  protected followReference(headingIndex: number): void {
+    if (this.returnPosition() === null) {
+      this.returnPosition.set(window.scrollY);
+    }
+    this.goTo(headingIndex);
+  }
+
+  protected goBack(): void {
+    const top = this.returnPosition();
+    if (top !== null) {
+      this.returnPosition.set(null);
+      this.chosenHeading = null;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }
+
   private load(id: number): void {
+    this.returnPosition.set(null);
     this.course.set(null);
     this.terms.set([]);
     this.activeHeading.set(null);

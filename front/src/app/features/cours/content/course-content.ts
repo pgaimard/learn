@@ -28,8 +28,8 @@ import { createCourseExtensions } from './course-extensions';
   host: {
     class: 'course-content',
     '[class.is-editable]': 'editable()',
-    '(click)': 'zoom($event)',
-    '(keydown.enter)': 'zoom($event)',
+    '(click)': 'activate($event)',
+    '(keydown.enter)': 'activate($event)',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -48,6 +48,8 @@ export class CourseContent {
   readonly edited = output();
   // Émis pour chaque image collée ou déposée ; l'envoi est fait par la page.
   readonly imageReceived = output<File>();
+  // Émis en lecture quand un renvoi vers une section est suivi : le rang du titre visé.
+  readonly sectionReferenced = output<number>();
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
@@ -148,10 +150,20 @@ export class CourseContent {
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
   }
 
-  // En lecture, un clic (ou Entrée) sur l'image d'une figure l'ouvre en grand.
-  protected zoom(event: Event): void {
+  // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ou ouvre en grand
+  // l'image d'une figure.
+  protected activate(event: Event): void {
     const image = event.target;
-    if (this.editable() || !(image instanceof HTMLImageElement)) {
+    if (this.editable() || !(image instanceof Element)) {
+      return;
+    }
+    const reference = image.closest<HTMLElement>('.section-ref');
+    if (reference) {
+      event.preventDefault();
+      this.sectionReferenced.emit(Number(reference.dataset['heading']));
+      return;
+    }
+    if (!(image instanceof HTMLImageElement)) {
       return;
     }
     const figure = image.closest('figure');
