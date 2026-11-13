@@ -14,8 +14,9 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
+import { Modal } from '../../core/ui/modal';
 import { TERM_SCREENS } from '../termes/term-screens';
-import { TermService, TermSummary } from '../termes/term.service';
+import { Term, TermService, TermSummary } from '../termes/term.service';
 import { buildOutline } from './content/build-outline';
 import { hasSheetContent, sheetHeadingIndexes } from './revision/revision-sheet';
 import { CourseContent } from './content/course-content';
@@ -30,7 +31,7 @@ const MENU_WIDTH_PX = 200;
 
 @Component({
   selector: 'app-course-read-page',
-  imports: [CourseContent, CourseOutline, DatePipe, Icon, RouterLink],
+  imports: [CourseContent, CourseOutline, DatePipe, Icon, Modal, RouterLink],
   host: {
     '(window:scroll)': 'followReading()',
     // L'utilisateur reprend la main sur le défilement.
@@ -103,6 +104,11 @@ export class CourseReadPage {
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
+  // Tous les termes du dictionnaire et du glossaire : ceux que le texte cite y deviennent
+  // cliquables.
+  protected readonly allTerms = signal<TermSummary[]>([]);
+  // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
+  protected readonly shownTerm = signal<Term | null>(null);
   protected readonly isSheetEmpty = computed(() => {
     const course = this.course();
     return this.isSheet() && !!course && !hasSheetContent(course.content);
@@ -136,7 +142,7 @@ export class CourseReadPage {
     });
   }
 
-  protected termPath(term: TermSummary): string {
+  protected termPath(term: Pick<TermSummary, 'type'>): string {
     return TERM_SCREENS[term.type].path;
   }
 
@@ -168,6 +174,14 @@ export class CourseReadPage {
     this.contentView()?.scrollToHeading(index);
   }
 
+  // Ouvre la définition complète d'un terme cité dans le texte.
+  protected openTerm(id: number): void {
+    this.termService.get(id).subscribe({
+      next: (term) => this.shownTerm.set(term),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
+
   // Suit un renvoi vers une section, en retenant d'où l'on part : plusieurs renvois
   // suivis à la file ramènent au premier endroit quitté.
   protected followReference(headingIndex: number): void {
@@ -188,6 +202,7 @@ export class CourseReadPage {
 
   private load(id: number): void {
     this.returnPosition.set(null);
+    this.shownTerm.set(null);
     this.course.set(null);
     this.terms.set([]);
     this.activeHeading.set(null);
@@ -195,6 +210,10 @@ export class CourseReadPage {
     // Les termes sont un complément : leur échec ne bloque pas la lecture.
     this.termService.list({ course: id }).subscribe({
       next: (terms) => this.terms.set(terms),
+      error: () => undefined,
+    });
+    this.termService.list().subscribe({
+      next: (terms) => this.allTerms.set(terms),
       error: () => undefined,
     });
     this.courseService.get(id).subscribe({

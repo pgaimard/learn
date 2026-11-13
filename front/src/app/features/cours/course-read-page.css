@@ -144,6 +144,18 @@
   }
 }
 
+/* Définition d'un terme cité, dans sa fenêtre : elle défile si elle est longue. */
+.term-definition {
+  max-height: min(70vh, 40rem);
+  overflow-y: auto;
+}
+
+.term-definition .expanded-form {
+  margin: 0 0 0.5rem;
+  color: var(--color-text);
+  font-style: italic;
+}
+
 /* Retour à la lecture après un renvoi : au bas de l'écran, au milieu. */
 .return-bar {
   position: fixed;
