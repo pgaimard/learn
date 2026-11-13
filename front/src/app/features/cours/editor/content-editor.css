@@ -36,7 +36,7 @@ app-editor-toolbar {
   /* Repère des menus et des barres flottantes. */
   position: relative;
   /* La marge de gauche loge la poignée de bloc et le bouton de pliage des chapitres. */
-  padding: 1.75rem 3.5rem 2.5rem;
+  padding: 1.75rem 3.5rem 2.5rem 4rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
   background: var(--color-surface);

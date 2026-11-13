@@ -52,24 +52,20 @@ describe('ImageViewer', () => {
     expect(dialog().querySelector('img')).toBeNull();
   });
 
-  it('montre l’image avec sa légende pour titre, à défaut son texte de remplacement', () => {
+  it('montre l’image seule, nommée par sa légende ou à défaut son texte de remplacement', () => {
     show('Figure 1 – états');
 
     expect(dialog().hasAttribute('open')).toBe(true);
     expect(dialog().querySelector('img')?.getAttribute('src')).toBe('/api/courses/7/images/4');
     expect(dialog().querySelector('img')?.getAttribute('alt')).toBe('États d’un processus');
-    expect(dialog().querySelector('h2')?.textContent).toBe('Figure 1 – états');
+    expect(dialog().querySelector('h2')).toBeNull();
+    expect(dialog().getAttribute('aria-label')).toBe('Figure 1 – états');
 
     show('');
-    expect(dialog().querySelector('h2')?.textContent).toBe('États d’un processus');
+    expect(dialog().getAttribute('aria-label')).toBe('États d’un processus');
   });
 
-  it('se ferme par son bouton, par un clic sur l’image, par Échap ou par un clic en dehors', () => {
-    show('');
-    dialog().querySelector<HTMLButtonElement>('[aria-label="Fermer la fenêtre"]')?.click();
-    fixture.detectChanges();
-    expect(dialog().hasAttribute('open')).toBe(false);
-
+  it('se ferme par un clic sur l’image, par Échap ou par un clic en dehors', () => {
     show('');
     dialog().querySelector('img')?.click();
     fixture.detectChanges();
