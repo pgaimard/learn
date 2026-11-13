@@ -10,8 +10,8 @@ import { BackdropClick } from './backdrop-click';
 import { Icon } from './icon';
 import { ImageViewerService } from './image-viewer.service';
 
-// Fenêtre qui montre une image en grand ; elle se ferme par son bouton, par Échap ou
-// par un clic en dehors.
+// Fenêtre qui montre une image en grand ; elle se ferme par son bouton, par Échap, par
+// un clic sur l'image ou par un clic en dehors.
 @Component({
   selector: 'app-image-viewer',
   imports: [BackdropClick, Icon],
@@ -37,7 +37,9 @@ import { ImageViewerService } from './image-viewer.service';
           </button>
         </div>
         <div class="modal-body">
-          <img [src]="image.src" [alt]="image.alt" />
+          <button type="button" class="image" title="Fermer" (click)="viewer.close()">
+            <img [src]="image.src" [alt]="image.alt" />
+          </button>
         </div>
       }
     </dialog>

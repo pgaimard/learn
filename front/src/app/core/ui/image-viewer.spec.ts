@@ -64,9 +64,14 @@ describe('ImageViewer', () => {
     expect(dialog().querySelector('h2')?.textContent).toBe('États d’un processus');
   });
 
-  it('se ferme par son bouton, par Échap ou par un clic en dehors', () => {
+  it('se ferme par son bouton, par un clic sur l’image, par Échap ou par un clic en dehors', () => {
     show('');
     dialog().querySelector<HTMLButtonElement>('[aria-label="Fermer la fenêtre"]')?.click();
+    fixture.detectChanges();
+    expect(dialog().hasAttribute('open')).toBe(false);
+
+    show('');
+    dialog().querySelector('img')?.click();
     fixture.detectChanges();
     expect(dialog().hasAttribute('open')).toBe(false);
 
