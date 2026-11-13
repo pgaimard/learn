@@ -67,6 +67,7 @@ export class CourseImportsController {
     return this.importService.import(
       await readUpload(file),
       options.replace ?? false,
+      options.replaceTerms ?? false,
     );
   }
 

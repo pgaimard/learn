@@ -99,6 +99,16 @@ dd {
   font-size: 0.75rem;
 }
 
+.terms p {
+  margin: 0 0 0.375rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .terms[role='status'],
 .warning {
   background: var(--color-callout-attention-soft);
