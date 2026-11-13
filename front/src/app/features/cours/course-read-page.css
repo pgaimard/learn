@@ -143,9 +143,42 @@
   }
 }
 
-/* En dessous, le cours prend toute la largeur ; les termes passent après lui. */
+/* Le bouton du sommaire ne sert que sur écran étroit. */
+.outline-toggle {
+  display: none;
+}
+
+/* En dessous, le cours prend toute la largeur ; les termes passent après lui. Le
+   sommaire est rétracté : son bouton, resté en bas de l'écran, le fait sortir sur le
+   côté, par-dessus le cours. */
 @media (max-width: 63.99rem) {
+  .outline-toggle {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 4;
+    display: inline-flex;
+    box-shadow: var(--shadow-bar);
+  }
+
   .outline {
+    position: fixed;
+    top: var(--sticky-top);
+    bottom: 0;
+    left: 0;
+    z-index: 3;
     display: none;
+    box-sizing: border-box;
+    width: min(19rem, 85vw);
+    /* La place du bouton, en bas. */
+    padding: 1rem 0.75rem 4.5rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+    box-shadow: 0 18px 50px rgb(0 0 0 / 32%);
+  }
+
+  .outline.is-open {
+    display: block;
   }
 }

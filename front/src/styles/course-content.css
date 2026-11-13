@@ -394,44 +394,62 @@
   pointer-events: none;
 }
 
-/* Chapitres : chevron de pliage dans la marge, à gauche du titre, pour que le titre
-   reste aligné sur le texte ; contenu replié caché. */
+/* Chapitres : bouton de pliage carré dans la marge, à gauche du titre, pour que le
+   titre reste aligné sur le texte ; contenu replié caché. */
 
 .course-content .fold-toggle {
+  --fold-size: 1.25rem;
   position: absolute;
-  top: 0;
-  left: -1.5rem;
+  /* Centré sur la première ligne du titre. */
+  top: calc((1.25em - var(--fold-size)) / 2);
+  left: -1.625rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  /* Hauteur de la première ligne du titre. */
-  height: 1.25em;
+  width: var(--fold-size);
+  height: var(--fold-size);
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 5px;
   background: none;
   color: var(--color-text-muted);
   font: inherit;
-  line-height: 1;
   cursor: pointer;
   user-select: none;
 }
 
-/* En édition, la poignée de bloc occupe déjà le bord du texte : le chevron se place
-   plus à gauche. */
+/* En édition, la poignée de bloc occupe déjà le bord du texte : le bouton se place
+   plus à gauche, un peu plus petit, toujours carré. */
 .course-content.is-editable .fold-toggle {
+  --fold-size: 1rem;
   left: -2.75rem;
-  width: 1rem;
 }
 
+/* Chevron : deux traits fins, vers le bas ; il pivote vers la droite quand le chapitre
+   est replié. */
 .course-content .fold-toggle::before {
-  font-size: 0.75rem;
-  content: '▾';
+  box-sizing: border-box;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-top: -0.1875rem;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  transition: transform 0.12s ease;
+  content: '';
 }
 
 .course-content .fold-toggle[aria-expanded='false']::before {
-  content: '▸';
+  margin-top: 0;
+  margin-left: -0.1875rem;
+  transform: rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-content .fold-toggle::before {
+    transition: none;
+  }
 }
 
 .course-content .fold-toggle:hover {

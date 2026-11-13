@@ -35,8 +35,21 @@
     </div>
   </div>
 
+  @if (outline().length > 0) {
+    <!-- Écran étroit : le sommaire est rétracté, ce bouton le fait sortir sur le côté. -->
+    <button
+      type="button"
+      class="button outline-toggle"
+      aria-controls="course-outline"
+      [attr.aria-expanded]="isOutlineOpen()"
+      (click)="isOutlineOpen.set(!isOutlineOpen())"
+    >
+      <app-icon [name]="isOutlineOpen() ? 'close' : 'list-bullets'" />Sommaire
+    </button>
+  }
+
   <div class="reading">
-    <aside class="side outline">
+    <aside id="course-outline" class="side outline" [class.is-open]="isOutlineOpen()">
       @if (outline().length > 0) {
         <app-course-outline
           [entries]="outline()"
