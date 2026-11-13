@@ -36,6 +36,38 @@ Règles de `cours.md` :
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
 
+### Renvois vers une section
+
+En lecture, l'application rend cliquable un renvoi vers une section du même cours. Il n'y a
+aucune syntaxe à écrire : il suffit de rédiger le renvoi comme ci-dessous.
+
+- Les titres portent leur numéro au début de leur texte : `## 3. Ordonnancement`,
+  `### 3.4 Tourniquet`. Un titre sans numéro ne peut pas être la cible d'un renvoi.
+- Dans le texte, le numéro est précédé de l'un de ces mots : « section », « § », « partie »,
+  « chapitre », « voir », « cf. », « réf. » (au singulier ou au pluriel, avec ou sans majuscule).
+  Exemples : « voir section 3.4 », « cf. 3.4 », « (réf. 3.4) », « § 3.4 », « sections 3.4 et 3.5 ».
+- Le numéro cité est exactement celui du titre : « 3.4 » mène au titre qui commence par « 3.4 ».
+  S'il ne correspond à aucun titre du cours, le texte reste du texte.
+- Un numéro sans l'un de ces mots devant lui n'est pas un renvoi (« 3.4 GHz », « version 2.1 »).
+  Rien n'est reconnu dans les titres ni dans le code.
+- Un renvoi ne désigne qu'une section du même cours. Pour citer un autre chapitre, écrire son
+  titre plutôt que « chapitre 3 », qui mènerait à la section 3 du cours en cours de lecture.
+
+### Termes cliquables dans le texte
+
+En lecture, l'application rend cliquable, dans le texte du cours, chaque terme présent dans le
+dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à
+écrire, et le terme n'a pas besoin de venir du même paquet.
+
+- Le terme est reconnu par son `libelle`, en mot entier : écrire dans le cours le libellé tel
+  qu'il figure dans `termes.json`. « processus » est reconnu pour le libellé « Processus » ;
+  un pluriel ou une autre forme (« ordonnanceurs » pour « Ordonnanceur ») ne l'est pas.
+- Une définition est reconnue sans tenir compte des majuscules ; un acronyme l'est avec ses
+  majuscules exactes (« PCB », pas « pcb »).
+- Quand deux libellés se recouvrent, le plus long l'emporte (« commutation de contexte » plutôt
+  que « contexte »).
+- Rien n'est reconnu dans les titres ni dans le code.
+
 Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
 (définition, acronyme défini, acronyme seul, définition riche) :
 
@@ -46,7 +78,9 @@ Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'
   acronyme ;
 - toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
 - un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
-  est signalé à l'aperçu et laissé tel quel à l'import.
+  est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
+  définition par celle du paquet », sa définition, sa forme développée et ses images sont
+  remplacées par celles du paquet, et il est rattaché au cours importé. Son libellé ne change pas.
 
 ### Définition riche
 
@@ -70,8 +104,8 @@ Un schéma ou une image s'insère comme dans `cours.md` :
 - une image référencée mais absente du paquet, ou d'un format refusé, fait refuser tout le paquet
   avec un message qui nomme le terme et le fichier ;
 - un même fichier peut servir au cours et à une ou plusieurs définitions : chacun en reçoit sa copie ;
-- les images d'un terme déjà présent dans l'application ne sont pas importées, puisque ce terme
-  est laissé tel quel.
+- les images d'un terme déjà présent dans l'application ne sont importées que si l'on demande le
+  remplacement de sa définition ; ses anciennes images sont alors supprimées.
 
 Un paquet sans image de définition reste valide : rien n'est à changer dans les paquets existants.
 Le Markdown collé, sans paquet, ne transporte toujours ni image ni terme.

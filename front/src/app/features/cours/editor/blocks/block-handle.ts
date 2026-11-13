@@ -10,6 +10,9 @@ export interface BlockHandleOptions {
   // Clic sur la poignée : ouvre le menu du bloc, positionné à cette hauteur
   // (en pixels depuis le haut de la zone de contenu).
   onOpenMenu: (target: { pos: number; top: number }) => void;
+  // Élément dont le survol affiche la poignée, quand il est plus large que le contenu :
+  // la feuille, dont la marge de gauche porte la poignée.
+  hoverZone?: () => HTMLElement | null;
 }
 
 // Bloc en cours de déplacement par la poignée, partagé entre la poignée et le dépôt.
@@ -30,6 +33,8 @@ const HANDLE_LABEL = 'Faire glisser pour déplacer le bloc ; clic droit pour son
 class BlockHandleView {
   private readonly handle: HTMLButtonElement;
   private readonly container: HTMLElement;
+  // Zone dont le survol affiche la poignée : la feuille, marges comprises.
+  private readonly hoverZone: HTMLElement;
   private current: TopLevelBlock | null = null;
   private draggedElement: HTMLElement | null = null;
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -41,9 +46,10 @@ class BlockHandleView {
   ) {
     this.container = view.dom.parentElement ?? view.dom;
     this.handle = this.createHandle();
+    this.hoverZone = options.hoverZone?.() ?? this.container;
     this.container.append(this.handle);
-    this.container.addEventListener('mousemove', this.onMouseMove);
-    this.container.addEventListener('mouseleave', this.onMouseLeave);
+    this.hoverZone.addEventListener('mousemove', this.onMouseMove);
+    this.hoverZone.addEventListener('mouseleave', this.onMouseLeave);
   }
 
   update(): void {
@@ -53,8 +59,8 @@ class BlockHandleView {
   }
 
   destroy(): void {
-    this.container.removeEventListener('mousemove', this.onMouseMove);
-    this.container.removeEventListener('mouseleave', this.onMouseLeave);
+    this.hoverZone.removeEventListener('mousemove', this.onMouseMove);
+    this.hoverZone.removeEventListener('mouseleave', this.onMouseLeave);
     this.cancelHide();
     this.handle.remove();
   }
@@ -88,8 +94,12 @@ class BlockHandleView {
       return;
     }
     const content = this.view.dom.getBoundingClientRect();
+    // Au-dessus ou au-dessous du contenu (en-tête de la feuille), aucun bloc n'est visé.
+    if (event.clientY < content.top || event.clientY > content.bottom) {
+      return;
+    }
     // On vise l'intérieur du contenu, à la hauteur de la souris : la poignée elle-même
-    // et les marges sont hors du texte.
+    // et les marges, d'où la souris l'atteint, sont hors du texte.
     const found = this.view.posAtCoords({ left: content.left + 8, top: event.clientY });
     if (found) {
       this.show(blockAt(this.view.state.doc, found.inside >= 0 ? found.inside : found.pos));

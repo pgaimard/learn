@@ -7,38 +7,26 @@ import {
   viewChild,
 } from '@angular/core';
 import { BackdropClick } from './backdrop-click';
-import { Icon } from './icon';
 import { ImageViewerService } from './image-viewer.service';
 
-// Fenêtre qui montre une image en grand ; elle se ferme par son bouton, par Échap ou
-// par un clic en dehors.
+// Fenêtre qui montre une image en grand, sans rien autour ; elle se ferme par un clic sur
+// l'image, par Échap ou par un clic en dehors.
 @Component({
   selector: 'app-image-viewer',
-  imports: [BackdropClick, Icon],
+  imports: [BackdropClick],
   template: `
     <dialog
       #dialog
       class="modal"
-      aria-labelledby="image-viewer-title"
+      [attr.aria-label]="viewer.image()?.caption || viewer.image()?.alt || 'Image'"
       appBackdropClick
       (backdropClick)="viewer.close()"
       (close)="viewer.close()"
     >
       @if (viewer.image(); as image) {
-        <div class="modal-header">
-          <h2 id="image-viewer-title">{{ image.caption || image.alt || 'Image' }}</h2>
-          <button
-            type="button"
-            class="button button-icon button-ghost"
-            aria-label="Fermer la fenêtre"
-            (click)="viewer.close()"
-          >
-            <app-icon name="close" [size]="15" />
-          </button>
-        </div>
-        <div class="modal-body">
+        <button type="button" class="image" title="Fermer" (click)="viewer.close()">
           <img [src]="image.src" [alt]="image.alt" />
-        </div>
+        </button>
       }
     </dialog>
   `,

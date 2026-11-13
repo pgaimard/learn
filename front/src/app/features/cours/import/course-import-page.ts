@@ -24,6 +24,8 @@ export class CourseImportPage {
 
   protected readonly mode = signal<Mode>('package');
   protected readonly markdown = new FormControl('', { nonNullable: true });
+  // Remplacer la définition des termes déjà présents par celle du paquet.
+  protected readonly replaceTerms = new FormControl(false, { nonNullable: true });
   // Source analysée avec succès, en attente de confirmation.
   protected readonly source = signal<ImportSource | null>(null);
   protected readonly preview = signal<ImportPreview | null>(null);
@@ -62,7 +64,8 @@ export class CourseImportPage {
       return;
     }
     this.isBusy.set(true);
-    this.importService.import(source, preview.existingCourse !== null).subscribe({
+    const replaceTerms = preview.duplicateTerms.length > 0 && this.replaceTerms.value;
+    this.importService.import(source, preview.existingCourse !== null, replaceTerms).subscribe({
       next: (course) => void this.router.navigate(['/ue', course.ue.code, 'cours', course.id]),
       error: (error: ApiError) => this.fail(error),
     });
@@ -72,6 +75,7 @@ export class CourseImportPage {
     this.source.set(null);
     this.preview.set(null);
     this.errors.set([]);
+    this.replaceTerms.reset();
   }
 
   private analyse(source: ImportSource): void {

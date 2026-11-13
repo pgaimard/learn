@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -35,6 +36,8 @@ export class CourseEditPage {
   // Paramètres de la route /ue/:code/cours/:id/edition.
   readonly code = input.required<string>();
   readonly id = input.required<string>();
+  // Paramètre de requête ?bloc=n : rang du bloc où reprendre, venu de la lecture.
+  readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
   private readonly dialog = inject(DialogService);
@@ -43,6 +46,10 @@ export class CourseEditPage {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly editor = viewChild(ContentEditor);
 
+  protected readonly startBlock = computed(() => {
+    const rank = Number(this.bloc());
+    return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
+  });
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly saveKey = shortcut('S');

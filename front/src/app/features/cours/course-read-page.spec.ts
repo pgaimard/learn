@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { ContentNode } from './content/content-node';
+import { CourseContent } from './content/course-content';
 import { TermService, TermSummary } from '../termes/term.service';
 import { CourseReadPage } from './course-read-page';
 import { Course, CourseService } from './course.service';
@@ -48,20 +50,27 @@ describe('CourseReadPage', () => {
   let fixture: ComponentFixture<CourseReadPage>;
 
   const listTerms = vi.fn<TermService['list']>();
+  const getTerm = vi.fn<TermService['get']>();
 
-  async function setup(shown: Course, view?: string, terms: TermSummary[] = []): Promise<void> {
+  async function setup(
+    shown: Course,
+    view?: string,
+    terms: TermSummary[] = [],
+    bloc?: string,
+  ): Promise<void> {
     listTerms.mockReset().mockReturnValue(of(terms));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: CourseService, useValue: { get: () => of(shown) } },
-        { provide: TermService, useValue: { list: listTerms } },
+        { provide: TermService, useValue: { list: listTerms, get: getTerm } },
       ],
     });
     fixture = TestBed.createComponent(CourseReadPage);
     fixture.componentRef.setInput('code', 'UTC502');
     fixture.componentRef.setInput('id', '7');
     fixture.componentRef.setInput('vue', view);
+    fixture.componentRef.setInput('bloc', bloc);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -97,6 +106,128 @@ describe('CourseReadPage', () => {
     expect(outline()).toEqual(['1. Notion', '2. Création', '2.1 fork', '3. Annexe']);
     expect(link('Fiche de révision')?.getAttribute('href')).toBe('/?vue=fiche');
     expect(element().querySelector('.sheet-note')).toBeNull();
+  });
+
+  it('sort le sommaire rétracté par son bouton, et le rentre dès qu’un titre est choisi', async () => {
+    await setup(COURSE);
+    const panel = element().querySelector('.outline') as HTMLElement;
+    const toggle = element().querySelector('.outline-toggle') as HTMLButtonElement;
+    expect(panel.classList.contains('is-open')).toBe(false);
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(panel.classList.contains('is-open')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    panel.querySelector('button')?.click();
+    fixture.detectChanges();
+    expect(panel.classList.contains('is-open')).toBe(false);
+  });
+
+  it('suit un renvoi vers une section et propose de revenir à l’endroit quitté', async () => {
+    await setup(
+      course(heading(2, '1. Notion'), paragraph('Détails en section 2.'), heading(2, '2. Suite')),
+    );
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    Object.defineProperty(window, 'scrollY', { value: 420, configurable: true });
+    const button = (label: string): HTMLButtonElement | undefined =>
+      Array.from(element().querySelectorAll('button')).find(
+        (candidate) => (candidate.textContent ?? '').trim() === label,
+      );
+    expect(button('Revenir à ma lecture')).toBeUndefined();
+
+    element().querySelector<HTMLElement>('.section-ref')?.click();
+    fixture.detectChanges();
+    expect(element().querySelector('.outline .is-current')?.textContent.trim()).toBe('2. Suite');
+
+    button('Revenir à ma lecture')?.click();
+    fixture.detectChanges();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 420, behavior: 'smooth' });
+    expect(button('Revenir à ma lecture')).toBeUndefined();
+    scrollTo.mockRestore();
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  });
+
+  it('ouvre dans une fenêtre la définition d’un terme cité dans le texte', async () => {
+    const pcb: TermSummary = {
+      id: 3,
+      type: 'acronym',
+      label: 'PCB',
+      expandedForm: 'Process Control Block',
+      excerpt: '',
+      ueCode: null,
+      courseId: null,
+      courseTitle: null,
+    };
+    getTerm.mockReturnValue(
+      of({
+        id: 3,
+        type: 'acronym',
+        label: 'PCB',
+        expandedForm: 'Process Control Block',
+        content: { type: 'doc', content: [paragraph('Bloc de contrôle du processus.')] },
+        ue: null,
+        course: null,
+      }),
+    );
+    await setup(course(paragraph('Le PCB est mis à jour.')), undefined, [pcb]);
+
+    element().querySelector<HTMLElement>('.term-mention')?.click();
+    fixture.detectChanges();
+
+    expect(getTerm).toHaveBeenCalledWith(3);
+    const dialog = element().querySelector('dialog') as HTMLElement;
+    expect(dialog.querySelector('h2')?.textContent).toBe('PCB');
+    expect(dialog.textContent).toContain('Process Control Block');
+    expect(dialog.textContent).toContain('Bloc de contrôle du processus.');
+    expect(link('Ouvrir dans le glossaire')?.getAttribute('href')).toBe('/glossaire/3');
+  });
+
+  it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {
+    await setup(COURSE);
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    // jsdom ne calcule pas de mise en page : le clic vise le cinquième bloc.
+    content.blockIndexAt = () => 4;
+    const rightClick = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    element().querySelector('.article p')?.dispatchEvent(rightClick);
+    fixture.detectChanges();
+
+    expect(rightClick.defaultPrevented).toBe(true);
+    expect(link('Modifier ici')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/edition?bloc=4');
+
+    document.body.click();
+    fixture.detectChanges();
+    expect(link('Modifier ici')).toBeUndefined();
+  });
+
+  it('reprend la lecture au bloc demandé au retour de l’édition (?bloc=n)', async () => {
+    const scrolled: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = function (this: Element): void {
+      scrolled.push((this.textContent ?? '').trim());
+    };
+
+    await setup(COURSE, undefined, [], '4');
+
+    expect(scrolled).toEqual(['Détails.']);
+    if (original) {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', original);
+    } else {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
+  });
+
+  it('laisse le menu du navigateur hors du cours', async () => {
+    await setup(COURSE);
+    const rightClick = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+
+    element().querySelector('h1')?.dispatchEvent(rightClick);
+    fixture.detectChanges();
+
+    expect(rightClick.defaultPrevented).toBe(false);
+    expect(link('Modifier ici')).toBeUndefined();
   });
 
   it('ouvre en grand l’image d’une figure, au clic comme au clavier', async () => {

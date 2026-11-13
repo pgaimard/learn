@@ -19,6 +19,7 @@ import { SlashMenuState } from '../editor/slash/slash-menu-state';
 import { setSheetView } from '../revision/revision-sheet-view';
 import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
+import { MentionTerm, setMentionTerms } from './term-mentions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
 // en lecture et en édition, et le contenu n'est jamais injecté comme du HTML.
@@ -28,8 +29,8 @@ import { createCourseExtensions } from './course-extensions';
   host: {
     class: 'course-content',
     '[class.is-editable]': 'editable()',
-    '(click)': 'zoom($event)',
-    '(keydown.enter)': 'zoom($event)',
+    '(click)': 'activate($event)',
+    '(keydown.enter)': 'activate($event)',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,11 +41,21 @@ export class CourseContent {
   readonly label = input('Contenu du cours');
   // Réduit l'affichage à la fiche de révision du cours.
   readonly sheet = input(false);
+  // Rang du bloc de premier niveau à amener au milieu de l'écran à l'ouverture ; en
+  // édition, le curseur s'y place.
+  readonly startBlock = input<number | null>(null);
+
+  // Termes à rendre cliquables dans le texte, en lecture.
+  readonly terms = input<MentionTerm[]>([]);
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
   // Émis pour chaque image collée ou déposée ; l'envoi est fait par la page.
   readonly imageReceived = output<File>();
+  // Émis en lecture quand un renvoi vers une section est suivi : le rang du titre visé.
+  readonly sectionReferenced = output<number>();
+  // Émis en lecture quand un terme cité dans le texte est choisi : son identifiant.
+  readonly termOpened = output<number>();
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
@@ -75,6 +86,7 @@ export class CourseContent {
             blockHandle: {
               onOpenMenu: ({ pos, top }) =>
                 this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+              hoverZone: () => this.host.nativeElement.parentElement,
             },
             tableTools: {
               onOpenMenu: ({ top, left }) =>
@@ -123,6 +135,7 @@ export class CourseContent {
           },
         }),
       );
+      this.focusBlock(untracked(this.startBlock));
     });
     effect(() => {
       const content = this.content();
@@ -137,16 +150,39 @@ export class CourseContent {
       }
     });
     effect(() => {
+      const terms = this.terms();
+      const view = this.editor()?.view;
+      if (view) {
+        setMentionTerms(view, terms);
+      }
+    });
+    effect(() => {
       const editable = this.editable();
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
   }
 
-  // En lecture, un clic (ou Entrée) sur l'image d'une figure l'ouvre en grand.
-  protected zoom(event: Event): void {
+  // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ouvre la définition
+  // d'un terme cité, ou ouvre en grand l'image d'une figure.
+  protected activate(event: Event): void {
     const image = event.target;
-    if (this.editable() || !(image instanceof HTMLImageElement)) {
+    if (this.editable() || !(image instanceof Element)) {
+      return;
+    }
+    const reference = image.closest<HTMLElement>('.section-ref');
+    if (reference) {
+      event.preventDefault();
+      this.sectionReferenced.emit(Number(reference.dataset['heading']));
+      return;
+    }
+    const mention = image.closest<HTMLElement>('.term-mention');
+    if (mention) {
+      event.preventDefault();
+      this.termOpened.emit(Number(mention.dataset['termId']));
+      return;
+    }
+    if (!(image instanceof HTMLImageElement)) {
       return;
     }
     const figure = image.closest('figure');
@@ -182,6 +218,36 @@ export class CourseContent {
         left: target.left + this.host.nativeElement.offsetLeft,
       }
     );
+  }
+
+  // Rang du bloc de premier niveau affiché à cet endroit de la fenêtre ; null hors du texte.
+  blockIndexAt(left: number, top: number): number | null {
+    const view = this.editor()?.view;
+    const found = view?.posAtCoords({ left, top });
+    if (!view || !found) {
+      return null;
+    }
+    const { doc } = view.state;
+    return Math.min(doc.resolve(found.pos).index(0), doc.childCount - 1);
+  }
+
+  // Amène le bloc de ce rang au milieu de l'écran ; en édition, y place le curseur.
+  private focusBlock(index: number | null): void {
+    const editor = this.editor();
+    if (!editor || index === null || index < 0 || index >= editor.state.doc.childCount) {
+      return;
+    }
+    let pos = 0;
+    for (let rank = 0; rank < index; rank++) {
+      pos += editor.state.doc.child(rank).nodeSize;
+    }
+    if (editor.isEditable) {
+      editor.commands.focus(pos + 1, { scrollIntoView: false });
+    }
+    const block = editor.view.nodeDOM(pos);
+    if (block instanceof HTMLElement && typeof block.scrollIntoView === 'function') {
+      block.scrollIntoView({ block: 'center' });
+    }
   }
 
   getContent(): ContentNode {

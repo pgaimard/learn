@@ -20,6 +20,8 @@
 .course-content h3,
 .course-content h4,
 .course-content h5 {
+  /* Repère du chevron de pliage, placé dans la marge. */
+  position: relative;
   /* Un titre atteint par le sommaire ne passe ni sous l'en-tête ni sous la barre de la
      page (--page-bar, posée par la page de lecture quand elle garde son titre affiché). */
   scroll-margin-top: calc(var(--sticky-top) + var(--page-bar, 0px) + 1rem);
@@ -27,17 +29,19 @@
   line-height: 1.25;
 }
 
+/* Les niveaux se distinguent nettement par leur taille. */
 .course-content h2 {
-  font-size: 1.0625rem;
-  letter-spacing: -0.005em;
+  margin-top: 1.75em;
+  font-size: 1.375rem;
+  letter-spacing: -0.01em;
 }
 
 .course-content h3 {
-  font-size: 0.90625rem;
+  font-size: 1.125rem;
 }
 
 .course-content h4 {
-  font-size: 0.875rem;
+  font-size: 0.96875rem;
 }
 
 .course-content h5 {
@@ -171,6 +175,44 @@
   margin-top: 0.375rem;
   color: var(--color-text-muted);
   font-size: 0.78125rem;
+}
+
+/* Renvoi vers une section du cours, cliquable en lecture. */
+.course-content .section-ref {
+  color: var(--color-accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.course-content .section-ref:hover {
+  text-decoration-style: solid;
+}
+
+.course-content .section-ref:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Terme du dictionnaire ou du glossaire cité dans le texte, cliquable en lecture : un
+   soulignement discret, pour ne pas hacher la lecture. */
+.course-content .term-mention {
+  text-decoration: underline dotted var(--color-text-muted);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.course-content .term-mention:hover {
+  text-decoration-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.course-content .term-mention:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* Encadrés typés : le libellé vient du type, pas du texte du cours. */
@@ -390,30 +432,69 @@
   pointer-events: none;
 }
 
-/* Chapitres : chevron de pliage devant chaque titre, contenu replié caché. */
+/* Chapitres : bouton de pliage carré, large autour de son chevron, dans la marge à
+   gauche du titre, pour que le titre reste aligné sur le texte ; contenu replié caché. */
 
 .course-content .fold-toggle {
-  width: 1.25em;
-  margin-right: 0.125em;
+  --fold-size: 1.5rem;
+  position: absolute;
+  /* Centré sur la première ligne du titre. */
+  top: calc((1.25em - var(--fold-size)) / 2);
+  left: -1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--fold-size);
+  height: var(--fold-size);
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 5px;
   background: none;
   color: var(--color-text-muted);
   font: inherit;
-  font-size: 0.75em;
-  line-height: 1;
-  vertical-align: middle;
   cursor: pointer;
   user-select: none;
 }
 
+/* En édition, la poignée de bloc occupe déjà le bord du texte : le bouton, de même
+   taille, se place plus à gauche. */
+.course-content.is-editable .fold-toggle {
+  left: -3.375rem;
+}
+
+/* Écran étroit : la marge est réduite, le bouton reste au bord du texte. */
+@media (max-width: 40rem) {
+  .course-content .fold-toggle,
+  .course-content.is-editable .fold-toggle {
+    left: -1.625rem;
+  }
+}
+
+/* Chevron : deux traits fins, vers le bas ; il pivote vers la droite quand le chapitre
+   est replié. */
 .course-content .fold-toggle::before {
-  content: '▾';
+  box-sizing: border-box;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-top: -0.1875rem;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  transition: transform 0.12s ease;
+  content: '';
 }
 
 .course-content .fold-toggle[aria-expanded='false']::before {
-  content: '▸';
+  margin-top: 0;
+  margin-left: -0.1875rem;
+  transform: rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-content .fold-toggle::before {
+    transition: none;
+  }
 }
 
 .course-content .fold-toggle:hover {

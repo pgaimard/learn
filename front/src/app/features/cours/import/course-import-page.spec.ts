@@ -83,7 +83,7 @@ describe('CourseImportPage', () => {
 
     const text = element().textContent.replace(/\s+/g, ' ');
     expect(text).toContain('2 à ajouter au dictionnaire et au glossaire : Processus, PCB');
-    expect(text).toContain('1 déjà présents, laissés tels quels : PID');
+    expect(text).toContain('1 déjà présents : PID');
   });
 
   it('importe après confirmation puis ouvre le cours', () => {
@@ -94,8 +94,29 @@ describe('CourseImportPage', () => {
 
     click('Importer le cours');
 
-    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false);
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502', 'cours', 9]);
+  });
+
+  it('remplace la définition des termes déjà présents quand la case est cochée', () => {
+    service.preview.mockReturnValue(of(PREVIEW));
+    service.import.mockReturnValue(of(IMPORTED));
+    setup();
+    pickPackage();
+
+    element().querySelector<HTMLInputElement>('input[type="checkbox"]')?.click();
+    click('Importer le cours');
+
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, true);
+  });
+
+  it('ne propose pas de remplacer les termes quand aucun n’est déjà présent', () => {
+    service.preview.mockReturnValue(of({ ...PREVIEW, duplicateTerms: [] }));
+    setup();
+
+    pickPackage();
+
+    expect(element().querySelector('input[type="checkbox"]')).toBeNull();
   });
 
   it('prévient du remplacement d’un chapitre existant et le confirme à l’import', () => {
@@ -109,7 +130,7 @@ describe('CourseImportPage', () => {
     expect(element().textContent).toContain('« Ancienne version » existe déjà dans UTC502');
     click('Remplacer le chapitre');
 
-    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, true);
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, true, false);
   });
 
   it('liste les erreurs d’un paquet invalide sans proposer l’import', () => {

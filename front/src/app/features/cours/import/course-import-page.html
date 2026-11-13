@@ -62,10 +62,16 @@
       </p>
     }
     @if (preview.duplicateTerms.length > 0) {
-      <p class="terms" role="status">
-        <strong>{{ preview.duplicateTerms.length }} déjà présents, laissés tels quels :</strong>
-        {{ labelsOf(preview.duplicateTerms) }}
-      </p>
+      <div class="terms duplicates" role="status">
+        <p>
+          <strong>{{ preview.duplicateTerms.length }} déjà présents :</strong>
+          {{ labelsOf(preview.duplicateTerms) }}
+        </p>
+        <label class="check">
+          <input type="checkbox" [formControl]="replaceTerms" />
+          Remplacer leur définition par celle du paquet (sinon ils restent tels quels)
+        </label>
+      </div>
     }
     @if (preview.existingCourse; as existing) {
       <p class="warning" role="status">

@@ -27,6 +27,7 @@
       [content]="content()"
       [label]="label()"
       [editable]="true"
+      [startBlock]="startBlock()"
       (edited)="onEdited()"
       (imageReceived)="imageAdded.emit($event)"
     />

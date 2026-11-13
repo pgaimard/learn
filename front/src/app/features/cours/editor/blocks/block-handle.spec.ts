@@ -53,6 +53,31 @@ describe('poignée de bloc', () => {
     expect(handle().hidden).toBe(false);
   });
 
+  it('apparaît aussi au survol de la marge qui la porte', () => {
+    const sheet = document.createElement('div');
+    const content = document.createElement('div');
+    sheet.append(content);
+    document.body.append(sheet);
+    const wide = new Editor({
+      element: content,
+      extensions: createCourseExtensions({
+        blockHandle: { onOpenMenu: () => undefined, hoverZone: () => sheet },
+        tableTools: { onOpenMenu: () => undefined },
+        selection: { onChange: () => undefined, onCodeBlock: () => undefined },
+        slash: { onChange: () => undefined, onKey: () => false },
+      }),
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+    });
+    wide.view.posAtCoords = () => ({ pos: 1, inside: 0 });
+    const wideHandle = content.querySelector('.block-handle') as HTMLButtonElement;
+
+    sheet.dispatchEvent(new MouseEvent('mousemove'));
+
+    expect(wideHandle.hidden).toBe(false);
+    wide.destroy();
+    sheet.remove();
+  });
+
   it('reste affichée le temps que la souris la rejoigne', () => {
     hover();
 

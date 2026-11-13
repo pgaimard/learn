@@ -29,7 +29,9 @@ import { findAltText, placeImages } from './place-images.js';
 import { PackageFiles } from './read-package.js';
 import {
   insertTerms,
+  replaceTerms,
   sortTerms,
+  TermImageWriter,
   TermReference,
   toReference,
 } from './term-import.js';
@@ -43,15 +45,17 @@ export interface ImportPreview {
   termCount: number;
   // Images des définitions que l'import créera.
   termImageCount: number;
-  // Termes de termes.json que l'import créera, et ceux déjà présents qu'il laissera tels quels.
+  // Termes de termes.json que l'import créera, et ceux déjà présents : il les laisse tels
+  // quels, ou remplace leur définition si on le lui demande.
   newTerms: TermReference[];
   duplicateTerms: TermReference[];
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
 
-// Fichiers écrits sur disque pendant un import, à effacer s'il échoue.
-interface WrittenImages {
+// Images d'un import : celles écrites sur disque, à effacer s'il échoue, ou celles
+// qu'il remplace, à effacer s'il réussit.
+interface PackageImages {
   course: CourseImage[];
   term: TermImage[];
 }
@@ -99,7 +103,13 @@ export class CourseImportService {
     };
   }
 
-  async import(files: PackageFiles, replace: boolean): Promise<Course> {
+  // replace : remplacer le chapitre de même titre ; replaceTerms : remplacer aussi la
+  // définition des termes déjà présents, au lieu de les laisser tels quels.
+  async import(
+    files: PackageFiles,
+    replace: boolean,
+    replaceTerms = false,
+  ): Promise<Course> {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
     const existing = await this.findExisting(ue, analysed.metadata.title);
@@ -108,13 +118,15 @@ export class CourseImportService {
         `Le chapitre « ${existing.title} » existe déjà dans ${ue.code} : confirmez son remplacement.`,
       );
     }
-    const written: WrittenImages = { course: [], term: [] };
+    const written: PackageImages = { course: [], term: [] };
     try {
       // Cours, images, contenu et termes sont enregistrés ensemble ou pas du tout.
       const { courseId, obsolete } = await this.dataSource.transaction(
-        (manager) => this.write(manager, ue, existing, analysed, written),
+        (manager) =>
+          this.write(manager, ue, existing, analysed, written, replaceTerms),
       );
-      await this.imagesService.removeFiles(obsolete);
+      await this.imagesService.removeFiles(obsolete.course);
+      await this.termImagesService.removeFiles(obsolete.term);
       return await this.courses.findOneOrFail({
         where: { id: courseId },
         relations: { ue: true },
@@ -131,8 +143,9 @@ export class CourseImportService {
     ue: Ue,
     existing: Course | null,
     analysed: AnalysedPackage,
-    written: WrittenImages,
-  ): Promise<{ courseId: number; obsolete: CourseImage[] }> {
+    written: PackageImages,
+    replaceExistingTerms: boolean,
+  ): Promise<{ courseId: number; obsolete: PackageImages }> {
     const { metadata } = analysed;
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
     const obsolete = await manager.findBy(CourseImage, { courseId: course.id });
@@ -155,25 +168,28 @@ export class CourseImportService {
     course.plainText = extractPlainText(content);
     await manager.save(course);
     const terms = await sortTerms(manager, analysed.terms);
-    await insertTerms(
-      manager,
-      terms.fresh,
-      { ueId: ue.id, courseId: course.id },
-      {
-        files: analysed.termImages,
-        upload: async (termId, data, altText) => {
-          const image = await this.termImagesService.upload(
-            termId,
-            data,
-            altText,
-            manager,
-          );
-          written.term.push(image);
-          return image.id;
-        },
+    const origin = { ueId: ue.id, courseId: course.id };
+    const termImages: TermImageWriter = {
+      files: analysed.termImages,
+      upload: async (termId, data, altText) => {
+        const image = await this.termImagesService.upload(
+          termId,
+          data,
+          altText,
+          manager,
+        );
+        written.term.push(image);
+        return image.id;
       },
-    );
-    return { courseId: course.id, obsolete };
+    };
+    await insertTerms(manager, terms.fresh, origin, termImages);
+    const obsoleteTermImages = replaceExistingTerms
+      ? await replaceTerms(manager, terms.duplicates, origin, termImages)
+      : [];
+    return {
+      courseId: course.id,
+      obsolete: { course: obsolete, term: obsoleteTermImages },
+    };
   }
 
   // Crée le chapitre et le place au rang demandé par « ordre » parmi ceux de l'UE

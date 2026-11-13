@@ -35,8 +35,21 @@
     </div>
   </div>
 
+  @if (outline().length > 0) {
+    <!-- Écran étroit : le sommaire est rétracté, ce bouton le fait sortir sur le côté. -->
+    <button
+      type="button"
+      class="button outline-toggle"
+      aria-controls="course-outline"
+      [attr.aria-expanded]="isOutlineOpen()"
+      (click)="isOutlineOpen.set(!isOutlineOpen())"
+    >
+      <app-icon [name]="isOutlineOpen() ? 'close' : 'list-bullets'" />Sommaire
+    </button>
+  }
+
   <div class="reading">
-    <aside class="side outline">
+    <aside id="course-outline" class="side outline" [class.is-open]="isOutlineOpen()">
       @if (outline().length > 0) {
         <app-course-outline
           [entries]="outline()"
@@ -46,7 +59,7 @@
       }
     </aside>
 
-    <article class="article">
+    <article #article class="article">
       @if (isSheet()) {
         <p class="sheet-note" role="status">
           Fiche de révision : les encadrés « À retenir » et les blocs épinglés.
@@ -58,7 +71,14 @@
           en modifiant le cours.
         </p>
       }
-      <app-course-content [content]="course.content" [sheet]="isSheet()" />
+      <app-course-content
+        [content]="course.content"
+        [sheet]="isSheet()"
+        [startBlock]="startBlock()"
+        [terms]="allTerms()"
+        (sectionReferenced)="followReference($event)"
+        (termOpened)="openTerm($event)"
+      />
     </article>
 
     <aside class="side terms" aria-labelledby="course-terms-title">
@@ -80,6 +100,55 @@
       }
     </aside>
   </div>
+
+  @if (shownTerm(); as term) {
+    <!-- Terme cité dans le texte : sa définition complète, sans quitter le cours. -->
+    <app-modal [heading]="term.label" [wide]="true" (closed)="shownTerm.set(null)">
+      <div class="term-definition">
+        @if (term.expandedForm; as expandedForm) {
+          <p class="expanded-form">{{ expandedForm }}</p>
+        }
+        <app-course-content [content]="term.content" label="Définition" />
+      </div>
+      <div modalFooter class="modal-footer">
+        <a class="button" [routerLink]="[termPath(term), term.id]">
+          Ouvrir dans le {{ term.type === 'acronym' ? 'glossaire' : 'dictionnaire' }}
+        </a>
+      </div>
+    </app-modal>
+  }
+
+  @if (returnPosition() !== null) {
+    <!-- Un renvoi vient d'être suivi : ce bouton ramène à l'endroit quitté. -->
+    <div class="return-bar">
+      <button type="button" class="button button-primary" (click)="goBack()">
+        <app-icon name="undo" />Revenir à ma lecture
+      </button>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        aria-label="Rester ici"
+        title="Rester ici"
+        (click)="returnPosition.set(null)"
+      >
+        <app-icon name="close" [size]="15" />
+      </button>
+    </div>
+  }
+
+  @if (contextMenu(); as menu) {
+    <div class="context-menu" role="menu" [style.top.px]="menu.top" [style.left.px]="menu.left">
+      <a
+        #menuItem
+        role="menuitem"
+        class="menu-item"
+        [routerLink]="['/ue', code(), 'cours', course.id, 'edition']"
+        [queryParams]="menu.block === null ? {} : { bloc: menu.block }"
+      >
+        <app-icon name="pencil" [size]="15" />Modifier ici
+      </a>
+    </div>
+  }
 } @else if (errors().length === 0) {
   <p>Chargement…</p>
 }
