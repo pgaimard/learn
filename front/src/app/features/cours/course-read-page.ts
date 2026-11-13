@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
   input,
   signal,
@@ -24,6 +25,8 @@ import { Course, CourseService } from './course.service';
 const SHOWN_TERMS = 6;
 // Hauteur, dans la fenêtre, sous laquelle un titre ouvre la section en cours de lecture.
 const READING_LINE_PX = 160;
+// Place à garder à droite du menu du clic droit pour qu'il ne sorte pas de la fenêtre.
+const MENU_WIDTH_PX = 200;
 
 @Component({
   selector: 'app-course-read-page',
@@ -34,7 +37,9 @@ const READING_LINE_PX = 160;
     '(window:wheel)': 'releaseHeading()',
     '(window:touchmove)': 'releaseHeading()',
     '(window:keydown)': 'releaseHeading()',
-    '(window:keydown.escape)': 'isOutlineOpen.set(false)',
+    '(window:keydown.escape)': 'closePanels()',
+    '(window:contextmenu)': 'openContextMenu($event)',
+    '(window:click)': 'contextMenu.set(null)',
   },
   templateUrl: './course-read-page.html',
   styleUrl: './course-read-page.css',
@@ -51,6 +56,8 @@ export class CourseReadPage {
   private readonly termService = inject(TermService);
   private readonly title = inject(Title);
   private readonly contentView = viewChild(CourseContent);
+  private readonly article = viewChild<ElementRef<HTMLElement>>('article');
+  private readonly menuItem = viewChild<ElementRef<HTMLElement>>('menuItem');
 
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
@@ -77,6 +84,13 @@ export class CourseReadPage {
   private chosenHeading: number | null = null;
   // Sur écran étroit, le sommaire est rétracté : true quand il est sorti.
   protected readonly isOutlineOpen = signal(false);
+  // Menu ouvert par un clic droit dans le cours : où l'afficher dans la fenêtre, et le
+  // rang du bloc visé, où l'édition s'ouvrira.
+  protected readonly contextMenu = signal<{
+    top: number;
+    left: number;
+    block: number | null;
+  } | null>(null);
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
@@ -87,6 +101,30 @@ export class CourseReadPage {
 
   constructor() {
     effect(() => this.load(Number(this.id())));
+    // Le menu ouvert reçoit le curseur : il se parcourt et se valide au clavier.
+    effect(() => this.menuItem()?.nativeElement.focus());
+  }
+
+  protected closePanels(): void {
+    this.isOutlineOpen.set(false);
+    this.contextMenu.set(null);
+  }
+
+  // Clic droit dans le cours : propose de le modifier à cet endroit. Avec du texte
+  // sélectionné, le menu du navigateur (copier) garde la main.
+  protected openContextMenu(event: MouseEvent): void {
+    const isInCourse =
+      event.target instanceof Node && this.article()?.nativeElement.contains(event.target);
+    if (!isInCourse || window.getSelection()?.isCollapsed === false) {
+      this.contextMenu.set(null);
+      return;
+    }
+    event.preventDefault();
+    this.contextMenu.set({
+      top: event.clientY,
+      left: Math.min(event.clientX, window.innerWidth - MENU_WIDTH_PX),
+      block: this.contentView()?.blockIndexAt(event.clientX, event.clientY) ?? null,
+    });
   }
 
   protected termPath(term: TermSummary): string {
@@ -95,6 +133,8 @@ export class CourseReadPage {
 
   // Un titre devient celui de la section en cours dès qu'il passe la ligne de lecture.
   protected followReading(): void {
+    // Le menu du clic droit ne suit pas la page : il se ferme dès qu'elle défile.
+    this.contextMenu.set(null);
     // Un titre choisi dans le sommaire reste marqué pendant que la page y défile, et
     // tant que l'utilisateur ne fait pas défiler lui-même.
     if (this.chosenHeading !== null) {

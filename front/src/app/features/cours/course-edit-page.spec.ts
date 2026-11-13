@@ -49,7 +49,7 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
   }
 
-  async function setup(): Promise<void> {
+  async function setup(bloc?: string): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -61,6 +61,7 @@ describe('CourseEditPage', () => {
     fixture = TestBed.createComponent(CourseEditPage);
     fixture.componentRef.setInput('code', 'UTC502');
     fixture.componentRef.setInput('id', '7');
+    fixture.componentRef.setInput('bloc', bloc);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -159,6 +160,26 @@ describe('CourseEditPage', () => {
       confirmLabel: 'Quitter sans enregistrer',
       isDestructive: true,
     });
+  });
+
+  it('place le curseur dans le bloc demandé par la lecture (?bloc=n)', async () => {
+    const second = {
+      type: 'paragraph',
+      attrs: { pinned: false },
+      content: [{ type: 'text', text: 'Deux.' }],
+    };
+    service.get.mockReturnValue(
+      of({
+        ...COURSE,
+        content: { type: 'doc', content: [...(COURSE.content.content ?? []), second] },
+      }),
+    );
+    await setup('1');
+
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    expect(content.editor()?.state.selection.$from.index(0)).toBe(1);
+    service.get.mockReturnValue(of(COURSE));
   });
 
   // jsdom ne transmet pas une sélection du document à l'éditeur : on la pose par son API.

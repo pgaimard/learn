@@ -12,6 +12,7 @@
       [content]="course.content"
       label="Contenu du cours"
       [outline]="true"
+      [startBlock]="startBlock()"
       (edited)="markDirty()"
       (imageAdded)="addImage($event)"
     >

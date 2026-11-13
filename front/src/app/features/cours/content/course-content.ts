@@ -40,6 +40,8 @@ export class CourseContent {
   readonly label = input('Contenu du cours');
   // Réduit l'affichage à la fiche de révision du cours.
   readonly sheet = input(false);
+  // Rang du bloc de premier niveau où placer le curseur à l'ouverture (édition).
+  readonly startBlock = input<number | null>(null);
 
   // Émis à chaque modification faite par l'utilisateur.
   readonly edited = output();
@@ -124,6 +126,7 @@ export class CourseContent {
           },
         }),
       );
+      this.focusBlock(untracked(this.startBlock));
     });
     effect(() => {
       const content = this.content();
@@ -183,6 +186,34 @@ export class CourseContent {
         left: target.left + this.host.nativeElement.offsetLeft,
       }
     );
+  }
+
+  // Rang du bloc de premier niveau affiché à cet endroit de la fenêtre ; null hors du texte.
+  blockIndexAt(left: number, top: number): number | null {
+    const view = this.editor()?.view;
+    const found = view?.posAtCoords({ left, top });
+    if (!view || !found) {
+      return null;
+    }
+    const { doc } = view.state;
+    return Math.min(doc.resolve(found.pos).index(0), doc.childCount - 1);
+  }
+
+  // Place le curseur au début du bloc de ce rang et l'amène au milieu de l'écran.
+  private focusBlock(index: number | null): void {
+    const editor = this.editor();
+    if (!editor || index === null || index < 0 || index >= editor.state.doc.childCount) {
+      return;
+    }
+    let pos = 0;
+    for (let rank = 0; rank < index; rank++) {
+      pos += editor.state.doc.child(rank).nodeSize;
+    }
+    editor.commands.focus(pos + 1, { scrollIntoView: false });
+    const block = editor.view.nodeDOM(pos);
+    if (block instanceof HTMLElement && typeof block.scrollIntoView === 'function') {
+      block.scrollIntoView({ block: 'center' });
+    }
   }
 
   getContent(): ContentNode {
