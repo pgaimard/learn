@@ -47,6 +47,12 @@
         <dt>Termes</dt>
         <dd>{{ preview.termCount }}</dd>
       </div>
+      @if (preview.termImageCount > 0) {
+        <div>
+          <dt>Images des définitions</dt>
+          <dd>{{ preview.termImageCount }}</dd>
+        </div>
+      }
     </dl>
 
     @if (preview.newTerms.length > 0) {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Term } from '../terms/term.entity.js';
+import { TermsModule } from '../terms/terms.module.js';
 import { UeModule } from '../ue/ue.module.js';
 import { Course } from './course.entity.js';
 import { CoursesController } from './courses.controller.js';
@@ -18,6 +19,7 @@ import { CourseImportsController } from './import/course-imports.controller.js';
     TypeOrmModule.forFeature([Course, CourseImage, Term]),
     UeModule,
     ImageStorageModule,
+    TermsModule,
   ],
   controllers: [
     CoursesController,
