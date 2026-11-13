@@ -34,6 +34,7 @@ const READING_LINE_PX = 160;
     '(window:wheel)': 'releaseHeading()',
     '(window:touchmove)': 'releaseHeading()',
     '(window:keydown)': 'releaseHeading()',
+    '(window:keydown.escape)': 'isOutlineOpen.set(false)',
   },
   templateUrl: './course-read-page.html',
   styleUrl: './course-read-page.css',
@@ -74,6 +75,8 @@ export class CourseReadPage {
   protected readonly activeHeading = signal<number | null>(null);
   // Titre choisi dans le sommaire, que le défilement qui s'ensuit ne doit pas démarquer.
   private chosenHeading: number | null = null;
+  // Sur écran étroit, le sommaire est rétracté : true quand il est sorti.
+  protected readonly isOutlineOpen = signal(false);
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
@@ -110,6 +113,7 @@ export class CourseReadPage {
   }
 
   protected goTo(index: number): void {
+    this.isOutlineOpen.set(false);
     this.chosenHeading = index;
     this.activeHeading.set(index);
     this.contentView()?.scrollToHeading(index);

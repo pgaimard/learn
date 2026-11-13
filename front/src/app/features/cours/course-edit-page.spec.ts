@@ -223,7 +223,7 @@ describe('CourseEditPage', () => {
     );
     await setup();
     const plan = (): string[] =>
-      Array.from(element().querySelectorAll('.plan nav button')).map((entry) =>
+      Array.from(element().querySelectorAll('.plan button')).map((entry) =>
         (entry.textContent ?? '').trim(),
       );
 

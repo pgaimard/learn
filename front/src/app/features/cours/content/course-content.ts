@@ -75,6 +75,7 @@ export class CourseContent {
             blockHandle: {
               onOpenMenu: ({ pos, top }) =>
                 this.blockMenu.set({ pos, top: top + this.host.nativeElement.offsetTop }),
+              hoverZone: () => this.host.nativeElement.parentElement,
             },
             tableTools: {
               onOpenMenu: ({ top, left }) =>

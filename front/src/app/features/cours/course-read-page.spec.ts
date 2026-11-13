@@ -72,7 +72,7 @@ describe('CourseReadPage', () => {
   }
 
   function outline(): string[] {
-    return Array.from(element().querySelectorAll('.outline nav button')).map((entry) =>
+    return Array.from(element().querySelectorAll('.outline button')).map((entry) =>
       (entry.textContent ?? '').trim(),
     );
   }
@@ -97,6 +97,22 @@ describe('CourseReadPage', () => {
     expect(outline()).toEqual(['1. Notion', '2. Création', '2.1 fork', '3. Annexe']);
     expect(link('Fiche de révision')?.getAttribute('href')).toBe('/?vue=fiche');
     expect(element().querySelector('.sheet-note')).toBeNull();
+  });
+
+  it('sort le sommaire rétracté par son bouton, et le rentre dès qu’un titre est choisi', async () => {
+    await setup(COURSE);
+    const panel = element().querySelector('.outline') as HTMLElement;
+    const toggle = element().querySelector('.outline-toggle') as HTMLButtonElement;
+    expect(panel.classList.contains('is-open')).toBe(false);
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(panel.classList.contains('is-open')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    panel.querySelector('button')?.click();
+    fixture.detectChanges();
+    expect(panel.classList.contains('is-open')).toBe(false);
   });
 
   it('ouvre en grand l’image d’une figure, au clic comme au clavier', async () => {
@@ -242,9 +258,7 @@ describe('CourseReadPage', () => {
   it('garde marqué le titre choisi dans le sommaire, jusqu’à ce que l’utilisateur fasse défiler', async () => {
     await setup(COURSE);
     setPageHeight(5000);
-    const entries = Array.from(
-      element().querySelectorAll<HTMLButtonElement>('.outline nav button'),
-    );
+    const entries = Array.from(element().querySelectorAll<HTMLButtonElement>('.outline button'));
     const current = (): string | undefined =>
       element().querySelector('.outline .is-current')?.textContent.trim();
 

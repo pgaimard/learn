@@ -2,23 +2,12 @@
 .modal {
   width: fit-content;
   max-width: calc(100vw - 2rem);
-}
-
-h2 {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.modal-body {
-  display: flex;
-  justify-content: center;
+  padding: 0.5rem;
 }
 
 /* L'image est un bouton : un clic dessus referme la fenêtre. */
 .image {
+  display: block;
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -31,7 +20,7 @@ img {
   /* L'image s'agrandit sans remplir l'écran : la page reste visible autour. */
   width: min(48rem, calc(100vw - 4rem));
   height: auto;
-  max-height: calc(100vh - 14rem);
+  max-height: calc(100vh - 10rem);
   object-fit: contain;
   border-radius: 8px;
   /* Les schémas sont dessinés pour un fond clair, quel que soit le thème. */
