@@ -57,6 +57,17 @@ Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés
 
 Les rappels par e-mail ne sont pas à développer avant demande.
 
+### Outils et commandes (tranche 7)
+
+| Entité | Champs principaux | Notes |
+|---|---|---|
+| Outil | nom, phrase de présentation, fonctionnement (format structuré de l'éditeur, comme un cours), texte brut dérivé pour la recherche, UE où il sert (zéro, une ou plusieurs) | Ce que l'on apprend à utiliser : bash, PowerShell, Cisco IOS, git, npm |
+| Mode d'outil | outil, nom, invite, façon d'y entrer, ordre | Facultatif : modes d'un terminal (Cisco IOS) |
+| Déclinaison d'outil | outil, nom, ordre | Facultatif : variantes d'un même outil (bash et zsh pour « Shell Unix ») |
+| Commande | outil, nom, phrase de description, syntaxe, mode requis (facultatif), déclinaisons concernées (aucune = toutes), notes, thèmes (étiquettes libres), UE et cours où elle sert | Une commande appartient à un seul outil ; son nom y est unique |
+| Option de commande | commande, texte, description, déclinaisons concernées (aucune = toutes), ordre | |
+| Exemple de commande | commande, ligne de commande, explication, sortie (facultative), ordre | |
+
 ## 5. Décisions fonctionnelles
 
 - **Cours — édition** : éditeur riche de type WYSIWYG, construit sur une bibliothèque d'édition existante (ne pas écrire d'éditeur maison). On édite directement la page telle qu'elle s'affiche, sans syntaxe à connaître.
@@ -77,7 +88,8 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - **Recherche** : une barre globale, accessible au clavier. Recherche plein texte PostgreSQL en configuration française, insensible aux accents, sur les cours (titre et contenu), les termes et les noms de fichiers. Résultats groupés par type avec extrait surligné.
 - **Tâches** : liste à cocher, filtrable par UE ; les tâches faites sont gardées et masquées par défaut. Sans e-mail, la date de rappel fait apparaître la tâche dans un encart « À faire maintenant » et dans une pastille de l'en-tête.
 - **Agenda** : une semaine à la fois, les jours en liste. Un événement peut être répété chaque semaine jusqu'à une date : chaque occurrence est ensuite un événement indépendant. Les tâches apparaissent à la date de leur échéance.
-- **Navigation** : accueil = liste des UE ; page UE = onglets Cours, Fichiers, Termes de l'UE ; l'agenda et les tâches ont chacun leur écran, avec un filtre par UE.
+- **Outils et commandes** : on entre par l'outil. Sa page a deux volets : « Fonctionnement » (la fiche rédigée et, s'il en a, ses modes) et « Commandes » (la liste, avec une recherche sur le nom et la description et des filtres par thème, par mode et par déclinaison). Une même commande existe autant de fois qu'il y a d'outils où elle sert (`ping` dans bash, dans PowerShell, dans Cisco IOS) ; sa fiche renvoie aux commandes de même nom des autres outils. Une commande ou une option qui n'existe que dans certaines déclinaisons de l'outil le signale par une pastille ; sans pastille, elle vaut pour toutes. La fiche d'une commande est colorée (nom, options, arguments) et ses exemples se copient. Seules les commandes apprises sont saisies : la liste n'a pas vocation à être exhaustive. Outils et commandes s'importent aussi par le paquet produit par Claude.
+- **Navigation** : accueil = liste des UE ; page UE = onglets Cours, Fichiers, Termes de l'UE ; l'agenda, les tâches et les outils ont chacun leur écran ; l'agenda et les tâches ont un filtre par UE.
 
 ## 6. Sécurité (application exposée sur Internet)
 
@@ -111,6 +123,7 @@ Chaque tranche est livrée de bout en bout (base, API, écran) et validée avant
 | 4 | Fichiers par UE |
 | 5 | Mise en production sur le serveur, HTTPS, sauvegardes |
 | 6 | Agenda et tâches |
+| 7 | Outils et commandes : outils avec fonctionnement, modes et déclinaisons ; commandes avec options et exemples ; liens vers les UE et les cours ; recherche ; import |
 | Plus tard | Rappels par e-mail |
 
 ## 9. Hors périmètre
