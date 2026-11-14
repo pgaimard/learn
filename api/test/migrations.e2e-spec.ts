@@ -55,6 +55,10 @@ describe('Migrations', () => {
       'tasks',
       'term_images',
       'terms',
+      'tool_modes',
+      'tool_ues',
+      'tool_variants',
+      'tools',
       'ues',
       'users',
     ]);

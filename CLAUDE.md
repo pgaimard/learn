@@ -113,7 +113,7 @@ Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la 
 
 ## NestJS
 
-- Un module par domaine (`ue`, `courses`, `terms`, `files`, `search`, `auth`).
+- Un module par domaine (`ue`, `courses`, `terms`, `tools`, `files`, `search`, `auth`).
 - Contrôleurs fins : validation et routage uniquement. La logique métier est dans les services.
 - Toute entrée validée par un DTO ; `ValidationPipe` global en mode liste blanche, propriétés inconnues rejetées.
 - Authentification par garde globale ; une route publique est une exception explicite.
