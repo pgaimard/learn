@@ -1,0 +1,106 @@
+.edit {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.field-name {
+  flex: 0 1 14rem;
+}
+
+.group {
+  margin: 0 0 0.875rem;
+  padding: 0;
+  border: 0;
+}
+
+.group legend {
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.group .field-hint {
+  margin: 0.125rem 0 0.5rem;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.625rem;
+  margin-top: 0.375rem;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  cursor: pointer;
+}
+
+.variant {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-bottom: 0;
+}
+
+.variant input {
+  width: 8rem;
+  font-family: var(--font-mono);
+}
+
+/* Un mode par ligne : nom, invite, commande d'entrée, puis ses boutons. */
+.mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.mode-actions {
+  display: flex;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 40rem) {
+  .mode {
+    grid-template-columns: 1fr;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.actions {
+  display: contents;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 0.25rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+  white-space: nowrap;
+}
+
+.unsaved {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--color-callout-attention);
+}
+
+.save-key {
+  border-color: currentcolor;
+  background: none;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.form-error {
+  margin: 0 0 0.5rem;
+}
