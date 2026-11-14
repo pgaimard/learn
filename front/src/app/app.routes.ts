@@ -54,6 +54,12 @@ export const routes: Routes = [
           import('./features/termes/termes.routes').then((module) => module.glossaireRoutes),
       },
       {
+        path: 'outils',
+        title: 'Outils',
+        loadChildren: () =>
+          import('./features/outils/outils.routes').then((module) => module.outilsRoutes),
+      },
+      {
         path: 'ue/:code/cours',
         loadChildren: () =>
           import('./features/cours/cours.routes').then((module) => module.coursRoutes),

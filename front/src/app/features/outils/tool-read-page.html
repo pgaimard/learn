@@ -1,0 +1,95 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/outils">Outils</a>
+</nav>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (tool(); as tool) {
+  <div class="page-header">
+    <div class="heading">
+      <h1 class="name">{{ tool.name }}</h1>
+      @if (tool.summary) {
+        <p class="summary">{{ tool.summary }}</p>
+      }
+      @if (tool.ues.length > 0 || tool.variants.length > 0) {
+        <p class="tags">
+          @for (ue of tool.ues; track ue.code) {
+            <a class="code-chip" [routerLink]="['/ue', ue.code]" [title]="ue.title">{{
+              ue.code
+            }}</a>
+          }
+          @for (variant of tool.variants; track variant.id) {
+            <span class="variant">{{ variant.name }}</span>
+          }
+        </p>
+      }
+    </div>
+    <div class="actions">
+      <a class="button" [routerLink]="['/outils', tool.id, 'edition']">
+        <app-icon name="pencil" />Modifier
+      </a>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        [attr.aria-label]="'Supprimer ' + tool.name"
+        (click)="remove(tool)"
+      >
+        <app-icon name="trash" />
+      </button>
+    </div>
+  </div>
+
+  <article class="card sheet">
+    @if (tool.modes.length > 0) {
+      <section aria-labelledby="tool-modes-title">
+        <h2 id="tool-modes-title">Modes</h2>
+        <div class="modes">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Mode</th>
+                <th scope="col">Invite</th>
+                <th scope="col">Pour y entrer</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (mode of tool.modes; track mode.id) {
+                <tr>
+                  <th scope="row">{{ mode.name }}</th>
+                  <td>
+                    @if (mode.prompt) {
+                      <code class="prompt">{{ mode.prompt }}</code>
+                    }
+                  </td>
+                  <td>
+                    @if (mode.entry) {
+                      <code class="entry">{{ mode.entry }}</code>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <section aria-labelledby="tool-content-title">
+      <h2 id="tool-content-title">Fonctionnement</h2>
+      @if (hasContent(tool)) {
+        <app-course-content [content]="tool.content" label="Fonctionnement de l’outil" />
+      } @else {
+        <p class="empty">
+          Rien pour l’instant. Cliquez sur « Modifier » pour décrire à quoi sert l’outil, son
+          installation et ses principes.
+        </p>
+      }
+    </section>
+  </article>
+} @else if (errors().length === 0) {
+  <p>Chargement…</p>
+}
