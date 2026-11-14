@@ -1,0 +1,217 @@
+@if (tool(); as tool) {
+  <nav class="breadcrumb" aria-label="Fil d’Ariane">
+    <a routerLink="/outils">Outils</a>
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/outils', tool.id]">{{ tool.name }}</a>
+  </nav>
+
+  <div class="edit">
+    <form class="meta" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="form-row">
+        <div class="field field-name">
+          <label for="tool-name">Nom</label>
+          <input
+            id="tool-name"
+            type="text"
+            formControlName="name"
+            (input)="markDirty()"
+            [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
+            [attr.aria-describedby]="
+              form.controls.name.touched && form.controls.name.invalid ? 'tool-name-error' : null
+            "
+          />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <p id="tool-name-error" class="field-error">
+              Le nom est requis (100 caractères au plus).
+            </p>
+          }
+        </div>
+        <div class="field field-grow">
+          <label for="tool-summary">Présentation en une phrase</label>
+          <input
+            id="tool-summary"
+            type="text"
+            formControlName="summary"
+            (input)="markDirty()"
+            [attr.aria-invalid]="form.controls.summary.invalid"
+          />
+        </div>
+      </div>
+
+      @if (ues().length > 0) {
+        <fieldset class="group">
+          <legend>UE où il sert</legend>
+          <div class="choices">
+            @for (ue of ues(); track ue.code) {
+              <label class="choice" [title]="ue.title">
+                <input
+                  type="checkbox"
+                  [checked]="ueCodes().includes(ue.code)"
+                  (change)="toggleUe(ue.code, $event)"
+                />
+                <span class="code-chip">{{ ue.code }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      }
+
+      <fieldset class="group" formArrayName="variants">
+        <legend>Déclinaisons</legend>
+        <p class="field-hint">
+          Facultatif. Variantes de l’outil, par exemple bash et zsh : une commande ou une option
+          pourra n’exister que dans certaines.
+        </p>
+        <div class="choices">
+          @for (variant of form.controls.variants.controls; track variant; let index = $index) {
+            <span class="field variant" [formGroupName]="index">
+              <input
+                type="text"
+                formControlName="name"
+                [attr.aria-label]="'Nom de la déclinaison ' + (index + 1)"
+                [attr.aria-invalid]="variant.controls.name.touched && variant.controls.name.invalid"
+                (input)="markDirty()"
+              />
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Retirer la déclinaison ' + (index + 1)"
+                (click)="removeAt(form.controls.variants, index)"
+              >
+                <app-icon name="close" [size]="14" />
+              </button>
+            </span>
+          }
+          <button type="button" class="button" (click)="addVariant()">
+            <app-icon name="plus" [size]="14" />Ajouter
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset class="group" formArrayName="modes">
+        <legend>Modes</legend>
+        <p class="field-hint">
+          Facultatif. Modes d’un terminal, dans l’ordre où on les traverse : son invite, et la
+          commande qui y fait entrer.
+        </p>
+        @for (mode of form.controls.modes.controls; track mode; let index = $index) {
+          <div class="field mode" [formGroupName]="index">
+            <input
+              type="text"
+              placeholder="Nom (Privilégié)"
+              formControlName="name"
+              [attr.aria-label]="'Nom du mode ' + (index + 1)"
+              [attr.aria-invalid]="mode.controls.name.touched && mode.controls.name.invalid"
+              (input)="markDirty()"
+            />
+            <input
+              class="mono"
+              type="text"
+              placeholder="Invite (Router#)"
+              formControlName="prompt"
+              [attr.aria-label]="'Invite du mode ' + (index + 1)"
+              (input)="markDirty()"
+            />
+            <input
+              class="mono"
+              type="text"
+              placeholder="Pour y entrer (enable)"
+              formControlName="entry"
+              [attr.aria-label]="'Commande d’entrée dans le mode ' + (index + 1)"
+              (input)="markDirty()"
+            />
+            <span class="mode-actions">
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Monter le mode ' + (index + 1)"
+                [disabled]="index === 0"
+                (click)="moveMode(index, -1)"
+              >
+                <app-icon name="arrow-up" [size]="14" />
+              </button>
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Descendre le mode ' + (index + 1)"
+                [disabled]="index === form.controls.modes.length - 1"
+                (click)="moveMode(index, 1)"
+              >
+                <app-icon name="arrow-down" [size]="14" />
+              </button>
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Retirer le mode ' + (index + 1)"
+                (click)="removeAt(form.controls.modes, index)"
+              >
+                <app-icon name="close" [size]="14" />
+              </button>
+            </span>
+          </div>
+        }
+        <button type="button" class="button" (click)="addMode()">
+          <app-icon name="plus" [size]="14" />Ajouter un mode
+        </button>
+      </fieldset>
+    </form>
+
+    <app-content-editor
+      [content]="tool.content"
+      label="Fonctionnement de l’outil"
+      (edited)="markDirty()"
+      (imageAdded)="refuseImage()"
+    >
+      <div editorActions class="actions">
+        <p class="status" aria-live="polite">
+          @if (isSaving()) {
+            Enregistrement…
+          } @else if (isDirty()) {
+            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
+          } @else if (savedAt(); as savedAt) {
+            Enregistré à {{ savedAt | date: 'HH:mm' }}
+          }
+        </p>
+        <a class="button" [routerLink]="['/outils', tool.id]">Terminer</a>
+        <button
+          type="button"
+          class="button button-primary"
+          [disabled]="isSaving()"
+          (click)="save()"
+        >
+          Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
+        </button>
+        <app-menu-button
+          label="Autres actions"
+          buttonClass="button button-icon button-ghost"
+          [alignEnd]="true"
+        >
+          <app-icon menuTrigger name="dots" [size]="15" />
+          <button
+            type="button"
+            role="menuitem"
+            class="menu-item menu-item-danger"
+            (click)="remove()"
+          >
+            <app-icon name="trash" [size]="15" />Supprimer l’outil
+          </button>
+        </app-menu-button>
+      </div>
+
+      <div role="alert">
+        @for (error of errors(); track error) {
+          <p class="form-error">{{ error }}</p>
+        }
+      </div>
+    </app-content-editor>
+  </div>
+} @else {
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+  @if (errors().length === 0) {
+    <p>Chargement…</p>
+  }
+}
