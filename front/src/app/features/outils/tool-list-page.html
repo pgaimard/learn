@@ -1,0 +1,43 @@
+<div class="page-header">
+  <h1>Outils</h1>
+  <button type="button" class="button button-primary" (click)="create()">
+    <app-icon name="plus" />Nouvel outil
+  </button>
+</div>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (tools(); as tools) {
+  @if (tools.length === 0) {
+    <p class="empty">
+      Aucun outil pour l’instant. Créez-en un pour y décrire son fonctionnement et y ranger ses
+      commandes.
+    </p>
+  } @else {
+    <ul class="tools">
+      @for (tool of tools; track tool.id) {
+        <li>
+          <a class="card tool-card" [routerLink]="['/outils', tool.id]">
+            <span class="name">{{ tool.name }}</span>
+            @if (tool.summary) {
+              <span class="summary">{{ tool.summary }}</span>
+            }
+            @if (tool.ueCodes.length > 0) {
+              <span class="ues">
+                @for (code of tool.ueCodes; track code) {
+                  <span class="code-chip">{{ code }}</span>
+                }
+              </span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  }
+} @else if (errors().length === 0) {
+  <p>Chargement…</p>
+}
