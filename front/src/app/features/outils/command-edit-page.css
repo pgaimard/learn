@@ -1,0 +1,116 @@
+.edit {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+}
+
+.field-name {
+  flex: 0 1 14rem;
+}
+
+.field-mode {
+  flex: 0 1 14rem;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Aperçu de la syntaxe telle que la fiche la colorera. */
+.preview {
+  margin: 0.375rem 0 0;
+  padding: 0.4375rem 0.625rem;
+  border-left: 3px solid var(--color-syntax-keyword);
+  border-radius: var(--radius);
+  background: var(--color-code-background);
+  font-size: 0.8125rem;
+}
+
+.group {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.group legend {
+  margin-bottom: 0.375rem;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
+}
+
+.choices .field-hint {
+  margin: 0;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  cursor: pointer;
+}
+
+.choice input {
+  width: auto;
+  height: auto;
+}
+
+.variant {
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 5px;
+  background: var(--color-callout-change-soft);
+  color: var(--color-callout-change);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Une option ou un exemple par ligne : ce qu'on tape, ce que ça fait, puis ses boutons ;
+   en dessous, sur toute la largeur, ses déclinaisons ou sa sortie. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.row-actions {
+  display: flex;
+}
+
+.only,
+.output {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+  .row {
+    grid-template-columns: 1fr;
+    margin-bottom: 0.875rem;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.save-key {
+  border-color: currentcolor;
+  background: none;
+  color: inherit;
+  opacity: 0.8;
+}
