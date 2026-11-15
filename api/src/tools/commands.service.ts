@@ -388,7 +388,7 @@ function key(name: string): string {
 
 // Texte d'une commande pour la recherche : syntaxe, options, exemples et notes. La
 // sortie des exemples n'en fait pas partie : elle noierait les résultats.
-function buildPlainText(command: Command): string {
+export function buildPlainText(command: Command): string {
   return [
     command.syntax,
     ...command.options.map((option) =>
