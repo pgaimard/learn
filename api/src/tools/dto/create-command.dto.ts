@@ -126,6 +126,18 @@ export class CreateCommandDto {
   themes?: string[];
 
   @IsOptional()
+  @IsArray({ message: 'Les UE sont une liste de codes.' })
+  @ArrayMaxSize(50, { message: 'Une commande sert dans 50 UE au plus.' })
+  @IsString({ each: true, message: 'Une UE est désignée par son code.' })
+  ueCodes?: string[];
+
+  @IsOptional()
+  @IsArray({ message: 'Les cours sont une liste.' })
+  @ArrayMaxSize(100, { message: 'Une commande sert dans 100 cours au plus.' })
+  @IsInt({ each: true, message: 'Un cours est désigné par son numéro.' })
+  courseIds?: number[];
+
+  @IsOptional()
   @IsArray({ message: 'Les options sont une liste.' })
   @ArrayMaxSize(100, { message: 'Une commande a 100 options au plus.' })
   @ValidateNested({ each: true })

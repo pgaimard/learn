@@ -10,6 +10,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Course } from '../courses/course.entity.js';
+import { Ue } from '../ue/ue.entity.js';
 import { Tool, ToolMode, ToolVariant } from './tool.entity.js';
 
 // Commande apprise d'un outil. La même commande existe autant de fois qu'il y a
@@ -52,6 +54,25 @@ export class Command {
   // Étiquettes libres : « réseau », « fichiers ».
   @Column({ type: 'text', array: true, default: () => "'{}'" })
   themes!: string[];
+
+  // UE où la commande sert.
+  @ManyToMany(() => Ue)
+  @JoinTable({
+    name: 'command_ues',
+    joinColumn: { name: 'command_id' },
+    inverseJoinColumn: { name: 'ue_id' },
+  })
+  ues!: Ue[];
+
+  // Cours où la commande sert. Jamais chargés avec la commande, pour ne pas ramener
+  // leur contenu : le service lit leurs titres à part.
+  @ManyToMany(() => Course)
+  @JoinTable({
+    name: 'command_courses',
+    joinColumn: { name: 'command_id' },
+    inverseJoinColumn: { name: 'course_id' },
+  })
+  courses?: Course[];
 
   @OneToMany(() => CommandOption, (option) => option.command, {
     cascade: true,
