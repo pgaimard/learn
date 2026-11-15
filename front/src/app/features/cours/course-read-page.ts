@@ -11,7 +11,8 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
@@ -59,6 +60,8 @@ export class CourseReadPage {
   private readonly courseService = inject(CourseService);
   private readonly termService = inject(TermService);
   private readonly title = inject(Title);
+  private readonly dialog = inject(DialogService);
+  private readonly router = inject(Router);
   private readonly contentView = viewChild(CourseContent);
   private readonly article = viewChild<ElementRef<HTMLElement>>('article');
   private readonly menuItem = viewChild<ElementRef<HTMLElement>>('menuItem');
@@ -200,6 +203,19 @@ export class CourseReadPage {
     }
   }
 
+  protected async remove(course: Course): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le cours',
+      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.courseService.remove(course.id).subscribe({
+      next: () => void this.router.navigate(['/ue', this.code()]),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
   private load(id: number): void {
     this.returnPosition.set(null);
     this.shownTerm.set(null);

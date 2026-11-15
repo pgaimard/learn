@@ -32,6 +32,15 @@
       >
         <app-icon name="pencil" />Modifier
       </a>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        [attr.aria-label]="'Supprimer ' + course.title"
+        title="Supprimer le cours"
+        (click)="remove(course)"
+      >
+        <app-icon name="trash" />
+      </button>
     </div>
   </div>
 

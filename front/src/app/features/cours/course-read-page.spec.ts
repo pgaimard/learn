@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { ContentNode } from './content/content-node';
 import { CourseContent } from './content/course-content';
@@ -51,6 +52,8 @@ describe('CourseReadPage', () => {
 
   const listTerms = vi.fn<TermService['list']>();
   const getTerm = vi.fn<TermService['get']>();
+  const removeCourse = vi.fn<CourseService['remove']>();
+  const confirmDeletion = vi.fn<DialogService['confirmDeletion']>();
 
   async function setup(
     shown: Course,
@@ -62,7 +65,8 @@ describe('CourseReadPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: CourseService, useValue: { get: () => of(shown) } },
+        { provide: CourseService, useValue: { get: () => of(shown), remove: removeCourse } },
+        { provide: DialogService, useValue: { confirmDeletion } },
         { provide: TermService, useValue: { list: listTerms, get: getTerm } },
       ],
     });
@@ -98,6 +102,23 @@ describe('CourseReadPage', () => {
       (candidate) => (candidate.textContent ?? '').trim() === label,
     );
   }
+
+  it('supprime le cours après confirmation, et revient à son UE', async () => {
+    await setup(COURSE);
+    removeCourse.mockReset().mockReturnValue(of(undefined));
+    confirmDeletion.mockReset().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const button = element().querySelector<HTMLButtonElement>('button[title="Supprimer le cours"]');
+
+    button?.click();
+    await fixture.whenStable();
+    expect(removeCourse).not.toHaveBeenCalled();
+
+    button?.click();
+    await fixture.whenStable();
+    expect(removeCourse).toHaveBeenCalledWith(COURSE.id);
+    expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
+  });
 
   it('affiche le cours complet et propose la fiche de révision', async () => {
     await setup(COURSE);
