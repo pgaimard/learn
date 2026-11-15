@@ -11,6 +11,8 @@ const INPUT: CommandInput = {
   variantIds: [],
   notes: '',
   themes: [],
+  ueCodes: [],
+  courseIds: [],
   options: [],
   examples: [],
 };
@@ -31,6 +33,8 @@ describe('CommandService', () => {
 
   it('range les commandes sous leur outil', () => {
     service.list(3).subscribe();
+    service.listByUe('UTC502').subscribe();
+    service.listByCourse(7).subscribe();
     service.create(3, INPUT).subscribe();
     service.update(3, 8, INPUT).subscribe();
     service.remove(3, 8).subscribe();
@@ -38,6 +42,8 @@ describe('CommandService', () => {
     const calls = http.match(() => true);
     expect(calls.map(({ request }) => `${request.method} ${request.url}`)).toEqual([
       'GET /api/tools/3/commands',
+      'GET /api/ues/UTC502/commands',
+      'GET /api/courses/7/commands',
       'POST /api/tools/3/commands',
       'PATCH /api/tools/3/commands/8',
       'DELETE /api/tools/3/commands/8',

@@ -17,9 +17,9 @@ import { DropdownOption, Dropdown } from '../../core/ui/dropdown';
 import { Icon } from '../../core/ui/icon';
 import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { CommandSheet } from './command-sheet';
-import { Command } from './command.service';
+import { Command, CommandTool } from './command.service';
 import { filterCommands, listThemes } from './filter-commands';
-import { Tool, ToolVariant } from './tool.service';
+import { ToolVariant } from './tool.service';
 
 // Volet « Commandes » d'un outil : la liste, sa recherche et ses filtres ; une commande
 // choisie déplie sa fiche.
@@ -31,7 +31,10 @@ import { Tool, ToolVariant } from './tool.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommandList {
-  readonly tool = input.required<Tool>();
+  readonly tool = input.required<CommandTool>();
+  // Liste posée dans une autre page (onglet d'une UE) : sans barre de recherche ni
+  // filtres, la page ne lui donne que les commandes à montrer.
+  readonly embedded = input(false);
   readonly commands = input.required<Command[]>();
   // Commande à montrer dépliée à l'arrivée (lien « Aussi dans », retour de l'édition).
   readonly openId = input<number | null>(null);
@@ -82,7 +85,7 @@ export class CommandList {
     });
   }
 
-  protected search(event: Event): void {
+  protected typeQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
   }
 

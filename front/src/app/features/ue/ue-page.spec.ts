@@ -5,9 +5,39 @@ import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from '../cours/course.service';
+import { CommandGroup, CommandService } from '../outils/command.service';
 import { TermService } from '../termes/term.service';
 import { UePage } from './ue-page';
 import { UeService } from './ue.service';
+
+function command(id: number, name: string): CommandGroup['commands'][number] {
+  return {
+    id,
+    name,
+    summary: '',
+    syntax: '',
+    modeId: null,
+    variantIds: [],
+    notes: '',
+    themes: [],
+    ueCodes: ['UTC502'],
+    courses: [],
+    options: [],
+    examples: [],
+    alsoIn: [],
+  };
+}
+
+const COMMAND_GROUPS: CommandGroup[] = [
+  {
+    tool: { id: 3, name: 'Cisco IOS', modes: [], variants: [] },
+    commands: [command(8, 'ping')],
+  },
+  {
+    tool: { id: 5, name: 'Shell Unix', modes: [], variants: [] },
+    commands: [command(9, 'grep'), command(10, 'ps')],
+  },
+];
 
 describe('UePage', () => {
   let fixture: ComponentFixture<UePage>;
@@ -24,6 +54,10 @@ describe('UePage', () => {
     remove: vi.fn<TermService['remove']>(),
     revision: signal(0),
   };
+  const commandService = {
+    listByUe: vi.fn<CommandService['listByUe']>(),
+    remove: vi.fn<CommandService['remove']>(),
+  };
   const dialog = { confirmDeletion: vi.fn<DialogService['confirmDeletion']>() };
 
   function setup(): void {
@@ -33,6 +67,7 @@ describe('UePage', () => {
         { provide: UeService, useValue: ueService },
         { provide: CourseService, useValue: courseService },
         { provide: TermService, useValue: termService },
+        { provide: CommandService, useValue: commandService },
         { provide: DialogService, useValue: dialog },
       ],
     });
@@ -71,6 +106,7 @@ describe('UePage', () => {
     courseService.list.mockReturnValue(
       of([{ id: 7, title: 'Processus', position: 1, updatedAt: '2026-11-10T10:00:00.000Z' }]),
     );
+    commandService.listByUe.mockReturnValue(of(COMMAND_GROUPS));
     termService.list.mockReturnValue(
       of([
         {
@@ -142,6 +178,50 @@ describe('UePage', () => {
     await remove();
     expect(termService.remove).toHaveBeenCalledWith(4);
     expect(termService.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('range les commandes de l’UE sous leur outil, dans leur onglet', () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+
+    expect(element().querySelector('.tabs [aria-current="page"]')?.textContent).toContain('3');
+    const tools = Array.from(element().querySelectorAll('.tool-commands')).map((group) => [
+      group.querySelector('h2 a')?.getAttribute('href'),
+      ...Array.from(group.querySelectorAll('.row .name')).map((name) => name.textContent),
+    ]);
+    expect(tools).toEqual([
+      ['/outils/3?volet=commandes', 'ping'],
+      ['/outils/5?volet=commandes', 'grep', 'ps'],
+    ]);
+    // Dans une UE, la liste d'un outil n'a ni recherche ni bouton d'ajout à elle.
+    expect(element().querySelector('.tool-commands input')).toBeNull();
+  });
+
+  it('filtre les commandes de l’UE et masque les outils sans résultat', () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+    const filter = element().querySelector<HTMLInputElement>('#ue-command-filter');
+
+    filter!.value = 'gre';
+    filter!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(element().querySelectorAll('.tool-commands h2')).toHaveLength(1);
+
+    filter!.value = 'zzz';
+    filter!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(element().textContent).toContain('Aucune commande ne correspond.');
+  });
+
+  it('explique comment rattacher une commande quand l’UE n’en a pas', () => {
+    commandService.listByUe.mockReturnValue(of([]));
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+
+    expect(element().textContent).toContain('Aucune commande rattachée à cette UE.');
   });
 
   it('se recharge quand un terme vient d’être créé', () => {

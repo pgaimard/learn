@@ -26,6 +26,9 @@ import {
   SortChange,
 } from '../../core/sortable/sortable';
 import { CourseService, CourseSummary } from '../cours/course.service';
+import { CommandList } from '../outils/command-list';
+import { Command, CommandGroup, CommandService } from '../outils/command.service';
+import { filterCommands } from '../outils/filter-commands';
 import { FileBrowser } from '../fichiers/file-browser';
 import { filterTerms } from '../termes/filter-terms';
 import { TermList } from '../termes/term-list';
@@ -35,6 +38,7 @@ import { Ue, UeService } from './ue.service';
 @Component({
   selector: 'app-ue-page',
   imports: [
+    CommandList,
     DatePipe,
     FileBrowser,
     Icon,
@@ -54,7 +58,8 @@ import { Ue, UeService } from './ue.service';
 export class UePage {
   // Paramètre de la route /ue/:code.
   readonly code = input.required<string>();
-  // Paramètre de requête ?onglet=termes ou ?onglet=fichiers ; l'onglet des cours est celui par défaut.
+  // Paramètre de requête ?onglet=termes, fichiers ou commandes ; l'onglet des cours est
+  // celui par défaut.
   readonly onglet = input<string>();
   // Paramètre de requête ?dossier=12 : dossier affiché dans l'onglet des fichiers.
   readonly dossier = input<string>();
@@ -62,6 +67,7 @@ export class UePage {
   private readonly ueService = inject(UeService);
   private readonly courseService = inject(CourseService);
   private readonly termService = inject(TermService);
+  private readonly commandService = inject(CommandService);
   private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -83,9 +89,29 @@ export class UePage {
       (term) => this.termType() === '' || term.type === this.termType(),
     ),
   );
+  // Commandes étiquetées avec l'UE ou un de ses cours, rangées sous leur outil.
+  protected readonly commandGroups = signal<CommandGroup[]>([]);
+  protected readonly commandFilter = signal('');
+  protected readonly commandCount = computed(() =>
+    this.commandGroups().reduce((count, group) => count + group.commands.length, 0),
+  );
+  // Outils qui gardent au moins une commande une fois le filtre appliqué.
+  protected readonly visibleCommandGroups = computed(() =>
+    this.commandGroups()
+      .map((group) => ({
+        ...group,
+        commands: filterCommands(group.commands, {
+          query: this.commandFilter(),
+          theme: '',
+          modeId: null,
+          variantId: null,
+        }),
+      }))
+      .filter((group) => group.commands.length > 0),
+  );
   protected readonly tab = computed(() => {
     const tab = this.onglet();
-    return tab === 'termes' || tab === 'fichiers' ? tab : 'cours';
+    return tab === 'termes' || tab === 'fichiers' || tab === 'commandes' ? tab : 'cours';
   });
   protected readonly folderId = computed(() => {
     const id = Number(this.dossier());
@@ -166,6 +192,20 @@ export class UePage {
     });
   }
 
+  protected async removeCommand(toolId: number, command: Command): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer la commande',
+      `« ${command.name} », ses options et ses exemples seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.commandService.remove(toolId, command.id).subscribe({
+      next: () => this.load(this.code()),
+      error: (error: ApiError) => this.pageErrors.set(error.messages),
+    });
+  }
+
   protected async removeTerm(term: TermSummary): Promise<void> {
     const confirmed = await this.dialog.confirmDeletion(
       'Supprimer le terme',
@@ -186,11 +226,13 @@ export class UePage {
       ue: this.ueService.get(code),
       courses: this.courseService.list(code),
       terms: this.termService.list({ ue: code }),
+      commands: this.commandService.listByUe(code),
     }).subscribe({
-      next: ({ ue, courses, terms }) => {
+      next: ({ ue, courses, terms, commands }) => {
         this.ue.set(ue);
         this.courses.set(courses);
         this.terms.set(terms);
+        this.commandGroups.set(commands);
         this.pageErrors.set(messages);
         this.title.setTitle(`${ue.code} – ${ue.title}`);
       },

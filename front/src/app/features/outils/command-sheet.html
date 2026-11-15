@@ -20,6 +20,20 @@
   </p>
 }
 
+@if (shown.ueCodes.length > 0 || shown.courses.length > 0) {
+  <p class="facts">
+    <span>Sert dans</span>
+    @for (code of shown.ueCodes; track code) {
+      <a class="code-chip" [routerLink]="['/ue', code]">{{ code }}</a>
+    }
+    @for (course of shown.courses; track course.id) {
+      <a class="course" [routerLink]="['/ue', course.ueCode, 'cours', course.id]">{{
+        course.title
+      }}</a>
+    }
+  </p>
+}
+
 @if (shown.options.length > 0) {
   <section>
     <h3>Options</h3>
@@ -97,13 +111,15 @@
     <a class="button" [routerLink]="['/outils', tool().id, 'commandes', shown.id, 'edition']">
       <app-icon name="pencil" [size]="14" />Modifier
     </a>
-    <button
-      type="button"
-      class="button button-icon button-ghost"
-      [attr.aria-label]="'Supprimer ' + shown.name"
-      (click)="removed.emit()"
-    >
-      <app-icon name="trash" [size]="14" />
-    </button>
+    @if (removable()) {
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        [attr.aria-label]="'Supprimer ' + shown.name"
+        (click)="removed.emit()"
+      >
+        <app-icon name="trash" [size]="14" />
+      </button>
+    }
   </span>
 </footer>

@@ -40,6 +40,13 @@
         <span class="meta">{{ counts.files }}</span>
       }
     </a>
+    <a
+      [routerLink]="[]"
+      [queryParams]="{ onglet: 'commandes' }"
+      [attr.aria-current]="tab() === 'commandes' ? 'page' : null"
+    >
+      Commandes <span class="meta">{{ commandCount() }}</span>
+    </a>
   </nav>
 
   @if (tab() === 'cours') {
@@ -155,6 +162,44 @@
     }
   } @else if (tab() === 'fichiers') {
     <app-file-browser [ueCode]="ue.code" [folderId]="folderId()" />
+  } @else if (tab() === 'commandes') {
+    @if (commandGroups().length === 0) {
+      <p class="empty">
+        Aucune commande rattachée à cette UE. Une commande s’y rattache depuis son formulaire, sous
+        « Sert dans ».
+      </p>
+    } @else {
+      <div class="page-header toolbar terms-toolbar">
+        <label class="visually-hidden" for="ue-command-filter">Filtrer</label>
+        <input
+          #commandFilterField
+          id="ue-command-filter"
+          class="term-filter"
+          type="search"
+          autocomplete="off"
+          placeholder="Filtrer les commandes de l’UE"
+          [value]="commandFilter()"
+          (input)="commandFilter.set(commandFilterField.value)"
+        />
+      </div>
+      @for (group of visibleCommandGroups(); track group.tool.id) {
+        <section class="tool-commands">
+          <h2>
+            <a [routerLink]="['/outils', group.tool.id]" [queryParams]="{ volet: 'commandes' }">{{
+              group.tool.name
+            }}</a>
+          </h2>
+          <app-command-list
+            [embedded]="true"
+            [tool]="group.tool"
+            [commands]="group.commands"
+            (removed)="removeCommand(group.tool.id, $event)"
+          />
+        </section>
+      } @empty {
+        <p class="empty">Aucune commande ne correspond.</p>
+      }
+    }
   } @else {
     @if (terms().length === 0) {
       <p class="empty">Aucun terme rattaché à cette UE. « Terme », en haut de page, en crée un.</p>

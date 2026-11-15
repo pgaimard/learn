@@ -27,6 +27,8 @@ function command(id: number, name: string, changes: Partial<Command> = {}): Comm
     variantIds: [],
     notes: '',
     themes: [],
+    ueCodes: [],
+    courses: [],
     options: [],
     examples: [],
     alsoIn: [],

@@ -25,6 +25,8 @@ const PING: Command = {
   variantIds: [],
   notes: '',
   themes: [],
+  ueCodes: [],
+  courses: [],
   options: [],
   examples: [],
   alsoIn: [],

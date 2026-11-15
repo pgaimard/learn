@@ -92,13 +92,44 @@
               <input
                 type="checkbox"
                 [checked]="form.controls.variantIds.value.includes(variant.id)"
-                (change)="toggleVariant(form.controls.variantIds, variant.id, $event)"
+                (change)="toggle(form.controls.variantIds, variant.id, $event)"
               />
               <span class="variant">{{ variant.name }}</span>
             </label>
           }
           <span class="field-hint">Rien de coché : la commande vaut pour toutes.</span>
         </div>
+      </fieldset>
+    }
+
+    @if (ueChoices().length > 0) {
+      <fieldset class="group">
+        <legend>Sert dans</legend>
+        <p class="field-hint">Cochez une UE entière, ou seulement certains de ses cours.</p>
+        @for (choice of ueChoices(); track choice.ue.code) {
+          <div class="ue-choice">
+            <label class="choice" [title]="choice.ue.title">
+              <input
+                type="checkbox"
+                [checked]="form.controls.ueCodes.value.includes(choice.ue.code)"
+                (change)="toggle(form.controls.ueCodes, choice.ue.code, $event)"
+              />
+              <span class="code-chip">{{ choice.ue.code }}</span>
+            </label>
+            <span class="choices">
+              @for (course of choice.courses; track course.id) {
+                <label class="choice">
+                  <input
+                    type="checkbox"
+                    [checked]="form.controls.courseIds.value.includes(course.id)"
+                    (change)="toggle(form.controls.courseIds, course.id, $event)"
+                  />
+                  {{ course.title }}
+                </label>
+              }
+            </span>
+          </div>
+        }
       </fieldset>
     }
 
@@ -161,7 +192,7 @@
                   <input
                     type="checkbox"
                     [checked]="option.controls.variantIds.value.includes(variant.id)"
-                    (change)="toggleVariant(option.controls.variantIds, variant.id, $event)"
+                    (change)="toggle(option.controls.variantIds, variant.id, $event)"
                   />
                   <span class="variant">{{ variant.name }}</span>
                 </label>

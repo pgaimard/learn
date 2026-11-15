@@ -55,6 +55,24 @@ h1 {
   margin: 0;
 }
 
+.group > .field-hint {
+  margin: 0 0 0.375rem;
+}
+
+/* Une UE par ligne : sa case, puis celles de ses cours. */
+.ue-choice {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.78125rem;
+}
+
+.ue-choice + .ue-choice {
+  border-top: 1px solid var(--color-border-soft);
+}
+
 .choice {
   display: inline-flex;
   align-items: center;
