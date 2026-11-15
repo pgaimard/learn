@@ -16,6 +16,7 @@ import { AddEventDescription1794910000000 } from './1794910000000-add-event-desc
 import { CreateTools1795000000000 } from './1795000000000-create-tools.js';
 import { CreateCommands1795100000000 } from './1795100000000-create-commands.js';
 import { AddCommandLinks1795200000000 } from './1795200000000-add-command-links.js';
+import { AddToolsSearch1795300000000 } from './1795300000000-add-tools-search.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -36,4 +37,5 @@ export const migrations = [
   CreateTools1795000000000,
   CreateCommands1795100000000,
   AddCommandLinks1795200000000,
+  AddToolsSearch1795300000000,
 ];

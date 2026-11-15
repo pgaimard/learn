@@ -226,6 +226,47 @@ describe('Recherche', () => {
     expect((await search('virtuelle')).courses.total).toBe(0);
   });
 
+  it('trouve un outil et une commande, par leur nom comme par leur contenu', async () => {
+    const tool = (
+      await client('post', '/api/tools').send({
+        name: 'Cisco IOS',
+        summary: 'Terminal des routeurs.',
+        content: doc('Les modes se traversent avec enable.'),
+      })
+    ).body as { id: number };
+    const command = (
+      await client('post', `/api/tools/${tool.id}/commands`).send({
+        name: 'traceroute',
+        summary: 'Montre le chemin vers une machine.',
+        options: [{ text: 'numeric', description: 'Sans résolution de noms.' }],
+        examples: [{ line: 'traceroute 10.0.0.1', output: 'bonds traversés' }],
+      })
+    ).body as { id: number };
+
+    const byName = await search('tracer');
+    expect(byName.commands.items).toMatchObject([
+      {
+        id: command.id,
+        name: 'traceroute',
+        toolId: tool.id,
+        toolName: 'Cisco IOS',
+      },
+    ]);
+    expect((await search('résolution')).commands.total).toBe(1);
+    // La sortie d'un exemple n'est pas cherchée.
+    expect((await search('bonds')).commands.total).toBe(0);
+
+    const tools = (await search('routeurs')).tools;
+    expect(tools.items).toMatchObject([{ id: tool.id, name: 'Cisco IOS' }]);
+    expect(highlighted(tools.items[0].excerpt)).toEqual(['routeurs']);
+    expect((await search('enable')).tools.total).toBe(1);
+
+    await client('patch', `/api/tools/${tool.id}/commands/${command.id}`).send({
+      options: [],
+    });
+    expect((await search('résolution')).commands.total).toBe(0);
+  });
+
   it('ne plante pas sur une saisie faite de signes ou de mots vides', async () => {
     const empty = { total: 0, items: [] };
 

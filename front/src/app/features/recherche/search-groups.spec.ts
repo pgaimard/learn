@@ -6,7 +6,14 @@ const EMPTY = { total: 0, items: [] };
 describe('toDisplayedGroups', () => {
   it('ne garde que les groupes qui ont des résultats', () => {
     expect(
-      toDisplayedGroups({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY }),
+      toDisplayedGroups({
+        courses: EMPTY,
+        definitions: EMPTY,
+        acronyms: EMPTY,
+        files: EMPTY,
+        tools: EMPTY,
+        commands: EMPTY,
+      }),
     ).toEqual([]);
   });
 
@@ -25,6 +32,8 @@ describe('toDisplayedGroups', () => {
         items: [{ id: 3, label: 'MMU', expandedForm: 'Memory Management Unit', excerpt: [] }],
       },
       files: EMPTY,
+      tools: EMPTY,
+      commands: EMPTY,
     };
 
     expect(toDisplayedGroups(results)).toEqual([
@@ -69,6 +78,8 @@ describe('toDisplayedGroups', () => {
           { ...file, id: 10, folderId: null, folderName: null },
         ],
       },
+      tools: EMPTY,
+      commands: EMPTY,
     });
 
     expect(group.title).toBe('Fichiers');
@@ -88,5 +99,29 @@ describe('toDisplayedGroups', () => {
         excerpt: [],
       },
     ]);
+  });
+
+  it('ouvre un outil trouvé, et une commande trouvée dépliée dans son outil', () => {
+    const groups = toDisplayedGroups({
+      courses: EMPTY,
+      definitions: EMPTY,
+      acronyms: EMPTY,
+      files: EMPTY,
+      tools: { total: 1, items: [{ id: 3, name: 'Cisco IOS', excerpt: [] }] },
+      commands: {
+        total: 1,
+        items: [{ id: 8, name: 'ping', toolId: 3, toolName: 'Cisco IOS', excerpt: [] }],
+      },
+    });
+
+    expect(groups.map((group) => group.title)).toEqual(['Outils', 'Commandes']);
+    expect(groups[0].results[0]).toMatchObject({ link: ['/outils', 3], title: 'Cisco IOS' });
+    expect(groups[1].results[0]).toEqual({
+      link: ['/outils', 3],
+      queryParams: { volet: 'commandes', commande: 8 },
+      title: 'ping',
+      detail: 'Cisco IOS',
+      excerpt: [],
+    });
   });
 });
