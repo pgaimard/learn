@@ -5,9 +5,39 @@ import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Course, CourseService } from '../cours/course.service';
+import { CommandGroup, CommandService } from '../outils/command.service';
 import { TermService } from '../termes/term.service';
 import { UePage } from './ue-page';
 import { UeService } from './ue.service';
+
+function command(id: number, name: string): CommandGroup['commands'][number] {
+  return {
+    id,
+    name,
+    summary: '',
+    syntax: '',
+    modeId: null,
+    variantIds: [],
+    notes: '',
+    themes: [],
+    ueCodes: ['UTC502'],
+    courses: [],
+    options: [],
+    examples: [],
+    alsoIn: [],
+  };
+}
+
+const COMMAND_GROUPS: CommandGroup[] = [
+  {
+    tool: { id: 3, name: 'Cisco IOS', modes: [], variants: [] },
+    commands: [command(8, 'ping')],
+  },
+  {
+    tool: { id: 5, name: 'Shell Unix', modes: [], variants: [] },
+    commands: [command(9, 'grep'), command(10, 'ps')],
+  },
+];
 
 describe('UePage', () => {
   let fixture: ComponentFixture<UePage>;
@@ -17,11 +47,16 @@ describe('UePage', () => {
     list: vi.fn<CourseService['list']>(),
     create: vi.fn<CourseService['create']>(),
     reorder: vi.fn<CourseService['reorder']>(),
+    remove: vi.fn<CourseService['remove']>(),
   };
   const termService = {
     list: vi.fn<TermService['list']>(),
     remove: vi.fn<TermService['remove']>(),
     revision: signal(0),
+  };
+  const commandService = {
+    listByUe: vi.fn<CommandService['listByUe']>(),
+    remove: vi.fn<CommandService['remove']>(),
   };
   const dialog = { confirmDeletion: vi.fn<DialogService['confirmDeletion']>() };
 
@@ -32,6 +67,7 @@ describe('UePage', () => {
         { provide: UeService, useValue: ueService },
         { provide: CourseService, useValue: courseService },
         { provide: TermService, useValue: termService },
+        { provide: CommandService, useValue: commandService },
         { provide: DialogService, useValue: dialog },
       ],
     });
@@ -70,6 +106,7 @@ describe('UePage', () => {
     courseService.list.mockReturnValue(
       of([{ id: 7, title: 'Processus', position: 1, updatedAt: '2026-11-10T10:00:00.000Z' }]),
     );
+    commandService.listByUe.mockReturnValue(of(COMMAND_GROUPS));
     termService.list.mockReturnValue(
       of([
         {
@@ -143,6 +180,50 @@ describe('UePage', () => {
     expect(termService.list).toHaveBeenCalledTimes(2);
   });
 
+  it('range les commandes de l’UE sous leur outil, dans leur onglet', () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+
+    expect(element().querySelector('.tabs [aria-current="page"]')?.textContent).toContain('3');
+    const tools = Array.from(element().querySelectorAll('.tool-commands')).map((group) => [
+      group.querySelector('h2 a')?.getAttribute('href'),
+      ...Array.from(group.querySelectorAll('.row .name')).map((name) => name.textContent),
+    ]);
+    expect(tools).toEqual([
+      ['/outils/3?volet=commandes', 'ping'],
+      ['/outils/5?volet=commandes', 'grep', 'ps'],
+    ]);
+    // Dans une UE, la liste d'un outil n'a ni recherche ni bouton d'ajout à elle.
+    expect(element().querySelector('.tool-commands input')).toBeNull();
+  });
+
+  it('filtre les commandes de l’UE et masque les outils sans résultat', () => {
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+    const filter = element().querySelector<HTMLInputElement>('#ue-command-filter');
+
+    filter!.value = 'gre';
+    filter!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(element().querySelectorAll('.tool-commands h2')).toHaveLength(1);
+
+    filter!.value = 'zzz';
+    filter!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(element().textContent).toContain('Aucune commande ne correspond.');
+  });
+
+  it('explique comment rattacher une commande quand l’UE n’en a pas', () => {
+    commandService.listByUe.mockReturnValue(of([]));
+    setup();
+    fixture.componentRef.setInput('onglet', 'commandes');
+    fixture.detectChanges();
+
+    expect(element().textContent).toContain('Aucune commande rattachée à cette UE.');
+  });
+
   it('se recharge quand un terme vient d’être créé', () => {
     setup();
 
@@ -181,6 +262,32 @@ describe('UePage', () => {
     handle.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
     fixture.detectChanges();
   }
+
+  it('propose de modifier chaque cours, et le supprime après confirmation seulement', async () => {
+    courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
+    courseService.remove.mockReset().mockReturnValue(of(undefined));
+    setup();
+    const remove = async (): Promise<void> => {
+      element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer Mémoire"]')?.click();
+      // La modale répond de façon asynchrone : on laisse la réponse arriver.
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    };
+
+    expect(element().querySelector('a[aria-label="Modifier Mémoire"]')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/9/edition',
+    );
+
+    dialog.confirmDeletion.mockResolvedValue(false);
+    await remove();
+    expect(courseService.remove).not.toHaveBeenCalled();
+
+    dialog.confirmDeletion.mockResolvedValue(true);
+    courseService.list.mockReturnValue(of([PROCESSUS]));
+    await remove();
+    expect(courseService.remove).toHaveBeenCalledWith(9);
+    expect(courseTitles()).toEqual(['Processus']);
+  });
 
   it('réordonne les cours depuis la poignée, renumérote et enregistre', () => {
     courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));

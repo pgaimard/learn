@@ -32,6 +32,15 @@
       >
         <app-icon name="pencil" />Modifier
       </a>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        [attr.aria-label]="'Supprimer ' + course.title"
+        title="Supprimer le cours"
+        (click)="remove(course)"
+      >
+        <app-icon name="trash" />
+      </button>
     </div>
   </div>
 
@@ -98,8 +107,43 @@
           </a>
         }
       }
+      @if (commandGroups().length > 0) {
+        <section class="commands" aria-labelledby="course-commands-title">
+          <h2 id="course-commands-title">Commandes du chapitre</h2>
+          @for (group of commandGroups(); track group.tool.id) {
+            <h3>{{ group.tool.name }}</h3>
+            <ul>
+              @for (command of group.commands; track command.id) {
+                <li>
+                  <button type="button" (click)="shownCommand.set({ command, tool: group.tool })">
+                    {{ command.name }}
+                  </button>
+                  <span>{{ command.summary }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
     </aside>
   </div>
+
+  @if (shownCommand(); as shown) {
+    <!-- Commande du chapitre : sa fiche, sans quitter le cours. -->
+    <app-modal [heading]="shown.command.name" [wide]="true" (closed)="shownCommand.set(null)">
+      <div class="term-definition">
+        <p class="command-tool">
+          <a [routerLink]="['/outils', shown.tool.id]" [queryParams]="{ volet: 'commandes' }">{{
+            shown.tool.name
+          }}</a>
+          @if (shown.command.summary) {
+            · {{ shown.command.summary }}
+          }
+        </p>
+        <app-command-sheet [command]="shown.command" [tool]="shown.tool" [removable]="false" />
+      </div>
+    </app-modal>
+  }
 
   @if (shownTerm(); as term) {
     <!-- Terme cité dans le texte : sa définition complète, sans quitter le cours. -->

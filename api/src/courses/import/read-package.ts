@@ -7,6 +7,8 @@ export interface PackageFiles {
   markdown: string;
   images: Map<string, Buffer>;
   terms: string | null;
+  // Contenu de commandes.json ; null quand le paquet n'en a pas.
+  commands: string | null;
 }
 
 export const MAX_PACKAGE_SIZE = 50 * 1024 * 1024;
@@ -100,6 +102,7 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
       markdown: '',
       images: new Map(),
       terms: null,
+      commands: null,
     };
     let hasMarkdown = false;
     for (const entry of entries) {
@@ -109,6 +112,8 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
         hasMarkdown = true;
       } else if (name === 'termes.json') {
         files.terms = (await extract(zipFile, entry)).toString('utf8');
+      } else if (name === 'commandes.json') {
+        files.commands = (await extract(zipFile, entry)).toString('utf8');
       } else if (IMAGE_PATH.test(name)) {
         files.images.set(name, await extract(zipFile, entry));
       } else {

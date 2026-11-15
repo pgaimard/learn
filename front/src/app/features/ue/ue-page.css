@@ -35,6 +35,25 @@
   white-space: nowrap;
 }
 
+.course-actions {
+  display: flex;
+  margin-right: -0.375rem;
+}
+
+.tool-commands + .tool-commands {
+  margin-top: 1.25rem;
+}
+
+.tool-commands h2 {
+  margin: 0 0 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.tool-commands h2 a {
+  color: var(--color-text);
+}
+
 .terms-toolbar {
   justify-content: flex-start;
 }

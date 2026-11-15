@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ImageViewerService } from '../../core/ui/image-viewer.service';
 import { ContentNode } from './content/content-node';
 import { CourseContent } from './content/course-content';
+import { CommandGroup, CommandService } from '../outils/command.service';
 import { TermService, TermSummary } from '../termes/term.service';
 import { CourseReadPage } from './course-read-page';
 import { Course, CourseService } from './course.service';
@@ -51,6 +53,9 @@ describe('CourseReadPage', () => {
 
   const listTerms = vi.fn<TermService['list']>();
   const getTerm = vi.fn<TermService['get']>();
+  const listCommands = vi.fn<CommandService['listByCourse']>();
+  const removeCourse = vi.fn<CourseService['remove']>();
+  const confirmDeletion = vi.fn<DialogService['confirmDeletion']>();
 
   async function setup(
     shown: Course,
@@ -59,11 +64,16 @@ describe('CourseReadPage', () => {
     bloc?: string,
   ): Promise<void> {
     listTerms.mockReset().mockReturnValue(of(terms));
+    if (!listCommands.getMockImplementation()) {
+      listCommands.mockReturnValue(of([]));
+    }
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: CourseService, useValue: { get: () => of(shown) } },
+        { provide: CourseService, useValue: { get: () => of(shown), remove: removeCourse } },
+        { provide: DialogService, useValue: { confirmDeletion } },
         { provide: TermService, useValue: { list: listTerms, get: getTerm } },
+        { provide: CommandService, useValue: { listByCourse: listCommands } },
       ],
     });
     fixture = TestBed.createComponent(CourseReadPage);
@@ -98,6 +108,23 @@ describe('CourseReadPage', () => {
       (candidate) => (candidate.textContent ?? '').trim() === label,
     );
   }
+
+  it('supprime le cours après confirmation, et revient à son UE', async () => {
+    await setup(COURSE);
+    removeCourse.mockReset().mockReturnValue(of(undefined));
+    confirmDeletion.mockReset().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const button = element().querySelector<HTMLButtonElement>('button[title="Supprimer le cours"]');
+
+    button?.click();
+    await fixture.whenStable();
+    expect(removeCourse).not.toHaveBeenCalled();
+
+    button?.click();
+    await fixture.whenStable();
+    expect(removeCourse).toHaveBeenCalledWith(COURSE.id);
+    expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
+  });
 
   it('affiche le cours complet et propose la fiche de révision', async () => {
     await setup(COURSE);
@@ -321,6 +348,46 @@ describe('CourseReadPage', () => {
     expect(items[1].querySelector('a')?.getAttribute('href')).toBe('/dictionnaire/2');
     expect(items[1].querySelector('span')?.textContent).toBe('Définition 2');
     expect(link('Voir les 8 termes')?.getAttribute('href')).toBe('/ue/UTC502?onglet=termes');
+  });
+
+  it('liste les commandes du chapitre et ouvre leur fiche dans une fenêtre', async () => {
+    const groups: CommandGroup[] = [
+      {
+        tool: { id: 5, name: 'Shell Unix', modes: [], variants: [] },
+        commands: [
+          {
+            id: 9,
+            name: 'ps',
+            summary: 'Liste les processus.',
+            syntax: 'ps [-e]',
+            modeId: null,
+            variantIds: [],
+            notes: '',
+            themes: [],
+            ueCodes: [],
+            courses: [{ id: 7, title: 'Processus', ueCode: 'UTC502' }],
+            options: [],
+            examples: [],
+            alsoIn: [],
+          },
+        ],
+      },
+    ];
+    listCommands.mockReturnValue(of(groups));
+    await setup(COURSE);
+
+    const entry = element().querySelector<HTMLButtonElement>('.commands li button');
+    expect(element().querySelector('.commands h3')?.textContent).toBe('Shell Unix');
+    expect(entry?.textContent?.trim()).toBe('ps');
+
+    entry?.click();
+    fixture.detectChanges();
+
+    const sheet = element().querySelector('app-modal app-command-sheet');
+    expect(sheet?.querySelector('.syntax .token-name')?.textContent).toBe('ps');
+    // La fiche se lit depuis le cours : on n'y supprime pas la commande.
+    expect(sheet?.querySelector('button[aria-label="Supprimer ps"]')).toBeNull();
+    listCommands.mockReturnValue(of([]));
   });
 
   it('n’affiche pas de colonne de termes pour un cours qui n’en a pas', async () => {

@@ -19,6 +19,7 @@ const PREVIEW: ImportPreview = {
     { type: 'acronym', label: 'PCB' },
   ],
   duplicateTerms: [{ type: 'acronym', label: 'PID' }],
+  commands: { newTools: [], existingTools: [], newCommands: [], duplicateCommands: [] },
   existingCourse: null,
 };
 const IMPORTED = { id: 9, ue: { code: 'UTC502', title: 'Systèmes' } } as Course;
@@ -94,8 +95,38 @@ describe('CourseImportPage', () => {
 
     click('Importer le cours');
 
-    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, false);
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, false, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502', 'cours', 9]);
+  });
+
+  it('annonce les outils et commandes du paquet, et remplace celles déjà en place sur demande', () => {
+    service.preview.mockReturnValue(
+      of({
+        ...PREVIEW,
+        duplicateTerms: [],
+        commands: {
+          newTools: ['git'],
+          existingTools: ['Shell Unix'],
+          newCommands: [{ tool: 'git', name: 'log' }],
+          duplicateCommands: [{ tool: 'Shell Unix', name: 'ping' }],
+        },
+      }),
+    );
+    service.import.mockReturnValue(of(IMPORTED));
+    setup();
+    pickPackage();
+
+    const text = element().querySelector('app-command-import-summary')?.textContent ?? '';
+    expect(text).toContain('1 outil à créer : git');
+    expect(text).toContain('1 commande à ajouter : log (git)');
+    expect(text).toContain('1 commande déjà en place : ping (Shell Unix)');
+
+    element()
+      .querySelector<HTMLInputElement>('app-command-import-summary input[type="checkbox"]')
+      ?.click();
+    click('Importer le cours');
+
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, false, true);
   });
 
   it('remplace la définition des termes déjà présents quand la case est cochée', () => {
@@ -107,7 +138,7 @@ describe('CourseImportPage', () => {
     element().querySelector<HTMLInputElement>('input[type="checkbox"]')?.click();
     click('Importer le cours');
 
-    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, true);
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, false, true, false);
   });
 
   it('ne propose pas de remplacer les termes quand aucun n’est déjà présent', () => {
@@ -130,7 +161,7 @@ describe('CourseImportPage', () => {
     expect(element().textContent).toContain('« Ancienne version » existe déjà dans UTC502');
     click('Remplacer le chapitre');
 
-    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, true, false);
+    expect(service.import).toHaveBeenCalledWith({ kind: 'package', file }, true, false, false);
   });
 
   it('liste les erreurs d’un paquet invalide sans proposer l’import', () => {

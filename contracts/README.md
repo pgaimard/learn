@@ -22,6 +22,8 @@ Un paquet de cours est une archive `.zip` qui contient :
 - `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
   (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
 - `termes.json` (facultatif) : la liste des entrées du glossaire du chapitre.
+- `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
+  « Outils et commandes »).
 
 Règles de `cours.md` :
 
@@ -115,3 +117,58 @@ Le Markdown collé, sans paquet, ne transporte toujours ni image ni terme.
 
 `cours.example.md` est importé par les tests de l'API (`markdown-to-content.spec.ts`,
 `course-imports.e2e-spec.ts`).
+
+## Outils et commandes
+
+`commandes.json` décrit les outils (bash, Cisco IOS, git…) et les commandes apprises. Il s'importe
+de deux façons :
+
+- dans un paquet de cours, à côté de `cours.md` : ses commandes sont rattachées au chapitre importé ;
+- seul, par le bouton « Importer » de la page Outils : rien n'est rattaché à un cours.
+
+`commandes.example.json` montre toutes les clés acceptées. Le fichier est une liste d'outils :
+
+| Clé d'un outil | Rôle |
+|---|---|
+| `outil` | Nom de l'outil, requis (100 caractères au plus). |
+| `presentation` | Une phrase (300 caractères au plus). |
+| `fonctionnement` | Fiche en Markdown, comme un cours (titres `##` à `#####`, listes, tableaux, code, encadrés), **sans image**, 20 000 caractères au plus. |
+| `modes` | Liste de `{ "nom", "invite", "entree" }` : modes d'un terminal, dans l'ordre où on les traverse. |
+| `declinaisons` | Liste de noms : variantes de l'outil (`"bash"`, `"zsh"`). |
+| `commandes` | Liste des commandes (300 au plus). |
+
+| Clé d'une commande | Rôle |
+|---|---|
+| `nom` | Requis, unique dans l'outil sans tenir compte de la casse (`"ping"`, `"show ip route"`). |
+| `description` | Une phrase (300 caractères au plus). |
+| `syntaxe` | Forme générale : entre crochets ce qui est facultatif, entre chevrons ce qu'il faut fournir (`ping [-c <nombre>] <hôte>`). |
+| `mode` | Nom d'un des `modes` de l'outil où la commande se tape. |
+| `declinaisons` | Déclinaisons où la commande existe ; absent : toutes. |
+| `themes` | Étiquettes libres (10 au plus, 40 caractères chacune). |
+| `notes` | Texte libre (5 000 caractères au plus). |
+| `options` | Liste de `{ "texte", "description", "declinaisons" }` ; seul `texte` est requis. |
+| `exemples` | Liste de `{ "ligne", "explication", "sortie" }` ; seule `ligne` est requise. `sortie` est ce que le terminal répond. |
+
+Règles :
+
+- un `mode` ou une déclinaison cités par une commande ou une option doivent être déclarés dans
+  `modes` et `declinaisons` du même outil, même si l'outil existe déjà dans l'application ;
+- une clé inconnue, un nom en double (outil dans le fichier, commande dans l'outil) ou un texte
+  trop long font refuser tout le fichier — et tout le paquet de cours qui le contient — avec un
+  message qui dit où : `commandes.json, outil 1, commande 2 : « nom » est requis.` ;
+- la coloration (nom, options, valeurs à fournir) est calculée à l'affichage : le fichier ne
+  contient que du texte.
+
+Ce que fait l'import :
+
+- un outil est reconnu par son nom, sans tenir compte de la casse. Absent, il est créé avec sa
+  présentation, sa fiche, ses modes et ses déclinaisons. Déjà présent, sa présentation et sa fiche
+  ne sont pas touchées ; seuls les modes et les déclinaisons qui lui manquent sont ajoutés ;
+- une commande est reconnue par son nom dans son outil. Absente, elle est créée. Déjà présente,
+  elle est laissée telle quelle, ou remplacée par celle du fichier si l'import le demande (case à
+  cocher de l'aperçu) ; elle garde alors ses UE et ses cours ;
+- dans un paquet de cours, toutes les commandes du fichier, nouvelles ou déjà présentes, sont
+  rattachées au chapitre importé.
+
+`commandes.example.json` est lu par les tests de l'API (`parse-commands.spec.ts`,
+`command-imports.e2e-spec.ts`).

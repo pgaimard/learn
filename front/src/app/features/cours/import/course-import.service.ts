@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { CommandImportPreview } from '../../outils/command-import.service';
 import { Course } from '../course.service';
 
 export interface ImportedTerm {
@@ -20,6 +21,8 @@ export interface ImportPreview {
   // Termes que l'import créera, et ceux déjà présents : laissés tels quels, ou remplacés sur demande.
   newTerms: ImportedTerm[];
   duplicateTerms: ImportedTerm[];
+  // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
+  commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
@@ -42,8 +45,14 @@ export class CourseImportService {
     return this.http.post<ImportPreview>('/api/course-imports/preview', form);
   }
 
-  // replaceTerms : remplacer aussi la définition des termes déjà présents (paquet seulement).
-  import(source: ImportSource, replace: boolean, replaceTerms = false): Observable<Course> {
+  // replaceTerms et replaceCommands : remplacer aussi la définition des termes et les
+  // commandes déjà présents (paquet seulement).
+  import(
+    source: ImportSource,
+    replace: boolean,
+    replaceTerms = false,
+    replaceCommands = false,
+  ): Observable<Course> {
     if (source.kind === 'markdown') {
       return this.http.post<Course>('/api/course-imports/markdown', {
         markdown: source.markdown,
@@ -54,6 +63,7 @@ export class CourseImportService {
     form.append('file', source.file);
     form.append('replace', String(replace));
     form.append('replaceTerms', String(replaceTerms));
+    form.append('replaceCommands', String(replaceCommands));
     return this.http.post<Course>('/api/course-imports', form);
   }
 }

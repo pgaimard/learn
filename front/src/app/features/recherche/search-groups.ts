@@ -1,9 +1,9 @@
 import { ExcerptSegment, SearchResults } from './search.service';
 
-// Résultats mis sous une forme commune aux trois types, prête à afficher.
+// Résultats mis sous une forme commune à tous les types, prête à afficher.
 export interface DisplayedResult {
   link: (string | number)[];
-  // Paramètres d'adresse du lien : onglet et dossier d'un fichier.
+  // Paramètres d'adresse du lien : onglet et dossier d'un fichier, commande d'un outil.
   queryParams?: Record<string, string | number>;
   title: string;
   // Précision affichée à côté du titre : code de l'UE, forme développée ou dossier.
@@ -62,6 +62,28 @@ export function toDisplayedGroups(results: SearchResults): DisplayedGroup[] {
         title: file.name,
         detail: file.folderName === null ? file.ueCode : `${file.ueCode} › ${file.folderName}`,
         excerpt: file.excerpt,
+      })),
+    },
+    {
+      title: 'Outils',
+      total: results.tools.total,
+      results: results.tools.items.map((tool) => ({
+        link: ['/outils', tool.id],
+        title: tool.name,
+        detail: null,
+        excerpt: tool.excerpt,
+      })),
+    },
+    {
+      title: 'Commandes',
+      total: results.commands.total,
+      // Une commande trouvée s'ouvre dépliée dans la page de son outil.
+      results: results.commands.items.map((command) => ({
+        link: ['/outils', command.toolId],
+        queryParams: { volet: 'commandes', commande: command.id },
+        title: command.name,
+        detail: command.toolName,
+        excerpt: command.excerpt,
       })),
     },
   ];

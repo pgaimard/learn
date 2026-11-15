@@ -1,0 +1,131 @@
+.page-header {
+  align-items: flex-start;
+}
+
+.heading {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.heading h1,
+.heading p {
+  margin: 0;
+}
+
+.name {
+  font-family: var(--font-mono);
+}
+
+.name::before {
+  margin-right: 0.5rem;
+  color: var(--color-accent);
+  content: '›';
+}
+
+.summary {
+  color: var(--color-text-muted);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3125rem;
+}
+
+.tags a {
+  text-decoration: none;
+}
+
+/* Déclinaison de l'outil : même forme qu'une UE, autre teinte. */
+.variant {
+  padding: 0.125rem 0.4375rem;
+  border-radius: 5px;
+  background: var(--color-callout-change-soft);
+  color: var(--color-callout-change);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sheet {
+  max-width: calc(var(--reading-width) + 7rem);
+  box-sizing: border-box;
+  padding: 1.5rem 3.5rem 2rem;
+}
+
+@media (max-width: 40rem) {
+  .sheet {
+    padding: 1.25rem 1.25rem 1.25rem 1.75rem;
+  }
+}
+
+.sheet h2 {
+  margin: 0 0 0.625rem;
+  color: var(--color-text-muted);
+  font-size: 0.71875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sheet section + section {
+  margin-top: 1.75rem;
+}
+
+.modes {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84375rem;
+}
+
+th,
+td {
+  padding: 0.4375rem 0.75rem;
+  border-top: 1px solid var(--color-border-soft);
+  text-align: left;
+  vertical-align: baseline;
+}
+
+thead th {
+  border-top: 0;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+tbody th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+/* L'invite se lit comme dans le terminal ; la commande d'entrée, comme une commande. */
+.prompt {
+  color: var(--color-callout-retenir);
+  font-weight: 600;
+}
+
+.entry {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-code-background);
+}

@@ -13,6 +13,10 @@ import { CreateTasks1794800000000 } from './1794800000000-create-tasks.js';
 import { CreateEvents1794810000000 } from './1794810000000-create-events.js';
 import { AddPrefixSearch1794900000000 } from './1794900000000-add-prefix-search.js';
 import { AddEventDescription1794910000000 } from './1794910000000-add-event-description.js';
+import { CreateTools1795000000000 } from './1795000000000-create-tools.js';
+import { CreateCommands1795100000000 } from './1795100000000-create-commands.js';
+import { AddCommandLinks1795200000000 } from './1795200000000-add-command-links.js';
+import { AddToolsSearch1795300000000 } from './1795300000000-add-tools-search.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -30,4 +34,8 @@ export const migrations = [
   CreateEvents1794810000000,
   AddPrefixSearch1794900000000,
   AddEventDescription1794910000000,
+  CreateTools1795000000000,
+  CreateCommands1795100000000,
+  AddCommandLinks1795200000000,
+  AddToolsSearch1795300000000,
 ];

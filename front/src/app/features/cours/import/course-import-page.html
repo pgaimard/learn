@@ -73,6 +73,7 @@
         </label>
       </div>
     }
+    <app-command-import-summary [preview]="preview.commands" [(replace)]="replaceCommands" />
     @if (preview.existingCourse; as existing) {
       <p class="warning" role="status">
         Le chapitre « {{ existing.title }} » existe déjà dans {{ preview.ueCode }}. L’import
@@ -97,7 +98,9 @@
   @if (mode() === 'package') {
     <label class="dropzone">
       <span class="dropzone-title">Choisir un paquet ou le déposer ici</span>
-      <span class="dropzone-hint">Archive .zip contenant cours.md, images/ et termes.json</span>
+      <span class="dropzone-hint"
+        >Archive .zip contenant cours.md, images/, termes.json et commandes.json</span
+      >
       <input type="file" accept=".zip,application/zip" (change)="pickPackage($event)" />
     </label>
   } @else {

@@ -11,10 +11,13 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
+import { CommandSheet } from '../outils/command-sheet';
+import { Command, CommandGroup, CommandService, CommandTool } from '../outils/command.service';
 import { TERM_SCREENS } from '../termes/term-screens';
 import { Term, TermService, TermSummary } from '../termes/term.service';
 import { buildOutline } from './content/build-outline';
@@ -31,7 +34,7 @@ const MENU_WIDTH_PX = 200;
 
 @Component({
   selector: 'app-course-read-page',
-  imports: [CourseContent, CourseOutline, DatePipe, Icon, Modal, RouterLink],
+  imports: [CommandSheet, CourseContent, CourseOutline, DatePipe, Icon, Modal, RouterLink],
   host: {
     '(window:scroll)': 'followReading()',
     // L'utilisateur reprend la main sur le défilement.
@@ -58,7 +61,10 @@ export class CourseReadPage {
 
   private readonly courseService = inject(CourseService);
   private readonly termService = inject(TermService);
+  private readonly commandService = inject(CommandService);
   private readonly title = inject(Title);
+  private readonly dialog = inject(DialogService);
+  private readonly router = inject(Router);
   private readonly contentView = viewChild(CourseContent);
   private readonly article = viewChild<ElementRef<HTMLElement>>('article');
   private readonly menuItem = viewChild<ElementRef<HTMLElement>>('menuItem');
@@ -109,6 +115,10 @@ export class CourseReadPage {
   protected readonly allTerms = signal<TermSummary[]>([]);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownTerm = signal<Term | null>(null);
+  // Commandes étiquetées avec ce cours, rangées sous leur outil.
+  protected readonly commandGroups = signal<CommandGroup[]>([]);
+  // Commande dont la fiche est affichée dans une fenêtre ; null quand elle est fermée.
+  protected readonly shownCommand = signal<{ command: Command; tool: CommandTool } | null>(null);
   protected readonly isSheetEmpty = computed(() => {
     const course = this.course();
     return this.isSheet() && !!course && !hasSheetContent(course.content);
@@ -200,16 +210,35 @@ export class CourseReadPage {
     }
   }
 
+  protected async remove(course: Course): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le cours',
+      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.courseService.remove(course.id).subscribe({
+      next: () => void this.router.navigate(['/ue', this.code()]),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
+  }
   private load(id: number): void {
     this.returnPosition.set(null);
     this.shownTerm.set(null);
     this.course.set(null);
     this.terms.set([]);
+    this.commandGroups.set([]);
+    this.shownCommand.set(null);
     this.activeHeading.set(null);
     this.chosenHeading = null;
     // Les termes sont un complément : leur échec ne bloque pas la lecture.
     this.termService.list({ course: id }).subscribe({
       next: (terms) => this.terms.set(terms),
+      error: () => undefined,
+    });
+    this.commandService.listByCourse(id).subscribe({
+      next: (groups) => this.commandGroups.set(groups),
       error: () => undefined,
     });
     this.termService.list().subscribe({

@@ -1,0 +1,299 @@
+@if (tool(); as tool) {
+  <nav class="breadcrumb" aria-label="Fil d’Ariane">
+    <a routerLink="/outils">Outils</a>
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/outils', tool.id]" [queryParams]="{ volet: 'commandes' }">{{
+      tool.name
+    }}</a>
+  </nav>
+
+  <form class="card edit" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h1>{{ command() ? 'Modifier la commande' : 'Nouvelle commande' }}</h1>
+
+    <div class="form-row">
+      <div class="field field-name">
+        <label for="command-name">Nom</label>
+        <input
+          id="command-name"
+          class="mono"
+          type="text"
+          autocomplete="off"
+          formControlName="name"
+          [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
+          [attr.aria-describedby]="
+            form.controls.name.touched && form.controls.name.invalid ? 'command-name-error' : null
+          "
+        />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <p id="command-name-error" class="field-error">
+            Le nom est requis (100 caractères au plus).
+          </p>
+        }
+      </div>
+      <div class="field field-grow">
+        <label for="command-summary">Description en une phrase</label>
+        <input id="command-summary" type="text" formControlName="summary" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="command-syntax">Syntaxe</label>
+      <input
+        id="command-syntax"
+        class="mono"
+        type="text"
+        autocomplete="off"
+        placeholder="ping [-c <nombre>] <hôte>"
+        formControlName="syntax"
+        aria-describedby="command-syntax-hint"
+      />
+      <p id="command-syntax-hint" class="field-hint">
+        Entre crochets, ce qui est facultatif ; entre chevrons, ce qu’il faut fournir.
+      </p>
+      @if (typedSyntax()) {
+        <p class="preview" aria-hidden="true">
+          <app-command-line [line]="typedSyntax()" [name]="typedName()" />
+        </p>
+      }
+    </div>
+
+    <div class="form-row">
+      @if (tool.modes.length > 0) {
+        <div class="field field-mode">
+          <label for="command-mode">Mode où elle se tape</label>
+          <app-dropdown fieldId="command-mode" formControlName="modeId" [options]="modeOptions()" />
+        </div>
+      }
+      <div class="field field-grow">
+        <label for="command-themes">Thèmes</label>
+        <input
+          id="command-themes"
+          type="text"
+          autocomplete="off"
+          placeholder="réseau, diagnostic"
+          formControlName="themes"
+          aria-describedby="command-themes-hint"
+        />
+        <p id="command-themes-hint" class="field-hint">
+          Séparés par des virgules.
+          @if (knownThemes().length > 0) {
+            Déjà utilisés : {{ knownThemes().join(', ') }}.
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (tool.variants.length > 0) {
+      <fieldset class="group">
+        <legend>N’existe que dans</legend>
+        <div class="choices">
+          @for (variant of tool.variants; track variant.id) {
+            <label class="choice">
+              <input
+                type="checkbox"
+                [checked]="form.controls.variantIds.value.includes(variant.id)"
+                (change)="toggle(form.controls.variantIds, variant.id, $event)"
+              />
+              <span class="variant">{{ variant.name }}</span>
+            </label>
+          }
+          <span class="field-hint">Rien de coché : la commande vaut pour toutes.</span>
+        </div>
+      </fieldset>
+    }
+
+    @if (ueChoices().length > 0) {
+      <fieldset class="group">
+        <legend>Sert dans</legend>
+        <p class="field-hint">Cochez une UE entière, ou seulement certains de ses cours.</p>
+        @for (choice of ueChoices(); track choice.ue.code) {
+          <div class="ue-choice">
+            <label class="choice" [title]="choice.ue.title">
+              <input
+                type="checkbox"
+                [checked]="form.controls.ueCodes.value.includes(choice.ue.code)"
+                (change)="toggle(form.controls.ueCodes, choice.ue.code, $event)"
+              />
+              <span class="code-chip">{{ choice.ue.code }}</span>
+            </label>
+            <span class="choices">
+              @for (course of choice.courses; track course.id) {
+                <label class="choice">
+                  <input
+                    type="checkbox"
+                    [checked]="form.controls.courseIds.value.includes(course.id)"
+                    (change)="toggle(form.controls.courseIds, course.id, $event)"
+                  />
+                  {{ course.title }}
+                </label>
+              }
+            </span>
+          </div>
+        }
+      </fieldset>
+    }
+
+    <fieldset class="group" formArrayName="options">
+      <legend>Options</legend>
+      @for (option of form.controls.options.controls; track option; let index = $index) {
+        <div class="field row option" [formGroupName]="index">
+          <input
+            class="mono"
+            type="text"
+            autocomplete="off"
+            placeholder="-c <nombre>"
+            formControlName="text"
+            [attr.aria-label]="'Texte de l’option ' + (index + 1)"
+            [attr.aria-invalid]="option.controls.text.touched && option.controls.text.invalid"
+          />
+          <input
+            type="text"
+            placeholder="Ce qu’elle fait"
+            formControlName="description"
+            [attr.aria-label]="'Description de l’option ' + (index + 1)"
+          />
+          <span class="row-actions">
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Monter l’option ' + (index + 1)"
+              [disabled]="index === 0"
+              (click)="move(form.controls.options, index, -1)"
+            >
+              <app-icon name="arrow-up" [size]="14" />
+            </button>
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Descendre l’option ' + (index + 1)"
+              [disabled]="index === form.controls.options.length - 1"
+              (click)="move(form.controls.options, index, 1)"
+            >
+              <app-icon name="arrow-down" [size]="14" />
+            </button>
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Retirer l’option ' + (index + 1)"
+              (click)="removeAt(form.controls.options, index)"
+            >
+              <app-icon name="close" [size]="14" />
+            </button>
+          </span>
+          @if (tool.variants.length > 0) {
+            <span
+              class="choices only"
+              role="group"
+              [attr.aria-label]="'Déclinaisons de l’option ' + (index + 1)"
+            >
+              <span class="field-hint">Seulement dans</span>
+              @for (variant of tool.variants; track variant.id) {
+                <label class="choice">
+                  <input
+                    type="checkbox"
+                    [checked]="option.controls.variantIds.value.includes(variant.id)"
+                    (change)="toggle(option.controls.variantIds, variant.id, $event)"
+                  />
+                  <span class="variant">{{ variant.name }}</span>
+                </label>
+              }
+            </span>
+          }
+        </div>
+      }
+      <button type="button" class="button" (click)="addOption()">
+        <app-icon name="plus" [size]="14" />Ajouter une option
+      </button>
+    </fieldset>
+
+    <fieldset class="group" formArrayName="examples">
+      <legend>Exemples</legend>
+      @for (example of form.controls.examples.controls; track example; let index = $index) {
+        <div class="field row example" [formGroupName]="index">
+          <input
+            class="mono"
+            type="text"
+            autocomplete="off"
+            placeholder="ping -c 2 example.org"
+            formControlName="line"
+            [attr.aria-label]="'Ligne de commande de l’exemple ' + (index + 1)"
+            [attr.aria-invalid]="example.controls.line.touched && example.controls.line.invalid"
+          />
+          <input
+            type="text"
+            placeholder="Ce que fait cet exemple"
+            formControlName="explanation"
+            [attr.aria-label]="'Explication de l’exemple ' + (index + 1)"
+          />
+          <span class="row-actions">
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Monter l’exemple ' + (index + 1)"
+              [disabled]="index === 0"
+              (click)="move(form.controls.examples, index, -1)"
+            >
+              <app-icon name="arrow-up" [size]="14" />
+            </button>
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Descendre l’exemple ' + (index + 1)"
+              [disabled]="index === form.controls.examples.length - 1"
+              (click)="move(form.controls.examples, index, 1)"
+            >
+              <app-icon name="arrow-down" [size]="14" />
+            </button>
+            <button
+              type="button"
+              class="button button-icon button-ghost"
+              [attr.aria-label]="'Retirer l’exemple ' + (index + 1)"
+              (click)="removeAt(form.controls.examples, index)"
+            >
+              <app-icon name="close" [size]="14" />
+            </button>
+          </span>
+          <textarea
+            class="mono output"
+            rows="2"
+            placeholder="Sortie du terminal (facultatif)"
+            formControlName="output"
+            [attr.aria-label]="'Sortie de l’exemple ' + (index + 1)"
+          ></textarea>
+        </div>
+      }
+      <button type="button" class="button" (click)="addExample()">
+        <app-icon name="plus" [size]="14" />Ajouter un exemple
+      </button>
+    </fieldset>
+
+    <div class="field">
+      <label for="command-notes">Notes</label>
+      <textarea id="command-notes" rows="3" formControlName="notes"></textarea>
+    </div>
+
+    <div role="alert">
+      @for (error of errors(); track error) {
+        <p class="form-error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="actions">
+      <a class="button" [routerLink]="['/outils', tool.id]" [queryParams]="{ volet: 'commandes' }"
+        >Annuler</a
+      >
+      <button type="submit" class="button button-primary" [disabled]="isSaving()">
+        Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
+      </button>
+    </div>
+  </form>
+} @else {
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+  @if (errors().length === 0) {
+    <p>Chargement…</p>
+  }
+}

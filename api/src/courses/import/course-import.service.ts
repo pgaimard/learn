@@ -23,6 +23,15 @@ import {
 import { markdownToContent } from './markdown-to-content.js';
 import { TermImage } from '../../terms/images/term-image.entity.js';
 import { TermImagesService } from '../../terms/images/term-images.service.js';
+import {
+  CommandImportPreview,
+  importCommands,
+  previewCommands,
+} from '../../tools/import/command-import.js';
+import {
+  parseCommands,
+  ParsedTool,
+} from '../../tools/import/parse-commands.js';
 import { CourseMetadata, parseFrontMatter } from './parse-front-matter.js';
 import { ParsedTerm, parseTerms } from './parse-terms.js';
 import { findAltText, placeImages } from './place-images.js';
@@ -49,6 +58,8 @@ export interface ImportPreview {
   // quels, ou remplace leur définition si on le lui demande.
   newTerms: TermReference[];
   duplicateTerms: TermReference[];
+  // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
+  commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
   existingCourse: { id: number; title: string } | null;
 }
@@ -68,6 +79,8 @@ interface AnalysedPackage {
   termImages: Map<string, Buffer>;
   sectionCount: number;
   terms: ParsedTerm[];
+  // Outils de commandes.json, avec leurs commandes.
+  tools: ParsedTool[];
 }
 
 @Injectable()
@@ -97,18 +110,21 @@ export class CourseImportService {
       ),
       newTerms: terms.fresh.map(toReference),
       duplicateTerms: terms.duplicates.map(toReference),
+      commands: await previewCommands(this.dataSource.manager, analysed.tools),
       existingCourse: existing
         ? { id: existing.id, title: existing.title }
         : null,
     };
   }
 
-  // replace : remplacer le chapitre de même titre ; replaceTerms : remplacer aussi la
-  // définition des termes déjà présents, au lieu de les laisser tels quels.
+  // replace : remplacer le chapitre de même titre ; replaceTerms et replaceCommands :
+  // remplacer aussi la définition des termes et les commandes déjà présents, au lieu de
+  // les laisser tels quels.
   async import(
     files: PackageFiles,
     replace: boolean,
     replaceTerms = false,
+    replaceCommands = false,
   ): Promise<Course> {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
@@ -120,10 +136,13 @@ export class CourseImportService {
     }
     const written: PackageImages = { course: [], term: [] };
     try {
-      // Cours, images, contenu et termes sont enregistrés ensemble ou pas du tout.
+      // Cours, images, contenu, termes et commandes sont enregistrés ensemble ou pas du tout.
       const { courseId, obsolete } = await this.dataSource.transaction(
         (manager) =>
-          this.write(manager, ue, existing, analysed, written, replaceTerms),
+          this.write(manager, ue, existing, analysed, written, {
+            terms: replaceTerms,
+            commands: replaceCommands,
+          }),
       );
       await this.imagesService.removeFiles(obsolete.course);
       await this.termImagesService.removeFiles(obsolete.term);
@@ -144,7 +163,8 @@ export class CourseImportService {
     existing: Course | null,
     analysed: AnalysedPackage,
     written: PackageImages,
-    replaceExistingTerms: boolean,
+    // Ce qui, déjà présent, est remplacé par le paquet.
+    replaced: { terms: boolean; commands: boolean },
   ): Promise<{ courseId: number; obsolete: PackageImages }> {
     const { metadata } = analysed;
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
@@ -183,9 +203,13 @@ export class CourseImportService {
       },
     };
     await insertTerms(manager, terms.fresh, origin, termImages);
-    const obsoleteTermImages = replaceExistingTerms
+    const obsoleteTermImages = replaced.terms
       ? await replaceTerms(manager, terms.duplicates, origin, termImages)
       : [];
+    await importCommands(manager, analysed.tools, {
+      replace: replaced.commands,
+      courseId: course.id,
+    });
     return {
       courseId: course.id,
       obsolete: { course: obsolete, term: obsoleteTermImages },
@@ -289,6 +313,8 @@ function analyse(files: PackageFiles): AnalysedPackage {
       collect(path, `termes.json, « ${term.label} »`, termImages);
     }
   }
+  const commands = parseCommands(files.commands);
+  errors.push(...commands.errors);
   if (!header.metadata || errors.length > 0) {
     throw new BadRequestException(errors.slice(0, 10));
   }
@@ -299,6 +325,7 @@ function analyse(files: PackageFiles): AnalysedPackage {
     termImages,
     sectionCount: converted.sectionCount,
     terms: terms.terms,
+    tools: commands.tools,
   };
 }
 

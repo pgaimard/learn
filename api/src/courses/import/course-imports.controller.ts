@@ -42,7 +42,7 @@ function readUpload(file: ReceivedFile | undefined): Promise<PackageFiles> {
 }
 
 function fromMarkdown(markdown: string): PackageFiles {
-  return { markdown, images: new Map(), terms: null };
+  return { markdown, images: new Map(), terms: null, commands: null };
 }
 
 @Controller('course-imports')
@@ -68,6 +68,7 @@ export class CourseImportsController {
       await readUpload(file),
       options.replace ?? false,
       options.replaceTerms ?? false,
+      options.replaceCommands ?? false,
     );
   }
 

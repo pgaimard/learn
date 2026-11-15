@@ -44,11 +44,27 @@ export interface FileResult {
   excerpt: ExcerptSegment[];
 }
 
+export interface ToolResult {
+  id: number;
+  name: string;
+  excerpt: ExcerptSegment[];
+}
+
+export interface CommandResult {
+  id: number;
+  name: string;
+  toolId: number;
+  toolName: string;
+  excerpt: ExcerptSegment[];
+}
+
 export interface SearchResults {
   courses: SearchGroup<CourseResult>;
   definitions: SearchGroup<TermResult>;
   acronyms: SearchGroup<TermResult>;
   files: SearchGroup<FileResult>;
+  tools: SearchGroup<ToolResult>;
+  commands: SearchGroup<CommandResult>;
 }
 
 type Row<Item> = Omit<Item, 'excerpt'> & { excerpt: string; total: string };
@@ -125,6 +141,30 @@ const FILES_SQL = `${QUERY_CTE}
    ORDER BY ${relevance('file')}, file.name, file.id
    LIMIT $6`;
 
+// L'extrait d'un outil ou d'une commande part de sa phrase de présentation.
+const TOOLS_SQL = `${QUERY_CTE}
+  SELECT tool.id, tool.name,
+         ts_headline('simple_unaccent', concat_ws(E'\\n', nullif(tool.summary, ''), tool.plain_text),
+                     query.highlight, $6) AS excerpt,
+         count(*) OVER () AS total
+    FROM tools tool, query
+   WHERE ${matches('tool')}
+   ORDER BY ${relevance('tool')}, tool.name, tool.id
+   LIMIT $7`;
+
+const COMMANDS_SQL = `${QUERY_CTE}
+  SELECT command.id, command.name, tool.id AS "toolId", tool.name AS "toolName",
+         ts_headline('simple_unaccent',
+                     concat_ws(E'\\n', nullif(command.summary, ''), command.plain_text),
+                     query.highlight, $6) AS excerpt,
+         count(*) OVER () AS total
+    FROM commands command
+    JOIN tools tool ON tool.id = command.tool_id,
+         query
+   WHERE ${matches('command')}
+   ORDER BY ${relevance('command')}, command.name, command.id
+   LIMIT $7`;
+
 @Injectable()
 export class SearchService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
@@ -138,6 +178,8 @@ export class SearchService {
         definitions: empty,
         acronyms: empty,
         files: empty,
+        tools: empty,
+        commands: empty,
       };
     }
     // Paramètres $1 à $5 de la requête commune.
@@ -148,17 +190,21 @@ export class SearchService {
       query.prefix,
       query.text,
     ];
-    const [courses, definitions, acronyms, files] = await Promise.all([
-      this.run<CourseResult>(COURSES_SQL, [
-        ...words,
-        HEADLINE_OPTIONS,
-        GROUP_LIMIT,
-      ]),
-      this.searchTerms(words, 'definition'),
-      this.searchTerms(words, 'acronym'),
-      this.run<FileResult>(FILES_SQL, [...words, GROUP_LIMIT]),
-    ]);
-    return { courses, definitions, acronyms, files };
+    const withExcerpt = [...words, HEADLINE_OPTIONS, GROUP_LIMIT];
+    const [courses, definitions, acronyms, files, tools, commands] =
+      await Promise.all([
+        this.run<CourseResult>(COURSES_SQL, [
+          ...words,
+          HEADLINE_OPTIONS,
+          GROUP_LIMIT,
+        ]),
+        this.searchTerms(words, 'definition'),
+        this.searchTerms(words, 'acronym'),
+        this.run<FileResult>(FILES_SQL, [...words, GROUP_LIMIT]),
+        this.run<ToolResult>(TOOLS_SQL, withExcerpt),
+        this.run<CommandResult>(COMMANDS_SQL, withExcerpt),
+      ]);
+    return { courses, definitions, acronyms, files, tools, commands };
   }
 
   private searchTerms(

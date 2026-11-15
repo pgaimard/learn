@@ -1,0 +1,82 @@
+[
+  {
+    "outil": "Cisco IOS",
+    "presentation": "Terminal des routeurs et commutateurs Cisco.",
+    "fonctionnement": "## À quoi il sert\n\nIOS se pilote en ligne de commande, par des **modes** emboîtés.\n\n> [!retenir]\n> `?` liste les commandes du mode courant.",
+    "modes": [
+      { "nom": "Utilisateur", "invite": "Router>" },
+      { "nom": "Privilégié", "invite": "Router#", "entree": "enable" },
+      {
+        "nom": "Configuration globale",
+        "invite": "Router(config)#",
+        "entree": "configure terminal"
+      }
+    ],
+    "declinaisons": ["IOS", "IOS-XE"],
+    "commandes": [
+      {
+        "nom": "ping",
+        "description": "Teste si une machine répond.",
+        "syntaxe": "ping <adresse> [repeat <nombre>]",
+        "mode": "Privilégié",
+        "themes": ["réseau", "diagnostic"],
+        "notes": "« ! » : réponse reçue ; « . » : délai dépassé.",
+        "options": [
+          {
+            "texte": "repeat <nombre>",
+            "description": "Nombre de paquets envoyés (5 par défaut)."
+          },
+          {
+            "texte": "source <interface>",
+            "description": "Interface d'où partent les paquets.",
+            "declinaisons": ["IOS-XE"]
+          }
+        ],
+        "exemples": [
+          {
+            "ligne": "ping 192.168.1.1",
+            "explication": "Cinq paquets vers la passerelle.",
+            "sortie": "Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:\n!!!!!\nSuccess rate is 100 percent (5/5)"
+          }
+        ]
+      },
+      {
+        "nom": "show ip route",
+        "description": "Affiche la table de routage.",
+        "syntaxe": "show ip route [<réseau>]",
+        "mode": "Privilégié",
+        "themes": ["réseau", "routage"]
+      }
+    ]
+  },
+  {
+    "outil": "Shell Unix",
+    "declinaisons": ["bash", "zsh"],
+    "commandes": [
+      {
+        "nom": "ping",
+        "description": "Teste si une machine répond.",
+        "syntaxe": "ping [-c <nombre>] <hôte>",
+        "themes": ["réseau"],
+        "options": [
+          {
+            "texte": "-c <nombre>",
+            "description": "S'arrête après ce nombre de paquets."
+          }
+        ],
+        "exemples": [
+          {
+            "ligne": "ping -c 2 example.org",
+            "explication": "Deux paquets, puis le bilan."
+          }
+        ]
+      },
+      {
+        "nom": "setopt",
+        "description": "Active une option du shell.",
+        "syntaxe": "setopt <option>",
+        "declinaisons": ["zsh"]
+      }
+    ]
+  }
+]

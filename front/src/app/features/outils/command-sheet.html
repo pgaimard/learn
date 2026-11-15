@@ -1,0 +1,125 @@
+@let shown = command();
+
+@if (shown.syntax) {
+  <p class="syntax"><app-command-line [line]="shown.syntax" [name]="shown.name" /></p>
+}
+
+@if (mode() || shown.themes.length > 0) {
+  <p class="facts">
+    @if (mode(); as mode) {
+      <span>
+        Se tape en mode <strong>{{ mode.name }}</strong>
+        @if (mode.prompt) {
+          <code class="prompt">{{ mode.prompt }}</code>
+        }
+      </span>
+    }
+    @for (theme of shown.themes; track theme) {
+      <span class="pill">{{ theme }}</span>
+    }
+  </p>
+}
+
+@if (shown.ueCodes.length > 0 || shown.courses.length > 0) {
+  <p class="facts">
+    <span>Sert dans</span>
+    @for (code of shown.ueCodes; track code) {
+      <a class="code-chip" [routerLink]="['/ue', code]">{{ code }}</a>
+    }
+    @for (course of shown.courses; track course.id) {
+      <a class="course" [routerLink]="['/ue', course.ueCode, 'cours', course.id]">{{
+        course.title
+      }}</a>
+    }
+  </p>
+}
+
+@if (shown.options.length > 0) {
+  <section>
+    <h3>Options</h3>
+    <dl class="options">
+      @for (option of shown.options; track option.id) {
+        <div class="option">
+          <dt>
+            <app-command-line [line]="option.text" [isFragment]="true" />
+            @for (variant of variants(option.variantIds); track variant.id) {
+              <span class="variant">{{ variant.name }}</span>
+            }
+          </dt>
+          <dd>{{ option.description }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+}
+
+@if (shown.examples.length > 0) {
+  <section>
+    <h3>Exemples</h3>
+    @for (example of shown.examples; track example.id; let index = $index) {
+      <div class="example">
+        @if (example.explanation) {
+          <p class="explanation">{{ example.explanation }}</p>
+        }
+        <div class="terminal">
+          <div class="line">
+            @if (mode()?.prompt; as prompt) {
+              <span class="prompt" aria-hidden="true">{{ prompt }}</span>
+            }
+            <app-command-line [line]="example.line" [name]="shown.name" />
+            <button
+              type="button"
+              class="button button-icon button-ghost copy"
+              [attr.aria-label]="'Copier l’exemple ' + (index + 1)"
+              [title]="copied() === index ? 'Copié' : 'Copier'"
+              (click)="copy(example.line, index)"
+            >
+              <app-icon [name]="copied() === index ? 'check' : 'copy'" [size]="14" />
+            </button>
+          </div>
+          @if (example.output) {
+            <pre class="output">{{ example.output }}</pre>
+          }
+        </div>
+      </div>
+    }
+  </section>
+}
+
+@if (shown.notes) {
+  <section>
+    <h3>Notes</h3>
+    <p class="notes">{{ shown.notes }}</p>
+  </section>
+}
+
+<footer>
+  @if (shown.alsoIn.length > 0) {
+    <p class="also">
+      Aussi dans
+      @for (twin of shown.alsoIn; track twin.commandId) {
+        <a
+          class="pill"
+          [routerLink]="['/outils', twin.toolId]"
+          [queryParams]="{ volet: 'commandes', commande: twin.commandId }"
+          >{{ twin.toolName }}</a
+        >
+      }
+    </p>
+  }
+  <span class="sheet-actions">
+    <a class="button" [routerLink]="['/outils', tool().id, 'commandes', shown.id, 'edition']">
+      <app-icon name="pencil" [size]="14" />Modifier
+    </a>
+    @if (removable()) {
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        [attr.aria-label]="'Supprimer ' + shown.name"
+        (click)="removed.emit()"
+      >
+        <app-icon name="trash" [size]="14" />
+      </button>
+    }
+  </span>
+</footer>
