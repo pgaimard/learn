@@ -132,6 +132,12 @@ describe('Import d’un paquet de cours', () => {
         { type: 'definition', label: 'Commutation de contexte' },
       ],
       duplicateTerms: [],
+      commands: {
+        newTools: [],
+        existingTools: [],
+        newCommands: [],
+        duplicateCommands: [],
+      },
       existingCourse: null,
     });
     expect(await countCourses()).toBe(0);

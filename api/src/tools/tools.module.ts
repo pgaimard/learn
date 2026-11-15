@@ -8,6 +8,8 @@ import {
   CommandsController,
 } from './commands.controller.js';
 import { CommandsService } from './commands.service.js';
+import { CommandImportService } from './import/command-import.service.js';
+import { CommandImportsController } from './import/command-imports.controller.js';
 import { Tool, ToolMode, ToolVariant } from './tool.entity.js';
 import { ToolsController } from './tools.controller.js';
 import { ToolsService } from './tools.service.js';
@@ -25,7 +27,12 @@ import { ToolsService } from './tools.service.js';
       Course,
     ]),
   ],
-  controllers: [ToolsController, CommandsController, CommandLinksController],
-  providers: [ToolsService, CommandsService],
+  controllers: [
+    ToolsController,
+    CommandsController,
+    CommandLinksController,
+    CommandImportsController,
+  ],
+  providers: [ToolsService, CommandsService, CommandImportService],
 })
 export class ToolsModule {}
