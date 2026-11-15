@@ -45,9 +45,11 @@ describe('Migrations', () => {
     await dataSource.runMigrations();
 
     expect(await readTableNames()).toEqual([
+      'command_courses',
       'command_examples',
       'command_option_variants',
       'command_options',
+      'command_ues',
       'command_variants',
       'commands',
       'course_images',

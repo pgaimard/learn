@@ -2,7 +2,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { ErrorResponse } from '../src/common/http-error.filter.js';
-import { CommandView } from '../src/tools/commands.service.js';
+import { CommandGroup, CommandView } from '../src/tools/commands.service.js';
 import { Tool } from '../src/tools/tool.entity.js';
 import {
   AuthenticatedClient,
@@ -87,6 +87,8 @@ describe('Commandes d’un outil', () => {
       variantIds: [zsh.id],
       notes: 'Ctrl+C pour arrêter.',
       themes: ['Réseau', 'diagnostic'],
+      ueCodes: [],
+      courses: [],
       alsoIn: [],
     });
     expect(command.options).toMatchObject([
@@ -122,6 +124,81 @@ describe('Commandes d’un outil', () => {
     expect((list.body as CommandView[])[0].alsoIn).toEqual([
       { commandId: twin.id, toolId: ios.id, toolName: 'Cisco IOS' },
     ]);
+  });
+
+  it('étiquette une commande avec des UE et des cours, et la montre depuis eux', async () => {
+    for (const code of ['UTC505', 'UTC502']) {
+      await client('post', '/api/ues').send({ code, title: code });
+    }
+    const course = (
+      await client('post', '/api/ues/UTC502/courses').send({ title: 'Réseau' })
+    ).body as { id: number };
+
+    const updated = await client(
+      'patch',
+      `${commandsOf(shell)}/${pingId}`,
+    ).send({ ueCodes: ['utc505'], courseIds: [course.id] });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body).toMatchObject({
+      ueCodes: ['UTC505'],
+      courses: [{ id: course.id, title: 'Réseau', ueCode: 'UTC502' }],
+    });
+    const names = async (path: string): Promise<string[][]> =>
+      ((await client('get', path)).body as CommandGroup[]).map((group) => [
+        group.tool.name,
+        ...group.commands.map((command) => command.name),
+      ]);
+    // UTC505 par l'étiquette d'UE, UTC502 par celle du cours.
+    expect(await names('/api/ues/UTC505/commands')).toEqual([
+      ['Shell Unix', 'ping'],
+    ]);
+    expect(await names('/api/ues/utc502/commands')).toEqual([
+      ['Shell Unix', 'ping'],
+    ]);
+    expect(await names(`/api/courses/${course.id}/commands`)).toEqual([
+      ['Shell Unix', 'ping'],
+    ]);
+    const groups = (await client('get', '/api/ues/UTC505/commands'))
+      .body as CommandGroup[];
+    expect(groups[0].tool.variants.map(({ name }) => name)).toEqual([
+      'bash',
+      'zsh',
+    ]);
+    expect(groups[0].commands[0].alsoIn).toHaveLength(1);
+  });
+
+  it('refuse une UE ou un cours inconnus, et répond 404 depuis eux', async () => {
+    const ue = await client('patch', `${commandsOf(shell)}/${pingId}`).send({
+      ueCodes: ['XXX000'],
+    });
+    const course = await client('patch', `${commandsOf(shell)}/${pingId}`).send(
+      { courseIds: [9999] },
+    );
+
+    expect(ue.status).toBe(400);
+    expect(messages(ue)).toContain('L’UE XXX000 n’existe pas.');
+    expect(course.status).toBe(400);
+    expect(messages(course)).toContain('Le cours n° 9999 n’existe pas.');
+    expect((await client('get', '/api/ues/XXX000/commands')).status).toBe(404);
+    expect((await client('get', '/api/courses/9999/commands')).status).toBe(
+      404,
+    );
+    expect((await client('get', '/api/courses/abc/commands')).status).toBe(404);
+  });
+
+  it('garde la commande quand son cours est supprimé', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses')).body as {
+      id: number;
+    }[];
+    await client('delete', `/api/courses/${course.id}`);
+
+    const list = (await client('get', commandsOf(shell))).body as CommandView[];
+
+    expect(list.find(({ name }) => name === 'ping')?.courses).toEqual([]);
+    expect(await client('get', '/api/ues/UTC502/commands')).toMatchObject({
+      body: [],
+    });
   });
 
   it('refuse le même nom dans le même outil, sans tenir compte de la casse', async () => {

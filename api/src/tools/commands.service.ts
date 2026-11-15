@@ -5,10 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { In, QueryFailedError, Repository } from 'typeorm';
+import { Course } from '../courses/course.entity.js';
+import { Ue } from '../ue/ue.entity.js';
 import { Command, CommandExample, CommandOption } from './command.entity.js';
 import { UpdateCommandDto } from './dto/update-command.dto.js';
-import { Tool, ToolVariant } from './tool.entity.js';
+import { Tool, ToolMode, ToolVariant } from './tool.entity.js';
 
 const UNIQUE_VIOLATION = '23505';
 
@@ -17,6 +19,13 @@ export interface CommandTwin {
   commandId: number;
   toolId: number;
   toolName: string;
+}
+
+// Cours où une commande sert.
+export interface CommandCourse {
+  id: number;
+  title: string;
+  ueCode: string;
 }
 
 // Commande telle que l'API la rend : modes et déclinaisons par leur numéro, ceux de
@@ -30,6 +39,8 @@ export interface CommandView {
   variantIds: number[];
   notes: string;
   themes: string[];
+  ueCodes: string[];
+  courses: CommandCourse[];
   options: {
     id: number;
     text: string;
@@ -40,11 +51,27 @@ export interface CommandView {
   alsoIn: CommandTwin[];
 }
 
+// Commandes d'une UE ou d'un cours, rangées sous leur outil : de quoi afficher leurs
+// fiches sans autre appel.
+export interface CommandGroup {
+  tool: Pick<Tool, 'id' | 'name'> & {
+    modes: Pick<ToolMode, 'id' | 'name' | 'prompt' | 'entry'>[];
+    variants: Pick<ToolVariant, 'id' | 'name'>[];
+  };
+  commands: CommandView[];
+}
+
+interface CourseRow extends CommandCourse {
+  commandId: number;
+}
+
 @Injectable()
 export class CommandsService {
   constructor(
     @InjectRepository(Command) private readonly commands: Repository<Command>,
     @InjectRepository(Tool) private readonly tools: Repository<Tool>,
+    @InjectRepository(Ue) private readonly ues: Repository<Ue>,
+    @InjectRepository(Course) private readonly courses: Repository<Course>,
   ) {}
 
   async findByTool(toolId: number): Promise<CommandView[]> {
@@ -54,10 +81,35 @@ export class CommandsService {
       relations: RELATIONS,
       order: ORDER,
     });
-    const twins = await this.findTwins(toolId, commands);
-    return commands
-      .map((command) => toView(command, twins))
-      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    return this.toViews(toolId, commands);
+  }
+
+  // Commandes étiquetées avec l'UE, ou avec un de ses cours.
+  async findByUe(code: string): Promise<CommandGroup[]> {
+    const ue = await this.ues.findOneBy({ code: code.trim().toUpperCase() });
+    if (!ue) {
+      throw new NotFoundException('Cette UE n’existe pas.');
+    }
+    const rows = await this.commands.query<{ id: number }[]>(
+      `SELECT command_id AS id FROM command_ues WHERE ue_id = $1
+       UNION
+       SELECT link.command_id FROM command_courses link
+         JOIN courses course ON course.id = link.course_id
+        WHERE course.ue_id = $1`,
+      [ue.id],
+    );
+    return this.findGroups(rows.map((row) => row.id));
+  }
+
+  async findByCourse(courseId: number): Promise<CommandGroup[]> {
+    if (!(await this.courses.existsBy({ id: courseId }))) {
+      throw new NotFoundException('Ce cours n’existe pas.');
+    }
+    const rows = await this.commands.query<{ id: number }[]>(
+      'SELECT command_id AS id FROM command_courses WHERE course_id = $1',
+      [courseId],
+    );
+    return this.findGroups(rows.map((row) => row.id));
   }
 
   async create(toolId: number, input: UpdateCommandDto): Promise<CommandView> {
@@ -67,10 +119,11 @@ export class CommandsService {
       mode: null,
       variants: [],
       themes: [],
+      ues: [],
       options: [],
       examples: [],
     });
-    apply(command, input, tool);
+    await this.apply(command, input, tool);
     const saved = await this.save(command);
     return this.findView(toolId, saved.id);
   }
@@ -82,7 +135,7 @@ export class CommandsService {
   ): Promise<CommandView> {
     const tool = await this.findTool(toolId);
     const command = await this.findOne(toolId, id);
-    apply(command, changes, tool);
+    await this.apply(command, changes, tool);
     await this.save(command);
     return this.findView(toolId, id);
   }
@@ -93,8 +146,8 @@ export class CommandsService {
   }
 
   private async findView(toolId: number, id: number): Promise<CommandView> {
-    const command = await this.findOne(toolId, id);
-    return toView(command, await this.findTwins(toolId, [command]));
+    const [view] = await this.toViews(toolId, [await this.findOne(toolId, id)]);
+    return view;
   }
 
   private async findOne(toolId: number, id: number): Promise<Command> {
@@ -118,6 +171,61 @@ export class CommandsService {
       throw new NotFoundException('Cet outil n’existe pas.');
     }
     return tool;
+  }
+
+  // Range les commandes portant ces numéros sous leur outil, par nom d'outil.
+  private async findGroups(ids: number[]): Promise<CommandGroup[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const commands = await this.commands.find({
+      where: { id: In(ids) },
+      relations: {
+        ...RELATIONS,
+        tool: { modes: true, variants: true },
+      },
+      order: {
+        ...ORDER,
+        tool: { modes: { position: 'ASC' }, variants: { position: 'ASC' } },
+      },
+    });
+    const tools = new Map(
+      commands.map((command) => [command.tool.id, command.tool]),
+    );
+    const groups = await Promise.all(
+      [...tools.values()].map(async (tool) => ({
+        tool: {
+          id: tool.id,
+          name: tool.name,
+          modes: tool.modes.map(({ id, name, prompt, entry }) => ({
+            id,
+            name,
+            prompt,
+            entry,
+          })),
+          variants: tool.variants.map(({ id, name }) => ({ id, name })),
+        },
+        commands: await this.toViews(
+          tool.id,
+          commands.filter((command) => command.tool.id === tool.id),
+        ),
+      })),
+    );
+    return groups.sort((a, b) => a.tool.name.localeCompare(b.tool.name, 'fr'));
+  }
+
+  // Commandes d'un même outil, prêtes à rendre, par ordre alphabétique.
+  private async toViews(
+    toolId: number,
+    commands: Command[],
+  ): Promise<CommandView[]> {
+    const [twins, courses] = await Promise.all([
+      this.findTwins(toolId, commands),
+      this.findCourses(commands),
+    ]);
+    return commands
+      .map((command) => toView(command, twins, courses))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
 
   // Commandes des autres outils qui portent le nom d'une de celles-ci, rangées par nom.
@@ -150,6 +258,100 @@ export class CommandsService {
     return twins;
   }
 
+  // Cours où servent ces commandes, rangés par commande, dans l'ordre des UE et des cours.
+  private async findCourses(
+    commands: Command[],
+  ): Promise<Map<number, CommandCourse[]>> {
+    const courses = new Map<number, CommandCourse[]>();
+    if (commands.length === 0) {
+      return courses;
+    }
+    const rows = await this.commands.query<CourseRow[]>(
+      `SELECT link.command_id AS "commandId", course.id, course.title, ue.code AS "ueCode"
+         FROM command_courses link
+         JOIN courses course ON course.id = link.course_id
+         JOIN ues ue ON ue.id = course.ue_id
+        WHERE link.command_id = ANY($1)
+        ORDER BY ue.position, course.position, course.id`,
+      [commands.map((command) => command.id)],
+    );
+    for (const { commandId, ...course } of rows) {
+      courses.set(commandId, [...(courses.get(commandId) ?? []), course]);
+    }
+    return courses;
+  }
+
+  // Reporte sur la commande les champs fournis ; ceux qui manquent gardent leur valeur.
+  private async apply(
+    command: Command,
+    input: UpdateCommandDto,
+    tool: Tool,
+  ): Promise<void> {
+    command.name = input.name ?? command.name;
+    command.summary = input.summary ?? command.summary ?? '';
+    command.syntax = input.syntax ?? command.syntax ?? '';
+    command.notes = input.notes ?? command.notes ?? '';
+    if (input.modeId !== undefined) {
+      command.mode = findMode(tool, input.modeId);
+    }
+    if (input.variantIds !== undefined) {
+      command.variants = findVariants(tool, input.variantIds);
+    }
+    if (input.themes !== undefined) {
+      command.themes = cleanThemes(input.themes);
+    }
+    if (input.ueCodes !== undefined) {
+      command.ues = await this.findUes(input.ueCodes);
+    }
+    if (input.courseIds !== undefined) {
+      command.courses = await this.findCourseRefs(input.courseIds);
+    }
+    if (input.options !== undefined) {
+      command.options = input.options.map((option, index) =>
+        Object.assign(new CommandOption(), {
+          text: option.text,
+          description: option.description ?? '',
+          variants: findVariants(tool, option.variantIds ?? []),
+          position: index + 1,
+        }),
+      );
+    }
+    if (input.examples !== undefined) {
+      command.examples = input.examples.map((example, index) =>
+        Object.assign(new CommandExample(), {
+          line: example.line,
+          explanation: example.explanation ?? '',
+          output: example.output ?? '',
+          position: index + 1,
+        }),
+      );
+    }
+  }
+
+  private async findUes(codes: string[]): Promise<Ue[]> {
+    const wanted = [...new Set(codes.map((code) => code.trim().toUpperCase()))];
+    const ues = await this.ues.findBy({ code: In(wanted) });
+    const missing = wanted.find((code) => !ues.some((ue) => ue.code === code));
+    if (missing !== undefined) {
+      throw new BadRequestException(`L’UE ${missing} n’existe pas.`);
+    }
+    return ues;
+  }
+
+  // Cours désignés par leur numéro, sans leur contenu : seul le lien est enregistré.
+  private async findCourseRefs(ids: number[]): Promise<Course[]> {
+    const wanted = [...new Set(ids)];
+    const courses = await this.courses.find({
+      select: { id: true },
+      where: { id: In(wanted) },
+    });
+    const missing = wanted.find((id) => !courses.some((c) => c.id === id));
+    if (missing !== undefined) {
+      throw new BadRequestException(`Le cours n° ${missing} n’existe pas.`);
+    }
+    return courses;
+  }
+
   private async save(command: Command): Promise<Command> {
     try {
       return await this.commands.save(command);
@@ -165,56 +367,22 @@ export class CommandsService {
 }
 
 const RELATIONS = {
+  tool: true,
   mode: true,
   variants: true,
+  ues: true,
   options: { variants: true },
   examples: true,
 } as const;
 
 const ORDER = {
+  ues: { position: 'ASC' },
   options: { position: 'ASC' },
   examples: { position: 'ASC' },
 } as const;
 
 function key(name: string): string {
   return name.toLowerCase();
-}
-
-// Reporte sur la commande les champs fournis ; ceux qui manquent gardent leur valeur.
-function apply(command: Command, input: UpdateCommandDto, tool: Tool): void {
-  command.name = input.name ?? command.name;
-  command.summary = input.summary ?? command.summary ?? '';
-  command.syntax = input.syntax ?? command.syntax ?? '';
-  command.notes = input.notes ?? command.notes ?? '';
-  if (input.modeId !== undefined) {
-    command.mode = findMode(tool, input.modeId);
-  }
-  if (input.variantIds !== undefined) {
-    command.variants = findVariants(tool, input.variantIds);
-  }
-  if (input.themes !== undefined) {
-    command.themes = cleanThemes(input.themes);
-  }
-  if (input.options !== undefined) {
-    command.options = input.options.map((option, index) =>
-      Object.assign(new CommandOption(), {
-        text: option.text,
-        description: option.description ?? '',
-        variants: findVariants(tool, option.variantIds ?? []),
-        position: index + 1,
-      }),
-    );
-  }
-  if (input.examples !== undefined) {
-    command.examples = input.examples.map((example, index) =>
-      Object.assign(new CommandExample(), {
-        line: example.line,
-        explanation: example.explanation ?? '',
-        output: example.output ?? '',
-        position: index + 1,
-      }),
-    );
-  }
 }
 
 function findMode(tool: Tool, id: number | null): Command['mode'] {
@@ -264,6 +432,7 @@ function variantIds(variants: ToolVariant[]): number[] {
 function toView(
   command: Command,
   twins: Map<string, CommandTwin[]>,
+  courses: Map<number, CommandCourse[]>,
 ): CommandView {
   return {
     id: command.id,
@@ -274,6 +443,8 @@ function toView(
     variantIds: variantIds(command.variants),
     notes: command.notes,
     themes: command.themes,
+    ueCodes: command.ues.map((ue) => ue.code),
+    courses: courses.get(command.id) ?? [],
     options: command.options.map((option) => ({
       id: option.id,
       text: option.text,

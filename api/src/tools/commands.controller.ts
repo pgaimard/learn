@@ -11,7 +11,11 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { CommandsService, CommandView } from './commands.service.js';
+import {
+  CommandGroup,
+  CommandsService,
+  CommandView,
+} from './commands.service.js';
 import { CreateCommandDto } from './dto/create-command.dto.js';
 import { UpdateCommandDto } from './dto/update-command.dto.js';
 
@@ -58,5 +62,29 @@ export class CommandsController {
     @Param('id', parseId) id: number,
   ): Promise<void> {
     return this.commandsService.remove(toolId, id);
+  }
+}
+
+// Commandes vues depuis une UE ou un cours : celles qui y sont étiquetées.
+@Controller()
+export class CommandLinksController {
+  constructor(private readonly commandsService: CommandsService) {}
+
+  @Get('ues/:code/commands')
+  findByUe(@Param('code') code: string): Promise<CommandGroup[]> {
+    return this.commandsService.findByUe(code);
+  }
+
+  @Get('courses/:id/commands')
+  findByCourse(
+    @Param(
+      'id',
+      new ParseIntPipe({
+        exceptionFactory: () => new NotFoundException('Ce cours n’existe pas.'),
+      }),
+    )
+    id: number,
+  ): Promise<CommandGroup[]> {
+    return this.commandsService.findByCourse(id);
   }
 }

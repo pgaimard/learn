@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Course } from '../courses/course.entity.js';
 import { Ue } from '../ue/ue.entity.js';
 import { Command, CommandExample, CommandOption } from './command.entity.js';
-import { CommandsController } from './commands.controller.js';
+import {
+  CommandLinksController,
+  CommandsController,
+} from './commands.controller.js';
 import { CommandsService } from './commands.service.js';
 import { Tool, ToolMode, ToolVariant } from './tool.entity.js';
 import { ToolsController } from './tools.controller.js';
@@ -18,9 +22,10 @@ import { ToolsService } from './tools.service.js';
       CommandOption,
       CommandExample,
       Ue,
+      Course,
     ]),
   ],
-  controllers: [ToolsController, CommandsController],
+  controllers: [ToolsController, CommandsController, CommandLinksController],
   providers: [ToolsService, CommandsService],
 })
 export class ToolsModule {}
