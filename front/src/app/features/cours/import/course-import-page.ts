@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { CommandImportSummary } from '../../outils/command-import-summary';
 import { ApiError } from '../../../core/http/api-error';
 import {
   CourseImportService,
@@ -13,7 +14,7 @@ type Mode = 'package' | 'markdown';
 
 @Component({
   selector: 'app-course-import-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [CommandImportSummary, ReactiveFormsModule, RouterLink],
   templateUrl: './course-import-page.html',
   styleUrl: './course-import-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +27,8 @@ export class CourseImportPage {
   protected readonly markdown = new FormControl('', { nonNullable: true });
   // Remplacer la définition des termes déjà présents par celle du paquet.
   protected readonly replaceTerms = new FormControl(false, { nonNullable: true });
+  // Remplacer les commandes déjà présentes par celles du paquet.
+  protected readonly replaceCommands = signal(false);
   // Source analysée avec succès, en attente de confirmation.
   protected readonly source = signal<ImportSource | null>(null);
   protected readonly preview = signal<ImportPreview | null>(null);
@@ -65,10 +68,13 @@ export class CourseImportPage {
     }
     this.isBusy.set(true);
     const replaceTerms = preview.duplicateTerms.length > 0 && this.replaceTerms.value;
-    this.importService.import(source, preview.existingCourse !== null, replaceTerms).subscribe({
-      next: (course) => void this.router.navigate(['/ue', course.ue.code, 'cours', course.id]),
-      error: (error: ApiError) => this.fail(error),
-    });
+    const replaceCommands = preview.commands.duplicateCommands.length > 0 && this.replaceCommands();
+    this.importService
+      .import(source, preview.existingCourse !== null, replaceTerms, replaceCommands)
+      .subscribe({
+        next: (course) => void this.router.navigate(['/ue', course.ue.code, 'cours', course.id]),
+        error: (error: ApiError) => this.fail(error),
+      });
   }
 
   protected reset(): void {
@@ -76,6 +82,7 @@ export class CourseImportPage {
     this.preview.set(null);
     this.errors.set([]);
     this.replaceTerms.reset();
+    this.replaceCommands.set(false);
   }
 
   private analyse(source: ImportSource): void {

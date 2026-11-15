@@ -48,3 +48,39 @@
   margin-top: auto;
   padding-top: 0.25rem;
 }
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Zone de choix du fichier, comme sur la page d'import d'un cours. */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1.75rem 1.125rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.dropzone:hover,
+.dropzone:focus-within {
+  border-color: var(--color-accent);
+}
+
+.dropzone-title {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.dropzone-hint {
+  font-size: 0.71875rem;
+}
