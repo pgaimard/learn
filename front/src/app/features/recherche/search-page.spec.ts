@@ -33,6 +33,8 @@ const RESULTS: SearchResults = {
       { id: 9, name: 'mémoire.pdf', ueCode: 'UTC502', folderId: 4, folderName: 'TD', excerpt: [] },
     ],
   },
+  tools: EMPTY,
+  commands: EMPTY,
 };
 
 describe('SearchPage', () => {
@@ -112,7 +114,14 @@ describe('SearchPage', () => {
 
   it('annonce une recherche sans résultat', () => {
     service.search.mockReturnValue(
-      of({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY }),
+      of({
+        courses: EMPTY,
+        definitions: EMPTY,
+        acronyms: EMPTY,
+        files: EMPTY,
+        tools: EMPTY,
+        commands: EMPTY,
+      }),
     );
     setup('xyz');
 
@@ -126,7 +135,14 @@ describe('SearchPage', () => {
     expect(text()).toContain('Recherche en cours');
 
     show('mémoire');
-    first.next({ courses: EMPTY, definitions: EMPTY, acronyms: EMPTY, files: EMPTY });
+    first.next({
+      courses: EMPTY,
+      definitions: EMPTY,
+      acronyms: EMPTY,
+      files: EMPTY,
+      tools: EMPTY,
+      commands: EMPTY,
+    });
     fixture.detectChanges();
 
     expect(text()).toContain('27 résultats pour « mémoire »');

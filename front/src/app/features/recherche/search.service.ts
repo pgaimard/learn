@@ -37,11 +37,27 @@ export interface FileResult {
   excerpt: ExcerptSegment[];
 }
 
+export interface ToolResult {
+  id: number;
+  name: string;
+  excerpt: ExcerptSegment[];
+}
+
+export interface CommandResult {
+  id: number;
+  name: string;
+  toolId: number;
+  toolName: string;
+  excerpt: ExcerptSegment[];
+}
+
 export interface SearchResults {
   courses: SearchGroup<CourseResult>;
   definitions: SearchGroup<TermResult>;
   acronyms: SearchGroup<TermResult>;
   files: SearchGroup<FileResult>;
+  tools: SearchGroup<ToolResult>;
+  commands: SearchGroup<CommandResult>;
 }
 
 export const MIN_QUERY_LENGTH = 2;
