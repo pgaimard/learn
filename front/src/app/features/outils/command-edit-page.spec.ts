@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { CourseService } from '../cours/course.service';
+import { UeService } from '../ue/ue.service';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { CommandEditPage } from './command-edit-page';
@@ -29,6 +31,8 @@ const PING: Command = {
   variantIds: [21],
   notes: 'Ctrl+Maj+6 pour arrêter.',
   themes: ['réseau', 'diagnostic'],
+  ueCodes: ['UTC505'],
+  courses: [{ id: 7, title: 'Processus', ueCode: 'UTC502' }],
   options: [
     { id: 5, text: 'repeat <nombre>', description: 'Nombre de paquets.', variantIds: [] },
     { id: 6, text: 'source <interface>', description: '', variantIds: [22] },
@@ -57,6 +61,27 @@ describe('CommandEditPage', () => {
         { provide: DialogService, useValue: { confirm } },
         { provide: ToolService, useValue: { get: () => of(TOOL) } },
         { provide: CommandService, useValue: service },
+        {
+          provide: UeService,
+          useValue: {
+            list: () =>
+              of([
+                { id: 1, code: 'UTC502', title: 'Systèmes', description: '', position: 1 },
+                { id: 2, code: 'UTC505', title: 'Réseaux', description: '', position: 2 },
+              ]),
+          },
+        },
+        {
+          provide: CourseService,
+          useValue: {
+            list: (code: string) =>
+              of(
+                code === 'UTC502'
+                  ? [{ id: 7, title: 'Processus', position: 1, updatedAt: '', sectionCount: 0 }]
+                  : [],
+              ),
+          },
+        },
       ],
     });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -97,6 +122,10 @@ describe('CommandEditPage', () => {
     type('#command-name', ' show vlan ');
     type('#command-syntax', 'show vlan [brief]');
     type('#command-themes', 'VLAN,  diagnostic ,');
+    const places = element().querySelectorAll<HTMLInputElement>('.ue-choice input');
+    // Cases dans l'ordre : UTC502, son cours « Processus », UTC505.
+    places[1].click();
+    places[2].click();
     button('Ajouter une option')?.click();
     fixture.detectChanges();
     type('.option input', 'brief');
@@ -116,6 +145,8 @@ describe('CommandEditPage', () => {
       variantIds: [],
       notes: '',
       themes: ['VLAN', 'diagnostic'],
+      ueCodes: ['UTC505'],
+      courseIds: [7],
       options: [{ text: 'brief', description: '', variantIds: [22] }],
       examples: [{ line: 'show vlan brief', explanation: '', output: '  1 default' }],
     });
@@ -151,7 +182,13 @@ describe('CommandEditPage', () => {
 
     const [toolId, id, input] = service.update.mock.calls[0];
     expect([toolId, id]).toEqual([3, 8]);
-    expect(input).toMatchObject({ modeId: 12, variantIds: [21], examples: [] });
+    expect(input).toMatchObject({
+      modeId: 12,
+      variantIds: [21],
+      ueCodes: ['UTC505'],
+      courseIds: [7],
+      examples: [],
+    });
     expect(input.options.map((option) => option.text)).toEqual([
       'source <interface>',
       'repeat <nombre>',

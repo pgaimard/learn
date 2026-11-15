@@ -88,6 +88,38 @@
   line-clamp: 2;
 }
 
+.commands {
+  margin-top: 1.25rem;
+}
+
+.commands h3 {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.commands li button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-syntax-keyword);
+  font-family: var(--font-mono);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.commands li button:hover {
+  text-decoration: underline;
+}
+
+.command-tool {
+  margin: 0 0 0.5rem 2.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
 .all-terms {
   display: block;
   margin-top: 0.5rem;

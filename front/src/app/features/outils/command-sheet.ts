@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { RouterLink } from '@angular/router';
 import { Icon } from '../../core/ui/icon';
 import { CommandLine } from './command-line';
-import { Command } from './command.service';
-import { Tool, ToolVariant } from './tool.service';
+import { Command, CommandTool } from './command.service';
+import { ToolVariant } from './tool.service';
 
 const COPIED_NOTICE_MS = 1500;
 
@@ -18,7 +18,9 @@ const COPIED_NOTICE_MS = 1500;
 })
 export class CommandSheet {
   readonly command = input.required<Command>();
-  readonly tool = input.required<Tool>();
+  readonly tool = input.required<CommandTool>();
+  // Faux là où la fiche ne fait que se lire (dans un cours) : pas de suppression.
+  readonly removable = input(true);
   // Demande de suppression : la page confirme et supprime.
   readonly removed = output<void>();
 

@@ -21,12 +21,14 @@ import {
 } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Dropdown, DropdownOption } from '../../core/ui/dropdown';
 import { Icon } from '../../core/ui/icon';
 import { shortcut } from '../../core/ui/platform';
+import { CourseService, CourseSummary } from '../cours/course.service';
+import { Ue, UeService } from '../ue/ue.service';
 import { CommandLine } from './command-line';
 import {
   Command,
@@ -49,6 +51,12 @@ type ExampleGroup = FormGroup<{
   explanation: FormControl<string>;
   output: FormControl<string>;
 }>;
+
+// UE et ses cours, proposés pour dire où la commande sert.
+interface UeChoice {
+  ue: Ue;
+  courses: CourseSummary[];
+}
 
 const required = [Validators.required, Validators.pattern(/\S/)];
 
@@ -74,6 +82,8 @@ export class CommandEditPage {
 
   private readonly toolService = inject(ToolService);
   private readonly commandService = inject(CommandService);
+  private readonly ueService = inject(UeService);
+  private readonly courseService = inject(CourseService);
   private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -86,6 +96,7 @@ export class CommandEditPage {
   protected readonly command = signal<Command | null>(null);
   // Thèmes déjà portés par les commandes de l'outil, rappelés sous le champ.
   protected readonly knownThemes = signal<string[]>([]);
+  protected readonly ueChoices = signal<UeChoice[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly isSaving = signal(false);
   protected readonly saveKey = shortcut('S');
@@ -99,6 +110,9 @@ export class CommandEditPage {
     variantIds: this.formBuilder.control<number[]>([]),
     // Thèmes séparés par des virgules.
     themes: [''],
+    // UE entières et cours où la commande sert.
+    ueCodes: this.formBuilder.control<string[]>([]),
+    courseIds: this.formBuilder.control<number[]>([]),
     notes: ['', Validators.maxLength(5000)],
     options: this.formBuilder.array<OptionGroup>([]),
     examples: this.formBuilder.array<ExampleGroup>([]),
@@ -119,6 +133,7 @@ export class CommandEditPage {
 
   constructor() {
     effect(() => this.load(Number(this.id()), this.commandId()));
+    this.loadUeChoices();
   }
 
   // Appelé par la garde de sortie de la route.
@@ -134,11 +149,11 @@ export class CommandEditPage {
     );
   }
 
-  // Coche ou décoche une déclinaison, pour la commande ou pour une de ses options.
-  protected toggleVariant(control: FormControl<number[]>, id: number, event: Event): void {
+  // Coche ou décoche une valeur d'une liste : déclinaison, UE ou cours.
+  protected toggle<Value>(control: FormControl<Value[]>, value: Value, event: Event): void {
     const isChecked = (event.target as HTMLInputElement).checked;
     control.setValue(
-      isChecked ? [...control.value, id] : control.value.filter((other) => other !== id),
+      isChecked ? [...control.value, value] : control.value.filter((other) => other !== value),
     );
     control.markAsDirty();
   }
@@ -215,6 +230,8 @@ export class CommandEditPage {
       modeId: value.modeId === '' ? null : Number(value.modeId),
       variantIds: value.variantIds,
       notes: value.notes.trim(),
+      ueCodes: value.ueCodes,
+      courseIds: value.courseIds,
       themes: value.themes
         .split(',')
         .map((theme) => theme.trim())
@@ -270,6 +287,8 @@ export class CommandEditPage {
       modeId: command.modeId === null ? '' : String(command.modeId),
       variantIds: command.variantIds,
       themes: command.themes.join(', '),
+      ueCodes: command.ueCodes,
+      courseIds: command.courses.map((course) => course.id),
       notes: command.notes,
     });
     this.form.setControl(
@@ -281,6 +300,27 @@ export class CommandEditPage {
       this.formBuilder.array(command.examples.map((example) => this.exampleGroup(example))),
     );
     this.form.markAsPristine();
+  }
+
+  // Les UE et leurs cours ; sans eux, le formulaire reste utilisable.
+  private loadUeChoices(): void {
+    this.ueService
+      .list()
+      .pipe(
+        switchMap((ues) =>
+          ues.length === 0
+            ? of([])
+            : forkJoin(
+                ues.map((ue) =>
+                  this.courseService.list(ue.code).pipe(map((courses) => ({ ue, courses }))),
+                ),
+              ),
+        ),
+      )
+      .subscribe({
+        next: (choices) => this.ueChoices.set(choices),
+        error: (error: ApiError) => this.errors.set(error.messages),
+      });
   }
 
   private load(toolId: number, commandId: string | undefined): void {

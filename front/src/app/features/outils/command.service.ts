@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Tool } from './tool.service';
 
 export interface CommandOption {
   id: number;
@@ -26,6 +27,13 @@ export interface CommandTwin {
   toolName: string;
 }
 
+// Cours où une commande sert.
+export interface CommandCourse {
+  id: number;
+  title: string;
+  ueCode: string;
+}
+
 // Commande apprise d'un outil ; son mode et ses déclinaisons sont ceux de l'outil.
 export interface Command {
   id: number;
@@ -36,9 +44,21 @@ export interface Command {
   variantIds: number[];
   notes: string;
   themes: string[];
+  // UE et cours où la commande sert.
+  ueCodes: string[];
+  courses: CommandCourse[];
   options: CommandOption[];
   examples: CommandExample[];
   alsoIn: CommandTwin[];
+}
+
+// Ce qu'une fiche de commande doit savoir de son outil.
+export type CommandTool = Pick<Tool, 'id' | 'name' | 'modes' | 'variants'>;
+
+// Commandes d'une UE ou d'un cours, rangées sous leur outil.
+export interface CommandGroup {
+  tool: CommandTool;
+  commands: Command[];
 }
 
 export interface CommandInput {
@@ -49,6 +69,8 @@ export interface CommandInput {
   variantIds: number[];
   notes: string;
   themes: string[];
+  ueCodes: string[];
+  courseIds: number[];
   options: Omit<CommandOption, 'id'>[];
   examples: Omit<CommandExample, 'id'>[];
 }
@@ -59,6 +81,15 @@ export class CommandService {
 
   list(toolId: number): Observable<Command[]> {
     return this.http.get<Command[]>(`/api/tools/${toolId}/commands`);
+  }
+
+  // Commandes étiquetées avec l'UE ou avec un de ses cours.
+  listByUe(code: string): Observable<CommandGroup[]> {
+    return this.http.get<CommandGroup[]>(`/api/ues/${code}/commands`);
+  }
+
+  listByCourse(courseId: number): Observable<CommandGroup[]> {
+    return this.http.get<CommandGroup[]>(`/api/courses/${courseId}/commands`);
   }
 
   create(toolId: number, input: CommandInput): Observable<Command> {

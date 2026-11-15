@@ -38,6 +38,23 @@ pre {
   margin-left: 0.25rem;
 }
 
+.facts a {
+  text-decoration: none;
+}
+
+.facts .course {
+  padding: 0.125rem 0.5rem;
+  border-radius: 99px;
+  background: var(--color-raised);
+  color: var(--color-text);
+  font-size: 0.71875rem;
+}
+
+.facts .course:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
 .facts strong {
   color: var(--color-text);
   font-weight: 600;
