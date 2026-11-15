@@ -152,6 +152,20 @@ export class UePage {
     this.saveCourseOrder(ordered.map((course) => course.id));
   }
 
+  protected async removeCourse(course: CourseSummary): Promise<void> {
+    const confirmed = await this.dialog.confirmDeletion(
+      'Supprimer le cours',
+      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    this.courseService.remove(course.id).subscribe({
+      next: () => this.load(this.code()),
+      error: (error: ApiError) => this.pageErrors.set(error.messages),
+    });
+  }
+
   protected async removeTerm(term: TermSummary): Promise<void> {
     const confirmed = await this.dialog.confirmDeletion(
       'Supprimer le terme',
