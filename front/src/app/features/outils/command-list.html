@@ -1,0 +1,92 @@
+<div class="toolbar">
+  <div class="field search">
+    <app-icon name="search" [size]="14" />
+    <input
+      type="search"
+      autocomplete="off"
+      placeholder="Chercher une commande"
+      aria-label="Chercher une commande par son nom ou sa description"
+      [value]="query()"
+      (input)="search($event)"
+    />
+  </div>
+  @if (tool().modes.length > 0) {
+    <app-dropdown
+      compact
+      label="Mode"
+      [options]="modeOptions()"
+      [value]="mode()"
+      (valueChange)="mode.set($event)"
+    />
+  }
+  @if (tool().variants.length > 0) {
+    <app-segmented
+      label="Déclinaison"
+      [options]="variantOptions()"
+      [value]="variant()"
+      (valueChange)="variant.set($event)"
+    />
+  }
+  <a
+    class="button button-primary add"
+    [routerLink]="['/outils', tool().id, 'commandes', 'nouvelle']"
+  >
+    <app-icon name="plus" />Nouvelle commande
+  </a>
+</div>
+
+@if (themes().length > 0) {
+  <div class="themes" role="group" aria-label="Thème">
+    @for (name of themes(); track name) {
+      <button
+        type="button"
+        class="pill theme"
+        [class.is-on]="theme() === name"
+        [attr.aria-pressed]="theme() === name"
+        (click)="toggleTheme(name)"
+      >
+        {{ name }}
+      </button>
+    }
+  </div>
+}
+
+@if (commands().length === 0) {
+  <p class="empty">
+    Aucune commande pour l’instant. « Nouvelle commande » ajoute la première que vous avez apprise.
+  </p>
+} @else if (shown().length === 0) {
+  <p class="empty">Aucune commande ne correspond.</p>
+} @else {
+  <ul class="commands">
+    @for (command of shown(); track command.id) {
+      <li [id]="'commande-' + command.id" [class.is-open]="open() === command.id">
+        <button
+          type="button"
+          class="row"
+          [attr.aria-expanded]="open() === command.id"
+          (click)="toggle(command.id)"
+        >
+          <app-icon class="chevron" name="chevron-right" [size]="14" />
+          <code class="name">{{ command.name }}</code>
+          <span class="summary">{{ command.summary }}</span>
+          <span class="marks">
+            @if (modeName(command); as mode) {
+              <span class="pill">{{ mode }}</span>
+            }
+            @for (variant of variants(command); track variant.id) {
+              <span class="variant">{{ variant.name }}</span>
+            }
+          </span>
+        </button>
+        @if (open() === command.id) {
+          <app-command-sheet
+            [command]="command"
+            [tool]="tool()"
+            (removed)="removed.emit(command)"
+          />
+        }
+      </li>
+    }
+  </ul>
+}

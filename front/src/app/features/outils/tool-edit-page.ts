@@ -197,7 +197,7 @@ export class ToolEditPage {
       !tool ||
       !(await this.dialog.confirmDeletion(
         'Supprimer l’outil',
-        `« ${tool.name} », ses modes et ses déclinaisons seront supprimés définitivement.`,
+        `« ${tool.name} », ses modes, ses déclinaisons et ses commandes seront supprimés définitivement.`,
       ))
     ) {
       return;
