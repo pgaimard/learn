@@ -1,9 +1,54 @@
 <div class="page-header">
   <h1>Outils</h1>
-  <button type="button" class="button button-primary" (click)="create()">
-    <app-icon name="plus" />Nouvel outil
-  </button>
+  <div class="header-actions">
+    <button type="button" class="button" (click)="openImport()">
+      <app-icon name="upload" />Importer
+    </button>
+    <button type="button" class="button button-primary" (click)="create()">
+      <app-icon name="plus" />Nouvel outil
+    </button>
+  </div>
 </div>
+
+@if (isImporting()) {
+  <app-modal heading="Importer des outils et des commandes" (closed)="isImporting.set(false)">
+    @if (importPreview(); as preview) {
+      <app-command-import-summary [preview]="preview" [(replace)]="replaceCommands" />
+      @if (preview.newCommands.length === 0 && preview.duplicateCommands.length === 0) {
+        <p class="field-hint">Ce fichier ne contient aucune commande.</p>
+      }
+    } @else {
+      <label class="dropzone">
+        <span class="dropzone-title">Choisir un fichier commandes.json</span>
+        <span class="dropzone-hint">Celui que produit le skill, sans le paquet de cours</span>
+        <input type="file" accept=".json,application/json" (change)="pickFile($event)" />
+      </label>
+      @if (isBusy()) {
+        <p aria-live="polite">Analyse en cours…</p>
+      }
+    }
+
+    <div role="alert">
+      @for (error of importErrors(); track error) {
+        <p class="form-error">{{ error }}</p>
+      }
+    </div>
+
+    <div class="form-actions">
+      @if (importPreview()) {
+        <button
+          type="button"
+          class="button button-primary"
+          [disabled]="isBusy()"
+          (click)="confirmImport()"
+        >
+          Importer
+        </button>
+      }
+      <button type="button" class="button" (click)="isImporting.set(false)">Annuler</button>
+    </div>
+  </app-modal>
+}
 
 <div role="alert">
   @for (error of errors(); track error) {
