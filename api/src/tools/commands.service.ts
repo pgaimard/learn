@@ -353,6 +353,7 @@ export class CommandsService {
   }
 
   private async save(command: Command): Promise<Command> {
+    command.plainText = buildPlainText(command);
     try {
       return await this.commands.save(command);
     } catch (error) {
@@ -383,6 +384,24 @@ const ORDER = {
 
 function key(name: string): string {
   return name.toLowerCase();
+}
+
+// Texte d'une commande pour la recherche : syntaxe, options, exemples et notes. La
+// sortie des exemples n'en fait pas partie : elle noierait les résultats.
+function buildPlainText(command: Command): string {
+  return [
+    command.syntax,
+    ...command.options.map((option) =>
+      [option.text, option.description].filter(Boolean).join(' '),
+    ),
+    ...command.examples.flatMap((example) => [
+      example.explanation,
+      example.line,
+    ]),
+    command.notes,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function findMode(tool: Tool, id: number | null): Command['mode'] {

@@ -51,6 +51,10 @@ export class Command {
   @Column({ type: 'text', default: '' })
   notes!: string;
 
+  // Texte cherché par la recherche globale, dérivé à chaque enregistrement.
+  @Column({ name: 'plain_text', type: 'text', default: '', select: false })
+  plainText!: string;
+
   // Étiquettes libres : « réseau », « fichiers ».
   @Column({ type: 'text', array: true, default: () => "'{}'" })
   themes!: string[];
