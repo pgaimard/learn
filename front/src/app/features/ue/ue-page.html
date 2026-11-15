@@ -130,6 +130,25 @@
             <span class="meta course-date">
               modifié le {{ course.updatedAt | date: 'dd/MM/yyyy' }}
             </span>
+            <span class="course-actions">
+              <a
+                class="button button-icon button-ghost"
+                [routerLink]="['/ue', ue.code, 'cours', course.id, 'edition']"
+                [attr.aria-label]="'Modifier ' + course.title"
+                title="Modifier"
+              >
+                <app-icon name="pencil" [size]="15" />
+              </a>
+              <button
+                type="button"
+                class="button button-icon button-ghost"
+                [attr.aria-label]="'Supprimer ' + course.title"
+                title="Supprimer"
+                (click)="removeCourse(course)"
+              >
+                <app-icon name="trash" [size]="15" />
+              </button>
+            </span>
           </li>
         }
       </ol>

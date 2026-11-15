@@ -17,6 +17,7 @@ describe('UePage', () => {
     list: vi.fn<CourseService['list']>(),
     create: vi.fn<CourseService['create']>(),
     reorder: vi.fn<CourseService['reorder']>(),
+    remove: vi.fn<CourseService['remove']>(),
   };
   const termService = {
     list: vi.fn<TermService['list']>(),
@@ -181,6 +182,32 @@ describe('UePage', () => {
     handle.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
     fixture.detectChanges();
   }
+
+  it('propose de modifier chaque cours, et le supprime après confirmation seulement', async () => {
+    courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
+    courseService.remove.mockReset().mockReturnValue(of(undefined));
+    setup();
+    const remove = async (): Promise<void> => {
+      element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer Mémoire"]')?.click();
+      // La modale répond de façon asynchrone : on laisse la réponse arriver.
+      await new Promise((resolve) => setTimeout(resolve));
+      fixture.detectChanges();
+    };
+
+    expect(element().querySelector('a[aria-label="Modifier Mémoire"]')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/9/edition',
+    );
+
+    dialog.confirmDeletion.mockResolvedValue(false);
+    await remove();
+    expect(courseService.remove).not.toHaveBeenCalled();
+
+    dialog.confirmDeletion.mockResolvedValue(true);
+    courseService.list.mockReturnValue(of([PROCESSUS]));
+    await remove();
+    expect(courseService.remove).toHaveBeenCalledWith(9);
+    expect(courseTitles()).toEqual(['Processus']);
+  });
 
   it('réordonne les cours depuis la poignée, renumérote et enregistre', () => {
     courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
