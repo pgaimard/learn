@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-const trim = ({ value }: { value: unknown }): unknown =>
+export const trim = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() : value;
 
 export class ToolModeDto {
