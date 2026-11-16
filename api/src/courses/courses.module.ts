@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Term } from '../terms/term.entity.js';
 import { TermsModule } from '../terms/terms.module.js';
+import { FilesModule } from '../files/files.module.js';
 import { UeModule } from '../ue/ue.module.js';
 import { Course } from './course.entity.js';
 import { CoursesController } from './courses.controller.js';
@@ -18,6 +19,7 @@ import { CourseImportsController } from './import/course-imports.controller.js';
     // Term : l'import d'un paquet crée les termes de son glossaire.
     TypeOrmModule.forFeature([Course, CourseImage, Term]),
     UeModule,
+    FilesModule,
     ImageStorageModule,
     TermsModule,
   ],

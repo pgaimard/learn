@@ -6,12 +6,19 @@ import { FilesController } from './files.controller.js';
 import { FilesService } from './files.service.js';
 import { Folder } from './folders/folder.entity.js';
 import { FoldersController } from './folders/folders.controller.js';
+import { CourseFoldersService } from './folders/course-folders.service.js';
 import { FoldersService } from './folders/folders.service.js';
 import { StoredFile } from './stored-file.entity.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Folder, StoredFile]), UeModule],
   controllers: [FoldersController, FilesController],
-  providers: [FoldersService, FilesService, FileStorageService],
+  providers: [
+    FoldersService,
+    FilesService,
+    FileStorageService,
+    CourseFoldersService,
+  ],
+  exports: [CourseFoldersService],
 })
 export class FilesModule {}

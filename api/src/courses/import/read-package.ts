@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Readable } from 'node:stream';
 import yauzl, { Entry, ZipFile } from 'yauzl';
+import { isEntryName } from '../../files/entry-name.js';
 import { IMAGE_PATH } from './markdown-to-content.js';
 
 export interface PackageFiles {
@@ -11,10 +12,14 @@ export interface PackageFiles {
   terms: string | null;
   // Contenu de commandes.json ; null quand le paquet n'en a pas.
   commands: string | null;
+  // Documents du dossier sources/, par nom : ils sont rangés dans le dossier du cours.
+  sources: Map<string, Buffer>;
 }
 
 export const MAX_PACKAGE_SIZE = 50 * 1024 * 1024;
 const MAX_ENTRIES = 500;
+// Un document source est directement dans sources/, sans sous-dossier.
+const SOURCE_PATH = /^sources\/([^/]+)$/;
 const IGNORED = /(^|\/)(__MACOSX\/|\.DS_Store$)|\/$/;
 
 function invalid(message: string): BadRequestException {
@@ -92,6 +97,16 @@ function checkSize(entries: Entry[]): void {
   }
 }
 
+// Nom d'un document de sources/ : celui du fichier, refusé s'il ne peut pas être un nom
+// de fichier de l'application.
+function sourceName(path: string): string {
+  const name = path.slice('sources/'.length).trim();
+  if (!isEntryName(name)) {
+    throw invalid(`Nom de document refusé dans le paquet : « ${path} ».`);
+  }
+  return name;
+}
+
 export async function readPackage(zip: Buffer): Promise<PackageFiles> {
   const zipFile = await open(zip);
   try {
@@ -106,6 +121,7 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
       sheet: null,
       terms: null,
       commands: null,
+      sources: new Map(),
     };
     let hasMarkdown = false;
     for (const entry of entries) {
@@ -121,6 +137,8 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
         files.commands = (await extract(zipFile, entry)).toString('utf8');
       } else if (IMAGE_PATH.test(name)) {
         files.images.set(name, await extract(zipFile, entry));
+      } else if (SOURCE_PATH.test(name)) {
+        files.sources.set(sourceName(name), await extract(zipFile, entry));
       } else {
         throw invalid(`Fichier inattendu dans le paquet : « ${name} ».`);
       }

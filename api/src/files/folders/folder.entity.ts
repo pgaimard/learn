@@ -21,6 +21,10 @@ export class Folder {
   @Column({ type: 'text' })
   name!: string;
 
+  // Cours dont c'est le dossier : il suit alors son titre. Absent pour un dossier libre.
+  @Column({ name: 'course_id', type: 'integer', nullable: true })
+  courseId!: number | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

@@ -70,6 +70,7 @@ describe('Dossiers', () => {
       id: expect.any(Number) as number,
       parentId: null,
       name: 'TD',
+      courseId: null,
     });
     tdId = (td.body as FolderSummary).id;
 
@@ -135,6 +136,7 @@ describe('Dossiers', () => {
       id: tdId,
       parentId: null,
       name: 'Travaux dirigés',
+      courseId: null,
     });
   });
 
@@ -162,12 +164,22 @@ describe('Dossiers', () => {
       parentId: tdId,
     });
     expect(moved.status).toBe(200);
-    expect(moved.body).toEqual({ id: tempId, parentId: tdId, name: 'Temp' });
+    expect(moved.body).toEqual({
+      id: tempId,
+      parentId: tdId,
+      name: 'Temp',
+      courseId: null,
+    });
 
     const back = await client('patch', `/api/folders/${tempId}`).send({
       parentId: null,
     });
-    expect(back.body).toEqual({ id: tempId, parentId: null, name: 'Temp' });
+    expect(back.body).toEqual({
+      id: tempId,
+      parentId: null,
+      name: 'Temp',
+      courseId: null,
+    });
 
     expect((await client('delete', `/api/folders/${tempId}`)).status).toBe(204);
   });

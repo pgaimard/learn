@@ -8,6 +8,10 @@ import {
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Ue } from '../../ue/ue.entity.js';
+import {
+  CourseFoldersService,
+  StoredSources,
+} from '../../files/folders/course-folders.service.js';
 import { UeService } from '../../ue/ue.service.js';
 import {
   buildImageSource,
@@ -64,6 +68,8 @@ export interface ImportPreview {
   // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
   hasSheet: boolean;
   sheetImageCount: number;
+  // Documents de sources/, que l'import range dans le dossier de fichiers du cours.
+  sourceCount: number;
   // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
   commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche
@@ -101,6 +107,7 @@ export class CourseImportService {
     private readonly imagesService: CourseImagesService,
     private readonly coursesService: CoursesService,
     private readonly termImagesService: TermImagesService,
+    private readonly courseFolders: CourseFoldersService,
   ) {}
 
   async preview(files: PackageFiles): Promise<ImportPreview> {
@@ -126,6 +133,7 @@ export class CourseImportService {
       commands: await previewCommands(this.dataSource.manager, analysed.tools),
       hasSheet: analysed.sheet !== null,
       sheetImageCount: analysed.sheet?.images.size ?? 0,
+      sourceCount: files.sources.size,
       existingCourse: existing
         ? {
             id: existing.id,
@@ -154,15 +162,34 @@ export class CourseImportService {
       );
     }
     const written: PackageImages = { course: [], term: [] };
+    const sources: StoredSources = { written: [], replaced: [] };
     try {
       // Cours, images, contenu, termes et commandes sont enregistrés ensemble ou pas du tout.
       const { courseId, obsolete } = await this.dataSource.transaction(
-        (manager) =>
-          this.write(manager, ue, existing, analysed, written, {
-            terms: replaceTerms,
-            commands: replaceCommands,
-          }),
+        async (manager) => {
+          const result = await this.write(
+            manager,
+            ue,
+            existing,
+            analysed,
+            written,
+            { terms: replaceTerms, commands: replaceCommands },
+          );
+          // Les documents sources rejoignent le dossier de fichiers du cours.
+          await this.courseFolders.storeSources(
+            manager,
+            {
+              id: result.courseId,
+              ueId: ue.id,
+              title: analysed.metadata.title,
+            },
+            files.sources,
+            sources,
+          );
+          return result;
+        },
       );
+      await this.courseFolders.removeStored(sources.replaced);
       await this.imagesService.removeFiles(obsolete.course);
       await this.termImagesService.removeFiles(obsolete.term);
       return await this.courses.findOneOrFail({
@@ -172,6 +199,7 @@ export class CourseImportService {
     } catch (error) {
       await this.imagesService.removeFiles(written.course);
       await this.termImagesService.removeFiles(written.term);
+      await this.courseFolders.removeStored(sources.written);
       throw error;
     }
   }
@@ -228,6 +256,7 @@ export class CourseImportService {
       ? await store(analysed.sheet.document, analysed.sheet.images)
       : keptSheet;
     await manager.save(course);
+    await this.courseFolders.rename(manager, course);
     const terms = await sortTerms(manager, analysed.terms, ue.id);
     const origin = { ueId: ue.id, courseId: course.id };
     const termImages: TermImageWriter = {
