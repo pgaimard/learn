@@ -67,6 +67,10 @@
   background: var(--color-callout-attention);
 }
 
+.dot[data-kind='definition'] {
+  background: var(--color-callout-definition);
+}
+
 .menu-item.is-on {
   background: var(--color-accent-soft);
   color: var(--color-accent);

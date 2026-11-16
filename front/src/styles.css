@@ -32,6 +32,8 @@
   --color-callout-change-soft: light-dark(#e7f0fa, #15243a);
   --color-callout-attention: light-dark(#8f4a06, #f0b45c);
   --color-callout-attention-soft: light-dark(#fcf1e0, #2b2113);
+  --color-callout-definition: light-dark(#6a3fb5, #b9a2f2);
+  --color-callout-definition-soft: light-dark(#f1ecfa, #231c38);
   --color-syntax-keyword: light-dark(#a31d5f, #f58bb8);
   --color-syntax-value: light-dark(#075e8c, #74c0f0);
   --color-syntax-comment: light-dark(#6b7280, #8c95a6);

@@ -256,6 +256,15 @@
   content: 'Attention';
 }
 
+.course-content .callout[data-kind='definition'] {
+  --callout-color: var(--color-callout-definition);
+  --callout-background: var(--color-callout-definition-soft);
+}
+
+.course-content .callout[data-kind='definition']::before {
+  content: 'Définition';
+}
+
 .course-content .callout > :last-child {
   margin-bottom: 0;
 }

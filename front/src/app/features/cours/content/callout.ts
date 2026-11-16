@@ -1,12 +1,13 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
-export const CALLOUT_KINDS = ['retenir', 'change', 'attention'] as const;
+export const CALLOUT_KINDS = ['retenir', 'change', 'attention', 'definition'] as const;
 export type CalloutKind = (typeof CALLOUT_KINDS)[number];
 
 export const CALLOUT_LABELS: Record<CalloutKind, string> = {
   retenir: 'À retenir',
   change: 'Ce qui a changé',
   attention: 'Attention',
+  definition: 'Définition',
 };
 
 function readKind(value: string | null): CalloutKind {
