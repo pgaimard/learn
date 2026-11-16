@@ -38,6 +38,7 @@ describe('CourseEditPage', () => {
     get: vi.fn<CourseService['get']>(),
     update: vi.fn<CourseService['update']>(),
     remove: vi.fn<CourseService['remove']>(),
+    folder: vi.fn<CourseService['folder']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
   const dialog = {
@@ -302,6 +303,7 @@ describe('CourseEditPage', () => {
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
     service.remove.mockReturnValue(of(undefined));
+    service.folder.mockReturnValue(of(null));
     dialog.confirmDeletion.mockResolvedValue(true);
     await setup();
 
@@ -309,7 +311,7 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
     await settle();
 
-    expect(service.remove).toHaveBeenCalledWith(7);
+    expect(service.remove).toHaveBeenCalledWith(7, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
   });
 

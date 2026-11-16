@@ -23,6 +23,7 @@ import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
 import { CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
+import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
 
 const SHOWN_TERMS = 6;
@@ -59,6 +60,7 @@ export class CourseReadPage {
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly courseRemoval = inject(CourseRemoval);
   private readonly termService = inject(TermService);
   private readonly commandService = inject(CommandService);
   private readonly title = inject(Title);
@@ -252,17 +254,13 @@ export class CourseReadPage {
   }
 
   protected async remove(course: Course): Promise<void> {
-    const confirmed = await this.dialog.confirmDeletion(
-      'Supprimer le cours',
-      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
-    );
-    if (!confirmed) {
-      return;
+    try {
+      if (await this.courseRemoval.remove(course)) {
+        void this.router.navigate(['/ue', this.code()]);
+      }
+    } catch (error) {
+      this.errors.set((error as ApiError).messages);
     }
-    this.courseService.remove(course.id).subscribe({
-      next: () => void this.router.navigate(['/ue', this.code()]),
-      error: (error: ApiError) => this.errors.set(error.messages),
-    });
   }
   private load(id: number): void {
     this.returnPosition.set(null);

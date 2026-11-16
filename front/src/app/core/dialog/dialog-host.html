@@ -20,7 +20,9 @@
         <p id="dialog-message">{{ request.message }}</p>
       </div>
       <div class="modal-footer">
-        <button #initialFocus type="button" class="button" (click)="cancel()">Annuler</button>
+        <button #initialFocus type="button" class="button" (click)="cancel()">
+          {{ request.cancelLabel ?? 'Annuler' }}
+        </button>
         <button
           type="button"
           class="button confirm"

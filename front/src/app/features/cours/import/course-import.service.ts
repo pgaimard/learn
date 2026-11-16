@@ -24,6 +24,8 @@ export interface ImportPreview {
   // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
   hasSheet: boolean;
   sheetImageCount: number;
+  // Documents de sources/, rangés dans le dossier de fichiers du cours.
+  sourceCount: number;
   // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
   commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche de

@@ -7,6 +7,8 @@ export interface Folder {
   // null pour un dossier placé à la racine de l'UE.
   parentId: number | null;
   name: string;
+  // Cours dont c'est le dossier : il suit son titre et ne se modifie pas à la main.
+  courseId: number | null;
 }
 
 export interface StoredFile {

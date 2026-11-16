@@ -21,6 +21,7 @@ const PREVIEW: ImportPreview = {
   duplicateTerms: [{ type: 'acronym', label: 'PID' }],
   hasSheet: true,
   sheetImageCount: 2,
+  sourceCount: 0,
   commands: { newTools: [], existingTools: [], newCommands: [], duplicateCommands: [] },
   existingCourse: null,
 };

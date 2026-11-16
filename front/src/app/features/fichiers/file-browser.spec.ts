@@ -7,8 +7,8 @@ import { FileBrowser } from './file-browser';
 import { FileService, Folder, StoredFile } from './file.service';
 
 const FOLDERS: Folder[] = [
-  { id: 1, parentId: null, name: 'TD' },
-  { id: 2, parentId: 1, name: 'Corrigés' },
+  { id: 1, parentId: null, name: 'TD', courseId: null },
+  { id: 2, parentId: 1, name: 'Corrigés', courseId: null },
 ];
 const NOTES: StoredFile = {
   id: 7,
@@ -135,7 +135,9 @@ describe('FileBrowser', () => {
 
   it('crée un dossier dans le dossier affiché puis recharge', () => {
     setup(1, []);
-    service.createFolder.mockReturnValue(of({ id: 3, parentId: 1, name: 'Sujets' }));
+    service.createFolder.mockReturnValue(
+      of({ id: 3, parentId: 1, name: 'Sujets', courseId: null }),
+    );
     click('Nouveau dossier');
 
     submitName(' Sujets ');
@@ -158,9 +160,25 @@ describe('FileBrowser', () => {
     expect(element().querySelector('form')).not.toBeNull();
   });
 
+  it('ne laisse ni renommer ni supprimer le dossier d’un cours', () => {
+    setup();
+    service.listFolders.mockReturnValue(
+      of([...FOLDERS, { id: 5, parentId: null, name: 'Processus', courseId: 12 }]),
+    );
+    fixture.componentRef.setInput('ueCode', 'NFE108');
+    fixture.detectChanges();
+
+    expect(text()).toContain('Processus Cours');
+    expect(element().querySelector('[aria-label="Renommer le dossier TD"]')).not.toBeNull();
+    expect(element().querySelector('[aria-label="Renommer le dossier Processus"]')).toBeNull();
+    expect(element().querySelector('[aria-label="Supprimer le dossier Processus"]')).toBeNull();
+  });
+
   it('renomme un dossier', () => {
     setup();
-    service.renameFolder.mockReturnValue(of({ id: 1, parentId: null, name: 'Travaux dirigés' }));
+    service.renameFolder.mockReturnValue(
+      of({ id: 1, parentId: null, name: 'Travaux dirigés', courseId: null }),
+    );
     click('Renommer le dossier TD');
     expect(element().querySelector<HTMLInputElement>('#entry-name')?.value).toBe('TD');
 
@@ -317,7 +335,9 @@ describe('FileBrowser', () => {
 
     it('remonte un dossier glissé sur le chemin', () => {
       setup(1, []);
-      service.moveFolder.mockReturnValue(of({ id: 2, parentId: null, name: 'Corrigés' }));
+      service.moveFolder.mockReturnValue(
+        of({ id: 2, parentId: null, name: 'Corrigés', courseId: null }),
+      );
 
       drag(folderRow(), 'dragstart');
       drag(pathLinks()[0], 'dragover');

@@ -124,7 +124,7 @@
         @for (folder of subfolders(); track folder.id) {
           <li
             class="entry is-folder"
-            draggable="true"
+            [attr.draggable]="folder.courseId === null"
             [class.is-dragged]="dragged()?.kind === 'folder' && dragged()?.id === folder.id"
             [class.is-drop-target]="dropTarget() === folder.id"
             (dragstart)="
@@ -144,25 +144,34 @@
             <a class="entry-name folder" [routerLink]="[]" [queryParams]="queryFor(folder.id)">
               <span class="visually-hidden">Dossier </span>{{ folder.name }}
             </a>
-            <span class="detail"></span>
+            <span class="detail">
+              @if (folder.courseId !== null) {
+                <span class="pill" title="Ce dossier suit le titre du cours et se supprime avec lui"
+                  >Cours</span
+                >
+              }
+            </span>
             <span class="detail"></span>
             <span class="entry-actions">
-              <button
-                type="button"
-                class="button button-icon button-ghost"
-                [attr.aria-label]="'Renommer le dossier ' + folder.name"
-                (click)="open({ kind: 'rename-folder', id: folder.id })"
-              >
-                <app-icon name="pencil" />
-              </button>
-              <button
-                type="button"
-                class="button button-icon button-ghost"
-                [attr.aria-label]="'Supprimer le dossier ' + folder.name"
-                (click)="removeFolder(folder)"
-              >
-                <app-icon name="trash" />
-              </button>
+              <!-- Le dossier d'un cours ne se renomme ni ne se supprime à la main. -->
+              @if (folder.courseId === null) {
+                <button
+                  type="button"
+                  class="button button-icon button-ghost"
+                  [attr.aria-label]="'Renommer le dossier ' + folder.name"
+                  (click)="open({ kind: 'rename-folder', id: folder.id })"
+                >
+                  <app-icon name="pencil" />
+                </button>
+                <button
+                  type="button"
+                  class="button button-icon button-ghost"
+                  [attr.aria-label]="'Supprimer le dossier ' + folder.name"
+                  (click)="removeFolder(folder)"
+                >
+                  <app-icon name="trash" />
+                </button>
+              }
             </span>
           </li>
         }
