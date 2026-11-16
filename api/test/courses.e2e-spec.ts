@@ -278,6 +278,56 @@ describe('Cours', () => {
     ]);
   });
 
+  it('enregistre, remplace et supprime la fiche de révision sans toucher au cours', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const before = (await client('get', `/api/courses/${course.id}`))
+      .body as Course;
+    expect(before.sheetContent).toBeNull();
+    const sheet = {
+      type: 'doc',
+      content: [
+        {
+          type: 'callout',
+          attrs: { kind: 'definition' },
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Fiche.' }] },
+          ],
+        },
+      ],
+    };
+
+    const saved = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: sheet,
+    });
+
+    expect(saved.status).toBe(200);
+    expect((saved.body as Course).sheetContent).toEqual(sheet);
+    expect((saved.body as Course).content).toEqual(before.content);
+
+    const invalid = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: { type: 'doc', content: [{ type: 'script' }] },
+    });
+    const foreign = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: {
+        type: 'doc',
+        content: [
+          {
+            type: 'figure',
+            attrs: { src: '/api/courses/9999/images/1', alt: '' },
+          },
+        ],
+      },
+    });
+    expect(invalid.status).toBe(400);
+    expect(foreign.status).toBe(400);
+
+    const removed = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: null,
+    });
+    expect((removed.body as Course).sheetContent).toBeNull();
+  });
+
   it('pose, déplace et retire le marque-page sans toucher à la date de modification', async () => {
     const [course] = (await client('get', '/api/ues/UTC502/courses'))
       .body as (Course & { hasBookmark: boolean })[];

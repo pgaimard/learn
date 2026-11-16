@@ -18,6 +18,7 @@ import { CreateCommands1795100000000 } from './1795100000000-create-commands.js'
 import { AddCommandLinks1795200000000 } from './1795200000000-add-command-links.js';
 import { AddToolsSearch1795300000000 } from './1795300000000-add-tools-search.js';
 import { AddCourseBookmark1795400000000 } from './1795400000000-add-course-bookmark.js';
+import { AddCourseSheet1795500000000 } from './1795500000000-add-course-sheet.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -40,4 +41,5 @@ export const migrations = [
   AddCommandLinks1795200000000,
   AddToolsSearch1795300000000,
   AddCourseBookmark1795400000000,
+  AddCourseSheet1795500000000,
 ];
