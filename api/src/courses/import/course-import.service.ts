@@ -107,7 +107,11 @@ export class CourseImportService {
     const analysed = analyse(files);
     const ue = await this.findUe(analysed.metadata.ueCode);
     const existing = await this.findExisting(ue, analysed.metadata.title);
-    const terms = await sortTerms(this.dataSource.manager, analysed.terms);
+    const terms = await sortTerms(
+      this.dataSource.manager,
+      analysed.terms,
+      ue.id,
+    );
     return {
       ...analysed.metadata,
       sectionCount: analysed.sectionCount,
@@ -224,7 +228,7 @@ export class CourseImportService {
       ? await store(analysed.sheet.document, analysed.sheet.images)
       : keptSheet;
     await manager.save(course);
-    const terms = await sortTerms(manager, analysed.terms);
+    const terms = await sortTerms(manager, analysed.terms, ue.id);
     const origin = { ueId: ue.id, courseId: course.id };
     const termImages: TermImageWriter = {
       files: analysed.termImages,

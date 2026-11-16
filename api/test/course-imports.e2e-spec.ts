@@ -333,6 +333,33 @@ describe('Import d’un paquet de cours', () => {
     expect(stored[0].plain_text).toContain('Programme en cours d');
   });
 
+  it('ne prend pas pour doublon le terme de même libellé d’une autre UE', async () => {
+    await client('post', '/api/ues').send({
+      code: 'NFE108',
+      title: 'Méthodes',
+    });
+    const other = await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Sémaphore',
+      ueCode: 'NFE108',
+    });
+    const zip = validPackage({
+      'termes.json': JSON.stringify([
+        { type: 'definition', libelle: 'Sémaphore', definition: 'Compteur.' },
+      ]),
+    });
+
+    const previewed = await preview(zip);
+
+    expect(previewed.body).toMatchObject({
+      newTerms: [{ type: 'definition', label: 'Sémaphore' }],
+      duplicateTerms: [],
+    });
+    // Les tests suivants comptent les termes et les UE : celui-ci n'en laisse pas.
+    await client('delete', `/api/terms/${(other.body as { id: number }).id}`);
+    await client('delete', '/api/ues/NFE108');
+  });
+
   it('remplace sur demande la définition et les images des termes déjà présents', async () => {
     const terms = JSON.stringify([
       {

@@ -92,26 +92,38 @@ describe('Termes', () => {
     expect(term.course).not.toHaveProperty('content');
   });
 
-  it('crée un acronyme sans origine, à la définition vide', async () => {
+  it('crée un acronyme rattaché à une UE seule, à la définition vide', async () => {
     const response = await client('post', '/api/terms').send({
       type: 'acronym',
       label: 'PID',
       expandedForm: 'Process Identifier',
+      ueCode: 'utc502',
     });
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       expandedForm: 'Process Identifier',
       content: { type: 'doc', content: [{ type: 'paragraph' }] },
-      ue: null,
+      ue: { code: 'UTC502' },
       course: null,
     });
   });
 
-  it('accepte le même libellé dans le dictionnaire et le glossaire', async () => {
+  it('accepte le même libellé pour une définition et un acronyme d’une UE', async () => {
     const response = await client('post', '/api/terms').send({
       type: 'definition',
       label: 'PID',
+      ueCode: 'UTC502',
+    });
+
+    expect(response.status).toBe(201);
+  });
+
+  it('accepte le même acronyme dans deux UE', async () => {
+    const response = await client('post', '/api/terms').send({
+      type: 'acronym',
+      label: 'pid',
+      expandedForm: 'Proportionnel, intégral, dérivé',
       ueCode: 'nfe108',
     });
 
@@ -119,15 +131,28 @@ describe('Termes', () => {
     expect(response.body).toMatchObject({ ue: { code: 'NFE108' } });
   });
 
+  it('refuse un terme sans UE', async () => {
+    const response = await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Orphelin',
+    });
+
+    expect(response.status).toBe(400);
+    expect((response.body as ErrorResponse).messages).toEqual([
+      'Un terme appartient à une UE.',
+    ]);
+  });
+
   it('refuse un doublon sans tenir compte de la casse', async () => {
     const response = await client('post', '/api/terms').send({
       type: 'definition',
       label: 'PROCESSUS',
+      ueCode: 'UTC502',
     });
 
     expect(response.status).toBe(409);
     expect((response.body as ErrorResponse).messages).toEqual([
-      '« PROCESSUS » existe déjà dans le dictionnaire.',
+      '« PROCESSUS » existe déjà dans les définitions de cette UE.',
     ]);
   });
 
@@ -166,6 +191,7 @@ describe('Termes', () => {
     await client('post', '/api/terms').send({
       type: 'definition',
       label: 'élément',
+      ueCode: 'UTC502',
     });
     const response = await client('get', '/api/terms?type=definition');
 
@@ -189,9 +215,10 @@ describe('Termes', () => {
   });
 
   it('filtre par type et par UE d’origine', async () => {
-    expect(await listLabels('?type=acronym')).toEqual(['PID']);
-    expect(await listLabels('?ue=UTC502')).toEqual(['Processus']);
-    expect(await listLabels('?ue=NFE108&type=acronym')).toEqual([]);
+    expect(await listLabels('?type=acronym')).toHaveLength(2);
+    expect(await listLabels('?ue=UTC502&type=acronym')).toEqual(['PID']);
+    expect(await listLabels('?ue=NFE108')).toEqual(['pid']);
+    expect(await listLabels('?ue=NFE108&type=definition')).toEqual([]);
   });
 
   it('filtre par cours d’origine', async () => {
@@ -267,7 +294,7 @@ describe('Termes', () => {
     expect(response.status).toBe(409);
   });
 
-  it('détache le terme de son cours puis de son UE', async () => {
+  it('détache le terme de son cours, mais pas de son UE', async () => {
     const path = `/api/terms/${processId}`;
     const withoutCourse = await client('patch', path).send({ courseId: null });
     expect(withoutCourse.body).toMatchObject({
@@ -276,7 +303,11 @@ describe('Termes', () => {
     });
 
     const withoutUe = await client('patch', path).send({ ueCode: null });
-    expect(withoutUe.body).toMatchObject({ course: null, ue: null });
+    expect(withoutUe.status).toBe(400);
+
+    const moved = await client('patch', path).send({ ueCode: 'NFE108' });
+    expect(moved.body).toMatchObject({ course: null, ue: { code: 'NFE108' } });
+    await client('patch', path).send({ ueCode: 'UTC502' });
   });
 
   it('garde le terme quand son cours d’origine est supprimé', async () => {
@@ -289,6 +320,12 @@ describe('Termes', () => {
       course: null,
       ue: { code: 'UTC502' },
     });
+  });
+
+  it('refuse de supprimer une UE qui a des termes', async () => {
+    const response = await client('delete', '/api/ues/NFE108');
+
+    expect(response.status).toBe(409);
   });
 
   it('supprime un terme', async () => {

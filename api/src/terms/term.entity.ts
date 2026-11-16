@@ -34,12 +34,13 @@ export class Term {
   @Column({ name: 'plain_text', type: 'text', select: false })
   plainText!: string;
 
-  @Column({ name: 'ue_id', type: 'integer', nullable: true })
-  ueId!: number | null;
+  // Un terme appartient toujours à une UE : le même libellé peut exister dans deux UE.
+  @Column({ name: 'ue_id', type: 'integer' })
+  ueId!: number;
 
   @ManyToOne(() => Ue)
   @JoinColumn({ name: 'ue_id' })
-  ue?: Ue | null;
+  ue?: Ue;
 
   @Column({ name: 'course_id', type: 'integer', nullable: true })
   courseId!: number | null;

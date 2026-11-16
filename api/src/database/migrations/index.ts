@@ -19,6 +19,7 @@ import { AddCommandLinks1795200000000 } from './1795200000000-add-command-links.
 import { AddToolsSearch1795300000000 } from './1795300000000-add-tools-search.js';
 import { AddCourseBookmark1795400000000 } from './1795400000000-add-course-bookmark.js';
 import { AddCourseSheet1795500000000 } from './1795500000000-add-course-sheet.js';
+import { TermsBelongToUe1795600000000 } from './1795600000000-terms-belong-to-ue.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -42,4 +43,5 @@ export const migrations = [
   AddToolsSearch1795300000000,
   AddCourseBookmark1795400000000,
   AddCourseSheet1795500000000,
+  TermsBelongToUe1795600000000,
 ];
