@@ -393,7 +393,7 @@ describe('Cours', () => {
 
     expect(response.status).toBe(409);
     expect((response.body as ErrorResponse).messages).toEqual([
-      'L’UE UTC502 n’est pas vide : supprimez d’abord ses cours, ses dossiers et ses fichiers.',
+      'L’UE UTC502 n’est pas vide : supprimez d’abord ses cours, ses termes, ses dossiers et ses fichiers.',
     ]);
   });
 

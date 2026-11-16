@@ -47,10 +47,15 @@ describe('Images de terme', () => {
     app = await createTestApp();
     await resetDatabase(app.get(DataSource));
     client = await createAuthenticatedClient(app);
+    await client('post', '/api/ues').send({
+      code: 'UTC502',
+      title: 'Systèmes',
+    });
     const createTerm = async (label: string): Promise<number> => {
       const response = await client('post', '/api/terms').send({
         type: 'definition',
         label,
+        ueCode: 'UTC502',
       });
       return (response.body as Term).id;
     };
@@ -150,6 +155,7 @@ describe('Images de terme', () => {
     const response = await client('post', '/api/terms').send({
       type: 'definition',
       label: 'Ordonnanceur',
+      ueCode: 'UTC502',
       content: doc(image.src),
     });
 
@@ -184,10 +190,6 @@ describe('Images de terme', () => {
 
   it('refuse l’image d’un autre terme ou d’un cours', async () => {
     const foreign = await uploadPng(`/api/terms/${otherTermId}/images`);
-    await client('post', '/api/ues').send({
-      code: 'UTC502',
-      title: 'Systèmes',
-    });
     const course = await client('post', '/api/ues/UTC502/courses').send({
       title: 'Processus',
     });

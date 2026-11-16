@@ -90,16 +90,19 @@ describe('Recherche', () => {
     await client('post', '/api/terms').send({
       type: 'definition',
       label: 'Carnet',
+      ueCode: 'UTC502',
       content: doc('Prendre des notes pendant la séance.'),
     });
     await client('post', '/api/terms').send({
       type: 'definition',
       label: 'Pagination',
+      ueCode: 'UTC502',
       content: doc('Découpage de la mémoire en pages de taille fixe.'),
     });
     await client('post', '/api/terms').send({
       type: 'acronym',
       label: 'MMU',
+      ueCode: 'UTC502',
       expandedForm: 'Memory Management Unit',
       content: doc('Circuit qui traduit les adresses.'),
     });
@@ -202,6 +205,7 @@ describe('Recherche', () => {
     expect((await search('mmu')).acronyms.items[0].label).toBe('MMU');
     expect((await search('management')).acronyms.items[0]).toMatchObject({
       label: 'MMU',
+      ueCode: 'UTC502',
       expandedForm: 'Memory Management Unit',
     });
   });

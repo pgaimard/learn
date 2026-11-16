@@ -29,6 +29,7 @@ export interface CourseResult {
 export interface TermResult {
   id: number;
   label: string;
+  ueCode: string;
   expandedForm: string | null;
   excerpt: ExcerptSegment[];
 }
@@ -119,10 +120,13 @@ const COURSES_SQL = `${QUERY_CTE}
    LIMIT $7`;
 
 const TERMS_SQL = `${QUERY_CTE}
-  SELECT term.id, term.label, term.expanded_form AS "expandedForm",
+  SELECT term.id, term.label, ue.code AS "ueCode",
+         term.expanded_form AS "expandedForm",
          ts_headline('simple_unaccent', term.plain_text, query.highlight, $6) AS excerpt,
          count(*) OVER () AS total
-    FROM terms term, query
+    FROM terms term
+    JOIN ues ue ON ue.id = term.ue_id,
+         query
    WHERE ${matches('term')} AND term.type = $8
    ORDER BY ${relevance('term')}, term.label, term.id
    LIMIT $7`;

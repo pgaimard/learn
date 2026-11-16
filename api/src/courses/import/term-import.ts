@@ -18,7 +18,8 @@ export interface TermReference {
 export interface SortedTerms {
   // Termes absents de l'application : l'import les crée.
   fresh: ParsedTerm[];
-  // Termes déjà présents (même type, même libellé sans la casse) : l'import les laisse tels quels.
+  // Termes déjà présents dans l'UE (même type, même libellé sans la casse) : l'import
+  // les laisse tels quels.
   duplicates: ParsedTerm[];
 }
 
@@ -33,6 +34,7 @@ export function toReference(term: TermReference): TermReference {
 export async function sortTerms(
   manager: EntityManager,
   terms: ParsedTerm[],
+  ueId: number,
 ): Promise<SortedTerms> {
   if (terms.length === 0) {
     return { fresh: [], duplicates: [] };
@@ -40,7 +42,8 @@ export async function sortTerms(
   const existing = await manager
     .createQueryBuilder(Term, 'term')
     .select(['term.type', 'term.label'])
-    .where('lower(term.label) IN (:...labels)', {
+    .where('term.ue_id = :ueId', { ueId })
+    .andWhere('lower(term.label) IN (:...labels)', {
       labels: terms.map((term) => term.label.toLowerCase()),
     })
     .getMany();
@@ -92,7 +95,8 @@ export async function insertTerms(
   }
 }
 
-// Remplace la définition, la forme développée et l'origine des termes déjà présents ;
+// Remplace la définition, la forme développée et le cours d'origine des termes déjà
+// présents dans l'UE ;
 // leur libellé reste tel qu'il a été saisi. Renvoie leurs anciennes images, dont les
 // fichiers restent à effacer une fois la transaction validée.
 export async function replaceTerms(
@@ -106,7 +110,8 @@ export async function replaceTerms(
     const existing = await manager
       .createQueryBuilder(Term, 'term')
       .select('term.id')
-      .where('term.type = :type', { type: term.type })
+      .where('term.ue_id = :ueId', { ueId: origin.ueId })
+      .andWhere('term.type = :type', { type: term.type })
       .andWhere('lower(term.label) = lower(:label)', { label: term.label })
       .getOne();
     if (!existing) {
@@ -120,13 +125,12 @@ export async function replaceTerms(
     await manager.query(
       `UPDATE terms
           SET expanded_form = $1, content = $2::jsonb, plain_text = $3,
-              ue_id = $4, course_id = $5, updated_at = now()
-        WHERE id = $6`,
+              course_id = $4, updated_at = now()
+        WHERE id = $5`,
       [
         term.expandedForm,
         JSON.stringify(content),
         extractPlainText(content),
-        origin.ueId,
         origin.courseId,
         existing.id,
       ],
