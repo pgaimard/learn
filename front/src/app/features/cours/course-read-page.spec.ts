@@ -33,6 +33,8 @@ function course(...content: ContentNode[]): Course {
     updatedAt: '2026-11-10T10:00:00.000Z',
     ue: { code: 'UTC502', title: 'Systèmes' },
     content: { type: 'doc', content },
+    bookmarkTitle: null,
+    bookmarkBlock: null,
   };
 }
 
@@ -54,6 +56,8 @@ describe('CourseReadPage', () => {
   const listTerms = vi.fn<TermService['list']>();
   const getTerm = vi.fn<TermService['get']>();
   const listCommands = vi.fn<CommandService['listByCourse']>();
+  const setBookmark = vi.fn<CourseService['setBookmark']>();
+  const removeBookmark = vi.fn<CourseService['removeBookmark']>();
   const removeCourse = vi.fn<CourseService['remove']>();
   const confirmDeletion = vi.fn<DialogService['confirmDeletion']>();
 
@@ -70,7 +74,15 @@ describe('CourseReadPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: CourseService, useValue: { get: () => of(shown), remove: removeCourse } },
+        {
+          provide: CourseService,
+          useValue: {
+            get: () => of(shown),
+            remove: removeCourse,
+            setBookmark,
+            removeBookmark,
+          },
+        },
         { provide: DialogService, useValue: { confirmDeletion } },
         { provide: TermService, useValue: { list: listTerms, get: getTerm } },
         { provide: CommandService, useValue: { listByCourse: listCommands } },
@@ -227,6 +239,79 @@ describe('CourseReadPage', () => {
     document.body.click();
     fixture.detectChanges();
     expect(link('Modifier ici')).toBeUndefined();
+  });
+
+  function rightClickOnBlock(block: number): void {
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    // jsdom ne calcule pas de mise en page : le clic vise le bloc de ce rang.
+    content.blockIndexAt = () => block;
+    element()
+      .querySelector('.article p')
+      ?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+  }
+
+  function menuButton(label: string): HTMLButtonElement | undefined {
+    return Array.from(element().querySelectorAll<HTMLButtonElement>('.context-menu button')).find(
+      (candidate) => (candidate.textContent ?? '').trim() === label,
+    );
+  }
+
+  it('marque la page sur la section du clic droit, et y pose le point', async () => {
+    await setup(COURSE);
+    setBookmark
+      .mockReset()
+      .mockReturnValue(of({ ...COURSE, bookmarkTitle: '2.1 fork', bookmarkBlock: 5 }));
+
+    // Sixième bloc du cours : le paragraphe sous « 2.1 fork ».
+    rightClickOnBlock(6);
+    menuButton('Marquer ma page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(setBookmark).toHaveBeenCalledWith(7, { title: '2.1 fork', block: 5 });
+    expect(element().querySelector('.is-bookmarked')?.textContent).toBe('2.1 fork');
+    expect(element().querySelector('.context-menu')).toBeNull();
+  });
+
+  it('propose de retirer le marque-page dans la section marquée', async () => {
+    await setup({ ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 });
+    removeBookmark.mockReset().mockReturnValue(of(COURSE));
+
+    rightClickOnBlock(4);
+    expect(menuButton('Marquer ma page')).toBeUndefined();
+    menuButton('Retirer le marque-page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(removeBookmark).toHaveBeenCalledWith(7);
+    expect(element().querySelector('.is-bookmarked')).toBeNull();
+  });
+
+  it('reprend la lecture au marque-page à l’ouverture du cours, pas dans sa fiche', async () => {
+    const scrolled: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = function (this: Element): void {
+      scrolled.push((this.textContent ?? '').trim());
+    };
+    // Le cours a été retouché depuis : le titre marqué est retrouvé par son texte.
+    const marked = { ...COURSE, bookmarkTitle: '2.1 fork', bookmarkBlock: 9 };
+
+    await setup(marked);
+    expect(scrolled).toEqual(['2.1 fork']);
+    expect(element().querySelector('.is-bookmarked')?.textContent).toBe('2.1 fork');
+
+    TestBed.resetTestingModule();
+    scrolled.length = 0;
+    await setup(marked, 'fiche');
+    expect(scrolled).toEqual([]);
+
+    if (original) {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', original);
+    } else {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
   });
 
   it('reprend la lecture au bloc demandé au retour de l’édition (?bloc=n)', async () => {

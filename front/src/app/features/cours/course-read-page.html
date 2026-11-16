@@ -84,6 +84,7 @@
         [content]="course.content"
         [sheet]="isSheet()"
         [startBlock]="startBlock()"
+        [bookmarkBlock]="bookmarkBlock()"
         [terms]="allTerms()"
         (sectionReferenced)="followReference($event)"
         (termOpened)="openTerm($event)"
@@ -191,6 +192,17 @@
       >
         <app-icon name="pencil" [size]="15" />Modifier ici
       </a>
+      @if (menuSection(); as section) {
+        @if (section.block === bookmarkBlock()) {
+          <button type="button" role="menuitem" class="menu-item" (click)="markPage(null)">
+            <app-icon name="close" [size]="15" />Retirer le marque-page
+          </button>
+        } @else {
+          <button type="button" role="menuitem" class="menu-item" (click)="markPage(section)">
+            <app-icon name="pin" [size]="15" />Marquer ma page
+          </button>
+        }
+      }
     </div>
   }
 } @else if (errors().length === 0) {

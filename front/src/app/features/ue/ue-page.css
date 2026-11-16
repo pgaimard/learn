@@ -35,6 +35,17 @@
   white-space: nowrap;
 }
 
+.bookmark {
+  flex: none;
+  /* Collé au titre qui le suit. */
+  margin-right: -0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-callout-retenir);
+  box-shadow: 0 0 0 3px var(--color-callout-retenir-soft);
+}
+
 .course-actions {
   display: flex;
   margin-right: -0.375rem;

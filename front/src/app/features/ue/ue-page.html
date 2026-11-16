@@ -125,6 +125,11 @@
               <app-icon name="grip" />
             </button>
             <span class="list-row-number course-position">{{ $index + 1 }}</span>
+            @if (course.hasBookmark) {
+              <span class="bookmark" title="Lecture en cours : un marque-page est posé">
+                <span class="visually-hidden">Lecture en cours</span>
+              </span>
+            }
             <a
               class="list-row-title course-title"
               [routerLink]="['/ue', ue.code, 'cours', course.id]"

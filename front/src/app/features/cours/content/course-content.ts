@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
+import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
@@ -44,6 +45,9 @@ export class CourseContent {
   // Rang du bloc de premier niveau à amener au milieu de l'écran à l'ouverture ; en
   // édition, le curseur s'y place.
   readonly startBlock = input<number | null>(null);
+
+  // Rang du bloc (un titre) qui porte le marque-page de lecture ; null sans marque-page.
+  readonly bookmarkBlock = input<number | null>(null);
 
   // Termes à rendre cliquables dans le texte, en lecture.
   readonly terms = input<MentionTerm[]>([]);
@@ -154,6 +158,15 @@ export class CourseContent {
       const view = this.editor()?.view;
       if (view) {
         setMentionTerms(view, terms);
+      }
+    });
+    effect(() => {
+      const block = this.bookmarkBlock();
+      // Le contenu est relu : le marque-page se repose après un changement de cours.
+      this.content();
+      const view = this.editor()?.view;
+      if (view) {
+        setBookmarkBlock(view, block);
       }
     });
     effect(() => {

@@ -562,3 +562,25 @@
 .course-content .is-off-sheet {
   display: none;
 }
+
+/* Marque-page de lecture : un point vert dans la marge, devant le titre où l'on s'est
+   arrêté, à gauche du chevron de pliage. */
+.course-content .is-bookmarked::after {
+  position: absolute;
+  top: calc((1.25em - 0.5rem) / 2);
+  left: -2.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-callout-retenir);
+  box-shadow: 0 0 0 3px var(--color-callout-retenir-soft);
+  content: '';
+}
+
+/* Écran étroit : la marge ne laisse la place qu'au chevron, le point passe au-dessus. */
+@media (max-width: 40rem) {
+  .course-content .is-bookmarked::after {
+    top: -0.375rem;
+    left: -1.125rem;
+  }
+}

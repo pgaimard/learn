@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Bookmark } from './bookmark/bookmark';
 import { ContentNode } from './content/content-node';
 
 export interface CourseSummary {
@@ -10,11 +11,17 @@ export interface CourseSummary {
   updatedAt: string;
   // Nombre de titres de premier niveau ; présent dans les listes de cours.
   sectionCount?: number;
+  // Vrai quand un marque-page de lecture est posé ; présent dans les listes de cours.
+  hasBookmark?: boolean;
 }
 
 export interface Course extends CourseSummary {
   content: ContentNode;
   ue: { code: string; title: string };
+  // Marque-page de lecture : le titre où l'on s'est arrêté et le rang de son bloc ; tous
+  // deux null quand le cours n'en a pas.
+  bookmarkTitle: string | null;
+  bookmarkBlock: number | null;
 }
 
 export interface UploadedImage {
@@ -63,5 +70,13 @@ export class CourseService {
 
   remove(id: number): Observable<void> {
     return this.http.delete<void>(`/api/courses/${id}`);
+  }
+
+  setBookmark(id: number, bookmark: Bookmark): Observable<Course> {
+    return this.http.put<Course>(`/api/courses/${id}/bookmark`, bookmark);
+  }
+
+  removeBookmark(id: number): Observable<Course> {
+    return this.http.delete<Course>(`/api/courses/${id}/bookmark`);
   }
 }
