@@ -20,6 +20,7 @@ import { CommandSheet } from '../outils/command-sheet';
 import { Command, CommandGroup, CommandService, CommandTool } from '../outils/command.service';
 import { TERM_SCREENS } from '../termes/term-screens';
 import { Term, TermService, TermSummary } from '../termes/term.service';
+import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
 import { hasSheetContent, sheetHeadingIndexes } from './revision/revision-sheet';
 import { CourseContent } from './content/course-content';
@@ -72,9 +73,33 @@ export class CourseReadPage {
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly isSheet = computed(() => this.vue() === 'fiche');
+  // Rang du titre qui porte le marque-page de lecture ; null sans marque-page, ou si le
+  // titre marqué n'existe plus.
+  protected readonly bookmarkBlock = computed(() => {
+    const course = this.course();
+    if (!course || course.bookmarkTitle === null || course.bookmarkBlock === null) {
+      return null;
+    }
+    return findBookmarkBlock(course.content, {
+      title: course.bookmarkTitle,
+      block: course.bookmarkBlock,
+    });
+  });
+  // Bloc amené à l'écran à l'ouverture : celui demandé au retour de l'édition, sinon le
+  // marque-page. La fiche de révision, elle, s'ouvre à son début.
   protected readonly startBlock = computed(() => {
     const rank = Number(this.bloc());
-    return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
+    if (this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0) {
+      return rank;
+    }
+    return this.isSheet() ? null : this.bookmarkBlock();
+  });
+  // Section visée par le clic droit, où le marque-page se poserait ; null hors du texte,
+  // dans la fiche, ou pour un cours sans titre.
+  protected readonly menuSection = computed<Bookmark | null>(() => {
+    const course = this.course();
+    const block = this.contextMenu()?.block ?? null;
+    return course && block !== null && !this.isSheet() ? sectionAt(course.content, block) : null;
   });
   // Sommaire du cours, réduit aux titres de la fiche quand elle est affichée.
   protected readonly outline = computed(() => {
@@ -149,6 +174,25 @@ export class CourseReadPage {
       top: event.clientY,
       left: Math.min(event.clientX, window.innerWidth - MENU_WIDTH_PX),
       block: this.contentView()?.blockIndexAt(event.clientX, event.clientY) ?? null,
+    });
+  }
+
+  // Pose le marque-page sur la section du clic droit, ou le retire (null).
+  protected markPage(bookmark: Bookmark | null): void {
+    const course = this.course();
+    this.contextMenu.set(null);
+    if (!course) {
+      return;
+    }
+    const request = bookmark
+      ? this.courseService.setBookmark(course.id, bookmark)
+      : this.courseService.removeBookmark(course.id);
+    request.subscribe({
+      // Seul le marque-page change : le contenu affiché reste le même objet, la lecture
+      // ne bouge pas.
+      next: ({ bookmarkTitle, bookmarkBlock }) =>
+        this.course.update((shown) => shown && { ...shown, bookmarkTitle, bookmarkBlock }),
+      error: (error: ApiError) => this.errors.set(error.messages),
     });
   }
 

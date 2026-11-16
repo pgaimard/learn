@@ -289,6 +289,16 @@ describe('UePage', () => {
     expect(courseTitles()).toEqual(['Processus']);
   });
 
+  it('signale d’un point les cours où un marque-page est posé', () => {
+    courseService.list.mockReturnValue(of([PROCESSUS, { ...MEMOIRE, hasBookmark: true }]));
+    setup();
+
+    const marked = Array.from(element().querySelectorAll('.course')).map(
+      (row) => row.querySelector('.bookmark') !== null,
+    );
+    expect(marked).toEqual([false, true]);
+  });
+
   it('réordonne les cours depuis la poignée, renumérote et enregistre', () => {
     courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
     courseService.reorder.mockReturnValue(of([MEMOIRE, PROCESSUS]));
