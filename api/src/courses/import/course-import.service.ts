@@ -6,10 +6,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Ue } from '../../ue/ue.entity.js';
 import { UeService } from '../../ue/ue.service.js';
-import { buildImageSource } from '../content/collect-figures.js';
+import {
+  buildImageSource,
+  collectFigures,
+} from '../content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from '../content/content-node.js';
 import { extractPlainText } from '../content/extract-plain-text.js';
 import { validateContent } from '../content/validate-content.js';
@@ -58,10 +61,14 @@ export interface ImportPreview {
   // quels, ou remplace leur définition si on le lui demande.
   newTerms: TermReference[];
   duplicateTerms: TermReference[];
+  // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
+  hasSheet: boolean;
+  sheetImageCount: number;
   // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
   commands: CommandImportPreview;
-  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
-  existingCourse: { id: number; title: string } | null;
+  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche
+  // de révision, s'il en a une, est gardée quand le paquet n'en apporte pas.
+  existingCourse: { id: number; title: string; hasSheet: boolean } | null;
 }
 
 // Images d'un import : celles écrites sur disque, à effacer s'il échoue, ou celles
@@ -75,6 +82,8 @@ interface AnalysedPackage {
   metadata: CourseMetadata;
   document: ContentNode;
   images: Map<string, Buffer>;
+  // Fiche de révision de fiche.md et ses images ; null quand le paquet n'en a pas.
+  sheet: { document: ContentNode; images: Map<string, Buffer> } | null;
   // Images référencées par les définitions de termes.json.
   termImages: Map<string, Buffer>;
   sectionCount: number;
@@ -111,8 +120,14 @@ export class CourseImportService {
       newTerms: terms.fresh.map(toReference),
       duplicateTerms: terms.duplicates.map(toReference),
       commands: await previewCommands(this.dataSource.manager, analysed.tools),
+      hasSheet: analysed.sheet !== null,
+      sheetImageCount: analysed.sheet?.images.size ?? 0,
       existingCourse: existing
-        ? { id: existing.id, title: existing.title }
+        ? {
+            id: existing.id,
+            title: existing.title,
+            hasSheet: existing.sheetContent !== null,
+          }
         : null,
     };
   }
@@ -168,24 +183,46 @@ export class CourseImportService {
   ): Promise<{ courseId: number; obsolete: PackageImages }> {
     const { metadata } = analysed;
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
-    const obsolete = await manager.findBy(CourseImage, { courseId: course.id });
-    await manager.delete(CourseImage, { courseId: course.id });
-    const sources = new Map<string, string>();
-    for (const [path, data] of analysed.images) {
-      const image = await this.imagesService.upload(
-        course.id,
-        data,
-        findAltText(analysed.document, path),
-        manager,
-      );
-      written.course.push(image);
-      sources.set(path, buildImageSource('courses', course.id, image.id));
+    // Un paquet sans fiche laisse en place celle du chapitre, avec ses images.
+    const keptSheet = analysed.sheet ? null : course.sheetContent;
+    const keptIds = collectFigures(keptSheet ?? EMPTY_CONTENT).map(
+      (figure) => figure.imageId,
+    );
+    const obsolete = (
+      await manager.findBy(CourseImage, { courseId: course.id })
+    ).filter((image) => !keptIds.includes(image.id));
+    if (obsolete.length > 0) {
+      await manager.delete(CourseImage, {
+        id: In(obsolete.map((image) => image.id)),
+      });
     }
-    const content = placeImages(analysed.document, sources);
-    throwIfAny(validateContent(content));
+    // Enregistre les images d'un document du paquet et les y met à leur adresse.
+    const store = async (
+      document: ContentNode,
+      images: Map<string, Buffer>,
+    ): Promise<ContentNode> => {
+      const sources = new Map<string, string>();
+      for (const [path, data] of images) {
+        const image = await this.imagesService.upload(
+          course.id,
+          data,
+          findAltText(document, path),
+          manager,
+        );
+        written.course.push(image);
+        sources.set(path, buildImageSource('courses', course.id, image.id));
+      }
+      const content = placeImages(document, sources);
+      throwIfAny(validateContent(content));
+      return content;
+    };
+    const content = await store(analysed.document, analysed.images);
     course.title = metadata.title;
     course.content = content;
     course.plainText = extractPlainText(content);
+    course.sheetContent = analysed.sheet
+      ? await store(analysed.sheet.document, analysed.sheet.images)
+      : keptSheet;
     await manager.save(course);
     const terms = await sortTerms(manager, analysed.terms);
     const origin = { ueId: ue.id, courseId: course.id };
@@ -305,6 +342,21 @@ function analyse(files: PackageFiles): AnalysedPackage {
   for (const path of converted.imagePaths) {
     collect(path, 'cours.md', images);
   }
+  let sheet: AnalysedPackage['sheet'] = null;
+  if (files.sheet !== null) {
+    const fiche = markdownToContent(files.sheet, 0, 'fiche.md');
+    errors.push(...fiche.errors);
+    const isBlank =
+      extractPlainText(fiche.document).trim() === '' &&
+      fiche.imagePaths.length === 0;
+    if (fiche.errors.length === 0 && isBlank) {
+      errors.push('fiche.md est vide.');
+    }
+    sheet = { document: fiche.document, images: new Map() };
+    for (const path of fiche.imagePaths) {
+      collect(path, 'fiche.md', sheet.images);
+    }
+  }
   const terms = parseTerms(files.terms);
   errors.push(...terms.errors);
   const termImages = new Map<string, Buffer>();
@@ -322,6 +374,7 @@ function analyse(files: PackageFiles): AnalysedPackage {
     metadata: header.metadata,
     document: converted.document,
     images,
+    sheet,
     termImages,
     sectionCount: converted.sectionCount,
     terms: terms.terms,

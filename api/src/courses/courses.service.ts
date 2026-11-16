@@ -88,13 +88,25 @@ export class CoursesService {
   async update(id: number, changes: UpdateCourseDto): Promise<Course> {
     const course = await this.findById(id);
     course.title = changes.title ?? course.title;
-    if (changes.content === undefined) {
+    if (changes.content === undefined && changes.sheetContent === undefined) {
       await this.save(this.courses.manager, course);
       return this.findById(id);
     }
-    course.content = checkContent(changes.content);
-    course.plainText = extractPlainText(course.content);
-    const figures = collectFigures(course.content);
+    if (changes.content !== undefined) {
+      course.content = checkContent(changes.content);
+      course.plainText = extractPlainText(course.content);
+    }
+    if (changes.sheetContent !== undefined) {
+      course.sheetContent =
+        changes.sheetContent === null
+          ? null
+          : checkContent(changes.sheetContent);
+    }
+    // Les images du cours servent à son texte comme à sa fiche de révision.
+    const figures = [
+      ...collectFigures(course.content),
+      ...(course.sheetContent ? collectFigures(course.sheetContent) : []),
+    ];
     await this.imagesService.assertFiguresExist(id, figures);
     // Le cours et ses images changent ensemble ou pas du tout.
     const unused = await this.dataSource.transaction(async (manager) => {

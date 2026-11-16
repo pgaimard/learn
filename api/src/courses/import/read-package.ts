@@ -6,6 +6,8 @@ import { IMAGE_PATH } from './markdown-to-content.js';
 export interface PackageFiles {
   markdown: string;
   images: Map<string, Buffer>;
+  // Contenu de fiche.md, la fiche de révision ; null quand le paquet n'en a pas.
+  sheet: string | null;
   terms: string | null;
   // Contenu de commandes.json ; null quand le paquet n'en a pas.
   commands: string | null;
@@ -101,6 +103,7 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
     const files: PackageFiles = {
       markdown: '',
       images: new Map(),
+      sheet: null,
       terms: null,
       commands: null,
     };
@@ -110,6 +113,8 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
       if (name === 'cours.md') {
         files.markdown = (await extract(zipFile, entry)).toString('utf8');
         hasMarkdown = true;
+      } else if (name === 'fiche.md') {
+        files.sheet = (await extract(zipFile, entry)).toString('utf8');
       } else if (name === 'termes.json') {
         files.terms = (await extract(zipFile, entry)).toString('utf8');
       } else if (name === 'commandes.json') {
