@@ -65,8 +65,11 @@
   color: var(--color-text);
 }
 
-.terms-toolbar {
-  justify-content: flex-start;
+.terms-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .term-filter {

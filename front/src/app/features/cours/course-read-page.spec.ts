@@ -195,7 +195,7 @@ describe('CourseReadPage', () => {
       label: 'PCB',
       expandedForm: 'Process Control Block',
       excerpt: '',
-      ueCode: null,
+      ueCode: 'UTC502',
       courseId: null,
       courseTitle: null,
     };
@@ -206,7 +206,7 @@ describe('CourseReadPage', () => {
         label: 'PCB',
         expandedForm: 'Process Control Block',
         content: { type: 'doc', content: [paragraph('Bloc de contrôle du processus.')] },
-        ue: null,
+        ue: { code: 'UTC502', title: 'Systèmes' },
         course: null,
       }),
     );
@@ -220,7 +220,7 @@ describe('CourseReadPage', () => {
     expect(dialog.querySelector('h2')?.textContent).toBe('PCB');
     expect(dialog.textContent).toContain('Process Control Block');
     expect(dialog.textContent).toContain('Bloc de contrôle du processus.');
-    expect(link('Ouvrir dans le glossaire')?.getAttribute('href')).toBe('/glossaire/3');
+    expect(link('Ouvrir le terme')?.getAttribute('href')).toBe('/ue/UTC502/termes/3');
   });
 
   it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {
@@ -458,7 +458,7 @@ describe('CourseReadPage', () => {
       label: `Terme ${index + 1}`,
       expandedForm: index === 0 ? 'Forme développée' : null,
       excerpt: `Définition ${index + 1}`,
-      ueCode: null,
+      ueCode: 'UTC502',
       courseId: null,
       courseTitle: null,
     }));
@@ -467,9 +467,9 @@ describe('CourseReadPage', () => {
     expect(listTerms).toHaveBeenCalledWith({ course: 7 });
     const items = Array.from(element().querySelectorAll('.terms li'));
     expect(items).toHaveLength(6);
-    expect(items[0].querySelector('a')?.getAttribute('href')).toBe('/glossaire/1');
+    expect(items[0].querySelector('a')?.getAttribute('href')).toBe('/ue/UTC502/termes/1');
     expect(items[0].querySelector('span')?.textContent).toBe('Forme développée');
-    expect(items[1].querySelector('a')?.getAttribute('href')).toBe('/dictionnaire/2');
+    expect(items[1].querySelector('a')?.getAttribute('href')).toBe('/ue/UTC502/termes/2');
     expect(items[1].querySelector('span')?.textContent).toBe('Définition 2');
     expect(link('Voir les 8 termes')?.getAttribute('href')).toBe('/ue/UTC502?onglet=termes');
   });

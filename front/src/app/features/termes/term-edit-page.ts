@@ -19,7 +19,6 @@ import { Dropdown } from '../../core/ui/dropdown';
 import { ContentEditor } from '../cours/editor/content-editor';
 import { ueOptions } from '../ue/ue-options';
 import { Ue, UeService } from '../ue/ue.service';
-import { TERM_SCREENS } from './term-screens';
 import { Term, TermInput, TermService } from './term.service';
 
 @Component({
@@ -35,7 +34,7 @@ import { Term, TermInput, TermService } from './term.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TermEditPage {
-  // Paramètre de la route /dictionnaire/:id/edition ou /glossaire/:id/edition.
+  // Paramètre de la route /ue/:code/termes/:id/edition.
   readonly id = input.required<string>();
 
   private readonly termService = inject(TermService);
@@ -48,12 +47,14 @@ export class TermEditPage {
 
   protected readonly term = signal<Term | null>(null);
   protected readonly ues = signal<Ue[]>([]);
-  protected readonly ueChoices = computed(() =>
-    ueOptions(this.ues(), [{ value: '', label: 'Aucune' }]),
-  );
+  protected readonly ueChoices = computed(() => ueOptions(this.ues()));
   // Origine telle qu'enregistrée : elle sert à savoir si l'UE choisie a changé.
-  protected readonly origin = signal<Pick<Term, 'ue' | 'course'>>({ ue: null, course: null });
-  protected readonly screen = computed(() => TERM_SCREENS[this.term()?.type ?? 'definition']);
+  protected readonly origin = signal<Pick<Term, 'course'> & { ueCode: string }>({
+    ueCode: '',
+    course: null,
+  });
+  // UE enregistrée du terme : les liens y mènent, même après un changement d'UE.
+  protected readonly ueCode = computed(() => this.origin().ueCode);
   protected readonly errors = signal<string[]>([]);
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
@@ -119,7 +120,7 @@ export class TermEditPage {
       next: (saved) => {
         this.isSaving.set(false);
         this.isDirty.set(false);
-        this.origin.set({ ue: saved.ue, course: saved.course });
+        this.origin.set({ ueCode: saved.ue.code, course: saved.course });
         this.title.setTitle(`Édition – ${saved.label}`);
       },
       error: (error: ApiError) => {
@@ -152,7 +153,7 @@ export class TermEditPage {
     this.termService.remove(term.id).subscribe({
       next: () => {
         this.isDirty.set(false);
-        void this.router.navigate([this.screen().path]);
+        void this.router.navigate(['/ue', this.ueCode()], { queryParams: { onglet: 'termes' } });
       },
       error: (error: ApiError) => this.errors.set(error.messages),
     });
@@ -177,21 +178,21 @@ export class TermEditPage {
   // Un cours d'origine impose son UE : changer d'UE détache donc le terme de ce cours.
   private originChanges(): TermInput {
     const ueCode = this.form.controls.ueCode.value;
-    if (ueCode === (this.origin().ue?.code ?? '')) {
+    if (ueCode === this.ueCode()) {
       return {};
     }
-    return { ueCode: ueCode === '' ? null : ueCode, courseId: null };
+    return { ueCode, courseId: null };
   }
 
   private load(id: number): void {
     this.termService.get(id).subscribe({
       next: (term) => {
         this.term.set(term);
-        this.origin.set({ ue: term.ue, course: term.course });
+        this.origin.set({ ueCode: term.ue.code, course: term.course });
         this.form.setValue({
           label: term.label,
           expandedForm: term.expandedForm ?? '',
-          ueCode: term.ue?.code ?? '',
+          ueCode: term.ue.code,
         });
         this.isDirty.set(false);
         this.title.setTitle(`Édition – ${term.label}`);

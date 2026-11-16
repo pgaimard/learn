@@ -85,7 +85,7 @@ describe('CourseImportPage', () => {
     pickPackage();
 
     const text = element().textContent.replace(/\s+/g, ' ');
-    expect(text).toContain('2 à ajouter au dictionnaire et au glossaire : Processus, PCB');
+    expect(text).toContain('2 à ajouter aux termes de l’UE : Processus, PCB');
     expect(text).toContain('1 déjà présents : PID');
   });
 

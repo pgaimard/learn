@@ -6,7 +6,11 @@
 
 @if (term(); as term) {
   <nav class="breadcrumb" aria-label="Fil d’Ariane">
-    <a [routerLink]="screen().path">{{ screen().title }}</a>
+    <a routerLink="/">Mes UE</a>
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/ue', term.ue.code]">{{ term.ue.code }}</a>
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/ue', term.ue.code]" [queryParams]="{ onglet: 'termes' }">Termes</a>
     <span aria-hidden="true">/</span>
     <span>{{ term.label }}</span>
   </nav>

@@ -25,7 +25,15 @@ const RESULTS: SearchResults = {
   definitions: EMPTY,
   acronyms: {
     total: 1,
-    items: [{ id: 3, label: 'MMU', expandedForm: 'Memory Management Unit', excerpt: [] }],
+    items: [
+      {
+        id: 3,
+        label: 'MMU',
+        ueCode: 'UTC502',
+        expandedForm: 'Memory Management Unit',
+        excerpt: [],
+      },
+    ],
   },
   files: {
     total: 1,
@@ -83,12 +91,16 @@ describe('SearchPage', () => {
       ]),
     ).toEqual([
       ['Cours', '25'],
-      ['Glossaire', '1'],
+      ['Acronymes', '1'],
       ['Fichiers', '1'],
     ]);
     expect(
       Array.from(element.querySelectorAll('a.result')).map((link) => link.getAttribute('href')),
-    ).toEqual(['/ue/UTC502/cours/7', '/glossaire/3', '/ue/UTC502?onglet=fichiers&dossier=4']);
+    ).toEqual([
+      '/ue/UTC502/cours/7',
+      '/ue/UTC502/termes/3',
+      '/ue/UTC502?onglet=fichiers&dossier=4',
+    ]);
     expect(element.querySelector('mark')?.textContent).toBe('mémoires');
     expect(text()).toContain('Les 1 résultats les plus pertinents sur 25');
   });
