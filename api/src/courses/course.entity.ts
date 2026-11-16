@@ -34,6 +34,14 @@ export class Course {
   @Column({ name: 'plain_text', type: 'text', select: false })
   plainText!: string;
 
+  // Marque-page de lecture : le titre où l'on s'est arrêté et le rang de son bloc ;
+  // tous deux null quand le cours n'en a pas.
+  @Column({ name: 'bookmark_title', type: 'text', nullable: true })
+  bookmarkTitle!: string | null;
+
+  @Column({ name: 'bookmark_block', type: 'integer', nullable: true })
+  bookmarkBlock!: number | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

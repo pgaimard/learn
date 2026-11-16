@@ -278,6 +278,66 @@ describe('Cours', () => {
     ]);
   });
 
+  it('pose, déplace et retire le marque-page sans toucher à la date de modification', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as (Course & { hasBookmark: boolean })[];
+    expect(course.hasBookmark).toBe(false);
+
+    const set = await client('put', `/api/courses/${course.id}/bookmark`).send({
+      title: '1.1 États',
+      block: 4,
+    });
+    const moved = await client(
+      'put',
+      `/api/courses/${course.id}/bookmark`,
+    ).send({ title: '2. Ordonnancement', block: 9 });
+
+    expect(set.status).toBe(200);
+    expect(set.body).toMatchObject({
+      bookmarkTitle: '1.1 États',
+      bookmarkBlock: 4,
+    });
+    expect(moved.body).toMatchObject({
+      bookmarkTitle: '2. Ordonnancement',
+      bookmarkBlock: 9,
+      updatedAt: course.updatedAt,
+    });
+    const listed = (await client('get', '/api/ues/UTC502/courses'))
+      .body as (Course & { hasBookmark: boolean })[];
+    expect(listed[0].hasBookmark).toBe(true);
+
+    const removed = await client(
+      'delete',
+      `/api/courses/${course.id}/bookmark`,
+    );
+
+    expect(removed.status).toBe(200);
+    expect(removed.body).toMatchObject({
+      bookmarkTitle: null,
+      bookmarkBlock: null,
+    });
+  });
+
+  it('refuse un marque-page invalide ou sur un cours inconnu', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const invalid = await client(
+      'put',
+      `/api/courses/${course.id}/bookmark`,
+    ).send({ title: 'x', block: -1 });
+    const unknown = await client('put', '/api/courses/9999/bookmark').send({
+      title: 'x',
+      block: 0,
+    });
+    const anonymous = await request(app.getHttpServer()).delete(
+      `/api/courses/${course.id}/bookmark`,
+    );
+
+    expect(invalid.status).toBe(400);
+    expect(unknown.status).toBe(404);
+    expect(anonymous.status).toBe(401);
+  });
+
   it('refuse de supprimer une UE qui contient des cours', async () => {
     const response = await client('delete', '/api/ues/UTC502');
 

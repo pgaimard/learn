@@ -27,7 +27,7 @@ const UNIQUE_VIOLATION = '23505';
 export type CourseSummary = Pick<
   Course,
   'id' | 'title' | 'position' | 'updatedAt'
-> & { sectionCount: number };
+> & { sectionCount: number; hasBookmark: boolean };
 
 @Injectable()
 export class CoursesService {
@@ -45,7 +45,8 @@ export class CoursesService {
               (SELECT count(*)::int
                  FROM jsonb_array_elements(c.content -> 'content') AS block
                 WHERE block ->> 'type' = 'heading'
-                  AND block -> 'attrs' ->> 'level' = '2') AS "sectionCount"
+                  AND block -> 'attrs' ->> 'level' = '2') AS "sectionCount",
+              c.bookmark_block IS NOT NULL AS "hasBookmark"
          FROM courses c
         WHERE c.ue_id = $1
         ORDER BY c.position`,
@@ -101,6 +102,20 @@ export class CoursesService {
       return this.imagesService.reconcile(manager, id, figures);
     });
     await this.imagesService.removeFiles(unused);
+    return this.findById(id);
+  }
+
+  // Pose le marque-page de lecture, ou le retire (null). Ce n'est pas une modification
+  // du cours : sa date de modification ne bouge pas.
+  async setBookmark(
+    id: number,
+    bookmark: { title: string; block: number } | null,
+  ): Promise<Course> {
+    await this.findById(id);
+    await this.courses.query(
+      'UPDATE courses SET bookmark_title = $2, bookmark_block = $3 WHERE id = $1',
+      [id, bookmark?.title ?? null, bookmark?.block ?? null],
+    );
     return this.findById(id);
   }
 

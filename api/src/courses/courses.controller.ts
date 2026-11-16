@@ -16,6 +16,7 @@ import { Course } from './course.entity.js';
 import { CourseSummary, CoursesService } from './courses.service.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
 import { ReorderCoursesDto } from './dto/reorder-courses.dto.js';
+import { SetBookmarkDto } from './dto/set-bookmark.dto.js';
 import { UpdateCourseDto } from './dto/update-course.dto.js';
 
 // Un identifiant non numérique désigne un cours qui n'existe pas.
@@ -59,6 +60,19 @@ export class CoursesController {
     @Body() changes: UpdateCourseDto,
   ): Promise<Course> {
     return this.coursesService.update(id, changes);
+  }
+
+  @Put('courses/:id/bookmark')
+  setBookmark(
+    @Param('id', parseId) id: number,
+    @Body() bookmark: SetBookmarkDto,
+  ): Promise<Course> {
+    return this.coursesService.setBookmark(id, bookmark);
+  }
+
+  @Delete('courses/:id/bookmark')
+  removeBookmark(@Param('id', parseId) id: number): Promise<Course> {
+    return this.coursesService.setBookmark(id, null);
   }
 
   @Delete('courses/:id')
