@@ -6,7 +6,7 @@
   class="modal"
   aria-labelledby="dialog-title"
   [attr.aria-describedby]="request()?.kind === 'confirm' ? 'dialog-message' : null"
-  (close)="cancel()"
+  (close)="closed()"
 >
   @if (request(); as request) {
     @if (request.kind === 'confirm') {
