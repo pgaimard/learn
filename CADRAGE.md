@@ -43,10 +43,10 @@ Seul le reverse proxy est accessible de l'extérieur ; la base n'est jamais expo
 | Image de cours | cours, chemin de stockage, type MIME, taille, texte alternatif | Schémas (SVG, PNG) et captures d'écran ; contenu sur disque |
 | Dossier | UE, dossier parent (optionnel), nom | Arborescence par UE |
 | Fichier | UE, dossier (optionnel), nom d'origine, chemin de stockage, type MIME, taille | Contenu sur disque, métadonnées en base |
-| Terme | type (définition ou acronyme), libellé, forme développée (acronymes), définition (format structuré de l'éditeur, comme un cours), texte brut dérivé pour la recherche, UE d'origine (optionnelle), cours d'origine (optionnel) | Commun à toutes les UE |
+| Terme | type (définition ou acronyme), libellé, forme développée (acronymes), définition (format structuré de l'éditeur, comme un cours), texte brut dérivé pour la recherche, UE, cours d'origine (optionnel) | Appartient à une UE ; libellé unique par UE et par type |
 | Image de terme | terme, chemin de stockage, type MIME, taille, texte alternatif | Mêmes règles que les images de cours |
 
-Dictionnaire et glossaire sont deux écrans sur la même entité Terme, filtrés par type.
+Définitions et acronymes sont la même entité Terme, distinguée par son type. Il n'y a pas de dictionnaire ni de glossaire commun : les termes se consultent dans l'onglet Termes de leur UE, où un filtre sépare les deux types.
 
 ### Agenda et tâches (tranche 6)
 
@@ -82,12 +82,12 @@ Les rappels par e-mail ne sont pas à développer avant demande.
   - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 5 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`, `definition`). Images référencées par chemin relatif, avec légende.
   - `fiche.md` (optionnel) : la fiche de révision du chapitre, en Markdown sans en-tête, avec les mêmes constructions que `cours.md` ; ses images sont des fichiers du dossier `images/`. Un paquet sans `fiche.md` garde la fiche déjà en place.
   - `images/` : un fichier par figure (SVG pour les schémas redessinés, PNG ou JPEG pour les figures d'origine et captures), nommé de façon stable (`fig-01.svg`, `fig-02.png`).
-  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, dont les images sont des fichiers du dossier `images/`), importées dans les Termes en signalant les doublons : ils sont laissés tels quels, ou leur définition est remplacée si l'import le demande.
+  - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, dont les images sont des fichiers du dossier `images/`), importées dans les Termes de l'UE du chapitre en signalant les doublons de cette UE : ils sont laissés tels quels, ou leur définition est remplacée si l'import le demande.
   - `commandes.json` (optionnel) : les outils et les commandes appris dans le chapitre (outil avec présentation, fonctionnement en Markdown sans image, modes et déclinaisons ; commandes avec syntaxe, mode, déclinaisons, thèmes, notes, options et exemples). Les outils absents sont créés ; un outil déjà présent ne reçoit que les modes et déclinaisons qui lui manquent. Les commandes sont rattachées au chapitre importé ; les doublons sont laissés tels quels, ou remplacés si l'import le demande. Le même fichier s'importe aussi seul, depuis la page des outils.
 - **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images et de termes détectés) ; réimporter un chapitre existant propose de le remplacer ; une case à cocher propose de remplacer la définition des termes déjà présents ; l'aperçu annonce aussi les outils et les commandes détectés, avec une case à cocher pour remplacer les commandes déjà présentes ; un paquet invalide est refusé avec un message précis.
 - **Import simple** : coller du Markdown seul reste possible pour un contenu sans image.
 - **Fichiers** : envoi, téléchargement, renommage, déplacement, suppression, dans une arborescence de dossiers par UE.
-- **Termes** : liste alphabétique avec filtre instantané ; création rapide depuis n'importe quel écran. Une définition s'édite comme un mini-cours, avec l'éditeur et les blocs des cours (code, images, tableaux, encadrés).
+- **Termes** : dans chaque UE, liste alphabétique avec filtre instantané et création rapide depuis l'onglet Termes. Le même libellé peut exister dans deux UE. Dans un cours, seuls les termes de son UE sont reconnus dans le texte. Une définition s'édite comme un mini-cours, avec l'éditeur et les blocs des cours (code, images, tableaux, encadrés).
 - **Recherche** : une barre globale, accessible au clavier. Recherche plein texte PostgreSQL en configuration française, insensible aux accents, sur les cours (titre et contenu), les termes, les noms de fichiers, les outils et les commandes. Résultats groupés par type avec extrait surligné.
 - **Tâches** : liste à cocher, filtrable par UE ; les tâches faites sont gardées et masquées par défaut. Sans e-mail, la date de rappel fait apparaître la tâche dans un encart « À faire maintenant » et dans une pastille de l'en-tête.
 - **Agenda** : une semaine à la fois, les jours en liste. Un événement peut être répété chaque semaine jusqu'à une date : chaque occurrence est ensuite un événement indépendant. Les tâches apparaissent à la date de leur échéance.

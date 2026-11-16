@@ -23,7 +23,8 @@ Un paquet de cours est une archive `.zip` qui contient :
 - `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
   (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
 - `fiche.md` (facultatif) : la fiche de révision du chapitre (voir « Fiche de révision ») ;
-- `termes.json` (facultatif) : la liste des entrées du glossaire du chapitre.
+- `termes.json` (facultatif) : les termes du chapitre (définitions et acronymes), rangés dans
+  l'UE du chapitre.
 - `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
   « Outils et commandes »).
 
@@ -56,8 +57,8 @@ Règles de `cours.md` :
 ```
 
 - le libellé (« Définition ») est affiché par l'application : il ne s'écrit pas dans l'encadré ;
-- un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans le
-  dictionnaire. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
+- un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans les
+  termes de l'UE. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
 - le terme défini s'écrit en gras à sa première mention dans l'encadré.
 
 ### Fiche de révision
@@ -110,9 +111,10 @@ aucune syntaxe à écrire : il suffit de rédiger le renvoi comme ci-dessous.
 
 ### Termes cliquables dans le texte
 
-En lecture, l'application rend cliquable, dans le texte du cours, chaque terme présent dans le
-dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à
-écrire, et le terme n'a pas besoin de venir du même paquet.
+En lecture, l'application rend cliquable, dans le texte du cours, chaque terme de l'UE du
+cours : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à écrire, et le terme n'a
+pas besoin de venir du même paquet : il suffit qu'il appartienne à la même UE. Un terme d'une
+autre UE n'est pas reconnu.
 
 - Le terme est reconnu par son `libelle`, en mot entier : écrire dans le cours le libellé tel
   qu'il figure dans `termes.json`. « processus » est reconnu pour le libellé « Processus » ;
@@ -123,6 +125,19 @@ dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a 
   que « contexte »).
 - Rien n'est reconnu dans les titres ni dans le code.
 
+### Les termes appartiennent à l'UE du chapitre
+
+Il n'y a pas de dictionnaire ni de glossaire commun à toutes les UE : chaque terme appartient à
+une UE, celle du `ue` de l'en-tête de `cours.md`. Le même libellé peut donc exister dans deux UE
+avec deux définitions différentes (« PID » en systèmes et en automatique).
+
+- Rédiger chaque définition pour l'UE du chapitre, sans chercher à couvrir le sens que le terme
+  a dans une autre matière.
+- Lister dans `termes.json` tout terme utile au chapitre, même s'il a déjà été défini dans le
+  paquet d'une autre UE : il n'y est pas visible depuis celle-ci.
+- Un terme déjà défini dans un autre chapitre de la même UE n'a pas à être répété : il est
+  reconnu dans le texte, et le répéter le signalerait comme doublon.
+
 Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
 (définition, acronyme défini, acronyme seul, définition riche) :
 
@@ -132,8 +147,8 @@ Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'
   `cours.md`, images comprises ; elle est obligatoire pour une définition, facultative pour un
   acronyme ;
 - toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
-- un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
-  est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
+- un terme déjà présent dans l'UE du chapitre (même type, même libellé sans tenir compte de la
+  casse) est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
   définition par celle du paquet », sa définition, sa forme développée et ses images sont
   remplacées par celles du paquet, et il est rattaché au cours importé. Son libellé ne change pas.
 
