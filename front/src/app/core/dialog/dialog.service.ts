@@ -5,6 +5,8 @@ export interface ConfirmRequest {
   message: string;
   // Libellé du bouton qui confirme.
   confirmLabel: string;
+  // Libellé du bouton qui refuse ; « Annuler » par défaut.
+  cancelLabel?: string;
   // Action sans retour (suppression, perte de modifications) : le bouton est en rouge.
   isDestructive: boolean;
 }

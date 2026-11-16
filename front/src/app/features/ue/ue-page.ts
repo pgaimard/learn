@@ -25,6 +25,7 @@ import {
   SortableList,
   SortChange,
 } from '../../core/sortable/sortable';
+import { CourseRemoval } from '../cours/course-removal';
 import { CourseService, CourseSummary } from '../cours/course.service';
 import { CommandList } from '../outils/command-list';
 import { Command, CommandGroup, CommandService } from '../outils/command.service';
@@ -68,6 +69,7 @@ export class UePage {
 
   private readonly ueService = inject(UeService);
   private readonly courseService = inject(CourseService);
+  private readonly courseRemoval = inject(CourseRemoval);
   private readonly termService = inject(TermService);
   private readonly commandService = inject(CommandService);
   private readonly dialog = inject(DialogService);
@@ -181,17 +183,13 @@ export class UePage {
   }
 
   protected async removeCourse(course: CourseSummary): Promise<void> {
-    const confirmed = await this.dialog.confirmDeletion(
-      'Supprimer le cours',
-      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
-    );
-    if (!confirmed) {
-      return;
+    try {
+      if (await this.courseRemoval.remove(course)) {
+        this.load(this.code());
+      }
+    } catch (error) {
+      this.pageErrors.set((error as ApiError).messages);
     }
-    this.courseService.remove(course.id).subscribe({
-      next: () => this.load(this.code()),
-      error: (error: ApiError) => this.pageErrors.set(error.messages),
-    });
   }
 
   protected async removeCommand(toolId: number, command: Command): Promise<void> {

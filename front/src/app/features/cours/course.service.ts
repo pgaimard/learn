@@ -39,6 +39,14 @@ export interface CourseInput {
   sheetContent?: ContentNode | null;
 }
 
+// Dossier de fichiers d'un cours, avec ce qu'il contient à tous les niveaux.
+export interface CourseFolder {
+  id: number;
+  name: string;
+  fileCount: number;
+  folderCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CourseService {
   private readonly http = inject(HttpClient);
@@ -72,8 +80,17 @@ export class CourseService {
     return this.http.post<UploadedImage>(`/api/courses/${courseId}/images`, form);
   }
 
-  remove(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/courses/${id}`);
+  // Dossier de fichiers du cours ; null s'il n'en a pas.
+  folder(id: number): Observable<CourseFolder | null> {
+    return this.http.get<CourseFolder | null>(`/api/courses/${id}/folder`);
+  }
+
+  // deleteFolder : supprimer aussi le dossier de fichiers du cours et son contenu. Sans
+  // cela, un dossier non vide reste dans l'UE.
+  remove(id: number, deleteFolder = false): Observable<void> {
+    return this.http.delete<void>(`/api/courses/${id}`, {
+      params: deleteFolder ? { folder: 'delete' } : {},
+    });
   }
 
   setBookmark(id: number, bookmark: Bookmark): Observable<Course> {

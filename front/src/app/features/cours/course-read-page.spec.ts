@@ -80,6 +80,7 @@ describe('CourseReadPage', () => {
           useValue: {
             get: () => of(shown),
             remove: removeCourse,
+            folder: () => of(null),
             setBookmark,
             removeBookmark,
           },
@@ -135,7 +136,7 @@ describe('CourseReadPage', () => {
 
     button?.click();
     await fixture.whenStable();
-    expect(removeCourse).toHaveBeenCalledWith(COURSE.id);
+    expect(removeCourse).toHaveBeenCalledWith(COURSE.id, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
   });
 

@@ -15,6 +15,7 @@ import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
 import { shortcut } from '../../core/ui/platform';
+import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
 
@@ -38,6 +39,7 @@ export class CourseEditPage {
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly courseRemoval = inject(CourseRemoval);
   private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -116,22 +118,17 @@ export class CourseEditPage {
 
   protected async remove(): Promise<void> {
     const course = this.course();
-    if (
-      !course ||
-      !(await this.dialog.confirmDeletion(
-        'Supprimer le cours',
-        `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
-      ))
-    ) {
+    if (!course) {
       return;
     }
-    this.courseService.remove(course.id).subscribe({
-      next: () => {
+    try {
+      if (await this.courseRemoval.remove(course)) {
         this.isDirty.set(false);
         void this.router.navigate(['/ue', this.code()]);
-      },
-      error: (error: ApiError) => this.errors.set(error.messages),
-    });
+      }
+    } catch (error) {
+      this.errors.set((error as ApiError).messages);
+    }
   }
 
   protected saveFromKeyboard(event: Event): void {

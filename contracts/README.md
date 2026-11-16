@@ -27,6 +27,8 @@ Un paquet de cours est une archive `.zip` qui contient :
   l'UE du chapitre.
 - `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
   « Outils et commandes »).
+- `sources/` (facultatif) : les documents qui ont servi à rédiger le cours (voir « Documents
+  sources »).
 
 Règles de `cours.md` :
 
@@ -91,6 +93,27 @@ Ce que fait l'import :
 - le Markdown collé, sans paquet, ne transporte pas de fiche.
 
 `fiche.example.md` est importé par les tests de l'API (`course-imports.e2e-spec.ts`).
+
+### Documents sources
+
+Chaque cours a, dans les fichiers de son UE, un dossier à son nom. Le paquet y dépose les
+documents qui ont servi à rédiger le cours : supports fournis (PDF, diaporama, document Word),
+sujets, annexes. Ils y restent consultables à côté du cours réécrit.
+
+- Les placer dans le dossier `sources/` du paquet, directement dedans : un sous-dossier fait
+  refuser le paquet.
+- Y mettre les documents d'origine tels qu'ils ont été fournis, sous leur nom d'origine, sans les
+  convertir ni les renommer. Ne pas y remettre `cours.md`, `fiche.md` ni les figures de `images/`.
+- Un nom de fichier ne contient ni « / », ni « \ », ni caractère de contrôle, et fait 255
+  caractères au plus. Tous les formats sont acceptés : un document source n'est jamais affiché
+  ni exécuté par l'application, seulement téléchargé.
+- Le paquet entier, sources comprises, fait 50 Mo au plus une fois décompressé et 500 fichiers
+  au plus. Un support trop lourd est laissé hors du paquet, à déposer à la main dans le dossier
+  du cours.
+- Au réimport d'un chapitre, un document de même nom (sans tenir compte de la casse) est
+  remplacé ; les autres documents du dossier sont gardés, y compris ceux déposés à la main.
+- Le dossier porte le titre du chapitre (`titre` de l'en-tête) : il est créé à l'import et suit
+  le titre si le cours est renommé. Il n'y a rien à déclarer dans `cours.md`.
 
 ### Renvois vers une section
 

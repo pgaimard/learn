@@ -3,8 +3,8 @@ import { Folder } from './file.service';
 import { FolderPicker } from './folder-picker';
 
 const FOLDERS: Folder[] = [
-  { id: 1, parentId: null, name: 'TD' },
-  { id: 2, parentId: 1, name: 'Corrigés' },
+  { id: 1, parentId: null, name: 'TD', courseId: null },
+  { id: 2, parentId: 1, name: 'Corrigés', courseId: null },
 ];
 
 describe('FolderPicker', () => {

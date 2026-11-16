@@ -48,6 +48,7 @@ describe('UePage', () => {
     create: vi.fn<CourseService['create']>(),
     reorder: vi.fn<CourseService['reorder']>(),
     remove: vi.fn<CourseService['remove']>(),
+    folder: vi.fn<CourseService['folder']>(),
   };
   const termService = {
     list: vi.fn<TermService['list']>(),
@@ -266,6 +267,7 @@ describe('UePage', () => {
   it('propose de modifier chaque cours, et le supprime après confirmation seulement', async () => {
     courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
     courseService.remove.mockReset().mockReturnValue(of(undefined));
+    courseService.folder.mockReturnValue(of(null));
     setup();
     const remove = async (): Promise<void> => {
       element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer Mémoire"]')?.click();
@@ -285,7 +287,7 @@ describe('UePage', () => {
     dialog.confirmDeletion.mockResolvedValue(true);
     courseService.list.mockReturnValue(of([PROCESSUS]));
     await remove();
-    expect(courseService.remove).toHaveBeenCalledWith(9);
+    expect(courseService.remove).toHaveBeenCalledWith(9, false);
     expect(courseTitles()).toEqual(['Processus']);
   });
 

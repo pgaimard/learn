@@ -2,10 +2,10 @@ import { Folder } from './file.service';
 import { childrenOf, flattenTree, isInside, pathTo } from './folder-tree';
 
 const FOLDERS: Folder[] = [
-  { id: 1, parentId: null, name: 'TD' },
-  { id: 2, parentId: 1, name: 'Corrigés' },
-  { id: 3, parentId: null, name: 'Annales' },
-  { id: 4, parentId: 2, name: '2024' },
+  { id: 1, parentId: null, name: 'TD', courseId: null },
+  { id: 2, parentId: 1, name: 'Corrigés', courseId: null },
+  { id: 3, parentId: null, name: 'Annales', courseId: null },
+  { id: 4, parentId: 2, name: '2024', courseId: null },
 ];
 
 describe('childrenOf', () => {
@@ -31,8 +31,8 @@ describe('pathTo', () => {
 
   it('ne boucle pas sur des données incohérentes', () => {
     const cycle: Folder[] = [
-      { id: 1, parentId: 2, name: 'A' },
-      { id: 2, parentId: 1, name: 'B' },
+      { id: 1, parentId: 2, name: 'A', courseId: null },
+      { id: 2, parentId: 1, name: 'B', courseId: null },
     ];
 
     expect(pathTo(cycle, 1)?.length).toBeLessThanOrEqual(3);
@@ -65,8 +65,8 @@ describe('isInside', () => {
 
   it('ne boucle pas sur des données incohérentes', () => {
     const loop: Folder[] = [
-      { id: 1, parentId: 2, name: 'A' },
-      { id: 2, parentId: 1, name: 'B' },
+      { id: 1, parentId: 2, name: 'A', courseId: null },
+      { id: 2, parentId: 1, name: 'B', courseId: null },
     ];
 
     expect(isInside(loop, 1, 9)).toBe(false);
