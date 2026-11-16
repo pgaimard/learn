@@ -56,6 +56,22 @@ describe('DialogHost', () => {
     expect(document.activeElement).toBe(buttons()[0]);
   });
 
+  it('garde la question posée à la suite d’une réponse, malgré la fermeture différée', async () => {
+    const first = ask();
+    buttons()[1].click();
+    expect(await first).toBe(true);
+    fixture.detectChanges();
+
+    const second = ask();
+    // Le navigateur signale la première fermeture après coup, modale déjà rouverte.
+    element().querySelector('dialog')?.dispatchEvent(new Event('close'));
+    fixture.detectChanges();
+
+    expect(buttons()).toHaveLength(2);
+    buttons()[1].click();
+    expect(await second).toBe(true);
+  });
+
   it('confirme par le bouton d’action et se referme', async () => {
     const answer = ask();
 

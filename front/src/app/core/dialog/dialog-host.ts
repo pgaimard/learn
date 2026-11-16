@@ -62,6 +62,15 @@ export class DialogHost {
     }
   }
 
+  // Fermeture par Échap : la demande est annulée. L'événement arrive aussi, en différé,
+  // après une réponse ; si une autre demande a rouvert la modale entre-temps, il ne la
+  // concerne pas.
+  protected closed(): void {
+    if (!this.dialog().nativeElement.open) {
+      this.cancel();
+    }
+  }
+
   protected cancel(): void {
     this.dialogService.cancel();
   }
