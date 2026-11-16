@@ -26,11 +26,8 @@
       } @else {
         <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">Fiche de révision</a>
       }
-      <a
-        class="button button-primary"
-        [routerLink]="['/ue', code(), 'cours', course.id, 'edition']"
-      >
-        <app-icon name="pencil" />Modifier
+      <a class="button button-primary" [routerLink]="editLink()">
+        <app-icon name="pencil" />{{ isSheet() ? 'Modifier la fiche' : 'Modifier' }}
       </a>
       <button
         type="button"
@@ -69,26 +66,27 @@
     </aside>
 
     <article #article class="article">
-      @if (isSheet()) {
-        <p class="sheet-note" role="status">
-          Fiche de révision : les encadrés « À retenir » et les blocs épinglés.
-        </p>
-      }
-      @if (isSheetEmpty()) {
+      @if (shownContent(); as content) {
+        @if (isSheet()) {
+          <p class="sheet-note" role="status">Fiche de révision du chapitre.</p>
+        }
+        <app-course-content
+          [content]="content"
+          [startBlock]="startBlock()"
+          [bookmarkBlock]="isSheet() ? null : bookmarkBlock()"
+          [terms]="allTerms()"
+          (sectionReferenced)="followReference($event)"
+          (termOpened)="openTerm($event)"
+        />
+      } @else {
         <p class="empty sheet-empty">
-          La fiche est vide. Ajoutez un encadré « À retenir », ou épinglez un bloc depuis son menu
-          en modifiant le cours.
+          Ce chapitre n’a pas encore de fiche de révision. Elle arrive avec le paquet du cours
+          (<code>fiche.md</code>), ou se rédige ici.
         </p>
+        <a class="button button-primary" [routerLink]="editLink()">
+          <app-icon name="pencil" />Rédiger la fiche
+        </a>
       }
-      <app-course-content
-        [content]="course.content"
-        [sheet]="isSheet()"
-        [startBlock]="startBlock()"
-        [bookmarkBlock]="bookmarkBlock()"
-        [terms]="allTerms()"
-        (sectionReferenced)="followReference($event)"
-        (termOpened)="openTerm($event)"
-      />
     </article>
 
     <aside class="side terms" aria-labelledby="course-terms-title">
@@ -187,7 +185,7 @@
         #menuItem
         role="menuitem"
         class="menu-item"
-        [routerLink]="['/ue', code(), 'cours', course.id, 'edition']"
+        [routerLink]="editLink()"
         [queryParams]="menu.block === null ? {} : { bloc: menu.block }"
       >
         <app-icon name="pencil" [size]="15" />Modifier ici

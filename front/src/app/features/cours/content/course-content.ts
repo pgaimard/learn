@@ -17,7 +17,6 @@ import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
-import { setSheetView } from '../revision/revision-sheet-view';
 import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
 import { MentionTerm, setMentionTerms } from './term-mentions';
@@ -40,8 +39,6 @@ export class CourseContent {
   readonly editable = input(false);
   // Nom accessible de la zone de contenu.
   readonly label = input('Contenu du cours');
-  // Réduit l'affichage à la fiche de révision du cours.
-  readonly sheet = input(false);
   // Rang du bloc de premier niveau à amener au milieu de l'écran à l'ouverture ; en
   // édition, le curseur s'y place.
   readonly startBlock = input<number | null>(null);
@@ -145,13 +142,6 @@ export class CourseContent {
       const content = this.content();
       // emitUpdate à false : charger un contenu n'est pas une modification de l'utilisateur.
       untracked(this.editor)?.commands.setContent(content, { emitUpdate: false });
-    });
-    effect(() => {
-      const isSheet = this.sheet();
-      const view = this.editor()?.view;
-      if (view) {
-        setSheetView(view, isSheet);
-      }
     });
     effect(() => {
       const terms = this.terms();

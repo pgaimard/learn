@@ -10,7 +10,6 @@ import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { BookmarkMark } from '../bookmark/bookmark-mark';
 import { RevisionPin } from '../revision/revision-pin';
-import { RevisionSheetView } from '../revision/revision-sheet-view';
 import { Callout } from './callout';
 import { Figure } from './figure';
 import { SectionReferences } from './section-references';
@@ -47,7 +46,6 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     TermMentions,
     BookmarkMark,
     RevisionPin,
-    RevisionSheetView,
     ...(tools
       ? [
           BlockHandle.configure(tools.blockHandle),

@@ -22,7 +22,6 @@ import { TERM_SCREENS } from '../termes/term-screens';
 import { Term, TermService, TermSummary } from '../termes/term.service';
 import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
-import { hasSheetContent, sheetHeadingIndexes } from './revision/revision-sheet';
 import { CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
 import { Course, CourseService } from './course.service';
@@ -54,7 +53,7 @@ export class CourseReadPage {
   // Paramètres de la route /ue/:code/cours/:id.
   readonly code = input.required<string>();
   readonly id = input.required<string>();
-  // Paramètre de requête ?vue=fiche : le cours réduit à sa fiche de révision.
+  // Paramètre de requête ?vue=fiche : la fiche de révision du cours, à la place du cours.
   readonly vue = input<string>();
   // Paramètre de requête ?bloc=n : rang du bloc où reprendre la lecture, au retour de
   // l'édition ouverte par « Modifier ici ».
@@ -101,18 +100,27 @@ export class CourseReadPage {
     const block = this.contextMenu()?.block ?? null;
     return course && block !== null && !this.isSheet() ? sectionAt(course.content, block) : null;
   });
-  // Sommaire du cours, réduit aux titres de la fiche quand elle est affichée.
-  protected readonly outline = computed(() => {
+  // Document affiché : le cours, ou sa fiche de révision ; null pour une fiche qui
+  // n'est pas encore rédigée.
+  protected readonly shownContent = computed(() => {
     const course = this.course();
     if (!course) {
-      return [];
+      return null;
     }
-    const entries = buildOutline(course.content);
-    if (!this.isSheet()) {
-      return entries;
-    }
-    const kept = sheetHeadingIndexes(course.content);
-    return entries.filter((entry) => kept.has(entry.index));
+    return this.isSheet() ? course.sheetContent : course.content;
+  });
+  // Page d'édition du document affiché.
+  protected readonly editLink = computed(() => [
+    '/ue',
+    this.code(),
+    'cours',
+    Number(this.id()),
+    ...(this.isSheet() ? ['fiche', 'edition'] : ['edition']),
+  ]);
+  // Sommaire du document affiché.
+  protected readonly outline = computed(() => {
+    const content = this.shownContent();
+    return content ? buildOutline(content) : [];
   });
   protected readonly sectionCount = computed(
     () => this.outline().filter((entry) => entry.level === 2).length,
@@ -144,11 +152,6 @@ export class CourseReadPage {
   protected readonly commandGroups = signal<CommandGroup[]>([]);
   // Commande dont la fiche est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownCommand = signal<{ command: Command; tool: CommandTool } | null>(null);
-  protected readonly isSheetEmpty = computed(() => {
-    const course = this.course();
-    return this.isSheet() && !!course && !hasSheetContent(course.content);
-  });
-
   constructor() {
     effect(() => this.load(Number(this.id())));
     // Le menu ouvert reçoit le curseur : il se parcourt et se valide au clavier.

@@ -19,6 +19,8 @@ const PREVIEW: ImportPreview = {
     { type: 'acronym', label: 'PCB' },
   ],
   duplicateTerms: [{ type: 'acronym', label: 'PID' }],
+  hasSheet: true,
+  sheetImageCount: 2,
   commands: { newTools: [], existingTools: [], newCommands: [], duplicateCommands: [] },
   existingCourse: null,
 };
@@ -152,7 +154,7 @@ describe('CourseImportPage', () => {
 
   it('prévient du remplacement d’un chapitre existant et le confirme à l’import', () => {
     service.preview.mockReturnValue(
-      of({ ...PREVIEW, existingCourse: { id: 5, title: 'Ancienne version' } }),
+      of({ ...PREVIEW, existingCourse: { id: 5, title: 'Ancienne version', hasSheet: true } }),
     );
     service.import.mockReturnValue(of(IMPORTED));
     setup();

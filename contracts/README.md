@@ -10,9 +10,10 @@ produits par l'éditeur. Il est testé des deux côtés :
 
 Ajouter un bloc à l'éditeur impose donc de l'ajouter ici, puis à la liste blanche de l'API.
 
-L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) marque
-un bloc comme épinglé à la fiche de révision du cours. Il est facultatif : un contenu importé ou
-plus ancien qui ne le porte pas reste valide, et le bloc n'est alors pas épinglé.
+L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) date de
+l'ancienne fiche de révision, calculée à partir des blocs épinglés. Il n'a plus d'effet, mais reste
+accepté : les cours déjà enregistrés le portent. La fiche de révision est désormais un document
+rédigé à part (voir « Fiche de révision »).
 
 ## Paquet de cours
 
@@ -21,6 +22,7 @@ Un paquet de cours est une archive `.zip` qui contient :
 - `cours.md` : le cours en Markdown, dont `cours.example.md` montre toutes les constructions acceptées ;
 - `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
   (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
+- `fiche.md` (facultatif) : la fiche de révision du chapitre (voir « Fiche de révision ») ;
 - `termes.json` (facultatif) : la liste des entrées du glossaire du chapitre.
 - `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
   « Outils et commandes »).
@@ -57,6 +59,37 @@ Règles de `cours.md` :
 - un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans le
   dictionnaire. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
 - le terme défini s'écrit en gras à sa première mention dans l'encadré.
+
+### Fiche de révision
+
+`fiche.md` est la fiche de révision du chapitre : un document à part, rédigé pour réviser, et non
+un extrait du cours. `fiche.example.md` en montre la forme.
+
+- pas d'en-tête : le fichier commence directement par son contenu ; la fiche est rattachée au
+  chapitre de `cours.md` ;
+- mêmes constructions que `cours.md` : titres de niveau 2 à 5, paragraphes, listes, tableaux, blocs
+  de code, citations, encadrés (`[!retenir]`, `[!change]`, `[!attention]`, `[!definition]`),
+  images ;
+- une image s'écrit comme dans le cours, seule dans son paragraphe, et son fichier est dans le
+  dossier `images/` du paquet : `![Texte alternatif](images/fiche-01.svg "Légende")`. Le préfixe
+  `fiche-` évite toute collision avec les figures du cours ; un même fichier peut servir au cours
+  et à la fiche ;
+- la fiche a ses propres titres et son propre sommaire : elle ne reprend pas forcément le plan du
+  cours. Elle va à l'essentiel — définitions, schémas de synthèse, tableaux comparatifs, méthodes,
+  pièges — sans renvoyer au cours pour être comprise ;
+- un `fiche.md` vide, invalide, ou qui référence une image absente fait refuser tout le paquet.
+
+Ce que fait l'import :
+
+- un paquet avec `fiche.md` crée la fiche du chapitre, ou remplace celle qui existe (ses anciennes
+  images sont supprimées) ;
+- un paquet sans `fiche.md` ne touche pas à la fiche du chapitre : réimporter le cours seul garde
+  la fiche déjà en place ;
+- la fiche se relit par le bouton « Fiche de révision » du cours et se retouche dans l'application,
+  avec le même éditeur que le cours ;
+- le Markdown collé, sans paquet, ne transporte pas de fiche.
+
+`fiche.example.md` est importé par les tests de l'API (`course-imports.e2e-spec.ts`).
 
 ### Renvois vers une section
 

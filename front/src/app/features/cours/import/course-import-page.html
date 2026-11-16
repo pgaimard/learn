@@ -47,6 +47,18 @@
         <dt>Termes</dt>
         <dd>{{ preview.termCount }}</dd>
       </div>
+      <div>
+        <dt>Fiche de révision</dt>
+        <dd>
+          @if (preview.hasSheet) {
+            oui{{
+              preview.sheetImageCount > 0 ? ' · ' + preview.sheetImageCount + ' image(s)' : ''
+            }}
+          } @else {
+            non
+          }
+        </dd>
+      </div>
       @if (preview.termImageCount > 0) {
         <div>
           <dt>Images des définitions</dt>
@@ -78,6 +90,13 @@
       <p class="warning" role="status">
         Le chapitre « {{ existing.title }} » existe déjà dans {{ preview.ueCode }}. L’import
         remplacera son contenu et ses images, sans changer sa place dans la liste.
+        @if (existing.hasSheet) {
+          {{
+            preview.hasSheet
+              ? 'Sa fiche de révision sera remplacée par celle du paquet.'
+              : 'Sa fiche de révision est gardée : le paquet n’en contient pas.'
+          }}
+        }
       </p>
     }
 
@@ -99,7 +118,7 @@
     <label class="dropzone">
       <span class="dropzone-title">Choisir un paquet ou le déposer ici</span>
       <span class="dropzone-hint"
-        >Archive .zip contenant cours.md, images/, termes.json et commandes.json</span
+        >Archive .zip contenant cours.md, images/, fiche.md, termes.json et commandes.json</span
       >
       <input type="file" accept=".zip,application/zip" (change)="pickPackage($event)" />
     </label>

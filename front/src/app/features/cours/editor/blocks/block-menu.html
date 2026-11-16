@@ -43,13 +43,6 @@
     <app-icon name="indent" [size]="15" />Niveau inférieur
   </button>
 }
-@if (isPinnable()) {
-  <button type="button" role="menuitem" class="menu-item" (click)="togglePin()">
-    <app-icon name="pin" [size]="15" />{{
-      isPinned() ? 'Retirer de la fiche de révision' : 'Épingler à la fiche de révision'
-    }}
-  </button>
-}
 <button type="button" role="menuitem" class="menu-item" (click)="duplicate()">
   <app-icon name="copy" [size]="15" />Dupliquer
 </button>

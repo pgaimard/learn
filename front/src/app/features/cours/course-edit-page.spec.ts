@@ -15,6 +15,7 @@ const COURSE: Course = {
   position: 3,
   updatedAt: '2026-11-10T10:00:00.000Z',
   ue: { code: 'UTC502', title: 'Systèmes' },
+  sheetContent: null,
   bookmarkTitle: null,
   bookmarkBlock: null,
   content: {
