@@ -5,7 +5,8 @@ import { ValidateBy } from 'class-validator';
 const MAX_LENGTH = 255;
 const DELETE = 127;
 
-function isForbidden(character: string): boolean {
+// Caractère qu'un nom de dossier ou de fichier ne peut pas contenir.
+export function isForbidden(character: string): boolean {
   const code = character.charCodeAt(0);
   return (
     character === '/' || character === '\\' || code < 32 || code === DELETE

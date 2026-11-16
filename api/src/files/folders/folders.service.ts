@@ -13,7 +13,11 @@ import { Folder } from './folder.entity.js';
 
 const UNIQUE_VIOLATION = '23505';
 
-export type FolderSummary = Pick<Folder, 'id' | 'parentId' | 'name'>;
+// courseId : cours dont c'est le dossier, null pour un dossier libre.
+export type FolderSummary = Pick<
+  Folder,
+  'id' | 'parentId' | 'name' | 'courseId'
+>;
 
 @Injectable()
 export class FoldersService {
@@ -28,7 +32,7 @@ export class FoldersService {
   async findAllByUe(ueCode: string): Promise<FolderSummary[]> {
     const ue = await this.ueService.findByCode(ueCode);
     return this.folders.find({
-      select: { id: true, parentId: true, name: true },
+      select: { id: true, parentId: true, name: true, courseId: true },
       where: { ueId: ue.id },
       order: { name: 'ASC', id: 'ASC' },
     });
@@ -59,12 +63,14 @@ export class FoldersService {
       ueId: ue.id,
       parentId,
       name: input.name,
+      courseId: null,
     });
     return toSummary(await this.save(folder));
   }
 
   async update(id: number, changes: UpdateFolderDto): Promise<FolderSummary> {
     const folder = await this.findById(id);
+    assertFree(folder);
     if (changes.name !== undefined) {
       folder.name = changes.name;
     }
@@ -107,6 +113,7 @@ export class FoldersService {
 
   async remove(id: number): Promise<void> {
     const folder = await this.findById(id);
+    assertFree(folder);
     const subfolders = await this.folders.countBy({ parentId: id });
     const files = await this.files.countBy({ folderId: id });
     if (subfolders + files > 0) {
@@ -134,6 +141,16 @@ export class FoldersService {
   }
 }
 
-function toSummary({ id, parentId, name }: Folder): FolderSummary {
-  return { id, parentId, name };
+function toSummary({ id, parentId, name, courseId }: Folder): FolderSummary {
+  return { id, parentId, name, courseId };
+}
+
+// Le dossier d'un cours suit son titre et disparaît avec lui : il ne se renomme, ne se
+// déplace et ne se supprime pas à la main.
+function assertFree(folder: Folder): void {
+  if (folder.courseId !== null) {
+    throw new ConflictException(
+      `« ${folder.name} » est le dossier d’un cours : il suit son titre et se supprime avec lui.`,
+    );
+  }
 }

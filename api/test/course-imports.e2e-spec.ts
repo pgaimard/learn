@@ -138,6 +138,7 @@ describe('Import d’un paquet de cours', () => {
       duplicateTerms: [],
       hasSheet: false,
       sheetImageCount: 0,
+      sourceCount: 0,
       commands: {
         newTools: [],
         existingTools: [],
