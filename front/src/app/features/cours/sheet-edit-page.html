@@ -1,0 +1,94 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/">Mes UE</a>
+  <span aria-hidden="true">/</span>
+  <a [routerLink]="['/ue', code()]">{{ code() }}</a>
+  @if (course(); as course) {
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/ue', code(), 'cours', course.id]">{{ course.title }}</a>
+  }
+  <span aria-hidden="true">/</span>
+  <span>Fiche de révision</span>
+</nav>
+
+@if (course(); as course) {
+  <div class="edit">
+    <app-content-editor
+      [content]="sheet()"
+      label="Fiche de révision"
+      [outline]="true"
+      [startBlock]="startBlock()"
+      (edited)="markDirty()"
+      (imageAdded)="addImage($event)"
+    >
+      <div editorActions class="actions">
+        <p class="status" aria-live="polite">
+          @if (isSaving()) {
+            Enregistrement…
+          } @else if (isDirty()) {
+            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
+          } @else if (savedAt(); as savedAt) {
+            Enregistré à {{ savedAt | date: 'HH:mm' }}
+          }
+        </p>
+        <!-- Venu de la lecture par « Modifier ici », on y retourne au même endroit. -->
+        <a
+          class="button"
+          [routerLink]="['/ue', code(), 'cours', course.id]"
+          [queryParams]="
+            startBlock() === null ? { vue: 'fiche' } : { vue: 'fiche', bloc: startBlock() }
+          "
+        >
+          Terminer
+        </a>
+        <button
+          type="button"
+          class="button button-primary"
+          [disabled]="isSaving()"
+          (click)="save()"
+        >
+          Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
+        </button>
+        @if (isSaved()) {
+          <app-menu-button
+            label="Autres actions"
+            buttonClass="button button-icon button-ghost"
+            [alignEnd]="true"
+          >
+            <app-icon menuTrigger name="dots" [size]="15" />
+            <button
+              type="button"
+              role="menuitem"
+              class="menu-item menu-item-danger"
+              (click)="remove()"
+            >
+              <app-icon name="trash" [size]="15" />Supprimer la fiche
+            </button>
+          </app-menu-button>
+        }
+      </div>
+
+      <div role="alert">
+        @for (error of errors(); track error) {
+          <p class="form-error">{{ error }}</p>
+        }
+      </div>
+
+      <div sheetHeader class="heading">
+        <h1 class="title">Fiche de révision</h1>
+        <p class="meta origin">
+          <span class="code-chip">{{ code() }}</span>
+          {{ course.title }}
+        </p>
+      </div>
+    </app-content-editor>
+  </div>
+} @else {
+  <div role="alert">
+    @for (error of errors(); track error) {
+      <p class="form-error">{{ error }}</p>
+    }
+  </div>
+  @if (errors().length === 0) {
+    <p>Chargement…</p>
+  }
+}

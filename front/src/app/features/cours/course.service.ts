@@ -18,6 +18,8 @@ export interface CourseSummary {
 export interface Course extends CourseSummary {
   content: ContentNode;
   ue: { code: string; title: string };
+  // Fiche de révision rédigée, au même format que le cours ; null quand il n'en a pas.
+  sheetContent: ContentNode | null;
   // Marque-page de lecture : le titre où l'on s'est arrêté et le rang de son bloc ; tous
   // deux null quand le cours n'en a pas.
   bookmarkTitle: string | null;
@@ -33,6 +35,8 @@ export interface UploadedImage {
 export interface CourseInput {
   title?: string;
   content?: ContentNode;
+  // Fiche de révision ; null la supprime.
+  sheetContent?: ContentNode | null;
 }
 
 @Injectable({ providedIn: 'root' })

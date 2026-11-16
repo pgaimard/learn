@@ -33,6 +33,7 @@ function course(...content: ContentNode[]): Course {
     updatedAt: '2026-11-10T10:00:00.000Z',
     ue: { code: 'UTC502', title: 'Systèmes' },
     content: { type: 'doc', content },
+    sheetContent: null,
     bookmarkTitle: null,
     bookmarkBlock: null,
   };
@@ -108,11 +109,11 @@ describe('CourseReadPage', () => {
     );
   }
 
-  // Textes des blocs de premier niveau restés visibles.
+  // Textes des blocs de premier niveau du document affiché.
   function visibleBlocks(): string[] {
-    return Array.from(element().querySelectorAll('.ProseMirror > *'))
-      .filter((block) => !block.classList.contains('is-off-sheet'))
-      .map((block) => (block.textContent ?? '').trim());
+    return Array.from(element().querySelectorAll('.ProseMirror > *')).map((block) =>
+      (block.textContent ?? '').trim(),
+    );
   }
 
   function link(label: string): HTMLAnchorElement | undefined {
@@ -366,42 +367,66 @@ describe('CourseReadPage', () => {
     viewer.close();
   });
 
-  it('réduit le cours à sa fiche : encadrés « À retenir », blocs épinglés et leurs titres', async () => {
-    await setup(COURSE, 'fiche');
+  // Fiche rédigée : un document à part, avec ses propres titres.
+  const SHEET: ContentNode = {
+    type: 'doc',
+    content: [
+      heading(2, 'L’essentiel'),
+      RETENIR,
+      heading(2, 'À savoir refaire'),
+      paragraph('fork'),
+    ],
+  };
+
+  it('affiche la fiche de révision rédigée à la place du cours, avec son sommaire', async () => {
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
     expect(visibleBlocks()).toEqual([
-      '1. Notion',
+      'L’essentiel',
       'Un programme est passif.',
-      '2. Création',
-      '2.1 fork',
-      'Appel épinglé.',
+      'À savoir refaire',
+      'fork',
     ]);
-    expect(outline()).toEqual(['1. Notion', '2. Création', '2.1 fork']);
+    expect(outline()).toEqual(['L’essentiel', 'À savoir refaire']);
     expect(link('Cours complet')?.getAttribute('href')).toBe('/');
+    expect(link('Modifier la fiche')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/fiche/edition',
+    );
     expect(element().querySelector('.sheet-note')).not.toBeNull();
   });
 
   it('revient au cours complet quand la vue change', async () => {
-    await setup(COURSE, 'fiche');
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
     fixture.componentRef.setInput('vue', undefined);
     fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(visibleBlocks()).toHaveLength(9);
     expect(outline()).toHaveLength(4);
+    expect(link('Modifier')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/edition');
   });
 
-  it('explique comment remplir une fiche vide', async () => {
-    await setup(course(heading(2, 'Titre'), paragraph('Texte.')), 'fiche');
+  it('propose de rédiger la fiche d’un chapitre qui n’en a pas', async () => {
+    await setup(COURSE, 'fiche');
 
-    expect(visibleBlocks()).toEqual([]);
-    expect(element().querySelector('.sheet-empty')?.textContent).toContain('épinglez un bloc');
+    expect(element().querySelector('.ProseMirror')).toBeNull();
+    expect(element().querySelector('.sheet-empty')?.textContent).toContain(
+      'pas encore de fiche de révision',
+    );
+    expect(link('Rédiger la fiche')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/fiche/edition');
   });
 
-  it('ne signale pas de fiche vide sur le cours complet', async () => {
-    await setup(course(heading(2, 'Titre'), paragraph('Texte.')));
+  it('ouvre l’édition de la fiche, au bon endroit, par le clic droit dans la fiche', async () => {
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
-    expect(element().querySelector('.sheet-empty')).toBeNull();
+    rightClickOnBlock(3);
+
+    expect(link('Modifier ici')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/fiche/edition?bloc=3',
+    );
+    // Le marque-page est celui du cours : il ne se pose pas dans la fiche.
+    expect(menuButton('Marquer ma page')).toBeUndefined();
   });
 
   it('annonce le nombre de sections et la date de modification', async () => {
