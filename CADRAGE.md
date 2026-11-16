@@ -39,7 +39,7 @@ Seul le reverse proxy est accessible de l'extérieur ; la base n'est jamais expo
 |---|---|---|
 | Utilisateur | identifiant, hash du mot de passe | Un seul compte, créé par script d'initialisation |
 | UE | code (ex. UTC502), intitulé, description, ordre | Conteneur principal |
-| Cours | UE, titre, ordre, contenu (format structuré de l'éditeur), texte brut dérivé pour la recherche, dates de création et de modification | Un cours = un chapitre |
+| Cours | UE, titre, ordre, contenu (format structuré de l'éditeur), texte brut dérivé pour la recherche, marque-page de lecture (optionnel), dates de création et de modification | Un cours = un chapitre |
 | Image de cours | cours, chemin de stockage, type MIME, taille, texte alternatif | Schémas (SVG, PNG) et captures d'écran ; contenu sur disque |
 | Dossier | UE, dossier parent (optionnel), nom | Arborescence par UE |
 | Fichier | UE, dossier (optionnel), nom d'origine, chemin de stockage, type MIME, taille | Contenu sur disque, métadonnées en base |
@@ -74,6 +74,7 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - **Cours — blocs à gérer** : titres sur quatre niveaux (section, sous-section, sous-sous-section, point), paragraphes, listes, tableaux, blocs de code avec coloration, images avec légende, encadrés typés (« À retenir », « Ce qui a changé », « Attention », « Définition »), citations, liens.
 - **Cours — images** : insertion par collage direct d'une capture d'écran, par glisser-déposer ou par sélection de fichier. Formats PNG, JPEG, SVG. Chaque image est enregistrée comme fichier rattaché au cours ; jamais encodée dans le contenu. Les SVG sont assainis à l'envoi.
 - **Cours — lecture** : présentation soignée (largeur de ligne limitée, typographie lisible), sommaire automatique cliquable construit à partir des titres, numérotation des sections conservée telle qu'écrite.
+- **Cours — marque-page** : en lecture, un clic droit dans une section propose « Marquer ma page ». Le marque-page, un par cours, est enregistré en base sur le titre de la section ; un point vert le signale devant ce titre et devant le cours dans la liste de l'UE. À la réouverture, le cours s'affiche à cet endroit.
 - **Cours — fiche de révision** : en lecture, un bouton réduit le cours à sa fiche de révision : les encadrés « À retenir », les blocs épinglés (texte, tableau, image, code) et les titres qui y mènent. Un bloc s'épingle depuis son menu, en édition ; l'épingle fait partie du contenu.
 - **Cours — stockage** : contenu dans le format structuré natif de l'éditeur ; une version texte brut est dérivée à chaque enregistrement pour alimenter la recherche.
 - **Import** : un cours se crée en déposant un « paquet de cours », archive .zip produite par Claude en même temps que le cours réécrit. Aucun passage par Word. Après import, le cours reste entièrement éditable.
