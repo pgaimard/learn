@@ -122,4 +122,83 @@ describe('poignée de bloc', () => {
     // Le menu du navigateur ne s'ouvre pas par-dessus.
     expect(rightClick.defaultPrevented).toBe(true);
   });
+
+  describe('glisser', () => {
+    // jsdom ne calcule pas de mise en page : chaque bloc reçoit une hauteur de 40 px,
+    // « un » de 0 à 40, « deux » de 40 à 80.
+    function layOut(): void {
+      Array.from(editor.view.dom.children).forEach((element, index) => {
+        Object.defineProperty(element, 'offsetHeight', { value: 40, configurable: true });
+        element.getBoundingClientRect = () =>
+          ({ top: index * 40, bottom: index * 40 + 40, height: 40, left: 0 }) as DOMRect;
+      });
+    }
+
+    function mouse(type: string, clientY: number, target: EventTarget = document): MouseEvent {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientY, button: 0 });
+      target.dispatchEvent(event);
+      return event;
+    }
+
+    function texts(): string[] {
+      const found: string[] = [];
+      editor.state.doc.forEach((node) => found.push(node.textContent));
+      return found;
+    }
+
+    beforeEach(() => {
+      vi.stubGlobal('requestAnimationFrame', () => 1);
+      vi.stubGlobal('cancelAnimationFrame', () => undefined);
+      hover();
+      layOut();
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('montre l’aperçu et la case d’arrivée, puis dépose le bloc où elle se trouve', () => {
+      const down = mouse('mousedown', 60, handle());
+      expect(down.defaultPrevented).toBe(true);
+      mouse('mousemove', 61);
+      expect(container.querySelector('.block-drag-preview')).toBeNull();
+
+      // Au-dessus du milieu de « un » : la case passe devant lui.
+      mouse('mousemove', 10);
+      layOut();
+
+      expect(container.querySelector('.block-drag-preview')?.textContent).toBe('deux');
+      expect(container.querySelector('.is-dragged')?.textContent).toBe('deux');
+      expect(container.querySelector('.block-drop-slot')?.nextElementSibling?.textContent).toBe(
+        'un',
+      );
+
+      mouse('mouseup', 10);
+
+      expect(texts()).toEqual(['deux', 'un']);
+      expect(container.querySelector('.block-drag-preview')).toBeNull();
+      expect(container.querySelector('.block-drop-slot')).toBeNull();
+    });
+
+    it('ne montre pas de case là où le dépôt ne changerait rien', () => {
+      mouse('mousedown', 60, handle());
+      mouse('mousemove', 75);
+
+      expect(container.querySelector('.block-drag-preview')).not.toBeNull();
+      expect(container.querySelector('.block-drop-slot')).toBeNull();
+
+      mouse('mouseup', 75);
+      expect(texts()).toEqual(['un', 'deux']);
+    });
+
+    it('abandonne le glisser avec Échap', () => {
+      mouse('mousedown', 60, handle());
+      mouse('mousemove', 10);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      mouse('mouseup', 10);
+
+      expect(texts()).toEqual(['un', 'deux']);
+      expect(container.querySelector('.block-drag-preview')).toBeNull();
+      expect(container.querySelector('.is-dragged')).toBeNull();
+    });
+  });
 });
