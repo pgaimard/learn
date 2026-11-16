@@ -276,6 +276,19 @@ describe('CourseReadPage', () => {
     expect(element().querySelector('.context-menu')).toBeNull();
   });
 
+  it('propose de retirer le marque-page depuis une autre section, à côté de « Marquer ma page »', async () => {
+    await setup({ ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 });
+    removeBookmark.mockReset().mockReturnValue(of(COURSE));
+
+    rightClickOnBlock(6);
+    expect(menuButton('Marquer ma page')).toBeDefined();
+    menuButton('Retirer le marque-page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(removeBookmark).toHaveBeenCalledWith(7);
+  });
+
   it('propose de retirer le marque-page dans la section marquée', async () => {
     await setup({ ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 });
     removeBookmark.mockReset().mockReturnValue(of(COURSE));
@@ -427,6 +440,7 @@ describe('CourseReadPage', () => {
     );
     // Le marque-page est celui du cours : il ne se pose pas dans la fiche.
     expect(menuButton('Marquer ma page')).toBeUndefined();
+    expect(menuButton('Retirer le marque-page')).toBeUndefined();
   });
 
   it('annonce le nombre de sections et la date de modification', async () => {
