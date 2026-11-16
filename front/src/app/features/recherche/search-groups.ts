@@ -30,22 +30,22 @@ export function toDisplayedGroups(results: SearchResults): DisplayedGroup[] {
       })),
     },
     {
-      title: 'Dictionnaire',
+      title: 'Définitions',
       total: results.definitions.total,
       results: results.definitions.items.map((term) => ({
-        link: ['/dictionnaire', term.id],
+        link: ['/ue', term.ueCode, 'termes', term.id],
         title: term.label,
-        detail: null,
+        detail: term.ueCode,
         excerpt: term.excerpt,
       })),
     },
     {
-      title: 'Glossaire',
+      title: 'Acronymes',
       total: results.acronyms.total,
       results: results.acronyms.items.map((term) => ({
-        link: ['/glossaire', term.id],
+        link: ['/ue', term.ueCode, 'termes', term.id],
         title: term.label,
-        detail: term.expandedForm,
+        detail: `${term.ueCode} · ${term.expandedForm}`,
         excerpt: term.excerpt,
       })),
     },

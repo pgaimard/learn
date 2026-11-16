@@ -1,18 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { TermDetail } from './term-detail';
-import { TERM_SCREENS } from './term-screens';
 import { Term, TermService } from './term.service';
 
 @Component({
@@ -23,7 +14,8 @@ import { Term, TermService } from './term.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TermReadPage {
-  // Paramètre de la route /dictionnaire/:id ou /glossaire/:id.
+  // Paramètres de la route /ue/:code/termes/:id.
+  readonly code = input.required<string>();
   readonly id = input.required<string>();
 
   private readonly termService = inject(TermService);
@@ -33,7 +25,6 @@ export class TermReadPage {
 
   protected readonly term = signal<Term | null>(null);
   protected readonly errors = signal<string[]>([]);
-  protected readonly screen = computed(() => TERM_SCREENS[this.term()?.type ?? 'definition']);
 
   constructor() {
     effect(() => this.load(Number(this.id())));
@@ -48,7 +39,8 @@ export class TermReadPage {
       return;
     }
     this.termService.remove(term.id).subscribe({
-      next: () => void this.router.navigateByUrl(this.screen().path),
+      next: () =>
+        void this.router.navigate(['/ue', term.ue.code], { queryParams: { onglet: 'termes' } }),
       error: (error: ApiError) => this.errors.set(error.messages),
     });
   }

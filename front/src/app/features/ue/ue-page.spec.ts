@@ -134,10 +134,10 @@ describe('UePage', () => {
     fixture.detectChanges();
 
     expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
-    expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
+    expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/ue/UTC502/termes/4');
     expect(element().querySelector('ol.list')).toBeNull();
     expect(element().querySelector('.term-actions a')?.getAttribute('href')).toBe(
-      '/glossaire/4/edition',
+      '/ue/UTC502/termes/4/edition',
     );
   });
 

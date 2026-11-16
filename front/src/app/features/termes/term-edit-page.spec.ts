@@ -134,20 +134,31 @@ describe('TermEditPage', () => {
 
   it('détache le terme de son cours quand l’UE d’origine change', async () => {
     await setup();
-    service.update.mockReturnValue(of({ ...PID, ue: null, course: null }));
+    service.update.mockReturnValue(
+      of({ ...PID, ue: { code: 'NFE108', title: 'Méthodes' }, course: null }),
+    );
 
-    pickOption(fixture, '#edit-ue', '');
+    pickOption(fixture, '#edit-ue', 'NFE108');
     click('Enregistrer');
 
     expect(service.update).toHaveBeenCalledWith(
       7,
-      expect.objectContaining({ ueCode: null, courseId: null }),
+      expect.objectContaining({ ueCode: 'NFE108', courseId: null }),
     );
     expect(element().textContent).not.toContain('Issu du cours');
+    expect(element().querySelector('.actions a.button')?.getAttribute('href')).toBe(
+      '/ue/NFE108/termes/7',
+    );
   });
 
   it('n’envoie pas de forme développée pour une définition', async () => {
-    await setup({ ...PID, type: 'definition', expandedForm: null, ue: null, course: null });
+    await setup({
+      ...PID,
+      type: 'definition',
+      expandedForm: null,
+      ue: { code: 'UTC502', title: 'Systèmes' },
+      course: null,
+    });
     service.update.mockReturnValue(of(PID));
 
     expect(element().querySelector('#edit-expanded-form')).toBeNull();
@@ -175,13 +186,13 @@ describe('TermEditPage', () => {
   it('affiche le refus de l’API et garde les modifications', async () => {
     await setup();
     service.update.mockReturnValue(
-      throwError(() => new ApiError(409, ['« TLB » existe déjà dans le glossaire.'])),
+      throwError(() => new ApiError(409, ['« TLB » existe déjà dans les acronymes de cette UE.'])),
     );
 
     fill('edit-label', 'TLB');
     click('Enregistrer');
 
-    expect(element().textContent).toContain('existe déjà dans le glossaire');
+    expect(element().textContent).toContain('existe déjà dans les acronymes');
     expect(saveButton()?.disabled).toBe(false);
   });
 
@@ -215,7 +226,7 @@ describe('TermEditPage', () => {
     );
   });
 
-  it('supprime le terme après confirmation et revient au glossaire', async () => {
+  it('supprime le terme après confirmation et revient aux termes de l’UE', async () => {
     await setup();
     service.remove.mockReturnValue(of(undefined));
     dialog.confirmDeletion.mockResolvedValue(true);
@@ -225,6 +236,8 @@ describe('TermEditPage', () => {
     await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
-    expect(navigate).toHaveBeenCalledWith(['/glossaire']);
+    expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502'], {
+      queryParams: { onglet: 'termes' },
+    });
   });
 });

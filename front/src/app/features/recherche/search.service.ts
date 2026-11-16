@@ -23,6 +23,7 @@ export interface CourseResult {
 export interface TermResult {
   id: number;
   label: string;
+  ueCode: string;
   expandedForm: string | null;
   excerpt: ExcerptSegment[];
 }

@@ -32,6 +32,7 @@ import { filterCommands } from '../outils/filter-commands';
 import { FileBrowser } from '../fichiers/file-browser';
 import { filterTerms } from '../termes/filter-terms';
 import { TermList } from '../termes/term-list';
+import { TermQuickCreate } from '../termes/term-quick-create';
 import { TermService, TermSummary } from '../termes/term.service';
 import { Ue, UeService } from './ue.service';
 
@@ -50,6 +51,7 @@ import { Ue, UeService } from './ue.service';
     SortableItem,
     SortableList,
     TermList,
+    TermQuickCreate,
   ],
   templateUrl: './ue-page.html',
   styleUrl: './ue-page.css',

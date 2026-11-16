@@ -18,7 +18,6 @@ import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
 import { CommandSheet } from '../outils/command-sheet';
 import { Command, CommandGroup, CommandService, CommandTool } from '../outils/command.service';
-import { TERM_SCREENS } from '../termes/term-screens';
 import { Term, TermService, TermSummary } from '../termes/term.service';
 import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
@@ -143,8 +142,7 @@ export class CourseReadPage {
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
-  // Tous les termes du dictionnaire et du glossaire : ceux que le texte cite y deviennent
-  // cliquables.
+  // Tous les termes de l'UE : ceux que le texte cite y deviennent cliquables.
   protected readonly allTerms = signal<TermSummary[]>([]);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownTerm = signal<Term | null>(null);
@@ -197,10 +195,6 @@ export class CourseReadPage {
         this.course.update((shown) => shown && { ...shown, bookmarkTitle, bookmarkBlock }),
       error: (error: ApiError) => this.errors.set(error.messages),
     });
-  }
-
-  protected termPath(term: Pick<TermSummary, 'type'>): string {
-    return TERM_SCREENS[term.type].path;
   }
 
   // Un titre devient celui de la section en cours dès qu'il passe la ligne de lecture.
@@ -288,7 +282,7 @@ export class CourseReadPage {
       next: (groups) => this.commandGroups.set(groups),
       error: () => undefined,
     });
-    this.termService.list().subscribe({
+    this.termService.list({ ue: this.code() }).subscribe({
       next: (terms) => this.allTerms.set(terms),
       error: () => undefined,
     });

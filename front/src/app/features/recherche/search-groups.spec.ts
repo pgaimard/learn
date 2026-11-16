@@ -25,11 +25,19 @@ describe('toDisplayedGroups', () => {
       },
       definitions: {
         total: 1,
-        items: [{ id: 2, label: 'Pagination', expandedForm: null, excerpt: [] }],
+        items: [{ id: 2, label: 'Pagination', ueCode: 'UTC502', expandedForm: null, excerpt: [] }],
       },
       acronyms: {
         total: 1,
-        items: [{ id: 3, label: 'MMU', expandedForm: 'Memory Management Unit', excerpt: [] }],
+        items: [
+          {
+            id: 3,
+            label: 'MMU',
+            ueCode: 'UTC502',
+            expandedForm: 'Memory Management Unit',
+            excerpt: [],
+          },
+        ],
       },
       files: EMPTY,
       tools: EMPTY,
@@ -50,15 +58,27 @@ describe('toDisplayedGroups', () => {
         ],
       },
       {
-        title: 'Dictionnaire',
-        total: 1,
-        results: [{ link: ['/dictionnaire', 2], title: 'Pagination', detail: null, excerpt: [] }],
-      },
-      {
-        title: 'Glossaire',
+        title: 'Définitions',
         total: 1,
         results: [
-          { link: ['/glossaire', 3], title: 'MMU', detail: 'Memory Management Unit', excerpt: [] },
+          {
+            link: ['/ue', 'UTC502', 'termes', 2],
+            title: 'Pagination',
+            detail: 'UTC502',
+            excerpt: [],
+          },
+        ],
+      },
+      {
+        title: 'Acronymes',
+        total: 1,
+        results: [
+          {
+            link: ['/ue', 'UTC502', 'termes', 3],
+            title: 'MMU',
+            detail: 'UTC502 · Memory Management Unit',
+            excerpt: [],
+          },
         ],
       },
     ]);

@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Icon } from '../../core/ui/icon';
 import { CourseContent } from '../cours/content/course-content';
-import { TERM_SCREENS } from './term-screens';
 import { Term } from './term.service';
 
 // Un terme en lecture : son libellé, son origine et sa définition, avec ses actions.
@@ -20,6 +19,4 @@ export class TermDetail {
 
   // Suppression demandée ; la confirmation et l'appel sont faits par la page.
   readonly removed = output<Term>();
-
-  protected readonly screen = computed(() => TERM_SCREENS[this.term().type]);
 }

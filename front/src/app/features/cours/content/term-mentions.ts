@@ -102,7 +102,7 @@ function mentionsIn(text: string, start: number, matchers: Matcher[]): TermMenti
   return kept;
 }
 
-// Termes du dictionnaire et du glossaire cités dans le texte du cours. Les titres et le
+// Termes de l’UE cités dans le texte du cours. Les titres et le
 // code ne sont pas examinés.
 export function findTermMentions(doc: ProseMirrorNode, terms: MentionTerm[]): TermMention[] {
   const matchers = buildMatchers(terms);
@@ -146,7 +146,7 @@ export function setMentionTerms(view: EditorView, terms: MentionTerm[]): void {
   }
 }
 
-// En lecture, rend cliquables les termes du dictionnaire et du glossaire cités dans le
+// En lecture, rend cliquables les termes de l’UE cités dans le
 // texte. Rien n'est enregistré dans le contenu : les termes sont reconnus à l'affichage.
 export const TermMentions = Extension.create({
   name: 'termMentions',

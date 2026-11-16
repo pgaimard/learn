@@ -5,7 +5,7 @@
     <h2 class="label" [class.mono]="term().type === 'acronym'">{{ term().label }}</h2>
   }
   <div class="actions">
-    <a class="button" [routerLink]="[screen().path, term().id, 'edition']">
+    <a class="button" [routerLink]="['/ue', term().ue.code, 'termes', term().id, 'edition']">
       <app-icon name="pencil" />Modifier
     </a>
     <button
@@ -21,14 +21,10 @@
 @if (term().expandedForm; as expandedForm) {
   <p class="expanded-form">{{ expandedForm }}</p>
 }
-@if (term().ue; as ue) {
+@if (term().course; as course) {
   <p class="meta origin">
-    Origine :
-    <a [routerLink]="['/ue', ue.code]">{{ ue.code }}</a>
-    @if (term().course; as course) {
-      <span aria-hidden="true"> / </span>
-      <a [routerLink]="['/ue', ue.code, 'cours', course.id]">{{ course.title }}</a>
-    }
+    Issu du cours
+    <a [routerLink]="['/ue', term().ue.code, 'cours', course.id]">{{ course.title }}</a>
   </p>
 }
 <app-course-content [content]="term().content" label="Définition" />

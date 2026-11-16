@@ -63,13 +63,6 @@
     </p>
   </div>
 
-  @if (origin(); as origin) {
-    <label class="check attach">
-      <input type="checkbox" formControlName="attach" />
-      Rattacher à {{ origin.label }}
-    </label>
-  }
-
   <div role="alert">
     @for (error of errors(); track error) {
       <p class="form-error">{{ error }}</p>

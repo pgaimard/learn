@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { TermQuickCreate } from './term-quick-create';
@@ -9,7 +9,7 @@ describe('TermQuickCreate', () => {
   let fixture: ComponentFixture<TermQuickCreate>;
   const service = { create: vi.fn<TermService['create']>() };
 
-  function setup(url: string): void {
+  function setup(): void {
     vi.resetAllMocks();
     // jsdom n'ouvre pas les boîtes de dialogue : seul l'appel compte ici.
     HTMLDialogElement.prototype.showModal = vi.fn();
@@ -19,8 +19,8 @@ describe('TermQuickCreate', () => {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: TermService, useValue: service }],
     });
-    vi.spyOn(TestBed.inject(Router), 'url', 'get').mockReturnValue(url);
     fixture = TestBed.createComponent(TermQuickCreate);
+    fixture.componentRef.setInput('ueCode', 'UTC502');
     fixture.detectChanges();
   }
 
@@ -45,31 +45,26 @@ describe('TermQuickCreate', () => {
     fixture.detectChanges();
   }
 
-  function check(selector: string): void {
-    const field = element().querySelector<HTMLInputElement>(selector);
-    field?.click();
-    fixture.detectChanges();
-  }
-
   function submit(): void {
     element().querySelector('form')?.dispatchEvent(new Event('submit'));
     fixture.detectChanges();
   }
 
+  const UE = { code: 'UTC502', title: 'Systèmes' };
+
   it('n’affiche le formulaire qu’une fois la boîte ouverte', () => {
-    setup('/');
+    setup();
     expect(element().querySelector('form')).toBeNull();
 
     click('Nouveau terme');
 
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
     expect(element().querySelector('form')).not.toBeNull();
-    expect(element().textContent).not.toContain('Rattacher à');
   });
 
-  it('crée un acronyme rattaché au cours affiché, puis propose de l’enrichir', () => {
-    setup('/ue/UTC502/cours/12');
-    service.create.mockReturnValue(of({ id: 5, type: 'acronym', label: 'PID' } as Term));
+  it('crée un acronyme dans l’UE, puis propose de l’enrichir', () => {
+    setup();
+    service.create.mockReturnValue(of({ id: 5, type: 'acronym', label: 'PID', ue: UE } as Term));
     click('Nouveau terme');
 
     click('Acronyme');
@@ -81,48 +76,52 @@ describe('TermQuickCreate', () => {
       type: 'acronym',
       label: 'PID',
       expandedForm: 'Process Identifier',
-      courseId: 12,
+      ueCode: 'UTC502',
     });
-    expect(element().textContent).toContain('« PID » est ajouté au glossaire.');
-    expect(element().querySelector('a.button')?.getAttribute('href')).toBe('/glossaire/5/edition');
+    expect(element().textContent).toContain('« PID » est ajouté aux termes de UTC502.');
+    expect(element().querySelector('a.button')?.getAttribute('href')).toBe(
+      '/ue/UTC502/termes/5/edition',
+    );
   });
 
-  it('rattache à l’UE affichée, sauf si la case est décochée', () => {
-    setup('/ue/UTC502');
-    service.create.mockReturnValue(of({ id: 6, type: 'definition', label: 'Processus' } as Term));
+  it('enchaîne sur un autre terme de la même UE', () => {
+    setup();
+    service.create.mockReturnValue(
+      of({ id: 6, type: 'definition', label: 'Processus', ue: UE } as Term),
+    );
     click('Nouveau terme');
     fill('quick-term-label', 'Processus');
     submit();
-    expect(service.create).toHaveBeenLastCalledWith({
-      type: 'definition',
-      label: 'Processus',
-      ueCode: 'UTC502',
-    });
 
     click('En créer un autre');
-    check('input[type="checkbox"]');
     fill('quick-term-label', 'Fil');
     submit();
 
-    expect(service.create).toHaveBeenLastCalledWith({ type: 'definition', label: 'Fil' });
+    expect(service.create).toHaveBeenLastCalledWith({
+      type: 'definition',
+      label: 'Fil',
+      ueCode: 'UTC502',
+    });
   });
 
   it('affiche le refus de l’API et garde la saisie', () => {
-    setup('/');
+    setup();
     service.create.mockReturnValue(
-      throwError(() => new ApiError(409, ['« Processus » existe déjà dans le dictionnaire.'])),
+      throwError(
+        () => new ApiError(409, ['« Processus » existe déjà dans les définitions de cette UE.']),
+      ),
     );
     click('Nouveau terme');
 
     fill('quick-term-label', 'Processus');
     submit();
 
-    expect(element().textContent).toContain('existe déjà dans le dictionnaire');
+    expect(element().textContent).toContain('existe déjà dans les définitions');
     expect(element().querySelector<HTMLInputElement>('#quick-term-label')?.value).toBe('Processus');
   });
 
   it('retire le formulaire à la fermeture', () => {
-    setup('/');
+    setup();
     click('Nouveau terme');
 
     click('Annuler');

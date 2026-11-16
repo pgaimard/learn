@@ -95,7 +95,7 @@
         <ul>
           @for (term of shownTerms(); track term.id) {
             <li>
-              <a [routerLink]="[termPath(term), term.id]">{{ term.label }}</a>
+              <a [routerLink]="['/ue', code(), 'termes', term.id]">{{ term.label }}</a>
               <span>{{ term.expandedForm || term.excerpt }}</span>
             </li>
           }
@@ -154,9 +154,7 @@
         <app-course-content [content]="term.content" label="Définition" />
       </div>
       <div modalFooter class="modal-footer">
-        <a class="button" [routerLink]="[termPath(term), term.id]">
-          Ouvrir dans le {{ term.type === 'acronym' ? 'glossaire' : 'dictionnaire' }}
-        </a>
+        <a class="button" [routerLink]="['/ue', code(), 'termes', term.id]"> Ouvrir le terme </a>
       </div>
     </app-modal>
   }
