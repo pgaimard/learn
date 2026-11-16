@@ -20,10 +20,6 @@
         <p class="status" aria-live="polite">
           @if (isSaving()) {
             Enregistrement…
-          } @else if (isDirty()) {
-            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
-          } @else if (savedAt(); as savedAt) {
-            Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
         <!-- Venu de la lecture par « Modifier ici », on y retourne au même endroit. -->
@@ -37,26 +33,20 @@
         <button
           type="button"
           class="button button-primary"
-          [disabled]="isSaving()"
+          [disabled]="isSaving() || !isDirty()"
           (click)="save()"
         >
           Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
         </button>
-        <app-menu-button
-          label="Autres actions"
-          buttonClass="button button-icon button-ghost"
-          [alignEnd]="true"
+        <button
+          type="button"
+          class="button button-icon button-ghost"
+          aria-label="Supprimer le cours"
+          title="Supprimer le cours"
+          (click)="remove()"
         >
-          <app-icon menuTrigger name="dots" [size]="15" />
-          <button
-            type="button"
-            role="menuitem"
-            class="menu-item menu-item-danger"
-            (click)="remove()"
-          >
-            <app-icon name="trash" [size]="15" />Supprimer le cours
-          </button>
-        </app-menu-button>
+          <app-icon name="trash" [size]="15" />
+        </button>
       </div>
 
       <div role="alert">

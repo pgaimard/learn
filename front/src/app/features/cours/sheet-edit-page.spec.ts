@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
@@ -70,6 +71,12 @@ describe('SheetEditPage', () => {
     );
   }
 
+  // Une retouche dans l’éditeur : c’est elle qui rend la fiche enregistrable.
+  function edit(): void {
+    fixture.debugElement.query(By.css('app-content-editor')).triggerEventHandler('edited');
+    fixture.detectChanges();
+  }
+
   function link(label: string): HTMLAnchorElement | undefined {
     return Array.from(element().querySelectorAll('a')).find(
       (candidate) => (candidate.textContent ?? '').trim() === label,
@@ -80,24 +87,31 @@ describe('SheetEditPage', () => {
     await setup();
 
     expect(element().querySelector('.ProseMirror h2')?.textContent).toBe('L’essentiel');
+    expect(button('Enregistrer')?.disabled).toBe(true);
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
     expect(service.update).toHaveBeenCalledWith(7, { sheetContent: SHEET });
-    expect(element().querySelector('.status')?.textContent).toContain('Enregistré à');
+    expect(button('Enregistrer')?.disabled).toBe(true);
   });
 
   it('part d’une page blanche pour un chapitre sans fiche, qu’on ne peut pas encore supprimer', async () => {
     await setup({ ...COURSE, sheetContent: null });
 
     expect(element().querySelector('.ProseMirror')?.textContent).toBe('');
-    expect(element().querySelector('app-menu-button[label="Autres actions"]')).toBeNull();
+    expect(
+      element().querySelector<HTMLButtonElement>('[aria-label="Supprimer la fiche"]'),
+    ).toBeNull();
 
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
     expect(service.update).toHaveBeenCalledTimes(1);
-    expect(element().querySelector('app-menu-button[label="Autres actions"]')).not.toBeNull();
+    expect(
+      element().querySelector<HTMLButtonElement>('[aria-label="Supprimer la fiche"]'),
+    ).not.toBeNull();
   });
 
   it('revient à la fiche en lecture, au bloc d’où l’on vient', async () => {
@@ -110,11 +124,7 @@ describe('SheetEditPage', () => {
     await setup();
     dialog.confirmDeletion.mockReset().mockResolvedValue(true);
 
-    element()
-      .querySelector<HTMLButtonElement>('app-menu-button[label="Autres actions"] button')
-      ?.click();
-    fixture.detectChanges();
-    button('Supprimer la fiche')?.click();
+    element().querySelector<HTMLButtonElement>('[aria-label="Supprimer la fiche"]')?.click();
     await fixture.whenStable();
 
     expect(service.update).toHaveBeenCalledWith(7, { sheetContent: null });
@@ -127,10 +137,12 @@ describe('SheetEditPage', () => {
       throwError(() => new ApiError(400, ['Type de bloc non autorisé.'])),
     );
 
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
     expect(element().querySelector('.form-error')?.textContent).toContain('non autorisé');
+    expect(button('Enregistrer')?.disabled).toBe(false);
     expect(element().querySelector('.ProseMirror h2')).not.toBeNull();
   });
 });

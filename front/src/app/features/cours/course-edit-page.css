@@ -18,13 +18,6 @@
   white-space: nowrap;
 }
 
-.unsaved {
-  width: 0.4375rem;
-  height: 0.4375rem;
-  border-radius: 50%;
-  background: var(--color-callout-attention);
-}
-
 .save-key {
   border-color: currentcolor;
   background: none;

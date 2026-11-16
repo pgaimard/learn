@@ -91,6 +91,10 @@ describe('TermEditPage', () => {
     fixture.detectChanges();
   }
 
+  function saveButton(): HTMLButtonElement | null {
+    return element().querySelector<HTMLButtonElement>('.actions .button-primary');
+  }
+
   function fill(id: string, value: string, event = 'input'): void {
     const field = element().querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`);
     if (field) {
@@ -115,8 +119,9 @@ describe('TermEditPage', () => {
     await setup();
     service.update.mockReturnValue(of({ ...PID, label: 'PPID' }));
 
+    expect(saveButton()?.disabled).toBe(true);
     fill('edit-label', ' PPID ');
-    expect(element().textContent).toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(false);
     click('Enregistrer');
 
     expect(service.update).toHaveBeenCalledWith(7, {
@@ -124,7 +129,7 @@ describe('TermEditPage', () => {
       expandedForm: 'Process Identifier',
       content: CONTENT,
     });
-    expect(element().textContent).toContain('Enregistré à');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('détache le terme de son cours quand l’UE d’origine change', async () => {
@@ -177,7 +182,7 @@ describe('TermEditPage', () => {
     click('Enregistrer');
 
     expect(element().textContent).toContain('existe déjà dans le glossaire');
-    expect(element().textContent).toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(false);
   });
 
   it('envoie une image puis l’insère dans la définition', async () => {
@@ -215,7 +220,8 @@ describe('TermEditPage', () => {
     service.remove.mockReturnValue(of(undefined));
     dialog.confirmDeletion.mockResolvedValue(true);
 
-    click('Supprimer le terme');
+    element().querySelector<HTMLButtonElement>('[aria-label="Supprimer le terme"]')?.click();
+    fixture.detectChanges();
     await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
