@@ -127,7 +127,7 @@ describe('CourseEditPage', () => {
       title: 'Les processus',
       content: COURSE.content,
     });
-    expect(element().textContent).toContain('Enregistré à');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('affiche le refus de l’API et garde les modifications en attente', async () => {
@@ -305,7 +305,8 @@ describe('CourseEditPage', () => {
     dialog.confirmDeletion.mockResolvedValue(true);
     await setup();
 
-    click('Supprimer le cours');
+    element().querySelector<HTMLButtonElement>('[aria-label="Supprimer le cours"]')?.click();
+    fixture.detectChanges();
     await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);

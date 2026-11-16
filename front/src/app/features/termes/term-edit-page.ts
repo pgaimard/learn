@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,7 +14,6 @@ import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
-import { MenuButton } from '../../core/ui/menu-button';
 import { shortcut } from '../../core/ui/platform';
 import { Dropdown } from '../../core/ui/dropdown';
 import { ContentEditor } from '../cours/editor/content-editor';
@@ -26,7 +24,7 @@ import { Term, TermInput, TermService } from './term.service';
 
 @Component({
   selector: 'app-term-edit-page',
-  imports: [Icon, MenuButton, Dropdown, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, Dropdown, ContentEditor, ReactiveFormsModule, RouterLink],
   templateUrl: './term-edit-page.html',
   styleUrl: './term-edit-page.css',
   host: {
@@ -60,7 +58,6 @@ export class TermEditPage {
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
-  protected readonly savedAt = signal<Date | null>(null);
 
   protected readonly form = this.formBuilder.group({
     label: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
@@ -122,7 +119,6 @@ export class TermEditPage {
       next: (saved) => {
         this.isSaving.set(false);
         this.isDirty.set(false);
-        this.savedAt.set(new Date());
         this.origin.set({ ue: saved.ue, course: saved.course });
         this.title.setTitle(`Édition – ${saved.label}`);
       },

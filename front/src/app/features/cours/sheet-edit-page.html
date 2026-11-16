@@ -24,8 +24,6 @@
         <p class="status" aria-live="polite">
           @if (isSaving()) {
             Enregistrement…
-          } @else if (!isDirty() && savedAt(); as savedAt) {
-            Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
         <!-- Venu de la lecture par « Modifier ici », on y retourne au même endroit. -->
@@ -47,21 +45,15 @@
           Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
         </button>
         @if (isSaved()) {
-          <app-menu-button
-            label="Autres actions"
-            buttonClass="button button-icon button-ghost"
-            [alignEnd]="true"
+          <button
+            type="button"
+            class="button button-icon button-ghost"
+            aria-label="Supprimer la fiche"
+            title="Supprimer la fiche"
+            (click)="remove()"
           >
-            <app-icon menuTrigger name="dots" [size]="15" />
-            <button
-              type="button"
-              role="menuitem"
-              class="menu-item menu-item-danger"
-              (click)="remove()"
-            >
-              <app-icon name="trash" [size]="15" />Supprimer la fiche
-            </button>
-          </app-menu-button>
+            <app-icon name="trash" [size]="15" />
+          </button>
         }
       </div>
 

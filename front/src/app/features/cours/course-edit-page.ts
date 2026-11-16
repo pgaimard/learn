@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,14 +14,13 @@ import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
-import { MenuButton } from '../../core/ui/menu-button';
 import { shortcut } from '../../core/ui/platform';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
 
 @Component({
   selector: 'app-course-edit-page',
-  imports: [Icon, MenuButton, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, ContentEditor, ReactiveFormsModule, RouterLink],
   templateUrl: './course-edit-page.html',
   styleUrl: './course-edit-page.css',
   host: {
@@ -55,7 +53,6 @@ export class CourseEditPage {
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
-  protected readonly savedAt = signal<Date | null>(null);
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
@@ -99,7 +96,6 @@ export class CourseEditPage {
       next: (course) => {
         this.isSaving.set(false);
         this.isDirty.set(false);
-        this.savedAt.set(new Date());
         this.title.setTitle(`Édition – ${course.title}`);
       },
       error: (error: ApiError) => {

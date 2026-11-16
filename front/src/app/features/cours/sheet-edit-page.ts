@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,7 +13,6 @@ import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
-import { MenuButton } from '../../core/ui/menu-button';
 import { shortcut } from '../../core/ui/platform';
 import { ContentNode } from './content/content-node';
 import { Course, CourseService } from './course.service';
@@ -27,7 +25,7 @@ const BLANK: ContentNode = { type: 'doc', content: [{ type: 'paragraph' }] };
 // éditeur que le cours. Ses images sont des images du cours.
 @Component({
   selector: 'app-sheet-edit-page',
-  imports: [ContentEditor, DatePipe, Icon, MenuButton, RouterLink],
+  imports: [ContentEditor, Icon, RouterLink],
   templateUrl: './sheet-edit-page.html',
   styleUrl: './course-edit-page.css',
   host: {
@@ -64,7 +62,6 @@ export class SheetEditPage {
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
-  protected readonly savedAt = signal<Date | null>(null);
 
   constructor() {
     effect(() => this.load(Number(this.id())));
@@ -103,7 +100,6 @@ export class SheetEditPage {
         this.isSaving.set(false);
         this.isDirty.set(false);
         this.isSaved.set(true);
-        this.savedAt.set(new Date());
       },
       error: (error: ApiError) => {
         this.isSaving.set(false);

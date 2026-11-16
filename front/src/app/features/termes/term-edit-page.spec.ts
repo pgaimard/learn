@@ -129,7 +129,7 @@ describe('TermEditPage', () => {
       expandedForm: 'Process Identifier',
       content: CONTENT,
     });
-    expect(element().textContent).toContain('Enregistré à');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('détache le terme de son cours quand l’UE d’origine change', async () => {
@@ -220,7 +220,8 @@ describe('TermEditPage', () => {
     service.remove.mockReturnValue(of(undefined));
     dialog.confirmDeletion.mockResolvedValue(true);
 
-    click('Supprimer le terme');
+    element().querySelector<HTMLButtonElement>('[aria-label="Supprimer le terme"]')?.click();
+    fixture.detectChanges();
     await settle();
 
     expect(service.remove).toHaveBeenCalledWith(7);
