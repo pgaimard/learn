@@ -88,6 +88,10 @@ export class SheetEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const sheetContent = this.editor()?.getContent();
     if (this.isSaving() || !sheetContent) {
       return;

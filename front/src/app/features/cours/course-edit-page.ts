@@ -83,6 +83,10 @@ export class CourseEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const content = this.editor()?.getContent();
     if (this.form.invalid || this.isSaving() || !content) {
       this.form.markAllAsTouched();

@@ -148,6 +148,10 @@ export class ToolEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const tool = this.tool();
     const content = this.editor()?.getContent();
     if (!tool || !content || this.isSaving() || this.form.invalid) {

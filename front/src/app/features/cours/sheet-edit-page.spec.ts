@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
@@ -70,6 +71,12 @@ describe('SheetEditPage', () => {
     );
   }
 
+  // Une retouche dans l’éditeur : c’est elle qui rend la fiche enregistrable.
+  function edit(): void {
+    fixture.debugElement.query(By.css('app-content-editor')).triggerEventHandler('edited');
+    fixture.detectChanges();
+  }
+
   function link(label: string): HTMLAnchorElement | undefined {
     return Array.from(element().querySelectorAll('a')).find(
       (candidate) => (candidate.textContent ?? '').trim() === label,
@@ -80,6 +87,8 @@ describe('SheetEditPage', () => {
     await setup();
 
     expect(element().querySelector('.ProseMirror h2')?.textContent).toBe('L’essentiel');
+    expect(button('Enregistrer')?.disabled).toBe(true);
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
@@ -93,6 +102,7 @@ describe('SheetEditPage', () => {
     expect(element().querySelector('.ProseMirror')?.textContent).toBe('');
     expect(element().querySelector('app-menu-button[label="Autres actions"]')).toBeNull();
 
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
@@ -127,10 +137,12 @@ describe('SheetEditPage', () => {
       throwError(() => new ApiError(400, ['Type de bloc non autorisé.'])),
     );
 
+    edit();
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
     expect(element().querySelector('.form-error')?.textContent).toContain('non autorisé');
+    expect(button('Enregistrer')?.disabled).toBe(false);
     expect(element().querySelector('.ProseMirror h2')).not.toBeNull();
   });
 });

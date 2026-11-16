@@ -24,9 +24,7 @@
         <p class="status" aria-live="polite">
           @if (isSaving()) {
             Enregistrement…
-          } @else if (isDirty()) {
-            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
-          } @else if (savedAt(); as savedAt) {
+          } @else if (!isDirty() && savedAt(); as savedAt) {
             Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
@@ -43,7 +41,7 @@
         <button
           type="button"
           class="button button-primary"
-          [disabled]="isSaving()"
+          [disabled]="isSaving() || !isDirty()"
           (click)="save()"
         >
           Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>

@@ -99,6 +99,10 @@ export class TermEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const term = this.term();
     const content = this.editor()?.getContent();
     if (!term || !content || this.isSaving() || !this.isFormValid(term)) {

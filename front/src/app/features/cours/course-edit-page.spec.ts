@@ -89,6 +89,10 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
   }
 
+  function saveButton(): HTMLButtonElement | null {
+    return element().querySelector<HTMLButtonElement>('.actions .button-primary');
+  }
+
   function typeTitle(title: string): void {
     const field = element().querySelector<HTMLInputElement>('#edit-title');
     if (field) {
@@ -136,7 +140,7 @@ describe('CourseEditPage', () => {
     click('Enregistrer');
 
     expect(element().textContent).toContain('Le titre ne doit pas dépasser 200 caractères.');
-    expect(element().textContent).toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(false);
   });
 
   it('n’enregistre pas un titre vide', async () => {
@@ -227,9 +231,7 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
 
     expect(element().querySelector('.ProseMirror strong')).not.toBeNull();
-    expect(element().querySelector('.status')?.textContent).toContain(
-      'Modifications non enregistrées',
-    );
+    expect(saveButton()?.disabled).toBe(false);
     expect(await fixture.componentInstance.canLeave()).toBe(false);
   });
 
@@ -295,7 +297,7 @@ describe('CourseEditPage', () => {
 
     expect(dialog.prompt).toHaveBeenCalledOnce();
     expect(element().querySelector('.ProseMirror a')).toBeNull();
-    expect(element().textContent).not.toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
