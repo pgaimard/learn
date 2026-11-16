@@ -34,9 +34,29 @@ Règles de `cours.md` :
   si le rang dépasse leur nombre) et les suivants reculent. L'ordre se change ensuite en faisant
   glisser les cours dans la liste ;
 - des titres de niveau 2 à 5 (`##` à `#####`) ; le niveau 1 est réservé au titre du chapitre ;
-- un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]` ou `[!attention]` ;
+- un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]`, `[!attention]`
+  ou `[!definition]` (voir « Encadrés ») ;
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
+
+### Encadrés
+
+| Marqueur | Libellé affiché | À utiliser pour |
+|---|---|---|
+| `[!retenir]` | À retenir | L'essentiel d'une section, ce qu'il faut savoir par cœur. |
+| `[!change]` | Ce qui a changé | Une évolution par rapport au support d'origine ou à une ancienne pratique. |
+| `[!attention]` | Attention | Un piège, une confusion fréquente, une erreur à éviter. |
+| `[!definition]` | Définition | La définition d'une notion, à l'endroit où le cours l'introduit. |
+
+```markdown
+> [!definition]
+> Un **processus** est un programme en cours d'exécution, avec son contexte.
+```
+
+- le libellé (« Définition ») est affiché par l'application : il ne s'écrit pas dans l'encadré ;
+- un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans le
+  dictionnaire. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
+- le terme défini s'écrit en gras à sa première mention dans l'encadré.
 
 ### Renvois vers une section
 
@@ -87,7 +107,7 @@ Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'
 ### Définition riche
 
 Une définition (ou la définition d'un acronyme) peut être un mini-cours : paragraphes, listes,
-tableaux, blocs de code, citations, encadrés `[!retenir]`, `[!change]`, `[!attention]`, titres de
+tableaux, blocs de code, citations, encadrés `[!retenir]`, `[!change]`, `[!attention]`, `[!definition]`, titres de
 niveau 2 à 5, et images. Dans le JSON, les sauts de ligne du Markdown s'écrivent `\n` et un bloc
 est séparé du suivant par une ligne vide (`\n\n`).
 

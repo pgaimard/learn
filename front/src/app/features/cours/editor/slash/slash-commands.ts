@@ -23,6 +23,7 @@ export const CALLOUT_ICONS: Record<CalloutKind, IconName> = {
   retenir: 'check',
   change: 'change',
   attention: 'warning',
+  definition: 'book',
 };
 
 export const IMAGE_COMMAND: SlashCommand = {

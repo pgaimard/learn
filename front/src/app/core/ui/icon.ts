@@ -40,6 +40,7 @@ const ICONS = {
   'arrow-up': 'M12 19V5M6 11l6-6 6 6',
   'arrow-down': 'M12 5v14M6 13l6 6 6-6',
   pin: 'M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7',
+  book: 'M6 4h12v16H7a2 2 0 0 1 0-4h11M9 8h6',
   copy: 'M9 9h11v11H9zM5 15V4h11',
   heading: 'M5 5v14M13 5v14M5 12h8M17 10l2-1v10',
   change: 'M4 8h14l-3-3M20 16H6l3 3',

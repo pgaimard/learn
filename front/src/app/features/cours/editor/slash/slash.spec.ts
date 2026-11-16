@@ -86,7 +86,13 @@ describe('menu « / »', () => {
       expect(labels('a')[0]).toBe('À retenir');
       expect(labels('change')).toEqual(['Ce qui a changé']);
       expect(labels('att')).toEqual(['Attention']);
-      expect(labels('encadre')).toEqual(['À retenir', 'Ce qui a changé', 'Attention']);
+      expect(labels('defin')).toEqual(['Définition']);
+      expect(labels('encadre')).toEqual([
+        'À retenir',
+        'Ce qui a changé',
+        'Attention',
+        'Définition',
+      ]);
     });
 
     it('range les blocs par rubrique : titres, encadrés, blocs', () => {
