@@ -1,4 +1,5 @@
-import { DatePipe } from '@angular/common';
+import { CdkDrag } from '@angular/cdk/drag-drop';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,7 +43,7 @@ interface UploadReport {
 // Fichiers et dossiers d'une UE : parcours, gestion des dossiers, envoi et téléchargement.
 @Component({
   selector: 'app-file-browser',
-  imports: [DatePipe, FolderPicker, Icon, Modal, NameForm, RouterLink],
+  imports: [CdkDrag, DatePipe, FolderPicker, Icon, Modal, NameForm, RouterLink],
   templateUrl: './file-browser.html',
   styleUrl: './file-browser.css',
   host: {
@@ -60,6 +61,7 @@ export class FileBrowser {
 
   private readonly fileService = inject(FileService);
   private readonly dialog = inject(DialogService);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly folders = signal<Folder[]>([]);
   protected readonly files = signal<StoredFile[]>([]);
@@ -143,17 +145,8 @@ export class FileBrowser {
     this.move({ kind: 'file', id: file.id, name: file.name, parentId: file.folderId }, folderId);
   }
 
-  protected startDrag(event: DragEvent, entry: Dragged): void {
+  protected startDrag(entry: Dragged): void {
     this.dragged.set(entry);
-    event.dataTransfer?.setData('text/plain', entry.name);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  protected endDrag(): void {
-    this.dragged.set(null);
-    this.dropTarget.set(undefined);
   }
 
   // Un dossier accepte l'élément glissé s'il ne s'y trouve pas déjà, et s'il n'est ni
@@ -168,27 +161,22 @@ export class FileBrowser {
     );
   }
 
-  protected aim(event: DragEvent, folderId: number | null): void {
-    if (this.canDropOn(folderId)) {
-      event.preventDefault();
-      this.dropTarget.set(folderId);
-    }
+  // Pendant le glisser : le dossier (ou le niveau du chemin) sous la souris se signale
+  // s'il accepte l'élément.
+  protected aimAt(pointer: { x: number; y: number }): void {
+    const folderId = dropFolderAt(this.document, pointer);
+    this.dropTarget.set(folderId !== undefined && this.canDropOn(folderId) ? folderId : undefined);
   }
 
-  protected leave(folderId: number | null): void {
-    if (this.dropTarget() === folderId) {
-      this.dropTarget.set(undefined);
-    }
-  }
-
-  protected dropOn(event: DragEvent, folderId: number | null): void {
+  // Fin du glisser : l'élément retourne à sa place, puis est déplacé s'il a été lâché
+  // sur un dossier qui l'accepte.
+  protected release(source: { reset(): void }): void {
     const entry = this.dragged();
-    const accepted = this.canDropOn(folderId);
-    this.endDrag();
-    if (entry && accepted) {
-      event.preventDefault();
-      // Le dépôt est traité ici : il ne doit pas passer pour un envoi de fichiers.
-      event.stopPropagation();
+    const folderId = this.dropTarget();
+    this.dragged.set(null);
+    this.dropTarget.set(undefined);
+    source.reset();
+    if (entry && folderId !== undefined) {
       this.move(entry, folderId);
     }
   }
@@ -350,4 +338,18 @@ export class FileBrowser {
 
 function failure(name: string, message: string): UploadReport {
   return { name, succeeded: false, message };
+}
+
+// Dossier désigné par l'élément de la page situé sous la souris : son numéro, null pour la
+// racine de l'UE, undefined quand la souris n'est sur aucun dossier.
+function dropFolderAt(
+  document: Document,
+  { x, y }: { x: number; y: number },
+): number | null | undefined {
+  const target = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-drop-folder]')
+    ?.dataset['dropFolder'];
+  if (target === undefined) {
+    return undefined;
+  }
+  return target === 'root' ? null : Number(target);
 }

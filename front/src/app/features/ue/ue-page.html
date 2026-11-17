@@ -110,13 +110,21 @@
     @if (courses().length === 0) {
       <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
     } @else {
-      <ol class="list" appSortableList (sorted)="reorderCourses($event)">
+      <ol
+        class="list"
+        cdkDropList
+        (cdkDropListDropped)="
+          reorderCourses({ from: $event.previousIndex, to: $event.currentIndex })
+        "
+      >
         @for (course of courses(); track course.id) {
-          <li class="list-row course" [appSortableItem]="$index" [appSortableLast]="$last">
+          <li class="list-row course" cdkDrag cdkDragLockAxis="y">
             <button
               type="button"
               class="sort-handle"
-              appSortableHandle
+              cdkDragHandle
+              [appSortKeys]="$index"
+              (sorted)="reorderCourses($event)"
               [attr.aria-label]="
                 'Déplacer le cours ' + course.title + ' : faire glisser, ou flèches haut et bas'
               "

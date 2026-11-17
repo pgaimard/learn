@@ -18,13 +18,8 @@ import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
 import { Segmented, SegmentedOption } from '../../core/ui/segmented';
 import { createOrderSaver } from '../../core/sortable/order-saver';
-import {
-  moveItem,
-  SortableHandle,
-  SortableItem,
-  SortableList,
-  SortChange,
-} from '../../core/sortable/sortable';
+import { CdkDrag, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { moveItem, SortChange, SortKeys } from '../../core/sortable/sortable';
 import { CourseRemoval } from '../cours/course-removal';
 import { CourseService, CourseSummary } from '../cours/course.service';
 import { CommandList } from '../outils/command-list';
@@ -48,9 +43,10 @@ import { Ue, UeService } from './ue.service';
     Segmented,
     ReactiveFormsModule,
     RouterLink,
-    SortableHandle,
-    SortableItem,
-    SortableList,
+    CdkDrag,
+    CdkDragHandle,
+    CdkDropList,
+    SortKeys,
     TermList,
     TermQuickCreate,
   ],
