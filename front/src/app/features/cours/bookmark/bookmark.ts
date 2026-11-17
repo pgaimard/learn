@@ -55,3 +55,43 @@ export function findBookmarkBlock(document: ContentNode, bookmark: Bookmark | nu
   });
   return closest;
 }
+
+function countHeadings(node: ContentNode): number {
+  if (node.type === 'heading') {
+    return 1;
+  }
+  return (node.content ?? []).reduce((count, child) => count + countHeadings(child), 0);
+}
+
+// Rang, parmi tous les titres du document, du titre placé au bloc donné : celui que lui
+// donne le sommaire.
+export function headingRankOf(document: ContentNode, block: number): number {
+  return (document.content ?? [])
+    .slice(0, block)
+    .reduce((count, node) => count + countHeadings(node), 0);
+}
+
+// Titre du sommaire, réduit à ce qui sert ici.
+interface RankedHeading {
+  index: number;
+  level: number;
+}
+
+// Le titre lu se trouve-t-il dans le chapitre marqué : le titre marqué lui-même, ou un de
+// ceux qui le suivent avant le prochain titre de même niveau ou de niveau supérieur ?
+export function isInSection(
+  headings: RankedHeading[],
+  marked: number,
+  read: number | null,
+): boolean {
+  const start = headings.findIndex((heading) => heading.index === marked);
+  if (start < 0 || read === null) {
+    return false;
+  }
+  const level = headings[start].level;
+  const next = headings.findIndex(
+    (heading, position) => position > start && heading.level <= level,
+  );
+  const inside = headings.slice(start, next < 0 ? undefined : next);
+  return inside.some((heading) => heading.index === read);
+}
