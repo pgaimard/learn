@@ -36,6 +36,9 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
       heading: { levels: [2, 3, 4, 5] },
       codeBlock: false,
       link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] },
+      // Emplacement d'arrivée d'un bloc ou d'une image qu'on fait glisser : une bande
+      // bien visible, dessinée par la feuille de style (classe drop-slot).
+      dropcursor: { color: false, width: 4, class: 'drop-slot' },
     }),
     CodeBlockLowlight.configure({ lowlight }),
     TableKit.configure({ table: { resizable: false } }),

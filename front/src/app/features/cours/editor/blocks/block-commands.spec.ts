@@ -6,7 +6,7 @@ import {
   canMoveBlock,
   canTransformBlock,
   deleteBlock,
-  dropBlock,
+  moveBlockTo,
   duplicateBlock,
   moveBlock,
   transformBlock,
@@ -100,7 +100,7 @@ describe('commandes de bloc', () => {
     setup(paragraph('un'), TABLE, paragraph('trois'));
     const table = blockAt(editor.state.doc, posOf(1));
 
-    const transaction = table && dropBlock(editor.state, table, 0);
+    const transaction = table && moveBlockTo(editor.state, table, 0);
     expect(transaction).not.toBeNull();
     if (transaction) {
       editor.view.dispatch(transaction);
@@ -109,11 +109,11 @@ describe('commandes de bloc', () => {
     expect(outline()).toEqual(['table:cellule', 'paragraph:un', 'paragraph:trois']);
   });
 
-  it('dépose un bloc plus bas, à la position visée après son retrait', () => {
+  it('dépose un bloc plus bas, à la frontière visée après son retrait', () => {
     setup(paragraph('un'), paragraph('deux'), paragraph('trois'));
     const first = blockAt(editor.state.doc, 0);
 
-    const transaction = first && dropBlock(editor.state, first, editor.state.doc.content.size);
+    const transaction = first && moveBlockTo(editor.state, first, editor.state.doc.content.size);
     if (transaction) {
       editor.view.dispatch(transaction);
     }
@@ -125,8 +125,8 @@ describe('commandes de bloc', () => {
     setup(paragraph('un'), paragraph('deux'));
     const first = blockAt(editor.state.doc, 0);
 
-    expect(first && dropBlock(editor.state, first, 2)).toBeNull();
-    expect(first && dropBlock(editor.state, first, posOf(1))).toBeNull();
+    expect(first && moveBlockTo(editor.state, first, 2)).toBeNull();
+    expect(first && moveBlockTo(editor.state, first, posOf(1))).toBeNull();
   });
 
   it('duplique un bloc juste en dessous', () => {
