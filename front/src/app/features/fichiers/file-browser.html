@@ -4,11 +4,9 @@
     <a
       [routerLink]="[]"
       [queryParams]="queryFor(null)"
+      data-drop-folder="root"
       [class.is-drop-target]="dropTarget() === null"
       [attr.aria-current]="folderId() === null ? 'page' : null"
-      (dragover)="aim($event, null)"
-      (dragleave)="leave(null)"
-      (drop)="dropOn($event, null)"
     >
       {{ ueCode() }}
     </a>
@@ -17,11 +15,9 @@
       <a
         [routerLink]="[]"
         [queryParams]="queryFor(folder.id)"
+        [attr.data-drop-folder]="folder.id"
         [class.is-drop-target]="dropTarget() === folder.id"
         [attr.aria-current]="last ? 'page' : null"
-        (dragover)="aim($event, folder.id)"
-        (dragleave)="leave(folder.id)"
-        (drop)="dropOn($event, folder.id)"
       >
         {{ folder.name }}
       </a>
@@ -124,62 +120,70 @@
         @for (folder of subfolders(); track folder.id) {
           <li
             class="entry is-folder"
-            draggable="true"
-            [class.is-dragged]="dragged()?.kind === 'folder' && dragged()?.id === folder.id"
+            cdkDrag
+            [cdkDragDisabled]="folder.courseId !== null"
+            [attr.data-drop-folder]="folder.id"
             [class.is-drop-target]="dropTarget() === folder.id"
-            (dragstart)="
-              startDrag($event, {
+            (cdkDragStarted)="
+              startDrag({
                 kind: 'folder',
                 id: folder.id,
                 name: folder.name,
                 parentId: folder.parentId,
               })
             "
-            (dragend)="endDrag()"
-            (dragover)="aim($event, folder.id)"
-            (dragleave)="leave(folder.id)"
-            (drop)="dropOn($event, folder.id)"
+            (cdkDragMoved)="aimAt($event.pointerPosition)"
+            (cdkDragEnded)="release($event.source)"
           >
             <app-icon name="folder" [size]="15" />
             <a class="entry-name folder" [routerLink]="[]" [queryParams]="queryFor(folder.id)">
               <span class="visually-hidden">Dossier </span>{{ folder.name }}
             </a>
-            <span class="detail"></span>
+            <span class="detail">
+              @if (folder.courseId !== null) {
+                <span class="pill" title="Ce dossier suit le titre du cours et se supprime avec lui"
+                  >Cours</span
+                >
+              }
+            </span>
             <span class="detail"></span>
             <span class="entry-actions">
-              <button
-                type="button"
-                class="button button-icon button-ghost"
-                [attr.aria-label]="'Renommer le dossier ' + folder.name"
-                (click)="open({ kind: 'rename-folder', id: folder.id })"
-              >
-                <app-icon name="pencil" />
-              </button>
-              <button
-                type="button"
-                class="button button-icon button-ghost"
-                [attr.aria-label]="'Supprimer le dossier ' + folder.name"
-                (click)="removeFolder(folder)"
-              >
-                <app-icon name="trash" />
-              </button>
+              <!-- Le dossier d'un cours ne se renomme ni ne se supprime à la main. -->
+              @if (folder.courseId === null) {
+                <button
+                  type="button"
+                  class="button button-icon button-ghost"
+                  [attr.aria-label]="'Renommer le dossier ' + folder.name"
+                  (click)="open({ kind: 'rename-folder', id: folder.id })"
+                >
+                  <app-icon name="pencil" />
+                </button>
+                <button
+                  type="button"
+                  class="button button-icon button-ghost"
+                  [attr.aria-label]="'Supprimer le dossier ' + folder.name"
+                  (click)="removeFolder(folder)"
+                >
+                  <app-icon name="trash" />
+                </button>
+              }
             </span>
           </li>
         }
         @for (file of files(); track file.id) {
           <li
             class="entry"
-            draggable="true"
-            [class.is-dragged]="dragged()?.kind === 'file' && dragged()?.id === file.id"
-            (dragstart)="
-              startDrag($event, {
+            cdkDrag
+            (cdkDragStarted)="
+              startDrag({
                 kind: 'file',
                 id: file.id,
                 name: file.name,
                 parentId: file.folderId,
               })
             "
-            (dragend)="endDrag()"
+            (cdkDragMoved)="aimAt($event.pointerPosition)"
+            (cdkDragEnded)="release($event.source)"
           >
             <app-icon name="file" [size]="15" />
             <a class="entry-name" [href]="downloadUrl(file)" download>{{ file.name }}</a>

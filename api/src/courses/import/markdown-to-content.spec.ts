@@ -129,6 +129,20 @@ describe('markdownToContent', () => {
     expect(blocks[7].content?.[0].type).toBe('bulletList');
   });
 
+  it('reconnaît un encadré « Définition »', () => {
+    const { document, errors } = markdownToContent(
+      '> [!definition]\n> Un **processus** est un programme en cours d’exécution.',
+      0,
+    );
+
+    expect(errors).toEqual([]);
+    expect(document.content?.[0]).toMatchObject({
+      type: 'callout',
+      attrs: { kind: 'definition' },
+    });
+    expect(validateContent(document)).toEqual([]);
+  });
+
   it('fait d’une image seule une figure avec texte alternatif et légende', () => {
     expect(blocks[8]).toEqual({
       type: 'figure',

@@ -13,10 +13,10 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
+import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
 import { SlashMenuState } from '../editor/slash/slash-menu-state';
-import { setSheetView } from '../revision/revision-sheet-view';
 import { CodeBlockTarget } from '../editor/selection/selection-watcher';
 import { createCourseExtensions } from './course-extensions';
 import { MentionTerm, setMentionTerms } from './term-mentions';
@@ -39,11 +39,12 @@ export class CourseContent {
   readonly editable = input(false);
   // Nom accessible de la zone de contenu.
   readonly label = input('Contenu du cours');
-  // Réduit l'affichage à la fiche de révision du cours.
-  readonly sheet = input(false);
   // Rang du bloc de premier niveau à amener au milieu de l'écran à l'ouverture ; en
   // édition, le curseur s'y place.
   readonly startBlock = input<number | null>(null);
+
+  // Rang du bloc (un titre) qui porte le marque-page de lecture ; null sans marque-page.
+  readonly bookmarkBlock = input<number | null>(null);
 
   // Termes à rendre cliquables dans le texte, en lecture.
   readonly terms = input<MentionTerm[]>([]);
@@ -143,17 +144,19 @@ export class CourseContent {
       untracked(this.editor)?.commands.setContent(content, { emitUpdate: false });
     });
     effect(() => {
-      const isSheet = this.sheet();
-      const view = this.editor()?.view;
-      if (view) {
-        setSheetView(view, isSheet);
-      }
-    });
-    effect(() => {
       const terms = this.terms();
       const view = this.editor()?.view;
       if (view) {
         setMentionTerms(view, terms);
+      }
+    });
+    effect(() => {
+      const block = this.bookmarkBlock();
+      // Le contenu est relu : le marque-page se repose après un changement de cours.
+      this.content();
+      const view = this.editor()?.view;
+      if (view) {
+        setBookmarkBlock(view, block);
       }
     });
     effect(() => {

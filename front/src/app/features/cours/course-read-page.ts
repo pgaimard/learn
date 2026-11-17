@@ -18,12 +18,12 @@ import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
 import { CommandSheet } from '../outils/command-sheet';
 import { Command, CommandGroup, CommandService, CommandTool } from '../outils/command.service';
-import { TERM_SCREENS } from '../termes/term-screens';
 import { Term, TermService, TermSummary } from '../termes/term.service';
+import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
-import { hasSheetContent, sheetHeadingIndexes } from './revision/revision-sheet';
 import { CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
+import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
 
 const SHOWN_TERMS = 6;
@@ -53,13 +53,14 @@ export class CourseReadPage {
   // Paramètres de la route /ue/:code/cours/:id.
   readonly code = input.required<string>();
   readonly id = input.required<string>();
-  // Paramètre de requête ?vue=fiche : le cours réduit à sa fiche de révision.
+  // Paramètre de requête ?vue=fiche : la fiche de révision du cours, à la place du cours.
   readonly vue = input<string>();
   // Paramètre de requête ?bloc=n : rang du bloc où reprendre la lecture, au retour de
   // l'édition ouverte par « Modifier ici ».
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly courseRemoval = inject(CourseRemoval);
   private readonly termService = inject(TermService);
   private readonly commandService = inject(CommandService);
   private readonly title = inject(Title);
@@ -72,22 +73,55 @@ export class CourseReadPage {
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly isSheet = computed(() => this.vue() === 'fiche');
+  // Rang du titre qui porte le marque-page de lecture ; null sans marque-page, ou si le
+  // titre marqué n'existe plus.
+  protected readonly bookmarkBlock = computed(() => {
+    const course = this.course();
+    if (!course || course.bookmarkTitle === null || course.bookmarkBlock === null) {
+      return null;
+    }
+    return findBookmarkBlock(course.content, {
+      title: course.bookmarkTitle,
+      block: course.bookmarkBlock,
+    });
+  });
+  // Bloc amené à l'écran à l'ouverture : celui demandé au retour de l'édition, sinon le
+  // marque-page. La fiche de révision, elle, s'ouvre à son début.
   protected readonly startBlock = computed(() => {
     const rank = Number(this.bloc());
-    return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
+    if (this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0) {
+      return rank;
+    }
+    return this.isSheet() ? null : this.bookmarkBlock();
   });
-  // Sommaire du cours, réduit aux titres de la fiche quand elle est affichée.
-  protected readonly outline = computed(() => {
+  // Section visée par le clic droit, où le marque-page se poserait ; null hors du texte,
+  // dans la fiche, ou pour un cours sans titre.
+  protected readonly menuSection = computed<Bookmark | null>(() => {
+    const course = this.course();
+    const block = this.contextMenu()?.block ?? null;
+    return course && block !== null && !this.isSheet() ? sectionAt(course.content, block) : null;
+  });
+  // Document affiché : le cours, ou sa fiche de révision ; null pour une fiche qui
+  // n'est pas encore rédigée.
+  protected readonly shownContent = computed(() => {
     const course = this.course();
     if (!course) {
-      return [];
+      return null;
     }
-    const entries = buildOutline(course.content);
-    if (!this.isSheet()) {
-      return entries;
-    }
-    const kept = sheetHeadingIndexes(course.content);
-    return entries.filter((entry) => kept.has(entry.index));
+    return this.isSheet() ? course.sheetContent : course.content;
+  });
+  // Page d'édition du document affiché.
+  protected readonly editLink = computed(() => [
+    '/ue',
+    this.code(),
+    'cours',
+    Number(this.id()),
+    ...(this.isSheet() ? ['fiche', 'edition'] : ['edition']),
+  ]);
+  // Sommaire du document affiché.
+  protected readonly outline = computed(() => {
+    const content = this.shownContent();
+    return content ? buildOutline(content) : [];
   });
   protected readonly sectionCount = computed(
     () => this.outline().filter((entry) => entry.level === 2).length,
@@ -110,8 +144,7 @@ export class CourseReadPage {
   // Termes issus de ce cours ; la colonne n'en montre que les premiers.
   protected readonly terms = signal<TermSummary[]>([]);
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
-  // Tous les termes du dictionnaire et du glossaire : ceux que le texte cite y deviennent
-  // cliquables.
+  // Tous les termes de l'UE : ceux que le texte cite y deviennent cliquables.
   protected readonly allTerms = signal<TermSummary[]>([]);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownTerm = signal<Term | null>(null);
@@ -119,11 +152,6 @@ export class CourseReadPage {
   protected readonly commandGroups = signal<CommandGroup[]>([]);
   // Commande dont la fiche est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownCommand = signal<{ command: Command; tool: CommandTool } | null>(null);
-  protected readonly isSheetEmpty = computed(() => {
-    const course = this.course();
-    return this.isSheet() && !!course && !hasSheetContent(course.content);
-  });
-
   constructor() {
     effect(() => this.load(Number(this.id())));
     // Le menu ouvert reçoit le curseur : il se parcourt et se valide au clavier.
@@ -152,8 +180,23 @@ export class CourseReadPage {
     });
   }
 
-  protected termPath(term: Pick<TermSummary, 'type'>): string {
-    return TERM_SCREENS[term.type].path;
+  // Pose le marque-page sur la section du clic droit, ou le retire (null).
+  protected markPage(bookmark: Bookmark | null): void {
+    const course = this.course();
+    this.contextMenu.set(null);
+    if (!course) {
+      return;
+    }
+    const request = bookmark
+      ? this.courseService.setBookmark(course.id, bookmark)
+      : this.courseService.removeBookmark(course.id);
+    request.subscribe({
+      // Seul le marque-page change : le contenu affiché reste le même objet, la lecture
+      // ne bouge pas.
+      next: ({ bookmarkTitle, bookmarkBlock }) =>
+        this.course.update((shown) => shown && { ...shown, bookmarkTitle, bookmarkBlock }),
+      error: (error: ApiError) => this.errors.set(error.messages),
+    });
   }
 
   // Un titre devient celui de la section en cours dès qu'il passe la ligne de lecture.
@@ -211,17 +254,13 @@ export class CourseReadPage {
   }
 
   protected async remove(course: Course): Promise<void> {
-    const confirmed = await this.dialog.confirmDeletion(
-      'Supprimer le cours',
-      `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
-    );
-    if (!confirmed) {
-      return;
+    try {
+      if (await this.courseRemoval.remove(course)) {
+        void this.router.navigate(['/ue', this.code()]);
+      }
+    } catch (error) {
+      this.errors.set((error as ApiError).messages);
     }
-    this.courseService.remove(course.id).subscribe({
-      next: () => void this.router.navigate(['/ue', this.code()]),
-      error: (error: ApiError) => this.errors.set(error.messages),
-    });
   }
   private load(id: number): void {
     this.returnPosition.set(null);
@@ -241,7 +280,7 @@ export class CourseReadPage {
       next: (groups) => this.commandGroups.set(groups),
       error: () => undefined,
     });
-    this.termService.list().subscribe({
+    this.termService.list({ ue: this.code() }).subscribe({
       next: (terms) => this.allTerms.set(terms),
       error: () => undefined,
     });

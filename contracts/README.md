@@ -10,9 +10,10 @@ produits par l'éditeur. Il est testé des deux côtés :
 
 Ajouter un bloc à l'éditeur impose donc de l'ajouter ici, puis à la liste blanche de l'API.
 
-L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) marque
-un bloc comme épinglé à la fiche de révision du cours. Il est facultatif : un contenu importé ou
-plus ancien qui ne le porte pas reste valide, et le bloc n'est alors pas épinglé.
+L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) date de
+l'ancienne fiche de révision, calculée à partir des blocs épinglés. Il n'a plus d'effet, mais reste
+accepté : les cours déjà enregistrés le portent. La fiche de révision est désormais un document
+rédigé à part (voir « Fiche de révision »).
 
 ## Paquet de cours
 
@@ -21,9 +22,13 @@ Un paquet de cours est une archive `.zip` qui contient :
 - `cours.md` : le cours en Markdown, dont `cours.example.md` montre toutes les constructions acceptées ;
 - `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
   (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
-- `termes.json` (facultatif) : la liste des entrées du glossaire du chapitre.
+- `fiche.md` (facultatif) : la fiche de révision du chapitre (voir « Fiche de révision ») ;
+- `termes.json` (facultatif) : les termes du chapitre (définitions et acronymes), rangés dans
+  l'UE du chapitre.
 - `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
   « Outils et commandes »).
+- `sources/` (facultatif) : les documents qui ont servi à rédiger le cours (voir « Documents
+  sources »).
 
 Règles de `cours.md` :
 
@@ -34,9 +39,81 @@ Règles de `cours.md` :
   si le rang dépasse leur nombre) et les suivants reculent. L'ordre se change ensuite en faisant
   glisser les cours dans la liste ;
 - des titres de niveau 2 à 5 (`##` à `#####`) ; le niveau 1 est réservé au titre du chapitre ;
-- un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]` ou `[!attention]` ;
+- un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]`, `[!attention]`
+  ou `[!definition]` (voir « Encadrés ») ;
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
+
+### Encadrés
+
+| Marqueur | Libellé affiché | À utiliser pour |
+|---|---|---|
+| `[!retenir]` | À retenir | L'essentiel d'une section, ce qu'il faut savoir par cœur. |
+| `[!change]` | Ce qui a changé | Une évolution par rapport au support d'origine ou à une ancienne pratique. |
+| `[!attention]` | Attention | Un piège, une confusion fréquente, une erreur à éviter. |
+| `[!definition]` | Définition | La définition d'une notion, à l'endroit où le cours l'introduit. |
+
+```markdown
+> [!definition]
+> Un **processus** est un programme en cours d'exécution, avec son contexte.
+```
+
+- le libellé (« Définition ») est affiché par l'application : il ne s'écrit pas dans l'encadré ;
+- un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans les
+  termes de l'UE. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
+- le terme défini s'écrit en gras à sa première mention dans l'encadré.
+
+### Fiche de révision
+
+`fiche.md` est la fiche de révision du chapitre : un document à part, rédigé pour réviser, et non
+un extrait du cours. `fiche.example.md` en montre la forme.
+
+- pas d'en-tête : le fichier commence directement par son contenu ; la fiche est rattachée au
+  chapitre de `cours.md` ;
+- mêmes constructions que `cours.md` : titres de niveau 2 à 5, paragraphes, listes, tableaux, blocs
+  de code, citations, encadrés (`[!retenir]`, `[!change]`, `[!attention]`, `[!definition]`),
+  images ;
+- une image s'écrit comme dans le cours, seule dans son paragraphe, et son fichier est dans le
+  dossier `images/` du paquet : `![Texte alternatif](images/fiche-01.svg "Légende")`. Le préfixe
+  `fiche-` évite toute collision avec les figures du cours ; un même fichier peut servir au cours
+  et à la fiche ;
+- la fiche a ses propres titres et son propre sommaire : elle ne reprend pas forcément le plan du
+  cours. Elle va à l'essentiel — définitions, schémas de synthèse, tableaux comparatifs, méthodes,
+  pièges — sans renvoyer au cours pour être comprise ;
+- un `fiche.md` vide, invalide, ou qui référence une image absente fait refuser tout le paquet.
+
+Ce que fait l'import :
+
+- un paquet avec `fiche.md` crée la fiche du chapitre, ou remplace celle qui existe (ses anciennes
+  images sont supprimées) ;
+- un paquet sans `fiche.md` ne touche pas à la fiche du chapitre : réimporter le cours seul garde
+  la fiche déjà en place ;
+- la fiche se relit par le bouton « Fiche de révision » du cours et se retouche dans l'application,
+  avec le même éditeur que le cours ;
+- le Markdown collé, sans paquet, ne transporte pas de fiche.
+
+`fiche.example.md` est importé par les tests de l'API (`course-imports.e2e-spec.ts`).
+
+### Documents sources
+
+Chaque cours a, dans les fichiers de son UE, un dossier à son nom. Le paquet y dépose les
+documents qui ont servi à rédiger le cours : supports fournis (PDF, diaporama, document Word),
+sujets, annexes. Ils y restent consultables à côté du cours réécrit.
+
+- Les placer dans le dossier `sources/` du paquet, directement dedans : un sous-dossier fait
+  refuser le paquet.
+- Y mettre les documents d'origine tels qu'ils ont été fournis, sous leur nom d'origine, sans les
+  convertir ni les renommer. Ne pas y remettre `cours.md`, `fiche.md` ni les figures de `images/`.
+- Un nom de fichier ne contient ni « / », ni « \ », ni caractère de contrôle, et fait 255
+  caractères au plus. Tous les formats sont acceptés : un document source n'est jamais affiché
+  ni exécuté par l'application, seulement téléchargé.
+- Le paquet entier, sources comprises, fait 50 Mo au plus une fois décompressé et 500 fichiers
+  au plus. Un support trop lourd est laissé hors du paquet, à déposer à la main dans le dossier
+  du cours.
+- Au réimport d'un chapitre, un document de même nom (sans tenir compte de la casse) est
+  remplacé ; les autres documents du dossier sont gardés, y compris ceux déposés à la main.
+- Le dossier porte le titre du chapitre (`titre` de l'en-tête) : il est créé à l'import et suit
+  le titre si le cours est renommé. Il n'y a rien à déclarer dans `cours.md`.
 
 ### Renvois vers une section
 
@@ -57,9 +134,10 @@ aucune syntaxe à écrire : il suffit de rédiger le renvoi comme ci-dessous.
 
 ### Termes cliquables dans le texte
 
-En lecture, l'application rend cliquable, dans le texte du cours, chaque terme présent dans le
-dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à
-écrire, et le terme n'a pas besoin de venir du même paquet.
+En lecture, l'application rend cliquable, dans le texte du cours, chaque terme de l'UE du
+cours : un clic ouvre sa définition complète. Il n'y a aucune syntaxe à écrire, et le terme n'a
+pas besoin de venir du même paquet : il suffit qu'il appartienne à la même UE. Un terme d'une
+autre UE n'est pas reconnu.
 
 - Le terme est reconnu par son `libelle`, en mot entier : écrire dans le cours le libellé tel
   qu'il figure dans `termes.json`. « processus » est reconnu pour le libellé « Processus » ;
@@ -70,6 +148,19 @@ dictionnaire ou le glossaire : un clic ouvre sa définition complète. Il n'y a 
   que « contexte »).
 - Rien n'est reconnu dans les titres ni dans le code.
 
+### Les termes appartiennent à l'UE du chapitre
+
+Il n'y a pas de dictionnaire ni de glossaire commun à toutes les UE : chaque terme appartient à
+une UE, celle du `ue` de l'en-tête de `cours.md`. Le même libellé peut donc exister dans deux UE
+avec deux définitions différentes (« PID » en systèmes et en automatique).
+
+- Rédiger chaque définition pour l'UE du chapitre, sans chercher à couvrir le sens que le terme
+  a dans une autre matière.
+- Lister dans `termes.json` tout terme utile au chapitre, même s'il a déjà été défini dans le
+  paquet d'une autre UE : il n'y est pas visible depuis celle-ci.
+- Un terme déjà défini dans un autre chapitre de la même UE n'a pas à être répété : il est
+  reconnu dans le texte, et le répéter le signalerait comme doublon.
+
 Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'entrée
 (définition, acronyme défini, acronyme seul, définition riche) :
 
@@ -79,15 +170,15 @@ Règles de `termes.json`, dont `termes.example.json` montre les quatre formes d'
   `cours.md`, images comprises ; elle est obligatoire pour une définition, facultative pour un
   acronyme ;
 - toute autre clé est refusée, ainsi que deux entrées de même type et de même libellé ;
-- un terme déjà présent dans l'application (même type, même libellé sans tenir compte de la casse)
-  est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
+- un terme déjà présent dans l'UE du chapitre (même type, même libellé sans tenir compte de la
+  casse) est signalé à l'aperçu. Par défaut il est laissé tel quel ; en cochant « Remplacer leur
   définition par celle du paquet », sa définition, sa forme développée et ses images sont
   remplacées par celles du paquet, et il est rattaché au cours importé. Son libellé ne change pas.
 
 ### Définition riche
 
 Une définition (ou la définition d'un acronyme) peut être un mini-cours : paragraphes, listes,
-tableaux, blocs de code, citations, encadrés `[!retenir]`, `[!change]`, `[!attention]`, titres de
+tableaux, blocs de code, citations, encadrés `[!retenir]`, `[!change]`, `[!attention]`, `[!definition]`, titres de
 niveau 2 à 5, et images. Dans le JSON, les sauts de ligne du Markdown s'écrivent `\n` et un bloc
 est séparé du suivant par une ligne vide (`\n\n`).
 

@@ -1,4 +1,6 @@
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
@@ -7,8 +9,8 @@ import { FileBrowser } from './file-browser';
 import { FileService, Folder, StoredFile } from './file.service';
 
 const FOLDERS: Folder[] = [
-  { id: 1, parentId: null, name: 'TD' },
-  { id: 2, parentId: 1, name: 'Corrigés' },
+  { id: 1, parentId: null, name: 'TD', courseId: null },
+  { id: 2, parentId: 1, name: 'Corrigés', courseId: null },
 ];
 const NOTES: StoredFile = {
   id: 7,
@@ -135,7 +137,9 @@ describe('FileBrowser', () => {
 
   it('crée un dossier dans le dossier affiché puis recharge', () => {
     setup(1, []);
-    service.createFolder.mockReturnValue(of({ id: 3, parentId: 1, name: 'Sujets' }));
+    service.createFolder.mockReturnValue(
+      of({ id: 3, parentId: 1, name: 'Sujets', courseId: null }),
+    );
     click('Nouveau dossier');
 
     submitName(' Sujets ');
@@ -158,9 +162,25 @@ describe('FileBrowser', () => {
     expect(element().querySelector('form')).not.toBeNull();
   });
 
+  it('ne laisse ni renommer ni supprimer le dossier d’un cours', () => {
+    setup();
+    service.listFolders.mockReturnValue(
+      of([...FOLDERS, { id: 5, parentId: null, name: 'Processus', courseId: 12 }]),
+    );
+    fixture.componentRef.setInput('ueCode', 'NFE108');
+    fixture.detectChanges();
+
+    expect(text()).toContain('Processus Cours');
+    expect(element().querySelector('[aria-label="Renommer le dossier TD"]')).not.toBeNull();
+    expect(element().querySelector('[aria-label="Renommer le dossier Processus"]')).toBeNull();
+    expect(element().querySelector('[aria-label="Supprimer le dossier Processus"]')).toBeNull();
+  });
+
   it('renomme un dossier', () => {
     setup();
-    service.renameFolder.mockReturnValue(of({ id: 1, parentId: null, name: 'Travaux dirigés' }));
+    service.renameFolder.mockReturnValue(
+      of({ id: 1, parentId: null, name: 'Travaux dirigés', courseId: null }),
+    );
     click('Renommer le dossier TD');
     expect(element().querySelector<HTMLInputElement>('#entry-name')?.value).toBe('TD');
 
@@ -284,32 +304,40 @@ describe('FileBrowser', () => {
   });
 
   describe('glisser-déposer', () => {
-    // Événement de glisser tel que le navigateur l'envoie, avec de quoi porter des données.
-    function drag(target: Element | null, type: string): Event {
-      const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), {
-        dataTransfer: { setData: vi.fn(), effectAllowed: 'none', types: [] },
-      });
-      target?.dispatchEvent(event);
+    const fileRow = (): DebugElement =>
+      fixture.debugElement.query(By.css('li.entry:not(.is-folder)'));
+    const folderRow = (): DebugElement => fixture.debugElement.query(By.css('li.entry.is-folder'));
+    const pathLinks = (): Element[] => Array.from(element().querySelectorAll('.path a'));
+    const source = { reset: vi.fn() };
+
+    // Le glisser est celui du cdk : on rejoue ses trois temps, la souris étant sur « over ».
+    function start(row: DebugElement): void {
+      row.triggerEventHandler('cdkDragStarted');
       fixture.detectChanges();
-      return event;
     }
 
-    const fileRow = (): Element | null => element().querySelector('li.entry:not(.is-folder)');
-    const folderRow = (): Element | null => element().querySelector('li.entry.is-folder');
-    const pathLinks = (): Element[] => Array.from(element().querySelectorAll('.path a'));
+    function hover(row: DebugElement, over: Element | null): void {
+      document.elementFromPoint = () => over;
+      row.triggerEventHandler('cdkDragMoved', { pointerPosition: { x: 10, y: 10 } });
+      fixture.detectChanges();
+    }
 
-    it('déplace un fichier glissé sur un dossier', () => {
+    function drop(row: DebugElement): void {
+      row.triggerEventHandler('cdkDragEnded', { source });
+      fixture.detectChanges();
+    }
+
+    it('déplace un fichier glissé sur un dossier, signalé pendant le survol', () => {
       setup();
       service.updateFile.mockReturnValue(of({ ...NOTES, folderId: 1 }));
 
-      drag(fileRow(), 'dragstart');
-      expect(fileRow()?.classList).toContain('is-dragged');
-      const over = drag(folderRow(), 'dragover');
-      expect(over.defaultPrevented).toBe(true);
-      expect(folderRow()?.classList).toContain('is-drop-target');
+      start(fileRow());
+      hover(fileRow(), folderRow().nativeElement.querySelector('a'));
+      expect(folderRow().nativeElement.classList).toContain('is-drop-target');
 
-      drag(folderRow(), 'drop');
+      drop(fileRow());
 
+      expect(source.reset).toHaveBeenCalled();
       expect(service.updateFile).toHaveBeenCalledWith(7, { folderId: 1 });
       expect(text()).toContain('Déplacé vers « TD »');
       expect(service.upload).not.toHaveBeenCalled();
@@ -317,26 +345,32 @@ describe('FileBrowser', () => {
 
     it('remonte un dossier glissé sur le chemin', () => {
       setup(1, []);
-      service.moveFolder.mockReturnValue(of({ id: 2, parentId: null, name: 'Corrigés' }));
+      service.moveFolder.mockReturnValue(
+        of({ id: 2, parentId: null, name: 'Corrigés', courseId: null }),
+      );
 
-      drag(folderRow(), 'dragstart');
-      drag(pathLinks()[0], 'dragover');
-      drag(pathLinks()[0], 'drop');
+      start(folderRow());
+      hover(folderRow(), pathLinks()[0]);
+      drop(folderRow());
 
       expect(service.moveFolder).toHaveBeenCalledWith(2, null);
     });
 
-    it('refuse un dépôt sans effet : là où l’élément se trouve déjà, ou un dossier sur lui-même', () => {
+    it('refuse un dépôt sans effet : hors d’un dossier, là où l’élément se trouve déjà, ou un dossier sur lui-même', () => {
       setup();
 
-      drag(fileRow(), 'dragstart');
-      expect(drag(pathLinks()[0], 'dragover').defaultPrevented).toBe(false);
-      drag(pathLinks()[0], 'drop');
-      drag(fileRow(), 'dragend');
+      start(fileRow());
+      hover(fileRow(), element());
+      drop(fileRow());
 
-      drag(folderRow(), 'dragstart');
-      expect(drag(folderRow(), 'dragover').defaultPrevented).toBe(false);
-      drag(folderRow(), 'drop');
+      start(fileRow());
+      hover(fileRow(), pathLinks()[0]);
+      expect(pathLinks()[0].classList).not.toContain('is-drop-target');
+      drop(fileRow());
+
+      start(folderRow());
+      hover(folderRow(), folderRow().nativeElement);
+      drop(folderRow());
 
       expect(service.updateFile).not.toHaveBeenCalled();
       expect(service.moveFolder).not.toHaveBeenCalled();
@@ -348,9 +382,9 @@ describe('FileBrowser', () => {
         throwError(() => new ApiError(400, ['Ce dossier n’existe pas dans cette UE.'])),
       );
 
-      drag(fileRow(), 'dragstart');
-      drag(folderRow(), 'dragover');
-      drag(folderRow(), 'drop');
+      start(fileRow());
+      hover(fileRow(), folderRow().nativeElement);
+      drop(fileRow());
 
       expect(text()).toContain('Ce dossier n’existe pas dans cette UE.');
     });

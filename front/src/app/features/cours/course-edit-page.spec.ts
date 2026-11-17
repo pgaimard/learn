@@ -15,6 +15,9 @@ const COURSE: Course = {
   position: 3,
   updatedAt: '2026-11-10T10:00:00.000Z',
   ue: { code: 'UTC502', title: 'Systèmes' },
+  sheetContent: null,
+  bookmarkTitle: null,
+  bookmarkBlock: null,
   content: {
     type: 'doc',
     content: [
@@ -35,6 +38,7 @@ describe('CourseEditPage', () => {
     get: vi.fn<CourseService['get']>(),
     update: vi.fn<CourseService['update']>(),
     remove: vi.fn<CourseService['remove']>(),
+    folder: vi.fn<CourseService['folder']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
   const dialog = {
@@ -86,6 +90,10 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
   }
 
+  function saveButton(): HTMLButtonElement | null {
+    return element().querySelector<HTMLButtonElement>('.actions .button-primary');
+  }
+
   function typeTitle(title: string): void {
     const field = element().querySelector<HTMLInputElement>('#edit-title');
     if (field) {
@@ -120,7 +128,7 @@ describe('CourseEditPage', () => {
       title: 'Les processus',
       content: COURSE.content,
     });
-    expect(element().textContent).toContain('Enregistré à');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('affiche le refus de l’API et garde les modifications en attente', async () => {
@@ -133,7 +141,7 @@ describe('CourseEditPage', () => {
     click('Enregistrer');
 
     expect(element().textContent).toContain('Le titre ne doit pas dépasser 200 caractères.');
-    expect(element().textContent).toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(false);
   });
 
   it('n’enregistre pas un titre vide', async () => {
@@ -224,9 +232,7 @@ describe('CourseEditPage', () => {
     fixture.detectChanges();
 
     expect(element().querySelector('.ProseMirror strong')).not.toBeNull();
-    expect(element().querySelector('.status')?.textContent).toContain(
-      'Modifications non enregistrées',
-    );
+    expect(saveButton()?.disabled).toBe(false);
     expect(await fixture.componentInstance.canLeave()).toBe(false);
   });
 
@@ -292,18 +298,20 @@ describe('CourseEditPage', () => {
 
     expect(dialog.prompt).toHaveBeenCalledOnce();
     expect(element().querySelector('.ProseMirror a')).toBeNull();
-    expect(element().textContent).not.toContain('Modifications non enregistrées');
+    expect(saveButton()?.disabled).toBe(true);
   });
 
   it('supprime le cours après confirmation puis revient à l’UE', async () => {
     service.remove.mockReturnValue(of(undefined));
+    service.folder.mockReturnValue(of(null));
     dialog.confirmDeletion.mockResolvedValue(true);
     await setup();
 
-    click('Supprimer le cours');
+    element().querySelector<HTMLButtonElement>('[aria-label="Supprimer le cours"]')?.click();
+    fixture.detectChanges();
     await settle();
 
-    expect(service.remove).toHaveBeenCalledWith(7);
+    expect(service.remove).toHaveBeenCalledWith(7, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
   });
 

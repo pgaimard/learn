@@ -33,13 +33,15 @@ export interface TermSummary extends Pick<
 > {
   // Début de la définition en texte brut.
   excerpt: string;
-  // Origine du terme : code de son UE, cours dont il est issu ; null s'il n'en a pas.
-  ueCode: string | null;
+  // Code de l'UE du terme, et cours dont il est issu ; null s'il n'en a pas.
+  ueCode: string;
   courseId: number | null;
   courseTitle: string | null;
 }
 
 type Origin = Pick<Term, 'ueId' | 'courseId'>;
+// À la création, l'UE n'est pas encore connue.
+type CurrentOrigin = { ueId: number | null; courseId: number | null };
 type OriginRequest = Pick<CreateTermDto, 'ueCode' | 'courseId'>;
 
 @Injectable()
@@ -159,21 +161,21 @@ export class TermsService {
     await this.imagesService.removeFiles(images);
   }
 
-  // Un cours d'origine impose son UE ; sans cours, l'UE est libre.
+  // Un cours d'origine impose son UE ; sans cours, l'UE se choisit, mais il en faut une.
   private async resolveOrigin(
     request: OriginRequest,
-    current: Origin,
+    current: CurrentOrigin,
   ): Promise<Origin> {
     const courseId =
       request.courseId === undefined ? current.courseId : request.courseId;
     if (courseId !== null) {
       return this.resolveCourseOrigin(courseId, request.ueCode);
     }
-    if (request.ueCode === undefined) {
+    if (request.ueCode === undefined && current.ueId !== null) {
       return { ueId: current.ueId, courseId: null };
     }
-    if (request.ueCode === null) {
-      return { ueId: null, courseId: null };
+    if (request.ueCode === undefined || request.ueCode === null) {
+      throw new BadRequestException('Un terme appartient à une UE.');
     }
     const ue = await this.findUe(request.ueCode, BadRequestException);
     return { ueId: ue.id, courseId: null };
@@ -225,8 +227,8 @@ export class TermsService {
 }
 
 function duplicateMessage(term: Pick<Term, 'type' | 'label'>): string {
-  const screen = term.type === 'acronym' ? 'le glossaire' : 'le dictionnaire';
-  return `« ${term.label} » existe déjà dans ${screen}.`;
+  const kind = term.type === 'acronym' ? 'les acronymes' : 'les définitions';
+  return `« ${term.label} » existe déjà dans ${kind} de cette UE.`;
 }
 
 function checkContent(content: unknown): ContentNode {

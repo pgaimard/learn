@@ -59,20 +59,13 @@ export function moveUnit(editor: Editor, pos: number, direction: -1 | 1): boolea
   return true;
 }
 
-// Dépose un chapitre entre deux blocs de premier niveau, au plus près de la position visée.
-// Renvoie null si le dépôt tombe dans le chapitre lui-même.
-export function dropSection(
+// Déplace un chapitre à la frontière donnée, entre deux blocs de premier niveau.
+// Renvoie null si elle tombe dans le chapitre lui-même.
+export function moveSectionTo(
   state: EditorState,
   section: Section,
-  aimedPos: number,
+  boundary: number,
 ): Transaction | null {
-  const block = blockAt(state.doc, aimedPos);
-  const middle = block ? block.pos + block.node.nodeSize / 2 : 0;
-  const boundary = !block
-    ? state.doc.content.size
-    : aimedPos < middle
-      ? block.pos
-      : block.pos + block.node.nodeSize;
   if (boundary >= section.from && boundary <= section.to) {
     return null;
   }

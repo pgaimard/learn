@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,14 +14,14 @@ import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
-import { MenuButton } from '../../core/ui/menu-button';
 import { shortcut } from '../../core/ui/platform';
+import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
 
 @Component({
   selector: 'app-course-edit-page',
-  imports: [Icon, MenuButton, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, ContentEditor, ReactiveFormsModule, RouterLink],
   templateUrl: './course-edit-page.html',
   styleUrl: './course-edit-page.css',
   host: {
@@ -40,6 +39,7 @@ export class CourseEditPage {
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly courseRemoval = inject(CourseRemoval);
   private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -55,7 +55,6 @@ export class CourseEditPage {
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
-  protected readonly savedAt = signal<Date | null>(null);
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
@@ -83,6 +82,10 @@ export class CourseEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const content = this.editor()?.getContent();
     if (this.form.invalid || this.isSaving() || !content) {
       this.form.markAllAsTouched();
@@ -95,7 +98,6 @@ export class CourseEditPage {
       next: (course) => {
         this.isSaving.set(false);
         this.isDirty.set(false);
-        this.savedAt.set(new Date());
         this.title.setTitle(`Édition – ${course.title}`);
       },
       error: (error: ApiError) => {
@@ -116,22 +118,17 @@ export class CourseEditPage {
 
   protected async remove(): Promise<void> {
     const course = this.course();
-    if (
-      !course ||
-      !(await this.dialog.confirmDeletion(
-        'Supprimer le cours',
-        `Le cours « ${course.title} » et ses images seront supprimés définitivement.`,
-      ))
-    ) {
+    if (!course) {
       return;
     }
-    this.courseService.remove(course.id).subscribe({
-      next: () => {
+    try {
+      if (await this.courseRemoval.remove(course)) {
         this.isDirty.set(false);
         void this.router.navigate(['/ue', this.code()]);
-      },
-      error: (error: ApiError) => this.errors.set(error.messages),
-    });
+      }
+    } catch (error) {
+      this.errors.set((error as ApiError).messages);
+    }
   }
 
   protected saveFromKeyboard(event: Event): void {

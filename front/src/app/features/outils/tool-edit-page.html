@@ -166,36 +166,26 @@
         <p class="status" aria-live="polite">
           @if (isSaving()) {
             Enregistrement…
-          } @else if (isDirty()) {
-            <span class="unsaved" aria-hidden="true"></span>Modifications non enregistrées
-          } @else if (savedAt(); as savedAt) {
-            Enregistré à {{ savedAt | date: 'HH:mm' }}
           }
         </p>
         <a class="button" [routerLink]="['/outils', tool.id]">Terminer</a>
         <button
           type="button"
           class="button button-primary"
-          [disabled]="isSaving()"
+          [disabled]="isSaving() || !isDirty()"
           (click)="save()"
         >
           Enregistrer <span class="kbd save-key" aria-hidden="true">{{ saveKey }}</span>
         </button>
-        <app-menu-button
-          label="Autres actions"
-          buttonClass="button button-icon button-ghost"
-          [alignEnd]="true"
+        <button
+          type="button"
+          class="button button-icon button-ghost"
+          aria-label="Supprimer l’outil"
+          title="Supprimer l’outil"
+          (click)="remove()"
         >
-          <app-icon menuTrigger name="dots" [size]="15" />
-          <button
-            type="button"
-            role="menuitem"
-            class="menu-item menu-item-danger"
-            (click)="remove()"
-          >
-            <app-icon name="trash" [size]="15" />Supprimer l’outil
-          </button>
-        </app-menu-button>
+          <app-icon name="trash" [size]="15" />
+        </button>
       </div>
 
       <div role="alert">

@@ -8,8 +8,8 @@ import { SelectionWatcher, SelectionWatcherOptions } from '../editor/selection/s
 import { SlashWatcher, SlashWatcherOptions } from '../editor/slash/slash-watcher';
 import { TableTools, TableToolsOptions } from '../editor/tables/table-tools';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+import { BookmarkMark } from '../bookmark/bookmark-mark';
 import { RevisionPin } from '../revision/revision-pin';
-import { RevisionSheetView } from '../revision/revision-sheet-view';
 import { Callout } from './callout';
 import { Figure } from './figure';
 import { SectionReferences } from './section-references';
@@ -36,6 +36,9 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
       heading: { levels: [2, 3, 4, 5] },
       codeBlock: false,
       link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] },
+      // Emplacement d'arrivée d'un bloc ou d'une image qu'on fait glisser : une bande
+      // bien visible, dessinée par la feuille de style (classe drop-slot).
+      dropcursor: { color: false, width: 4, class: 'drop-slot' },
     }),
     CodeBlockLowlight.configure({ lowlight }),
     TableKit.configure({ table: { resizable: false } }),
@@ -44,8 +47,8 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     SectionFolding,
     SectionReferences,
     TermMentions,
+    BookmarkMark,
     RevisionPin,
-    RevisionSheetView,
     ...(tools
       ? [
           BlockHandle.configure(tools.blockHandle),

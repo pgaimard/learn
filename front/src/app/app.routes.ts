@@ -40,24 +40,15 @@ export const routes: Routes = [
           import('./features/taches/tasks-page').then((module) => module.TasksPage),
       },
       {
-        path: 'dictionnaire',
-        title: 'Dictionnaire',
-        data: { type: 'definition' },
-        loadChildren: () =>
-          import('./features/termes/termes.routes').then((module) => module.dictionnaireRoutes),
-      },
-      {
-        path: 'glossaire',
-        title: 'Glossaire',
-        data: { type: 'acronym' },
-        loadChildren: () =>
-          import('./features/termes/termes.routes').then((module) => module.glossaireRoutes),
-      },
-      {
         path: 'outils',
         title: 'Outils',
         loadChildren: () =>
           import('./features/outils/outils.routes').then((module) => module.outilsRoutes),
+      },
+      {
+        path: 'ue/:code/termes',
+        loadChildren: () =>
+          import('./features/termes/termes.routes').then((module) => module.termesRoutes),
       },
       {
         path: 'ue/:code/cours',

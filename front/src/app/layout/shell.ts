@@ -16,19 +16,10 @@ import { ThemeService } from '../core/theme/theme.service';
 import { Icon } from '../core/ui/icon';
 import { SearchBox } from '../features/recherche/search-box';
 import { TaskReminderBadge } from '../features/taches/task-reminder-badge';
-import { TermQuickCreate } from '../features/termes/term-quick-create';
 
 @Component({
   selector: 'app-shell',
-  imports: [
-    Icon,
-    RouterLink,
-    RouterLinkActive,
-    RouterOutlet,
-    SearchBox,
-    TaskReminderBadge,
-    TermQuickCreate,
-  ],
+  imports: [Icon, RouterLink, RouterLinkActive, RouterOutlet, SearchBox, TaskReminderBadge],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
   host: {

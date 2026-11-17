@@ -33,6 +33,9 @@ function course(...content: ContentNode[]): Course {
     updatedAt: '2026-11-10T10:00:00.000Z',
     ue: { code: 'UTC502', title: 'Systèmes' },
     content: { type: 'doc', content },
+    sheetContent: null,
+    bookmarkTitle: null,
+    bookmarkBlock: null,
   };
 }
 
@@ -54,6 +57,8 @@ describe('CourseReadPage', () => {
   const listTerms = vi.fn<TermService['list']>();
   const getTerm = vi.fn<TermService['get']>();
   const listCommands = vi.fn<CommandService['listByCourse']>();
+  const setBookmark = vi.fn<CourseService['setBookmark']>();
+  const removeBookmark = vi.fn<CourseService['removeBookmark']>();
   const removeCourse = vi.fn<CourseService['remove']>();
   const confirmDeletion = vi.fn<DialogService['confirmDeletion']>();
 
@@ -70,7 +75,16 @@ describe('CourseReadPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: CourseService, useValue: { get: () => of(shown), remove: removeCourse } },
+        {
+          provide: CourseService,
+          useValue: {
+            get: () => of(shown),
+            remove: removeCourse,
+            folder: () => of(null),
+            setBookmark,
+            removeBookmark,
+          },
+        },
         { provide: DialogService, useValue: { confirmDeletion } },
         { provide: TermService, useValue: { list: listTerms, get: getTerm } },
         { provide: CommandService, useValue: { listByCourse: listCommands } },
@@ -96,11 +110,11 @@ describe('CourseReadPage', () => {
     );
   }
 
-  // Textes des blocs de premier niveau restés visibles.
+  // Textes des blocs de premier niveau du document affiché.
   function visibleBlocks(): string[] {
-    return Array.from(element().querySelectorAll('.ProseMirror > *'))
-      .filter((block) => !block.classList.contains('is-off-sheet'))
-      .map((block) => (block.textContent ?? '').trim());
+    return Array.from(element().querySelectorAll('.ProseMirror > *')).map((block) =>
+      (block.textContent ?? '').trim(),
+    );
   }
 
   function link(label: string): HTMLAnchorElement | undefined {
@@ -122,7 +136,7 @@ describe('CourseReadPage', () => {
 
     button?.click();
     await fixture.whenStable();
-    expect(removeCourse).toHaveBeenCalledWith(COURSE.id);
+    expect(removeCourse).toHaveBeenCalledWith(COURSE.id, false);
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502']);
   });
 
@@ -182,7 +196,7 @@ describe('CourseReadPage', () => {
       label: 'PCB',
       expandedForm: 'Process Control Block',
       excerpt: '',
-      ueCode: null,
+      ueCode: 'UTC502',
       courseId: null,
       courseTitle: null,
     };
@@ -193,7 +207,7 @@ describe('CourseReadPage', () => {
         label: 'PCB',
         expandedForm: 'Process Control Block',
         content: { type: 'doc', content: [paragraph('Bloc de contrôle du processus.')] },
-        ue: null,
+        ue: { code: 'UTC502', title: 'Systèmes' },
         course: null,
       }),
     );
@@ -207,7 +221,7 @@ describe('CourseReadPage', () => {
     expect(dialog.querySelector('h2')?.textContent).toBe('PCB');
     expect(dialog.textContent).toContain('Process Control Block');
     expect(dialog.textContent).toContain('Bloc de contrôle du processus.');
-    expect(link('Ouvrir dans le glossaire')?.getAttribute('href')).toBe('/glossaire/3');
+    expect(link('Ouvrir le terme')?.getAttribute('href')).toBe('/ue/UTC502/termes/3');
   });
 
   it('propose, au clic droit dans le cours, de le modifier à cet endroit', async () => {
@@ -227,6 +241,92 @@ describe('CourseReadPage', () => {
     document.body.click();
     fixture.detectChanges();
     expect(link('Modifier ici')).toBeUndefined();
+  });
+
+  function rightClickOnBlock(block: number): void {
+    const content = fixture.debugElement.query(By.directive(CourseContent))
+      .componentInstance as CourseContent;
+    // jsdom ne calcule pas de mise en page : le clic vise le bloc de ce rang.
+    content.blockIndexAt = () => block;
+    element()
+      .querySelector('.article p')
+      ?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+  }
+
+  function menuButton(label: string): HTMLButtonElement | undefined {
+    return Array.from(element().querySelectorAll<HTMLButtonElement>('.context-menu button')).find(
+      (candidate) => (candidate.textContent ?? '').trim() === label,
+    );
+  }
+
+  it('marque la page sur la section du clic droit, et y pose le point', async () => {
+    await setup(COURSE);
+    setBookmark
+      .mockReset()
+      .mockReturnValue(of({ ...COURSE, bookmarkTitle: '2.1 fork', bookmarkBlock: 5 }));
+
+    // Sixième bloc du cours : le paragraphe sous « 2.1 fork ».
+    rightClickOnBlock(6);
+    menuButton('Marquer ma page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(setBookmark).toHaveBeenCalledWith(7, { title: '2.1 fork', block: 5 });
+    expect(element().querySelector('.is-bookmarked')?.textContent).toBe('2.1 fork');
+    expect(element().querySelector('.context-menu')).toBeNull();
+  });
+
+  it('propose de retirer le marque-page depuis une autre section, à côté de « Marquer ma page »', async () => {
+    await setup({ ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 });
+    removeBookmark.mockReset().mockReturnValue(of(COURSE));
+
+    rightClickOnBlock(6);
+    expect(menuButton('Marquer ma page')).toBeDefined();
+    menuButton('Retirer le marque-page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(removeBookmark).toHaveBeenCalledWith(7);
+  });
+
+  it('propose de retirer le marque-page dans la section marquée', async () => {
+    await setup({ ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 });
+    removeBookmark.mockReset().mockReturnValue(of(COURSE));
+
+    rightClickOnBlock(4);
+    expect(menuButton('Marquer ma page')).toBeUndefined();
+    menuButton('Retirer le marque-page')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(removeBookmark).toHaveBeenCalledWith(7);
+    expect(element().querySelector('.is-bookmarked')).toBeNull();
+  });
+
+  it('reprend la lecture au marque-page à l’ouverture du cours, pas dans sa fiche', async () => {
+    const scrolled: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+    Element.prototype.scrollIntoView = function (this: Element): void {
+      scrolled.push((this.textContent ?? '').trim());
+    };
+    // Le cours a été retouché depuis : le titre marqué est retrouvé par son texte.
+    const marked = { ...COURSE, bookmarkTitle: '2.1 fork', bookmarkBlock: 9 };
+
+    await setup(marked);
+    expect(scrolled).toEqual(['2.1 fork']);
+    expect(element().querySelector('.is-bookmarked')?.textContent).toBe('2.1 fork');
+
+    TestBed.resetTestingModule();
+    scrolled.length = 0;
+    await setup(marked, 'fiche');
+    expect(scrolled).toEqual([]);
+
+    if (original) {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', original);
+    } else {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
   });
 
   it('reprend la lecture au bloc demandé au retour de l’édition (?bloc=n)', async () => {
@@ -281,42 +381,67 @@ describe('CourseReadPage', () => {
     viewer.close();
   });
 
-  it('réduit le cours à sa fiche : encadrés « À retenir », blocs épinglés et leurs titres', async () => {
-    await setup(COURSE, 'fiche');
+  // Fiche rédigée : un document à part, avec ses propres titres.
+  const SHEET: ContentNode = {
+    type: 'doc',
+    content: [
+      heading(2, 'L’essentiel'),
+      RETENIR,
+      heading(2, 'À savoir refaire'),
+      paragraph('fork'),
+    ],
+  };
+
+  it('affiche la fiche de révision rédigée à la place du cours, avec son sommaire', async () => {
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
     expect(visibleBlocks()).toEqual([
-      '1. Notion',
+      'L’essentiel',
       'Un programme est passif.',
-      '2. Création',
-      '2.1 fork',
-      'Appel épinglé.',
+      'À savoir refaire',
+      'fork',
     ]);
-    expect(outline()).toEqual(['1. Notion', '2. Création', '2.1 fork']);
+    expect(outline()).toEqual(['L’essentiel', 'À savoir refaire']);
     expect(link('Cours complet')?.getAttribute('href')).toBe('/');
+    expect(link('Modifier la fiche')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/fiche/edition',
+    );
     expect(element().querySelector('.sheet-note')).not.toBeNull();
   });
 
   it('revient au cours complet quand la vue change', async () => {
-    await setup(COURSE, 'fiche');
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
     fixture.componentRef.setInput('vue', undefined);
     fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(visibleBlocks()).toHaveLength(9);
     expect(outline()).toHaveLength(4);
+    expect(link('Modifier')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/edition');
   });
 
-  it('explique comment remplir une fiche vide', async () => {
-    await setup(course(heading(2, 'Titre'), paragraph('Texte.')), 'fiche');
+  it('propose de rédiger la fiche d’un chapitre qui n’en a pas', async () => {
+    await setup(COURSE, 'fiche');
 
-    expect(visibleBlocks()).toEqual([]);
-    expect(element().querySelector('.sheet-empty')?.textContent).toContain('épinglez un bloc');
+    expect(element().querySelector('.ProseMirror')).toBeNull();
+    expect(element().querySelector('.sheet-empty')?.textContent).toContain(
+      'pas encore de fiche de révision',
+    );
+    expect(link('Rédiger la fiche')?.getAttribute('href')).toBe('/ue/UTC502/cours/7/fiche/edition');
   });
 
-  it('ne signale pas de fiche vide sur le cours complet', async () => {
-    await setup(course(heading(2, 'Titre'), paragraph('Texte.')));
+  it('ouvre l’édition de la fiche, au bon endroit, par le clic droit dans la fiche', async () => {
+    await setup({ ...COURSE, sheetContent: SHEET }, 'fiche');
 
-    expect(element().querySelector('.sheet-empty')).toBeNull();
+    rightClickOnBlock(3);
+
+    expect(link('Modifier ici')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/fiche/edition?bloc=3',
+    );
+    // Le marque-page est celui du cours : il ne se pose pas dans la fiche.
+    expect(menuButton('Marquer ma page')).toBeUndefined();
+    expect(menuButton('Retirer le marque-page')).toBeUndefined();
   });
 
   it('annonce le nombre de sections et la date de modification', async () => {
@@ -334,7 +459,7 @@ describe('CourseReadPage', () => {
       label: `Terme ${index + 1}`,
       expandedForm: index === 0 ? 'Forme développée' : null,
       excerpt: `Définition ${index + 1}`,
-      ueCode: null,
+      ueCode: 'UTC502',
       courseId: null,
       courseTitle: null,
     }));
@@ -343,9 +468,9 @@ describe('CourseReadPage', () => {
     expect(listTerms).toHaveBeenCalledWith({ course: 7 });
     const items = Array.from(element().querySelectorAll('.terms li'));
     expect(items).toHaveLength(6);
-    expect(items[0].querySelector('a')?.getAttribute('href')).toBe('/glossaire/1');
+    expect(items[0].querySelector('a')?.getAttribute('href')).toBe('/ue/UTC502/termes/1');
     expect(items[0].querySelector('span')?.textContent).toBe('Forme développée');
-    expect(items[1].querySelector('a')?.getAttribute('href')).toBe('/dictionnaire/2');
+    expect(items[1].querySelector('a')?.getAttribute('href')).toBe('/ue/UTC502/termes/2');
     expect(items[1].querySelector('span')?.textContent).toBe('Définition 2');
     expect(link('Voir les 8 termes')?.getAttribute('href')).toBe('/ue/UTC502?onglet=termes');
   });

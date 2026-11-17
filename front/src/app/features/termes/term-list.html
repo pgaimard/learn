@@ -1,78 +1,53 @@
-<div class="list">
-  @for (group of groups(); track group.letter) {
-    @if (grouped()) {
-      <h2 class="letter" [id]="'lettre-' + group.letter">{{ group.letter }}</h2>
-    }
-    <ul>
-      @for (term of group.terms; track term.id) {
-        <li
-          class="term-row"
-          [class.has-type]="showType()"
-          [class.has-origin]="origin() !== 'none'"
-          [class.has-columns]="columns()"
-        >
-          <a
-            class="term term-label"
-            [class.mono]="term.type === 'acronym'"
-            [routerLink]="[screens[term.type].path, term.id]"
-          >
-            {{ term.label }}
-          </a>
-          @if (showType()) {
-            <span class="pill type">{{ term.type === 'acronym' ? 'Acronyme' : 'Définition' }}</span>
-          }
-          @if (columns()) {
-            <span class="term-text">
-              <em class="term-expanded">{{ term.expandedForm }}</em>
-            </span>
-            <span class="term-text term-excerpt">{{ term.excerpt }}</span>
-          } @else {
-            <span class="term-text">
-              @if (term.expandedForm) {
-                <em class="term-expanded">{{ term.expandedForm }}</em>
-                @if (term.excerpt) {
-                  <span aria-hidden="true"> · </span>
-                }
-              }
-              <span class="term-excerpt">{{ term.excerpt }}</span>
-            </span>
-          }
-          @if (origin() === 'ue') {
-            <span class="origin">
-              @if (term.ueCode; as code) {
-                <a class="code-chip" [routerLink]="['/ue', code]">{{ code }}</a>
-              }
-            </span>
-          } @else if (origin() === 'course') {
-            <span class="origin">
-              @if (term.ueCode && term.courseId) {
-                <a class="course" [routerLink]="['/ue', term.ueCode, 'cours', term.courseId]">{{
-                  term.courseTitle
-                }}</a>
-              }
-            </span>
-          }
-          @if (showActions()) {
-            <span class="term-actions">
-              <a
-                class="button button-icon button-ghost"
-                [routerLink]="[screens[term.type].path, term.id, 'edition']"
-                [attr.aria-label]="'Modifier ' + term.label"
-              >
-                <app-icon name="pencil" />
-              </a>
-              <button
-                type="button"
-                class="button button-icon button-ghost"
-                [attr.aria-label]="'Supprimer ' + term.label"
-                (click)="removed.emit(term)"
-              >
-                <app-icon name="trash" />
-              </button>
-            </span>
-          }
-        </li>
+<ul class="list">
+  @for (term of terms(); track term.id) {
+    <li class="term-row" [class.has-type]="showType()" [class.has-origin]="showCourse()">
+      <a
+        class="term term-label"
+        [class.mono]="term.type === 'acronym'"
+        [routerLink]="['/ue', term.ueCode, 'termes', term.id]"
+      >
+        {{ term.label }}
+      </a>
+      @if (showType()) {
+        <span class="pill type">{{ term.type === 'acronym' ? 'Acronyme' : 'Définition' }}</span>
       }
-    </ul>
+      <span class="term-text">
+        @if (term.expandedForm) {
+          <em class="term-expanded">{{ term.expandedForm }}</em>
+          @if (term.excerpt) {
+            <span aria-hidden="true"> · </span>
+          }
+        }
+        <span class="term-excerpt">{{ term.excerpt }}</span>
+      </span>
+      @if (showCourse()) {
+        <span class="origin">
+          @if (term.courseId) {
+            <a class="course" [routerLink]="['/ue', term.ueCode, 'cours', term.courseId]">{{
+              term.courseTitle
+            }}</a>
+          }
+        </span>
+      }
+      @if (showActions()) {
+        <span class="term-actions">
+          <a
+            class="button button-icon button-ghost"
+            [routerLink]="['/ue', term.ueCode, 'termes', term.id, 'edition']"
+            [attr.aria-label]="'Modifier ' + term.label"
+          >
+            <app-icon name="pencil" />
+          </a>
+          <button
+            type="button"
+            class="button button-icon button-ghost"
+            [attr.aria-label]="'Supprimer ' + term.label"
+            (click)="removed.emit(term)"
+          >
+            <app-icon name="trash" />
+          </button>
+        </span>
+      }
+    </li>
   }
-</div>
+</ul>

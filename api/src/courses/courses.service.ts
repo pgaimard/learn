@@ -11,6 +11,10 @@ import {
   QueryFailedError,
   Repository,
 } from 'typeorm';
+import {
+  CourseFolderSummary,
+  CourseFoldersService,
+} from '../files/folders/course-folders.service.js';
 import { UeService } from '../ue/ue.service.js';
 import { collectFigures } from './content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from './content/content-node.js';
@@ -27,7 +31,7 @@ const UNIQUE_VIOLATION = '23505';
 export type CourseSummary = Pick<
   Course,
   'id' | 'title' | 'position' | 'updatedAt'
-> & { sectionCount: number };
+> & { sectionCount: number; hasBookmark: boolean };
 
 @Injectable()
 export class CoursesService {
@@ -36,6 +40,7 @@ export class CoursesService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly ueService: UeService,
     private readonly imagesService: CourseImagesService,
+    private readonly courseFolders: CourseFoldersService,
   ) {}
 
   async findAllByUe(ueCode: string): Promise<CourseSummary[]> {
@@ -45,7 +50,8 @@ export class CoursesService {
               (SELECT count(*)::int
                  FROM jsonb_array_elements(c.content -> 'content') AS block
                 WHERE block ->> 'type' = 'heading'
-                  AND block -> 'attrs' ->> 'level' = '2') AS "sectionCount"
+                  AND block -> 'attrs' ->> 'level' = '2') AS "sectionCount",
+              c.bookmark_block IS NOT NULL AS "hasBookmark"
          FROM courses c
         WHERE c.ue_id = $1
         ORDER BY c.position`,
@@ -80,27 +86,60 @@ export class CoursesService {
       content,
       plainText: extractPlainText(content),
     });
-    const saved = await this.save(this.courses.manager, course);
+    // Le cours et son dossier de fichiers naissent ensemble.
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const created = await this.save(manager, course);
+      await this.courseFolders.attach(manager, created);
+      return created;
+    });
     return this.findById(saved.id);
   }
 
   async update(id: number, changes: UpdateCourseDto): Promise<Course> {
     const course = await this.findById(id);
     course.title = changes.title ?? course.title;
-    if (changes.content === undefined) {
-      await this.save(this.courses.manager, course);
+    if (changes.content === undefined && changes.sheetContent === undefined) {
+      await this.dataSource.transaction((manager) =>
+        this.saveWithFolder(manager, course),
+      );
       return this.findById(id);
     }
-    course.content = checkContent(changes.content);
-    course.plainText = extractPlainText(course.content);
-    const figures = collectFigures(course.content);
+    if (changes.content !== undefined) {
+      course.content = checkContent(changes.content);
+      course.plainText = extractPlainText(course.content);
+    }
+    if (changes.sheetContent !== undefined) {
+      course.sheetContent =
+        changes.sheetContent === null
+          ? null
+          : checkContent(changes.sheetContent);
+    }
+    // Les images du cours servent à son texte comme à sa fiche de révision.
+    const figures = [
+      ...collectFigures(course.content),
+      ...(course.sheetContent ? collectFigures(course.sheetContent) : []),
+    ];
     await this.imagesService.assertFiguresExist(id, figures);
     // Le cours et ses images changent ensemble ou pas du tout.
     const unused = await this.dataSource.transaction(async (manager) => {
-      await this.save(manager, course);
+      await this.saveWithFolder(manager, course);
       return this.imagesService.reconcile(manager, id, figures);
     });
     await this.imagesService.removeFiles(unused);
+    return this.findById(id);
+  }
+
+  // Pose le marque-page de lecture, ou le retire (null). Ce n'est pas une modification
+  // du cours : sa date de modification ne bouge pas.
+  async setBookmark(
+    id: number,
+    bookmark: { title: string; block: number } | null,
+  ): Promise<Course> {
+    await this.findById(id);
+    await this.courses.query(
+      'UPDATE courses SET bookmark_title = $2, bookmark_block = $3 WHERE id = $1',
+      [id, bookmark?.title ?? null, bookmark?.block ?? null],
+    );
     return this.findById(id);
   }
 
@@ -143,16 +182,41 @@ export class CoursesService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  findFolder(id: number): Promise<CourseFolderSummary | null> {
+    return this.findById(id).then(() => this.courseFolders.describe(id));
+  }
+
+  // Supprime le cours. Son dossier de fichiers part avec lui s'il est vide ou si
+  // deleteFolder le demande ; sinon il reste dans l'UE, comme dossier libre.
+  async remove(id: number, deleteFolder = false): Promise<void> {
     const course = await this.findById(id);
     const images = await this.imagesService.findByCourse(id);
-    await this.courses.remove(course);
+    const folder = await this.courseFolders.describe(id);
+    const isEmpty = folder?.fileCount === 0 && folder.folderCount === 0;
+    const storedFiles = await this.dataSource.transaction(async (manager) => {
+      const removed =
+        deleteFolder || isEmpty
+          ? await this.courseFolders.removeTree(manager, id)
+          : [];
+      await manager.remove(course);
+      return removed;
+    });
     await this.imagesService.removeFiles(images);
+    await this.courseFolders.removeStored(storedFiles);
   }
 
   private async nextPosition(ueId: number): Promise<number> {
     const last = await this.courses.maximum('position', { ueId });
     return (last ?? 0) + 1;
+  }
+
+  // Enregistre le cours ; le nom de son dossier suit son titre.
+  private async saveWithFolder(
+    manager: EntityManager,
+    course: Course,
+  ): Promise<void> {
+    await this.save(manager, course);
+    await this.courseFolders.rename(manager, course);
   }
 
   private async save(manager: EntityManager, course: Course): Promise<Course> {

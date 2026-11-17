@@ -20,6 +20,10 @@ const MARKDOWN = readFileSync(
 );
 const SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" onload="alert(1)"><rect width="10" height="10"/></svg>';
+const SHEET = readFileSync(
+  new URL('../../contracts/fiche.example.md', import.meta.url),
+  'utf8',
+);
 const TERMS = readFileSync(
   new URL('../../contracts/termes.example.json', import.meta.url),
   'utf8',
@@ -132,6 +136,9 @@ describe('Import d’un paquet de cours', () => {
         { type: 'definition', label: 'Commutation de contexte' },
       ],
       duplicateTerms: [],
+      hasSheet: false,
+      sheetImageCount: 0,
+      sourceCount: 0,
       commands: {
         newTools: [],
         existingTools: [],
@@ -173,7 +180,7 @@ describe('Import d’un paquet de cours', () => {
     const kinds = course.content.content
       ?.filter((node) => node.type === 'callout')
       .map((node) => node.attrs?.['kind']);
-    expect(kinds).toEqual(['retenir', 'change', 'attention']);
+    expect(kinds).toEqual(['retenir', 'change', 'attention', 'definition']);
   });
 
   it('crée les termes du paquet, rattachés au cours et à son UE', async () => {
@@ -325,6 +332,33 @@ describe('Import d’un paquet de cours', () => {
       'PCB',
     ]);
     expect(stored[0].plain_text).toContain('Programme en cours d');
+  });
+
+  it('ne prend pas pour doublon le terme de même libellé d’une autre UE', async () => {
+    await client('post', '/api/ues').send({
+      code: 'NFE108',
+      title: 'Méthodes',
+    });
+    const other = await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Sémaphore',
+      ueCode: 'NFE108',
+    });
+    const zip = validPackage({
+      'termes.json': JSON.stringify([
+        { type: 'definition', libelle: 'Sémaphore', definition: 'Compteur.' },
+      ]),
+    });
+
+    const previewed = await preview(zip);
+
+    expect(previewed.body).toMatchObject({
+      newTerms: [{ type: 'definition', label: 'Sémaphore' }],
+      duplicateTerms: [],
+    });
+    // Les tests suivants comptent les termes et les UE : celui-ci n'en laisse pas.
+    await client('delete', `/api/terms/${(other.body as { id: number }).id}`);
+    await client('delete', '/api/ues/NFE108');
   });
 
   it('remplace sur demande la définition et les images des termes déjà présents', async () => {
@@ -587,6 +621,102 @@ describe('Import d’un paquet de cours', () => {
     ],
   ])('refuse %s avec un message précis', async (_label, zip, message) => {
     await expectRefusal(zip, message);
+  });
+
+  describe('fiche de révision', () => {
+    const MARKDOWN_FICHE =
+      '---\nue: UTC502\ntitre: Chapitre à fiche\nordre: 9\n---\n\n## Bases\n\nTexte.';
+    const withSheet = (): Buffer =>
+      createZip({
+        'cours.md': MARKDOWN_FICHE,
+        'fiche.md': SHEET,
+        'images/fiche-01.svg': SVG,
+      });
+    const withoutSheet = (): Buffer =>
+      createZip({ 'cours.md': MARKDOWN_FICHE });
+
+    function figureOf(course: Course): string {
+      const figure = course.sheetContent?.content?.find(
+        (node) => node.type === 'figure',
+      );
+      return String(figure?.attrs?.['src']);
+    }
+
+    it('annonce la fiche du paquet dans l’aperçu', async () => {
+      const response = await preview(withSheet());
+
+      expect(response.body).toMatchObject({
+        hasSheet: true,
+        sheetImageCount: 1,
+        existingCourse: null,
+      });
+    });
+
+    it('importe la fiche avec ses images, rattachées au cours', async () => {
+      const response = await importPackage(withSheet());
+
+      expect(response.status).toBe(201);
+      const course = response.body as Course;
+      const types = course.sheetContent?.content?.map((node) => node.type);
+      expect(types).toEqual([
+        'heading',
+        'paragraph',
+        'figure',
+        'table',
+        'callout',
+        'heading',
+        'orderedList',
+        'codeBlock',
+        'callout',
+      ]);
+      expect(figureOf(course)).toMatch(
+        new RegExp(`^/api/courses/${course.id}/images/\\d+$`),
+      );
+      const served = await client('get', figureOf(course)).buffer(true);
+      expect(served.status).toBe(200);
+      expect((served.body as Buffer).toString('utf8')).not.toContain('onload');
+    });
+
+    it('garde la fiche et ses images quand le paquet réimporté n’en a pas', async () => {
+      const announced = await preview(withoutSheet());
+      expect(announced.body).toMatchObject({
+        hasSheet: false,
+        existingCourse: { hasSheet: true },
+      });
+
+      const response = await importPackage(withoutSheet(), true);
+
+      const course = response.body as Course;
+      expect(course.sheetContent?.content).toHaveLength(9);
+      expect((await client('get', figureOf(course))).status).toBe(200);
+    });
+
+    it('remplace la fiche et efface ses anciennes images au réimport', async () => {
+      const before = (await importPackage(withoutSheet(), true)).body as Course;
+      const oldFigure = figureOf(before);
+
+      const response = await importPackage(withSheet(), true);
+
+      const course = response.body as Course;
+      expect(figureOf(course)).not.toBe(oldFigure);
+      expect((await client('get', oldFigure)).status).toBe(404);
+      expect((await client('get', figureOf(course))).status).toBe(200);
+    });
+
+    it('refuse une fiche vide, invalide ou dont une image manque', async () => {
+      await expectRefusal(
+        createZip({ 'cours.md': MARKDOWN_FICHE, 'fiche.md': '  \n' }),
+        'fiche.md est vide.',
+      );
+      await expectRefusal(
+        createZip({ 'cours.md': MARKDOWN_FICHE, 'fiche.md': '> [!note]\n> x' }),
+        /fiche\.md.*type d’encadré inconnu « note »/,
+      );
+      await expectRefusal(
+        createZip({ 'cours.md': MARKDOWN_FICHE, 'fiche.md': SHEET }),
+        'fiche.md référence « images/fiche-01.svg », absent du paquet.',
+      );
+    });
   });
 
   it('n’enregistre rien quand l’import échoue', async () => {

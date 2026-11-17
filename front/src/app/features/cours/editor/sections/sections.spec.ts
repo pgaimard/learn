@@ -4,7 +4,7 @@ import { createCourseExtensions } from '../../content/course-extensions';
 import {
   canMoveUnit,
   canShiftSectionLevel,
-  dropSection,
+  moveSectionTo,
   moveUnit,
   shiftSectionLevel,
 } from './section-commands';
@@ -139,7 +139,7 @@ describe('chapitres', () => {
     it('dépose un chapitre entre deux blocs, à l’endroit visé', () => {
       const section = sectionAt(editor.state.doc, posOf('A1'));
       const transaction =
-        section && dropSection(editor.state, section, editor.state.doc.content.size);
+        section && moveSectionTo(editor.state, section, editor.state.doc.content.size);
       if (transaction) {
         editor.view.dispatch(transaction);
       }
@@ -147,9 +147,9 @@ describe('chapitres', () => {
       expect(outline()).toBe('intro ##A a ###A2 a2 ##B b ###A1 a1');
     });
 
-    it('dépose avant ou après le bloc visé selon la moitié touchée', () => {
+    it('dépose à la frontière visée, ici avant le premier bloc', () => {
       const section = sectionAt(editor.state.doc, posOf('B'));
-      const transaction = section && dropSection(editor.state, section, posOf('intro') + 1);
+      const transaction = section && moveSectionTo(editor.state, section, posOf('intro'));
       if (transaction) {
         editor.view.dispatch(transaction);
       }
@@ -160,7 +160,7 @@ describe('chapitres', () => {
     it('ignore un dépôt du chapitre sur lui-même', () => {
       const section = sectionAt(editor.state.doc, posOf('A'));
 
-      expect(section && dropSection(editor.state, section, posOf('a1') + 1)).toBeNull();
+      expect(section && moveSectionTo(editor.state, section, posOf('a1'))).toBeNull();
     });
   });
 
@@ -257,7 +257,7 @@ describe('chapitres', () => {
       toggleFold(editor.view, posOf('B'));
       const section = sectionAt(editor.state.doc, posOf('B'));
       // Déposé juste avant le chapitre A.
-      const transaction = section && dropSection(editor.state, section, posOf('A'));
+      const transaction = section && moveSectionTo(editor.state, section, posOf('A'));
       if (transaction) {
         editor.view.dispatch(transaction);
       }

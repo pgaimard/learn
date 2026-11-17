@@ -278,12 +278,122 @@ describe('Cours', () => {
     ]);
   });
 
+  it('enregistre, remplace et supprime la fiche de révision sans toucher au cours', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const before = (await client('get', `/api/courses/${course.id}`))
+      .body as Course;
+    expect(before.sheetContent).toBeNull();
+    const sheet = {
+      type: 'doc',
+      content: [
+        {
+          type: 'callout',
+          attrs: { kind: 'definition' },
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Fiche.' }] },
+          ],
+        },
+      ],
+    };
+
+    const saved = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: sheet,
+    });
+
+    expect(saved.status).toBe(200);
+    expect((saved.body as Course).sheetContent).toEqual(sheet);
+    expect((saved.body as Course).content).toEqual(before.content);
+
+    const invalid = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: { type: 'doc', content: [{ type: 'script' }] },
+    });
+    const foreign = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: {
+        type: 'doc',
+        content: [
+          {
+            type: 'figure',
+            attrs: { src: '/api/courses/9999/images/1', alt: '' },
+          },
+        ],
+      },
+    });
+    expect(invalid.status).toBe(400);
+    expect(foreign.status).toBe(400);
+
+    const removed = await client('patch', `/api/courses/${course.id}`).send({
+      sheetContent: null,
+    });
+    expect((removed.body as Course).sheetContent).toBeNull();
+  });
+
+  it('pose, déplace et retire le marque-page sans toucher à la date de modification', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as (Course & { hasBookmark: boolean })[];
+    expect(course.hasBookmark).toBe(false);
+
+    const set = await client('put', `/api/courses/${course.id}/bookmark`).send({
+      title: '1.1 États',
+      block: 4,
+    });
+    const moved = await client(
+      'put',
+      `/api/courses/${course.id}/bookmark`,
+    ).send({ title: '2. Ordonnancement', block: 9 });
+
+    expect(set.status).toBe(200);
+    expect(set.body).toMatchObject({
+      bookmarkTitle: '1.1 États',
+      bookmarkBlock: 4,
+    });
+    expect(moved.body).toMatchObject({
+      bookmarkTitle: '2. Ordonnancement',
+      bookmarkBlock: 9,
+      updatedAt: course.updatedAt,
+    });
+    const listed = (await client('get', '/api/ues/UTC502/courses'))
+      .body as (Course & { hasBookmark: boolean })[];
+    expect(listed[0].hasBookmark).toBe(true);
+
+    const removed = await client(
+      'delete',
+      `/api/courses/${course.id}/bookmark`,
+    );
+
+    expect(removed.status).toBe(200);
+    expect(removed.body).toMatchObject({
+      bookmarkTitle: null,
+      bookmarkBlock: null,
+    });
+  });
+
+  it('refuse un marque-page invalide ou sur un cours inconnu', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const invalid = await client(
+      'put',
+      `/api/courses/${course.id}/bookmark`,
+    ).send({ title: 'x', block: -1 });
+    const unknown = await client('put', '/api/courses/9999/bookmark').send({
+      title: 'x',
+      block: 0,
+    });
+    const anonymous = await request(app.getHttpServer()).delete(
+      `/api/courses/${course.id}/bookmark`,
+    );
+
+    expect(invalid.status).toBe(400);
+    expect(unknown.status).toBe(404);
+    expect(anonymous.status).toBe(401);
+  });
+
   it('refuse de supprimer une UE qui contient des cours', async () => {
     const response = await client('delete', '/api/ues/UTC502');
 
     expect(response.status).toBe(409);
     expect((response.body as ErrorResponse).messages).toEqual([
-      'L’UE UTC502 n’est pas vide : supprimez d’abord ses cours, ses dossiers et ses fichiers.',
+      'L’UE UTC502 n’est pas vide : supprimez d’abord ses cours, ses termes, ses dossiers et ses fichiers.',
     ]);
   });
 

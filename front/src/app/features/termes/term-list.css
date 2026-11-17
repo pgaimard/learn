@@ -4,24 +4,6 @@ ul {
   list-style: none;
 }
 
-/* Intitulé d'une lettre, dans la liste regroupée. */
-.letter {
-  margin: 0;
-  padding: 0.25rem 0.875rem;
-  border-top: 1px solid var(--color-border-soft);
-  background: var(--color-raised);
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  /* Une lettre atteinte par la barre A–Z ne passe pas sous l'en-tête. */
-  scroll-margin-top: calc(var(--sticky-top) + 0.5rem);
-}
-
-.letter:first-child {
-  border-top: 0;
-}
-
 .term-row {
   display: grid;
   grid-template-columns: 7.5rem minmax(0, 1fr) auto;
@@ -40,14 +22,7 @@ ul {
   grid-template-columns: 7.5rem 5.25rem minmax(0, 1fr) minmax(0, 10rem) auto;
 }
 
-/* Glossaire : acronyme, forme développée, définition, UE, actions. L'UE a une largeur
-   fixe pour que les colonnes s'alignent d'une ligne à l'autre. */
-.term-row.has-columns.has-origin {
-  grid-template-columns: 6.875rem minmax(0, 1.1fr) minmax(0, 1.6fr) 5rem auto;
-}
-
-ul:first-child > .term-row:first-child,
-.letter + ul > .term-row:first-child {
+.term-row:first-child {
   border-top: 0;
 }
 
@@ -84,10 +59,6 @@ ul:first-child > .term-row:first-child,
   font-size: 0.75rem;
 }
 
-.origin .code-chip:hover {
-  text-decoration: none;
-}
-
 .term-actions {
   display: flex;
   gap: 2px;
@@ -100,13 +71,8 @@ ul:first-child > .term-row:first-child,
     grid-template-columns: 6rem minmax(0, 1fr) auto;
   }
 
-  .term-row.has-columns.has-origin {
-    grid-template-columns: 6rem minmax(0, 1fr) auto;
-  }
-
   .type,
-  .origin,
-  .has-columns .term-excerpt {
+  .origin {
     display: none;
   }
 }

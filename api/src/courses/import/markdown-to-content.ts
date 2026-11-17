@@ -12,7 +12,7 @@ export interface ConvertedMarkdown {
 }
 
 const CALLOUT_MARKER = /^\[!([^\]\s]+)\]\s*/;
-const CALLOUT_KINDS = ['retenir', 'change', 'attention'];
+const CALLOUT_KINDS = ['retenir', 'change', 'attention', 'definition'];
 export const IMAGE_PATH =
   /^images\/[A-Za-z0-9][A-Za-z0-9._-]*\.(svg|png|jpe?g)$/i;
 const MAX_ERRORS = 10;
@@ -144,7 +144,7 @@ class Converter {
     if (!CALLOUT_KINDS.includes(marker[1])) {
       this.fail(
         token,
-        `type d’encadré inconnu « ${marker[1]} » (retenir, change ou attention).`,
+        `type d’encadré inconnu « ${marker[1]} » (retenir, change, attention ou definition).`,
       );
     }
     const body = stripMarker(content, marker[0].length);

@@ -19,6 +19,9 @@ const PREVIEW: ImportPreview = {
     { type: 'acronym', label: 'PCB' },
   ],
   duplicateTerms: [{ type: 'acronym', label: 'PID' }],
+  hasSheet: true,
+  sheetImageCount: 2,
+  sourceCount: 0,
   commands: { newTools: [], existingTools: [], newCommands: [], duplicateCommands: [] },
   existingCourse: null,
 };
@@ -83,7 +86,7 @@ describe('CourseImportPage', () => {
     pickPackage();
 
     const text = element().textContent.replace(/\s+/g, ' ');
-    expect(text).toContain('2 à ajouter au dictionnaire et au glossaire : Processus, PCB');
+    expect(text).toContain('2 à ajouter aux termes de l’UE : Processus, PCB');
     expect(text).toContain('1 déjà présents : PID');
   });
 
@@ -152,7 +155,7 @@ describe('CourseImportPage', () => {
 
   it('prévient du remplacement d’un chapitre existant et le confirme à l’import', () => {
     service.preview.mockReturnValue(
-      of({ ...PREVIEW, existingCourse: { id: 5, title: 'Ancienne version' } }),
+      of({ ...PREVIEW, existingCourse: { id: 5, title: 'Ancienne version', hasSheet: true } }),
     );
     service.import.mockReturnValue(of(IMPORTED));
     setup();

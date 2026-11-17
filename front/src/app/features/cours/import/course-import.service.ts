@@ -21,10 +21,16 @@ export interface ImportPreview {
   // Termes que l'import créera, et ceux déjà présents : laissés tels quels, ou remplacés sur demande.
   newTerms: ImportedTerm[];
   duplicateTerms: ImportedTerm[];
+  // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
+  hasSheet: boolean;
+  sheetImageCount: number;
+  // Documents de sources/, rangés dans le dossier de fichiers du cours.
+  sourceCount: number;
   // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
   commands: CommandImportPreview;
-  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait.
-  existingCourse: { id: number; title: string } | null;
+  // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche de
+  // révision, s'il en a une, est gardée quand le paquet n'en apporte pas.
+  existingCourse: { id: number; title: string; hasSheet: boolean } | null;
 }
 
 // Ce que l'on importe : un paquet .zip ou du Markdown collé.

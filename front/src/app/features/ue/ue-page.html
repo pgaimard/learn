@@ -110,13 +110,21 @@
     @if (courses().length === 0) {
       <p class="empty">Aucun cours dans cette UE pour l’instant.</p>
     } @else {
-      <ol class="list" appSortableList (sorted)="reorderCourses($event)">
+      <ol
+        class="list"
+        cdkDropList
+        (cdkDropListDropped)="
+          reorderCourses({ from: $event.previousIndex, to: $event.currentIndex })
+        "
+      >
         @for (course of courses(); track course.id) {
-          <li class="list-row course" [appSortableItem]="$index" [appSortableLast]="$last">
+          <li class="list-row course" cdkDrag cdkDragLockAxis="y">
             <button
               type="button"
               class="sort-handle"
-              appSortableHandle
+              cdkDragHandle
+              [appSortKeys]="$index"
+              (sorted)="reorderCourses($event)"
               [attr.aria-label]="
                 'Déplacer le cours ' + course.title + ' : faire glisser, ou flèches haut et bas'
               "
@@ -125,6 +133,11 @@
               <app-icon name="grip" />
             </button>
             <span class="list-row-number course-position">{{ $index + 1 }}</span>
+            @if (course.hasBookmark) {
+              <span class="bookmark" title="Lecture en cours : un marque-page est posé">
+                <span class="visually-hidden">Lecture en cours</span>
+              </span>
+            }
             <a
               class="list-row-title course-title"
               [routerLink]="['/ue', ue.code, 'cours', course.id]"
@@ -201,42 +214,47 @@
       }
     }
   } @else {
-    @if (terms().length === 0) {
-      <p class="empty">Aucun terme rattaché à cette UE. « Terme », en haut de page, en crée un.</p>
-    } @else {
-      <div class="page-header toolbar terms-toolbar">
-        <label class="visually-hidden" for="ue-term-filter">Filtrer</label>
-        <input
-          #termFilterField
-          id="ue-term-filter"
-          class="term-filter"
-          type="search"
-          autocomplete="off"
-          placeholder="Filtrer les termes de l’UE"
-          [value]="termFilter()"
-          (input)="termFilter.set(termFilterField.value)"
-        />
-        <app-segmented
-          label="Type"
-          [options]="termTypeOptions"
-          [value]="termType()"
-          (valueChange)="termType.set($event)"
-        />
-        <span class="meta" aria-live="polite">
-          {{ visibleTerms().length }} sur {{ terms().length }}
-        </span>
+    <div class="page-header toolbar">
+      <div class="terms-filters">
+        @if (terms().length > 0) {
+          <label class="visually-hidden" for="ue-term-filter">Filtrer</label>
+          <input
+            #termFilterField
+            id="ue-term-filter"
+            class="term-filter"
+            type="search"
+            autocomplete="off"
+            placeholder="Filtrer les termes de l’UE"
+            [value]="termFilter()"
+            (input)="termFilter.set(termFilterField.value)"
+          />
+          <app-segmented
+            label="Type"
+            [options]="termTypeOptions"
+            [value]="termType()"
+            (valueChange)="termType.set($event)"
+          />
+          <span class="meta" aria-live="polite">
+            {{ visibleTerms().length }} sur {{ terms().length }}
+          </span>
+        }
       </div>
-      @if (visibleTerms().length === 0) {
-        <p class="empty">Aucun terme ne correspond.</p>
-      } @else {
-        <app-term-list
-          origin="course"
-          [terms]="visibleTerms()"
-          [showType]="true"
-          [showActions]="true"
-          (removed)="removeTerm($event)"
-        />
-      }
+      <div class="header-actions">
+        <app-term-quick-create [ueCode]="ue.code" />
+      </div>
+    </div>
+    @if (terms().length === 0) {
+      <p class="empty">Aucun terme dans cette UE.</p>
+    } @else if (visibleTerms().length === 0) {
+      <p class="empty">Aucun terme ne correspond.</p>
+    } @else {
+      <app-term-list
+        [terms]="visibleTerms()"
+        [showCourse]="true"
+        [showType]="true"
+        [showActions]="true"
+        (removed)="removeTerm($event)"
+      />
     }
   }
 }

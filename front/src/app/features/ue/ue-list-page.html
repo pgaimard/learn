@@ -28,14 +28,21 @@
 } @else if (ues().length === 0) {
   <p class="empty">Aucune UE pour l’instant. Commencez par en créer une.</p>
 } @else {
-  <ul class="ue-grid" appSortableList [appSortableGrid]="true" (sorted)="reorder($event)">
+  <ul
+    class="ue-grid"
+    cdkDropList
+    cdkDropListOrientation="mixed"
+    (cdkDropListDropped)="reorder({ from: $event.previousIndex, to: $event.currentIndex })"
+  >
     @for (ue of ues(); track ue.id) {
-      <li class="card ue" [appSortableItem]="$index" [appSortableLast]="$last">
+      <li class="card ue" cdkDrag>
         <div class="ue-top">
           <button
             type="button"
             class="sort-handle"
-            appSortableHandle
+            cdkDragHandle
+            [appSortKeys]="$index"
+            (sorted)="reorder($event)"
             [attr.aria-label]="
               'Déplacer l’UE ' + ue.code + ' : faire glisser, ou flèches haut et bas'
             "

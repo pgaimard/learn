@@ -11,13 +11,8 @@ import { forkJoin } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { createOrderSaver } from '../../core/sortable/order-saver';
-import {
-  moveItem,
-  SortableHandle,
-  SortableItem,
-  SortableList,
-  SortChange,
-} from '../../core/sortable/sortable';
+import { CdkDrag, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { moveItem, SortChange, SortKeys } from '../../core/sortable/sortable';
 import { Icon } from '../../core/ui/icon';
 import { Modal } from '../../core/ui/modal';
 import { AgendaEvent, EventService } from '../agenda/event.service';
@@ -39,7 +34,7 @@ const DAY_FORMAT = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'nu
 
 @Component({
   selector: 'app-ue-list-page',
-  imports: [Icon, Modal, RouterLink, SortableHandle, SortableItem, SortableList, UeForm],
+  imports: [Icon, Modal, RouterLink, CdkDrag, CdkDragHandle, CdkDropList, SortKeys, UeForm],
   templateUrl: './ue-list-page.html',
   styleUrl: './ue-list-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

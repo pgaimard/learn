@@ -48,6 +48,7 @@ describe('UePage', () => {
     create: vi.fn<CourseService['create']>(),
     reorder: vi.fn<CourseService['reorder']>(),
     remove: vi.fn<CourseService['remove']>(),
+    folder: vi.fn<CourseService['folder']>(),
   };
   const termService = {
     list: vi.fn<TermService['list']>(),
@@ -134,10 +135,10 @@ describe('UePage', () => {
     fixture.detectChanges();
 
     expect(termService.list).toHaveBeenCalledWith({ ue: 'UTC502' });
-    expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/glossaire/4');
+    expect(element().querySelector('a.term')?.getAttribute('href')).toBe('/ue/UTC502/termes/4');
     expect(element().querySelector('ol.list')).toBeNull();
     expect(element().querySelector('.term-actions a')?.getAttribute('href')).toBe(
-      '/glossaire/4/edition',
+      '/ue/UTC502/termes/4/edition',
     );
   });
 
@@ -266,6 +267,7 @@ describe('UePage', () => {
   it('propose de modifier chaque cours, et le supprime après confirmation seulement', async () => {
     courseService.list.mockReturnValue(of([PROCESSUS, MEMOIRE]));
     courseService.remove.mockReset().mockReturnValue(of(undefined));
+    courseService.folder.mockReturnValue(of(null));
     setup();
     const remove = async (): Promise<void> => {
       element().querySelector<HTMLButtonElement>('button[aria-label="Supprimer Mémoire"]')?.click();
@@ -285,8 +287,18 @@ describe('UePage', () => {
     dialog.confirmDeletion.mockResolvedValue(true);
     courseService.list.mockReturnValue(of([PROCESSUS]));
     await remove();
-    expect(courseService.remove).toHaveBeenCalledWith(9);
+    expect(courseService.remove).toHaveBeenCalledWith(9, false);
     expect(courseTitles()).toEqual(['Processus']);
+  });
+
+  it('signale d’un point les cours où un marque-page est posé', () => {
+    courseService.list.mockReturnValue(of([PROCESSUS, { ...MEMOIRE, hasBookmark: true }]));
+    setup();
+
+    const marked = Array.from(element().querySelectorAll('.course')).map(
+      (row) => row.querySelector('.bookmark') !== null,
+    );
+    expect(marked).toEqual([false, true]);
   });
 
   it('réordonne les cours depuis la poignée, renumérote et enregistre', () => {

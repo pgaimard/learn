@@ -26,6 +26,9 @@ Un **processus** est un *programme en cours d'exécution*. Il est créé par l'a
 > [!attention]
 > Ne pas confondre programme et processus.
 
+> [!definition]
+> Un **processus** est un programme en cours d'exécution, avec son contexte.
+
 #### 1.1.1 Exemple
 
 ```c

@@ -1,5 +1,5 @@
-<button type="button" class="button" aria-label="Nouveau terme" (click)="open()">
-  <app-icon name="plus" />Terme
+<button type="button" class="button button-primary" (click)="open()">
+  <app-icon name="plus" />Nouveau terme
 </button>
 
 <dialog
@@ -24,7 +24,7 @@
       </div>
       <div class="modal-body">
         <p class="added" role="status">
-          « {{ term.label }} » est ajouté au {{ screens[term.type].title.toLowerCase() }}.
+          « {{ term.label }} » est ajouté aux termes de {{ term.ue.code }}.
         </p>
         <p class="field-hint">Code, images et tableaux s’ajoutent en ouvrant le terme.</p>
       </div>
@@ -35,7 +35,7 @@
         <button type="button" class="button" (click)="close()">Fermer</button>
         <a
           class="button button-primary"
-          [routerLink]="[screens[term.type].path, term.id, 'edition']"
+          [routerLink]="['/ue', term.ue.code, 'termes', term.id, 'edition']"
           (click)="close()"
         >
           Enrichir la définition
@@ -56,7 +56,7 @@
       <div class="modal-body">
         <app-term-form
           idPrefix="quick-term"
-          [origin]="origin()"
+          [ueCode]="ueCode()"
           [errors]="errors()"
           [isSaving]="isSaving()"
           (saved)="create($event)"

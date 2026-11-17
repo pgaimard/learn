@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -24,7 +23,6 @@ import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
-import { MenuButton } from '../../core/ui/menu-button';
 import { shortcut } from '../../core/ui/platform';
 import { ContentEditor } from '../cours/editor/content-editor';
 import { Ue, UeService } from '../ue/ue.service';
@@ -47,7 +45,7 @@ const required = [Validators.required, Validators.pattern(/\S/)];
 
 @Component({
   selector: 'app-tool-edit-page',
-  imports: [Icon, MenuButton, ContentEditor, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [Icon, ContentEditor, ReactiveFormsModule, RouterLink],
   templateUrl: './tool-edit-page.html',
   styleUrl: './tool-edit-page.css',
   host: {
@@ -79,7 +77,6 @@ export class ToolEditPage {
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
   protected readonly isDirty = signal(false);
-  protected readonly savedAt = signal<Date | null>(null);
 
   protected readonly form = this.formBuilder.group({
     name: ['', [...required, Validators.maxLength(100)]],
@@ -148,6 +145,10 @@ export class ToolEditPage {
   }
 
   protected save(): void {
+    // Rien à enregistrer : le bouton est grisé, le raccourci clavier ne fait rien non plus.
+    if (!this.isDirty()) {
+      return;
+    }
     const tool = this.tool();
     const content = this.editor()?.getContent();
     if (!tool || !content || this.isSaving() || this.form.invalid) {
@@ -176,7 +177,6 @@ export class ToolEditPage {
     this.toolService.update(tool.id, changes).subscribe({
       next: (saved) => {
         this.isSaving.set(false);
-        this.savedAt.set(new Date());
         // Les nouveaux modes et déclinaisons ont maintenant un numéro.
         this.fill(saved);
       },

@@ -13,8 +13,8 @@ export interface TermSummary {
   expandedForm: string | null;
   // Début de la définition en texte brut.
   excerpt: string;
-  // Origine du terme : code de son UE, cours dont il est issu ; null s'il n'en a pas.
-  ueCode: string | null;
+  // Code de l'UE du terme, et cours dont il est issu ; null s'il n'en a pas.
+  ueCode: string;
   courseId: number | null;
   courseTitle: string | null;
 }
@@ -25,7 +25,7 @@ export interface Term {
   label: string;
   expandedForm: string | null;
   content: ContentNode;
-  ue: { code: string; title: string } | null;
+  ue: { code: string; title: string };
   course: { id: number; title: string } | null;
 }
 
@@ -34,7 +34,7 @@ export interface TermInput {
   label?: string;
   expandedForm?: string | null;
   content?: ContentNode;
-  ueCode?: string | null;
+  ueCode?: string;
   courseId?: number | null;
 }
 

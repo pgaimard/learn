@@ -1,7 +1,6 @@
 import { Editor } from '@tiptap/core';
-import { Fragment, Node as ProseMirrorNode, Slice } from '@tiptap/pm/model';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { EditorState, NodeSelection, TextSelection, Transaction } from '@tiptap/pm/state';
-import { dropPoint } from '@tiptap/pm/transform';
 import { CalloutKind } from '../../content/callout';
 
 // Types en lesquels un bloc de texte (paragraphe ou titre) peut être transformé.
@@ -55,22 +54,20 @@ export function moveBlock(editor: Editor, pos: number, direction: -1 | 1): boole
   return true;
 }
 
-// Déplace un bloc de premier niveau à l'endroit du dépôt le plus proche de la position
-// visée où il peut entrer (entre deux blocs, ou dans un encadré, une cellule…).
-// Renvoie null si le dépôt n'a pas lieu d'être : dans le bloc lui-même, ou sans place.
-export function dropBlock(
+// Déplace un bloc de premier niveau à la frontière donnée : une position entre deux blocs,
+// dans le document ou dans un encadré. Renvoie null si le déplacement n'a pas lieu d'être :
+// dans le bloc lui-même, ou à un endroit qui ne l'accepte pas.
+export function moveBlockTo(
   state: EditorState,
   source: TopLevelBlock,
-  aimedPos: number,
+  boundary: number,
 ): Transaction | null {
-  const slice = new Slice(Fragment.from(source.node), 0, 0);
-  const insertPos = dropPoint(state.doc, aimedPos, slice) ?? aimedPos;
   const sourceEnd = source.pos + source.node.nodeSize;
-  if (insertPos >= source.pos && insertPos <= sourceEnd) {
+  if (boundary >= source.pos && boundary <= sourceEnd) {
     return null;
   }
   const transaction = state.tr.delete(source.pos, sourceEnd);
-  const target = transaction.mapping.map(insertPos);
+  const target = transaction.mapping.map(boundary);
   try {
     transaction.insert(target, source.node);
   } catch {
