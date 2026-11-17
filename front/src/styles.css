@@ -53,8 +53,14 @@
   --control-height: 1.75rem;
   --page-width: 73.75rem;
   /* Lecture d'un cours : le plan, la feuille et les termes côte à côte. */
-  --page-width-wide: 88.25rem;
-  --reading-width: 43.75rem;
+  /* Corps du texte : listes, fiches, formulaires. Le texte plus petit est réservé à ce
+     qui doit rester dense (barre d'outils de l'éditeur, agenda, précisions, pastilles). */
+  --text-size: 0.9375rem;
+  /* Grossissement du texte des cours, qui amène leur corps à la même taille (1 = 14 px). */
+  --reading-scale: 1.0714;
+  /* La feuille s'élargit avec le texte, pour garder la même longueur de ligne. */
+  --reading-width: calc(43.75rem * var(--reading-scale));
+  --page-width-wide: calc(48.5rem + var(--reading-width));
   /* Hauteur occupée en haut de la fenêtre par l'en-tête quand il reste affiché. */
   --sticky-top: 0px;
 }
@@ -78,7 +84,7 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-text);
-  font-size: 0.8125rem;
+  font-size: var(--text-size);
   line-height: 1.5;
 }
 

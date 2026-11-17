@@ -1,6 +1,7 @@
 :host {
   display: block;
-  max-width: 46rem;
+  /* Suit la largeur de lecture : la feuille s'élargit avec le texte des cours. */
+  max-width: calc(2.25rem + var(--reading-width));
   margin: 0 auto;
 }
 

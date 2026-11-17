@@ -4,8 +4,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 const ICONS = {
   plus: 'M12 5v14M5 12h14',
   search: 'M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0M20 20l-3.5-3.5',
-  moon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
-  sun: 'M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   pencil: 'M4 20h4L19 9l-4-4L4 16v4z',
   trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6',
   check: 'M5 12l5 5L20 7',

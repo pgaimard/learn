@@ -14,12 +14,21 @@ import { SessionService } from '../core/auth/session.service';
 import { LOGIN_URL } from '../core/http/api-error.interceptor';
 import { ThemeService } from '../core/theme/theme.service';
 import { Icon } from '../core/ui/icon';
+import { Segmented, SegmentedOption } from '../core/ui/segmented';
 import { SearchBox } from '../features/recherche/search-box';
 import { TaskReminderBadge } from '../features/taches/task-reminder-badge';
 
 @Component({
   selector: 'app-shell',
-  imports: [Icon, RouterLink, RouterLinkActive, RouterOutlet, SearchBox, TaskReminderBadge],
+  imports: [
+    Icon,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    SearchBox,
+    Segmented,
+    TaskReminderBadge,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
   host: {
@@ -36,7 +45,13 @@ export class Shell {
 
   protected readonly user = this.session.user;
   protected readonly initials = computed(() => (this.user()?.username ?? '').slice(0, 2));
-  protected readonly isDark = computed(() => this.themeService.theme() === 'dark');
+  // Thème choisi dans le menu du compte ; « system » suit celui de l'ordinateur.
+  protected readonly themeOptions: SegmentedOption[] = [
+    { value: 'light', label: 'Clair' },
+    { value: 'dark', label: 'Sombre' },
+    { value: 'system', label: 'Système' },
+  ];
+  protected readonly themeChoice = computed(() => this.themeService.choice() ?? 'system');
   // Les pages d'une UE et de ses cours restent sous « Mes UE » dans la navigation.
   protected readonly isInUe = toSignal(
     this.router.events.pipe(
@@ -48,8 +63,8 @@ export class Shell {
   protected readonly isAccountOpen = signal(false);
   protected readonly isLoggingOut = signal(false);
 
-  protected toggleTheme(): void {
-    this.themeService.toggle();
+  protected chooseTheme(choice: string): void {
+    this.themeService.choose(choice === 'light' || choice === 'dark' ? choice : null);
   }
 
   protected closeAccountFromOutside(event: Event): void {

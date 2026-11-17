@@ -64,16 +64,24 @@ describe('Shell', () => {
     expect(element('.account-item')).toBeNull();
   });
 
-  it('bascule le thème et renomme le bouton', () => {
+  it('propose le thème clair, sombre ou celui du système dans le menu du compte', () => {
     setup(of(undefined));
-    const toggle = element('button[aria-label^="Passer au thème"]');
-    const before = toggle.getAttribute('aria-label');
-
-    toggle.click();
+    element('.avatar').click();
     fixture.detectChanges();
+    const choice = (label: string): HTMLButtonElement =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+          '.account-theme button',
+        ),
+      ).find((button) => button.textContent.trim() === label) as HTMLButtonElement;
 
-    expect(toggle.getAttribute('aria-label')).not.toBe(before);
-    expect(document.documentElement.dataset['theme']).toBeDefined();
+    choice('Sombre').click();
+    fixture.detectChanges();
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+
+    choice('Système').click();
+    fixture.detectChanges();
+    expect(document.documentElement.dataset['theme']).toBeUndefined();
   });
 
   it('renvoie à la connexion après la déconnexion', () => {
