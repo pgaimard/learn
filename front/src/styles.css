@@ -53,8 +53,12 @@
   --control-height: 1.75rem;
   --page-width: 73.75rem;
   /* Lecture d'un cours : le plan, la feuille et les termes côte à côte. */
-  --page-width-wide: 88.25rem;
-  --reading-width: 43.75rem;
+  /* Grossissement du texte des cours (1 = 14 px pour le corps du texte). Le plan du
+     chapitre et le reste de l'interface n'en dépendent pas. */
+  --reading-scale: 1.143;
+  /* La feuille s'élargit avec le texte, pour garder la même longueur de ligne. */
+  --reading-width: calc(43.75rem * var(--reading-scale));
+  --page-width-wide: calc(44.5rem + var(--reading-width));
   /* Hauteur occupée en haut de la fenêtre par l'en-tête quand il reste affiché. */
   --sticky-top: 0px;
 }
