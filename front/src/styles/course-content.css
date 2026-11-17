@@ -24,10 +24,8 @@
 .course-content h5 {
   /* Repère du chevron de pliage, placé dans la marge. */
   position: relative;
-  /* Un titre atteint par le sommaire ne passe ni sous l'en-tête ni sous la barre de la
-     page (--crumb-bar et --page-bar, posées par la page de lecture quand elle garde son fil
-     d'Ariane et son titre affichés). */
-  scroll-margin-top: calc(var(--sticky-top) + var(--crumb-bar, 0px) + var(--page-bar, 0px) + 1rem);
+  /* Un titre atteint par le sommaire ne passe pas sous l'en-tête de l'application. */
+  scroll-margin-top: calc(var(--sticky-top) + 1rem);
   margin: 2em 0 0.5em;
   line-height: 1.25;
 }

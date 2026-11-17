@@ -1,10 +1,18 @@
-.page-header {
-  align-items: flex-start;
+/* Colonne de gauche : fil d'Ariane, titre, boutons, sommaire. Sur écran étroit, ce sont
+   de simples blocs au-dessus du cours. */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.rail .breadcrumb {
+  margin-bottom: 0;
 }
 
 .heading {
   display: flex;
-  flex: 1 1 18rem;
   flex-direction: column;
   gap: 0.375rem;
   min-width: 0;
@@ -134,46 +142,15 @@
   font-size: 0.78125rem;
 }
 
-/* Trois colonnes sur grand écran : sommaire, cours, termes. Les colonnes latérales
-   restent affichées pendant la lecture. */
+/* Trois colonnes sur grand écran : à gauche le titre et le sommaire, au centre le cours,
+   à droite les termes et les commandes. Les colonnes latérales restent affichées pendant
+   la lecture : elles sont à leur place dès l'ouverture et ne bougent pas quand le cours
+   défile. Le cours, lui, monte jusque sous l'en-tête de l'application. */
 @media (min-width: 64rem) {
-  /* Le fil d'Ariane, le titre et ses boutons (« Fiche de révision », « Modifier ») restent
-     affichés sous l'en-tête de l'application pendant la lecture. Leurs hauteurs sont fixes
-     et rien ne les précède : le sommaire et la colonne de droite sont donc déjà à leur
-     place quand la page s'ouvre, et ne bougent pas quand le cours défile. */
   :host {
-    --crumb-bar: 3rem;
-    --page-bar: 4.5rem;
-  }
-
-  .breadcrumb {
-    position: sticky;
-    top: var(--sticky-top);
-    z-index: 1;
-    box-sizing: border-box;
-    height: var(--crumb-bar);
-    /* Remonte dans la marge haute de la page, qu'il couvre de son fond. */
-    margin: -1.25rem -1.5rem 0;
-    padding: 1.25rem 1.5rem 0;
-    background: var(--color-background);
-  }
-
-  .page-header {
-    position: sticky;
-    top: calc(var(--sticky-top) + var(--crumb-bar));
-    z-index: 1;
-    box-sizing: border-box;
-    min-height: var(--page-bar);
-    margin: 0 -1.5rem 0.5rem;
-    padding: 0.625rem 1.5rem;
-    background: var(--color-background);
-  }
-
-  /* Un titre long tient sur une ligne, pour que la barre garde sa hauteur. */
-  .heading h1 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* Marges haute et basse de la page, autour de son contenu. */
+    --page-top: 1.25rem;
+    --page-bottom: 3rem;
   }
 
   .reading {
@@ -183,10 +160,24 @@
     align-items: start;
   }
 
+  .rail,
   .side {
     position: sticky;
-    top: calc(var(--sticky-top) + var(--crumb-bar) + var(--page-bar) + 0.5rem);
-    max-height: calc(100vh - var(--sticky-top) - var(--crumb-bar) - var(--page-bar) - 1.5rem);
+    top: calc(var(--sticky-top) + var(--page-top));
+    /* Jamais plus hautes que la place laissée par la marge basse de la page : sinon la fin
+       du cours les repousserait vers le haut. */
+    max-height: calc(100vh - var(--sticky-top) - var(--page-top) - var(--page-bottom));
+  }
+
+  .side {
+    overflow-y: auto;
+  }
+
+  /* Dans la colonne de gauche, seul le sommaire défile : le fil d'Ariane, le titre et
+     les boutons restent en haut. */
+  .outline {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
   }
 }

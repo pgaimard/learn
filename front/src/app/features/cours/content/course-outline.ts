@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { OutlineEntry } from './build-outline';
 
 // Sommaire d'un cours : ses titres, celui de la section affichée mis en avant.
@@ -35,4 +43,46 @@ export class CourseOutline {
   readonly activeIndex = input<number | null>(null);
 
   readonly picked = output<number>();
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Le sommaire suit la lecture : quand la section affichée change, son titre est
+    // ramené dans la partie visible du sommaire s'il en était sorti.
+    afterRenderEffect(() => {
+      if (this.activeIndex() !== null) {
+        revealIn(this.host.nativeElement);
+      }
+    });
+  }
+}
+
+// Fait défiler le conteneur du sommaire, et lui seul, pour montrer le titre en cours :
+// la page, elle, ne bouge pas.
+function revealIn(host: HTMLElement): void {
+  const current = host.querySelector<HTMLElement>('.is-current');
+  const scroller = scrollerOf(host);
+  if (!current || !scroller) {
+    return;
+  }
+  const box = current.getBoundingClientRect();
+  const frame = scroller.getBoundingClientRect();
+  if (box.top < frame.top || box.bottom > frame.bottom) {
+    // Au milieu : les titres voisins, avant et après, restent visibles.
+    scroller.scrollTop += box.top - frame.top - (frame.height - box.height) / 2;
+  }
+}
+
+// Premier ancêtre qui défile verticalement ; null si le sommaire tient en entier.
+function scrollerOf(element: HTMLElement): HTMLElement | null {
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    const overflow = getComputedStyle(parent).overflowY;
+    if (
+      (overflow === 'auto' || overflow === 'scroll') &&
+      parent.scrollHeight > parent.clientHeight
+    ) {
+      return parent;
+    }
+  }
+  return null;
 }
