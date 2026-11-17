@@ -144,12 +144,14 @@
 }
 
 /* Trois colonnes sur grand écran : à gauche le titre et le sommaire, au centre le cours,
-   à droite les actions, les termes et les commandes. Rien ne bouge : la page tient dans
-   la fenêtre, et le cours défile seul, dans sa boîte. */
+   à droite les actions, les termes et les commandes. Les colonnes latérales restent
+   affichées pendant la lecture : elles sont à leur place dès l'ouverture et ne bougent pas
+   quand la page défile. Le cours, lui, monte jusque sous l'en-tête de l'application. */
 @media (min-width: 64rem) {
   :host {
-    /* Hauteur laissée par l'en-tête de l'application et les marges de la page. */
-    --column-height: calc(100vh - var(--sticky-top) - 2.5rem);
+    /* Marges haute et basse de la page, autour de son contenu. */
+    --page-top: 1.25rem;
+    --page-bottom: 3rem;
   }
 
   .reading {
@@ -160,20 +162,12 @@
   }
 
   .rail,
-  .article,
   .right {
-    box-sizing: border-box;
-    height: var(--column-height);
-  }
-
-  .article {
-    overflow-y: auto;
-  }
-
-  /* Dans la boîte, un titre atteint par le sommaire vient près de son bord haut : il n'y
-     a plus d'en-tête à éviter. */
-  .article app-course-content {
-    --sticky-top: 0px;
+    position: sticky;
+    top: calc(var(--sticky-top) + var(--page-top));
+    /* Jamais plus hautes que la place laissée par la marge basse de la page : sinon la fin
+       du cours les repousserait vers le haut. */
+    max-height: calc(100vh - var(--sticky-top) - var(--page-top) - var(--page-bottom));
   }
 
   .right {

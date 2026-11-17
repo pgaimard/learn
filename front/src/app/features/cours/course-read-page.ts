@@ -29,11 +29,6 @@ import { Course, CourseService } from './course.service';
 const SHOWN_TERMS = 6;
 // Hauteur, dans la fenêtre, sous laquelle un titre ouvre la section en cours de lecture.
 const READING_LINE_PX = 160;
-// La même ligne quand le cours défile dans sa boîte : sa distance au haut de la boîte.
-const BOX_READING_LINE_PX = 96;
-// Largeur à partir de laquelle le cours défile dans sa boîte ; la même que dans la feuille
-// de style.
-const BOXED_LAYOUT = '(min-width: 64rem)';
 // Place à garder à droite du menu du clic droit pour qu'il ne sorte pas de la fenêtre.
 const MENU_WIDTH_PX = 200;
 
@@ -216,25 +211,9 @@ export class CourseReadPage {
     }
     // En bas de page, les derniers titres ne peuvent plus monter jusqu'à la ligne de
     // lecture : le dernier titre visible est alors celui de la section en cours.
-    const box = this.scrollBox();
-    const frame = box?.getBoundingClientRect();
-    const isAtBottom = box
-      ? box.scrollTop + box.clientHeight >= box.scrollHeight - 2
-      : window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
-    const line = frame
-      ? isAtBottom
-        ? frame.bottom
-        : frame.top + BOX_READING_LINE_PX
-      : isAtBottom
-        ? window.innerHeight
-        : READING_LINE_PX;
+    const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
+    const line = isAtBottom ? window.innerHeight : READING_LINE_PX;
     this.activeHeading.set(this.contentView()?.headingIndexAbove(line) ?? null);
-  }
-
-  // Boîte du cours quand c'est elle qui défile (grand écran) ; null quand c'est la page.
-  private scrollBox(): HTMLElement | null {
-    const isBoxed = window.matchMedia?.(BOXED_LAYOUT).matches ?? false;
-    return isBoxed ? (this.article()?.nativeElement ?? null) : null;
   }
 
   protected releaseHeading(): void {
@@ -260,7 +239,7 @@ export class CourseReadPage {
   // suivis à la file ramènent au premier endroit quitté.
   protected followReference(headingIndex: number): void {
     if (this.returnPosition() === null) {
-      this.returnPosition.set(this.scrollBox()?.scrollTop ?? window.scrollY);
+      this.returnPosition.set(window.scrollY);
     }
     this.goTo(headingIndex);
   }
@@ -270,7 +249,7 @@ export class CourseReadPage {
     if (top !== null) {
       this.returnPosition.set(null);
       this.chosenHeading = null;
-      (this.scrollBox() ?? window).scrollTo({ top, behavior: 'smooth' });
+      window.scrollTo({ top, behavior: 'smooth' });
     }
   }
 

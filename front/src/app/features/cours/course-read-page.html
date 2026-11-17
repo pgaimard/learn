@@ -46,8 +46,7 @@
       </aside>
     </div>
 
-    <!-- Sur grand écran, le cours reste dans sa boîte et y défile seul. -->
-    <article #article class="article" (scroll)="followReading()">
+    <article #article class="article">
       @if (shownContent(); as content) {
         @if (isSheet()) {
           <p class="sheet-note" role="status">Fiche de révision du chapitre.</p>

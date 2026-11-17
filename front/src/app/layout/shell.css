@@ -157,14 +157,6 @@ app-search-box {
   max-width: var(--page-width-wide);
 }
 
-/* Sur grand écran elle tient dans la fenêtre, où le cours défile seul : sa marge basse est
-   celle du haut. */
-@media (min-width: 64rem) {
-  .content:has(app-course-read-page) {
-    padding-bottom: 1.25rem;
-  }
-}
-
 /* Sur grand écran l'en-tête reste affiché : la recherche est toujours à portée,
    et y placer le curseur ne fait pas perdre la position de lecture. */
 @media (min-width: 64rem) {
