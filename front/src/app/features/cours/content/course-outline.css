@@ -58,13 +58,14 @@ button.is-current {
   padding-left: 2.75rem;
 }
 
-/* Marque-page de lecture : le même point vert que devant le titre, dans le cours. Il suit
-   le texte du titre : la marge du sommaire, qui défile, le couperait. */
-button.is-marked::after {
+/* Marque-page de lecture : le même point vert que devant le titre, dans le cours. Il
+   précède le texte du titre, dans le bouton : la marge du sommaire, qui défile, le
+   couperait. */
+button.is-marked::before {
   display: inline-block;
   width: 0.4375rem;
   height: 0.4375rem;
-  margin-left: 0.5rem;
+  margin-right: 0.4375rem;
   border-radius: 50%;
   background: var(--color-callout-retenir);
   box-shadow: 0 0 0 2px var(--color-callout-retenir-soft);
