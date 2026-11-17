@@ -6,7 +6,7 @@ export type Theme = 'light' | 'dark';
 const STORAGE_KEY = 'theme';
 
 // Thème clair ou sombre : celui du système tant que rien n'a été choisi, puis le
-// choix fait dans l'en-tête, gardé dans le navigateur.
+// choix fait dans le menu du compte, gardé dans le navigateur.
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
@@ -15,6 +15,8 @@ export class ThemeService {
   );
 
   private readonly chosen = signal<Theme | null>(this.readChoice());
+  // Thème choisi ; null quand on suit celui du système.
+  readonly choice = this.chosen.asReadonly();
   private readonly system = signal<Theme>(this.systemDark?.matches ? 'dark' : 'light');
 
   readonly theme = computed<Theme>(() => this.chosen() ?? this.system());
@@ -26,11 +28,11 @@ export class ThemeService {
     this.apply(this.chosen());
   }
 
-  toggle(): void {
-    const next: Theme = this.theme() === 'dark' ? 'light' : 'dark';
-    this.chosen.set(next);
-    this.apply(next);
-    this.store(next);
+  // Fixe le thème, ou revient à celui du système (null).
+  choose(theme: Theme | null): void {
+    this.chosen.set(theme);
+    this.apply(theme);
+    this.store(theme);
   }
 
   // Sans choix, l'attribut est absent : la feuille de style suit le système.
@@ -53,9 +55,14 @@ export class ThemeService {
     }
   }
 
-  private store(theme: Theme): void {
+  private store(theme: Theme | null): void {
     try {
-      this.document.defaultView?.localStorage.setItem(STORAGE_KEY, theme);
+      const storage = this.document.defaultView?.localStorage;
+      if (theme) {
+        storage?.setItem(STORAGE_KEY, theme);
+      } else {
+        storage?.removeItem(STORAGE_KEY);
+      }
     } catch {
       // Rien à faire : le thème reste appliqué pour la page en cours.
     }

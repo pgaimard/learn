@@ -24,15 +24,6 @@
 
   <app-search-box />
 
-  <button
-    type="button"
-    class="button button-icon"
-    [attr.aria-label]="isDark() ? 'Passer au thème clair' : 'Passer au thème sombre'"
-    (click)="toggleTheme()"
-  >
-    <app-icon [name]="isDark() ? 'sun' : 'moon'" [size]="15" />
-  </button>
-
   @if (user(); as currentUser) {
     <div class="account">
       <button
@@ -49,6 +40,13 @@
       @if (isAccountOpen()) {
         <div class="account-menu" role="menu" aria-label="Compte">
           <p class="account-name">{{ currentUser.username }}</p>
+          <app-segmented
+            class="account-theme"
+            label="Thème"
+            [options]="themeOptions"
+            [value]="themeChoice()"
+            (valueChange)="chooseTheme($event)"
+          />
           <button
             type="button"
             role="menuitem"
