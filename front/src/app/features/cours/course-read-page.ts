@@ -19,7 +19,13 @@ import { Modal } from '../../core/ui/modal';
 import { CommandSheet } from '../outils/command-sheet';
 import { Command, CommandGroup, CommandService, CommandTool } from '../outils/command.service';
 import { Term, TermService, TermSummary } from '../termes/term.service';
-import { Bookmark, findBookmarkBlock, sectionAt } from './bookmark/bookmark';
+import {
+  Bookmark,
+  findBookmarkBlock,
+  headingRankOf,
+  isInSection,
+  sectionAt,
+} from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
 import { CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
@@ -85,6 +91,15 @@ export class CourseReadPage {
       block: course.bookmarkBlock,
     });
   });
+  // Rang, dans le sommaire, du titre qui porte le marque-page ; null sans marque-page, et
+  // dans la fiche de révision, qui a son propre sommaire.
+  protected readonly bookmarkHeading = computed(() => {
+    const course = this.course();
+    const block = this.bookmarkBlock();
+    return course && block !== null && !this.isSheet()
+      ? headingRankOf(course.content, block)
+      : null;
+  });
   // Bloc amené à l'écran à l'ouverture : celui demandé au retour de l'édition, sinon le
   // marque-page. La fiche de révision, elle, s'ouvre à son début.
   protected readonly startBlock = computed(() => {
@@ -128,6 +143,18 @@ export class CourseReadPage {
   );
   // Titre de la section en cours de lecture, mis en avant dans le sommaire.
   protected readonly activeHeading = signal<number | null>(null);
+  // « Revenir à ma page » : proposé quand la lecture a quitté le chapitre marqué, tant
+  // qu'on ne l'a pas écarté. Le retour après un renvoi (returnPosition) passe avant.
+  protected readonly isBookmarkBarHidden = signal(false);
+  protected readonly canReturnToBookmark = computed(() => {
+    const marked = this.bookmarkHeading();
+    return (
+      marked !== null &&
+      !this.isBookmarkBarHidden() &&
+      this.returnPosition() === null &&
+      !isInSection(this.outline(), marked, this.activeHeading())
+    );
+  });
   // Titre choisi dans le sommaire, que le défilement qui s'ensuit ne doit pas démarquer.
   private chosenHeading: number | null = null;
   // Sur écran étroit, le sommaire est rétracté : true quand il est sorti.
@@ -193,8 +220,11 @@ export class CourseReadPage {
     request.subscribe({
       // Seul le marque-page change : le contenu affiché reste le même objet, la lecture
       // ne bouge pas.
-      next: ({ bookmarkTitle, bookmarkBlock }) =>
-        this.course.update((shown) => shown && { ...shown, bookmarkTitle, bookmarkBlock }),
+      next: ({ bookmarkTitle, bookmarkBlock }) => {
+        this.course.update((shown) => shown && { ...shown, bookmarkTitle, bookmarkBlock });
+        // Un marque-page posé ailleurs remet « Revenir à ma page » en jeu.
+        this.isBookmarkBarHidden.set(false);
+      },
       error: (error: ApiError) => this.errors.set(error.messages),
     });
   }
@@ -214,6 +244,14 @@ export class CourseReadPage {
     const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
     const line = isAtBottom ? window.innerHeight : READING_LINE_PX;
     this.activeHeading.set(this.contentView()?.headingIndexAbove(line) ?? null);
+  }
+
+  // Ramène la lecture au titre qui porte le marque-page.
+  protected goToBookmark(): void {
+    const marked = this.bookmarkHeading();
+    if (marked !== null) {
+      this.goTo(marked);
+    }
   }
 
   protected releaseHeading(): void {
@@ -271,6 +309,7 @@ export class CourseReadPage {
     this.shownCommand.set(null);
     this.activeHeading.set(null);
     this.chosenHeading = null;
+    this.isBookmarkBarHidden.set(false);
     // Les termes sont un complément : leur échec ne bloque pas la lecture.
     this.termService.list({ course: id }).subscribe({
       next: (terms) => this.terms.set(terms),

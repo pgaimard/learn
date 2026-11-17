@@ -1,5 +1,5 @@
 import { ContentNode } from '../content/content-node';
-import { findBookmarkBlock, sectionAt } from './bookmark';
+import { findBookmarkBlock, headingRankOf, isInSection, sectionAt } from './bookmark';
 
 function heading(text: string): ContentNode {
   return { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text }] };
@@ -52,5 +52,40 @@ describe('findBookmarkBlock', () => {
   it('ne trouve rien sans marque-page, ou quand le titre a disparu', () => {
     expect(findBookmarkBlock(DOCUMENT, null)).toBeNull();
     expect(findBookmarkBlock(DOCUMENT, { title: '3. Annexe', block: 3 })).toBeNull();
+  });
+});
+
+describe('headingRankOf', () => {
+  it('donne le rang du titre parmi ceux du document, celui du sommaire', () => {
+    expect(headingRankOf(DOCUMENT, 1)).toBe(0);
+    expect(headingRankOf(DOCUMENT, 3)).toBe(1);
+    expect(headingRankOf(DOCUMENT, 7)).toBe(3);
+  });
+});
+
+describe('isInSection', () => {
+  // « 1 » contient « 1.1 » et « 1.2 » ; « 2 » ouvre le chapitre suivant.
+  const headings = [
+    { index: 0, level: 2 },
+    { index: 1, level: 3 },
+    { index: 2, level: 3 },
+    { index: 3, level: 2 },
+  ];
+
+  it('compte le titre marqué et ses sous-titres comme le chapitre marqué', () => {
+    expect(isInSection(headings, 0, 0)).toBe(true);
+    expect(isInSection(headings, 0, 2)).toBe(true);
+    expect(isInSection(headings, 0, 3)).toBe(false);
+  });
+
+  it('s’arrête au titre suivant de même niveau', () => {
+    expect(isInSection(headings, 1, 1)).toBe(true);
+    expect(isInSection(headings, 1, 2)).toBe(false);
+    expect(isInSection(headings, 1, 0)).toBe(false);
+  });
+
+  it('est hors du chapitre avant le premier titre, ou pour un titre marqué disparu', () => {
+    expect(isInSection(headings, 0, null)).toBe(false);
+    expect(isInSection(headings, 9, 0)).toBe(false);
   });
 });
