@@ -40,6 +40,7 @@
           <app-course-outline
             [entries]="outline()"
             [activeIndex]="activeHeading()"
+            [markedIndex]="bookmarkHeading()"
             (picked)="goTo($event)"
           />
         }
@@ -178,6 +179,22 @@
         aria-label="Rester ici"
         title="Rester ici"
         (click)="returnPosition.set(null)"
+      >
+        <app-icon name="close" [size]="15" />
+      </button>
+    </div>
+  } @else if (canReturnToBookmark()) {
+    <!-- La lecture a quitté le chapitre marqué : ce bouton ramène au marque-page. -->
+    <div class="return-bar">
+      <button type="button" class="button button-primary" (click)="goToBookmark()">
+        <app-icon name="undo" />Revenir à ma page
+      </button>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        aria-label="Masquer"
+        title="Masquer"
+        (click)="isBookmarkBarHidden.set(true)"
       >
         <app-icon name="close" [size]="15" />
       </button>

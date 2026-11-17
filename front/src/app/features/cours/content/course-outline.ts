@@ -22,10 +22,14 @@ import { OutlineEntry } from './build-outline';
               type="button"
               [class]="'level-' + entry.level"
               [class.is-current]="entry.index === activeIndex()"
+              [class.is-marked]="entry.index === markedIndex()"
               [attr.aria-current]="entry.index === activeIndex() ? 'location' : null"
               (click)="picked.emit(entry.index)"
             >
               {{ entry.text }}
+              @if (entry.index === markedIndex()) {
+                <span class="visually-hidden">(marque-page)</span>
+              }
             </button>
           </li>
         }
@@ -41,6 +45,8 @@ export class CourseOutline {
   readonly headingId = input('course-outline-title');
   // Rang du titre de la section affichée ; null s'il n'y en a pas.
   readonly activeIndex = input<number | null>(null);
+  // Rang du titre qui porte le marque-page de lecture, signalé d'un point vert.
+  readonly markedIndex = input<number | null>(null);
 
   readonly picked = output<number>();
 

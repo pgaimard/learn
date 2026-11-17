@@ -578,4 +578,72 @@ describe('CourseReadPage', () => {
     scrollWithHeadingsAt([40, 300, 500, 900]);
     expect(current()).toBe('1. Notion');
   });
+
+  describe('marque-page', () => {
+    // Le marque-page est sur « 2. Création », deuxième titre du sommaire.
+    const MARKED = { ...COURSE, bookmarkTitle: '2. Création', bookmarkBlock: 3 };
+
+    // jsdom ne sait pas faire défiler vers un élément : l'appel seul compte ici.
+    beforeEach(() => {
+      Element.prototype.scrollIntoView = () => undefined;
+    });
+
+    afterEach(() => Reflect.deleteProperty(Element.prototype, 'scrollIntoView'));
+    const bar = (label: string): HTMLButtonElement | undefined =>
+      Array.from(element().querySelectorAll<HTMLButtonElement>('.return-bar button')).find(
+        (candidate) => candidate.textContent.trim() === label,
+      );
+
+    it('signale d’un point, dans le sommaire, le titre qui porte le marque-page', async () => {
+      await setup(MARKED);
+
+      const marked = element().querySelectorAll('.outline .is-marked');
+      expect(marked).toHaveLength(1);
+      expect(marked[0].textContent).toContain('2. Création');
+    });
+
+    it('propose de revenir à sa page quand la lecture quitte le chapitre marqué', async () => {
+      await setup(MARKED);
+      setPageHeight(5000);
+
+      // Lecture dans « 2.1 fork », sous-titre du chapitre marqué : rien à proposer.
+      scrollWithHeadingsAt([-900, -400, 40, 900]);
+      expect(bar('Revenir à ma page')).toBeUndefined();
+
+      // Lecture dans « 3. Annexe » : hors du chapitre marqué.
+      scrollWithHeadingsAt([-900, -700, -400, 40]);
+      bar('Revenir à ma page')?.click();
+      fixture.detectChanges();
+
+      expect(element().querySelector('.outline .is-current')?.textContent).toContain('2. Création');
+      expect(bar('Revenir à ma page')).toBeUndefined();
+    });
+
+    it('se masque à la demande, et laisse passer le retour après un renvoi', async () => {
+      await setup({
+        ...course(
+          heading(2, '1. Notion'),
+          paragraph('Détails en section 2.'),
+          heading(2, '2. Suite'),
+          heading(2, '3. Fin'),
+        ),
+        bookmarkTitle: '3. Fin',
+        bookmarkBlock: 3,
+      });
+      setPageHeight(5000);
+      scrollWithHeadingsAt([40, 300, 900]);
+      expect(bar('Revenir à ma page')).toBeDefined();
+
+      element().querySelector<HTMLElement>('.section-ref')?.click();
+      fixture.detectChanges();
+      expect(bar('Revenir à ma lecture')).toBeDefined();
+      expect(bar('Revenir à ma page')).toBeUndefined();
+
+      element().querySelector<HTMLButtonElement>('.return-bar [aria-label="Rester ici"]')?.click();
+      fixture.detectChanges();
+      element().querySelector<HTMLButtonElement>('.return-bar [aria-label="Masquer"]')?.click();
+      fixture.detectChanges();
+      expect(element().querySelector('.return-bar')).toBeNull();
+    });
+  });
 });
