@@ -35,25 +35,6 @@
           {{ course.updatedAt | date: 'dd/MM/yyyy' }}
         </p>
       </div>
-      <div class="header-actions">
-        @if (isSheet()) {
-          <a class="button" [routerLink]="[]">Cours complet</a>
-        } @else {
-          <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">Fiche de révision</a>
-        }
-        <a class="button button-primary" [routerLink]="editLink()">
-          <app-icon name="pencil" />{{ isSheet() ? 'Modifier la fiche' : 'Modifier' }}
-        </a>
-        <button
-          type="button"
-          class="button button-icon button-ghost"
-          [attr.aria-label]="'Supprimer ' + course.title"
-          title="Supprimer le cours"
-          (click)="remove(course)"
-        >
-          <app-icon name="trash" />
-        </button>
-      </div>
       <aside id="course-outline" class="outline" [class.is-open]="isOutlineOpen()">
         @if (outline().length > 0) {
           <app-course-outline
@@ -65,7 +46,8 @@
       </aside>
     </div>
 
-    <article #article class="article">
+    <!-- Sur grand écran, le cours reste dans sa boîte et y défile seul. -->
+    <article #article class="article" (scroll)="followReading()">
       @if (shownContent(); as content) {
         @if (isSheet()) {
           <p class="sheet-note" role="status">Fiche de révision du chapitre.</p>
@@ -89,42 +71,68 @@
       }
     </article>
 
-    <aside class="side terms" aria-labelledby="course-terms-title">
-      @if (terms().length > 0) {
-        <h2 id="course-terms-title">Termes du chapitre</h2>
-        <ul>
-          @for (term of shownTerms(); track term.id) {
-            <li>
-              <a [routerLink]="['/ue', code(), 'termes', term.id]">{{ term.label }}</a>
-              <span>{{ term.expandedForm || term.excerpt }}</span>
-            </li>
-          }
-        </ul>
-        @if (terms().length > shownTerms().length) {
-          <a class="all-terms" [routerLink]="['/ue', code()]" [queryParams]="{ onglet: 'termes' }">
-            Voir les {{ terms().length }} termes
-          </a>
+    <!-- Colonne de droite : les actions sur le cours, puis ses termes et ses commandes. -->
+    <div class="right">
+      <div class="header-actions">
+        @if (isSheet()) {
+          <a class="button" [routerLink]="[]">Cours complet</a>
+        } @else {
+          <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">Fiche de révision</a>
         }
-      }
-      @if (commandGroups().length > 0) {
-        <section class="commands" aria-labelledby="course-commands-title">
-          <h2 id="course-commands-title">Commandes du chapitre</h2>
-          @for (group of commandGroups(); track group.tool.id) {
-            <h3>{{ group.tool.name }}</h3>
-            <ul>
-              @for (command of group.commands; track command.id) {
-                <li>
-                  <button type="button" (click)="shownCommand.set({ command, tool: group.tool })">
-                    {{ command.name }}
-                  </button>
-                  <span>{{ command.summary }}</span>
-                </li>
-              }
-            </ul>
+        <a class="button button-primary" [routerLink]="editLink()">
+          <app-icon name="pencil" />{{ isSheet() ? 'Modifier la fiche' : 'Modifier' }}
+        </a>
+        <button
+          type="button"
+          class="button button-icon button-ghost"
+          [attr.aria-label]="'Supprimer ' + course.title"
+          title="Supprimer le cours"
+          (click)="remove(course)"
+        >
+          <app-icon name="trash" />
+        </button>
+      </div>
+      <aside class="terms" aria-labelledby="course-terms-title">
+        @if (terms().length > 0) {
+          <h2 id="course-terms-title">Termes du chapitre</h2>
+          <ul>
+            @for (term of shownTerms(); track term.id) {
+              <li>
+                <a [routerLink]="['/ue', code(), 'termes', term.id]">{{ term.label }}</a>
+                <span>{{ term.expandedForm || term.excerpt }}</span>
+              </li>
+            }
+          </ul>
+          @if (terms().length > shownTerms().length) {
+            <a
+              class="all-terms"
+              [routerLink]="['/ue', code()]"
+              [queryParams]="{ onglet: 'termes' }"
+            >
+              Voir les {{ terms().length }} termes
+            </a>
           }
-        </section>
-      }
-    </aside>
+        }
+        @if (commandGroups().length > 0) {
+          <section class="commands" aria-labelledby="course-commands-title">
+            <h2 id="course-commands-title">Commandes du chapitre</h2>
+            @for (group of commandGroups(); track group.tool.id) {
+              <h3>{{ group.tool.name }}</h3>
+              <ul>
+                @for (command of group.commands; track command.id) {
+                  <li>
+                    <button type="button" (click)="shownCommand.set({ command, tool: group.tool })">
+                      {{ command.name }}
+                    </button>
+                    <span>{{ command.summary }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </aside>
+    </div>
   </div>
 
   @if (shownCommand(); as shown) {
