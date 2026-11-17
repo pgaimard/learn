@@ -119,6 +119,12 @@ app-search-box {
   font-size: 0.71875rem;
 }
 
+/* Choix du thème : clair, sombre, ou celui du système. */
+.account-theme {
+  display: block;
+  margin: 0.125rem 0.25rem 0.375rem;
+}
+
 .account-item {
   display: flex;
   align-items: center;

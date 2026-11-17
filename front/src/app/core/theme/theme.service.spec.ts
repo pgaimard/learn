@@ -27,15 +27,29 @@ describe('ThemeService', () => {
     expect(root.dataset['theme']).toBeUndefined();
   });
 
-  it('bascule, applique le thème et le garde', () => {
+  it('applique le thème choisi et le garde', () => {
     systemPrefers(false);
     const service = TestBed.inject(ThemeService);
 
-    service.toggle();
+    service.choose('dark');
 
     expect(service.theme()).toBe('dark');
+    expect(service.choice()).toBe('dark');
     expect(root.dataset['theme']).toBe('dark');
     expect(localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('revient au thème du système et oublie le choix', () => {
+    systemPrefers(true);
+    localStorage.setItem('theme', 'light');
+    const service = TestBed.inject(ThemeService);
+
+    service.choose(null);
+
+    expect(service.theme()).toBe('dark');
+    expect(service.choice()).toBeNull();
+    expect(root.dataset['theme']).toBeUndefined();
+    expect(localStorage.getItem('theme')).toBeNull();
   });
 
   it('reprend le choix gardé, même contraire au système', () => {
