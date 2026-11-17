@@ -189,6 +189,10 @@
   .outline {
     /* Un peu d'air entre le titre du cours et son sommaire. */
     margin-top: 1rem;
+    /* Marge intérieure où se place le point du marque-page : le sommaire défile, et ce qui
+       en dépasse serait coupé. La marge négative le laisse aligné sur le titre du cours. */
+    margin-left: -1rem;
+    padding-left: 1rem;
   }
 }
 

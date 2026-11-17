@@ -21,6 +21,8 @@ ol {
 }
 
 button {
+  /* Repère du point du marque-page. */
+  position: relative;
   display: block;
   width: 100%;
   padding: 0.25rem 0.5rem;
@@ -58,17 +60,17 @@ button.is-current {
   padding-left: 2.75rem;
 }
 
-/* Marque-page de lecture : le même point vert que devant le titre, dans le cours. Il
-   précède le texte du titre, dans le bouton : la marge du sommaire, qui défile, le
-   couperait. */
+/* Marque-page de lecture : le même point vert que devant le titre, dans le cours. Il se
+   place dans la marge, à gauche du titre, sans décaler son texte. Le conteneur du sommaire
+   doit lui réserver cette marge : il défile, et ce qui en dépasse serait coupé. */
 button.is-marked::before {
-  display: inline-block;
+  position: absolute;
+  top: calc(0.25rem + (1.4em - 0.4375rem) / 2);
+  left: -0.6875rem;
   width: 0.4375rem;
   height: 0.4375rem;
-  margin-right: 0.4375rem;
   border-radius: 50%;
   background: var(--color-callout-retenir);
   box-shadow: 0 0 0 2px var(--color-callout-retenir-soft);
-  vertical-align: 0.05em;
   content: '';
 }
