@@ -72,7 +72,8 @@
 .terms li {
   padding: 0.5rem 0;
   border-top: 1px solid var(--color-border-soft);
-  font-size: var(--text-size);
+  /* Colonne d'appoint : un cran sous le corps du texte. */
+  font-size: 0.875rem;
 }
 
 .terms li:first-child {
