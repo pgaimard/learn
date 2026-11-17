@@ -6,7 +6,7 @@ ul {
 
 .term-row {
   display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  grid-template-columns: 9.5rem minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-items: center;
   min-height: 2.25rem;
@@ -15,11 +15,11 @@ ul {
 }
 
 .term-row.has-origin {
-  grid-template-columns: 7.5rem minmax(0, 1fr) minmax(0, 10rem) auto;
+  grid-template-columns: 9.5rem minmax(0, 1fr) minmax(0, 10rem) auto;
 }
 
 .term-row.has-type.has-origin {
-  grid-template-columns: 7.5rem 5.25rem minmax(0, 1fr) minmax(0, 10rem) auto;
+  grid-template-columns: 9.5rem 5.25rem minmax(0, 1fr) minmax(0, 10rem) auto;
 }
 
 .term-row:first-child {

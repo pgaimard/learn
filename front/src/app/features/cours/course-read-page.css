@@ -64,7 +64,7 @@
 .terms li {
   padding: 0.5rem 0;
   border-top: 1px solid var(--color-border-soft);
-  font-size: 0.8125rem;
+  font-size: var(--text-size);
 }
 
 .terms li:first-child {
@@ -117,7 +117,7 @@
 .command-tool {
   margin: 0 0 0.5rem 2.25rem;
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-size);
 }
 
 .all-terms {
@@ -137,15 +137,30 @@
 /* Trois colonnes sur grand écran : sommaire, cours, termes. Les colonnes latérales
    restent affichées pendant la lecture. */
 @media (min-width: 64rem) {
-  /* Le titre et ses boutons (« Fiche de révision », « Modifier ») restent affichés sous
-     l'en-tête de l'application pendant la lecture. */
+  /* Le fil d'Ariane, le titre et ses boutons (« Fiche de révision », « Modifier ») restent
+     affichés sous l'en-tête de l'application pendant la lecture. Leurs hauteurs sont fixes
+     et rien ne les précède : le sommaire et la colonne de droite sont donc déjà à leur
+     place quand la page s'ouvre, et ne bougent pas quand le cours défile. */
   :host {
+    --crumb-bar: 3rem;
     --page-bar: 4.5rem;
+  }
+
+  .breadcrumb {
+    position: sticky;
+    top: var(--sticky-top);
+    z-index: 1;
+    box-sizing: border-box;
+    height: var(--crumb-bar);
+    /* Remonte dans la marge haute de la page, qu'il couvre de son fond. */
+    margin: -1.25rem -1.5rem 0;
+    padding: 1.25rem 1.5rem 0;
+    background: var(--color-background);
   }
 
   .page-header {
     position: sticky;
-    top: var(--sticky-top);
+    top: calc(var(--sticky-top) + var(--crumb-bar));
     z-index: 1;
     box-sizing: border-box;
     min-height: var(--page-bar);
@@ -163,15 +178,15 @@
 
   .reading {
     /* La colonne du cours compte la largeur de lecture et les marges de la feuille. */
-    grid-template-columns: 15rem minmax(0, calc(var(--reading-width) + 7rem)) 14rem;
+    grid-template-columns: 17rem minmax(0, calc(var(--reading-width) + 7rem)) 16rem;
     column-gap: 3.5rem;
     align-items: start;
   }
 
   .side {
     position: sticky;
-    top: calc(var(--sticky-top) + var(--page-bar) + 0.5rem);
-    max-height: calc(100vh - var(--sticky-top) - var(--page-bar) - 1.5rem);
+    top: calc(var(--sticky-top) + var(--crumb-bar) + var(--page-bar) + 0.5rem);
+    max-height: calc(100vh - var(--sticky-top) - var(--crumb-bar) - var(--page-bar) - 1.5rem);
     overflow-y: auto;
   }
 }

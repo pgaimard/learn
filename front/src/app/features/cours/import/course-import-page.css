@@ -86,7 +86,7 @@ dt {
 
 dd {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-size);
   font-weight: 600;
 }
 
