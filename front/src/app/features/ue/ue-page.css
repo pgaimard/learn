@@ -58,7 +58,7 @@
 .tool-commands h2 {
   margin: 0 0 0.375rem;
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .tool-commands h2 a {

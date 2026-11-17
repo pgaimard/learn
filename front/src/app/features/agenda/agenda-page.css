@@ -1,5 +1,7 @@
 :host {
   display: block;
+  /* Le planning reste dense : il garde un texte plus petit que le reste de l'application. */
+  font-size: 0.8125rem;
 }
 
 /* Barre du planning : période, titre, vue, création. */

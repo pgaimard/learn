@@ -83,7 +83,7 @@
   background: none;
   color: inherit;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: var(--text-size);
   text-align: left;
   cursor: pointer;
 }
@@ -113,7 +113,7 @@
   flex: none;
   color: var(--color-syntax-keyword);
   font-family: var(--font-mono);
-  font-size: 0.84375rem;
+  font-size: var(--text-size);
   font-weight: 600;
 }
 

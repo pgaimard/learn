@@ -89,7 +89,7 @@
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.84375rem;
+  font-size: var(--text-size);
 }
 
 th,
