@@ -129,6 +129,23 @@ describe('markdownToContent', () => {
     expect(blocks[7].content?.[0].type).toBe('bulletList');
   });
 
+  it.each(['savoir', 'noter', 'astuce'])(
+    'reconnaît un encadré « %s »',
+    (kind) => {
+      const { document, errors } = markdownToContent(
+        `> [!${kind}]\n> Texte.`,
+        0,
+      );
+
+      expect(errors).toEqual([]);
+      expect(document.content?.[0]).toMatchObject({
+        type: 'callout',
+        attrs: { kind },
+      });
+      expect(validateContent(document)).toEqual([]);
+    },
+  );
+
   it('reconnaît un encadré « Définition »', () => {
     const { document, errors } = markdownToContent(
       '> [!definition]\n> Un **processus** est un programme en cours d’exécution.',

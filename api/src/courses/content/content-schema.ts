@@ -105,13 +105,22 @@ export const NODE_RULES: Record<string, NodeRule> = {
       alt: (value) => typeof value === 'string' && value.length <= 500,
     },
   },
-  // Encadré typé : « À retenir », « Ce qui a changé », « Attention », « Définition ».
+  // Encadré typé : « À retenir », « Ce qui a changé », « Attention », « Définition »,
+  // « À savoir », « À noter », « Astuce ».
   callout: {
     children: 'block',
     minChildren: 1,
     attrs: {
       ...pinned,
-      kind: isOneOf(['retenir', 'change', 'attention', 'definition']),
+      kind: isOneOf([
+        'retenir',
+        'change',
+        'attention',
+        'definition',
+        'savoir',
+        'noter',
+        'astuce',
+      ]),
     },
   },
   hardBreak: { children: 'none' },
