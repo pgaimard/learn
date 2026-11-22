@@ -266,6 +266,33 @@
   content: 'Définition';
 }
 
+.course-content .callout[data-kind='savoir'] {
+  --callout-color: var(--color-callout-savoir);
+  --callout-background: var(--color-callout-savoir-soft);
+}
+
+.course-content .callout[data-kind='savoir']::before {
+  content: 'À savoir';
+}
+
+.course-content .callout[data-kind='noter'] {
+  --callout-color: var(--color-callout-noter);
+  --callout-background: var(--color-callout-noter-soft);
+}
+
+.course-content .callout[data-kind='noter']::before {
+  content: 'À noter';
+}
+
+.course-content .callout[data-kind='astuce'] {
+  --callout-color: var(--color-callout-astuce);
+  --callout-background: var(--color-callout-astuce-soft);
+}
+
+.course-content .callout[data-kind='astuce']::before {
+  content: 'Astuce';
+}
+
 .course-content .callout > :last-child {
   margin-bottom: 0;
 }

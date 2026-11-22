@@ -71,6 +71,18 @@
   background: var(--color-callout-definition);
 }
 
+.dot[data-kind='savoir'] {
+  background: var(--color-callout-savoir);
+}
+
+.dot[data-kind='noter'] {
+  background: var(--color-callout-noter);
+}
+
+.dot[data-kind='astuce'] {
+  background: var(--color-callout-astuce);
+}
+
 .menu-item.is-on {
   background: var(--color-accent-soft);
   color: var(--color-accent);

@@ -87,11 +87,17 @@ describe('menu « / »', () => {
       expect(labels('change')).toEqual(['Ce qui a changé']);
       expect(labels('att')).toEqual(['Attention']);
       expect(labels('defin')).toEqual(['Définition']);
+      expect(labels('savoir')).toEqual(['À savoir']);
+      expect(labels('noter')).toEqual(['À noter']);
+      expect(labels('astu')).toEqual(['Astuce']);
       expect(labels('encadre')).toEqual([
         'À retenir',
         'Ce qui a changé',
         'Attention',
         'Définition',
+        'À savoir',
+        'À noter',
+        'Astuce',
       ]);
     });
 

@@ -24,6 +24,9 @@ export const CALLOUT_ICONS: Record<CalloutKind, IconName> = {
   change: 'change',
   attention: 'warning',
   definition: 'book',
+  savoir: 'info',
+  noter: 'pencil',
+  astuce: 'bulb',
 };
 
 export const IMAGE_COMMAND: SlashCommand = {

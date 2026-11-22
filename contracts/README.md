@@ -39,8 +39,8 @@ Règles de `cours.md` :
   si le rang dépasse leur nombre) et les suivants reculent. L'ordre se change ensuite en faisant
   glisser les cours dans la liste ;
 - des titres de niveau 2 à 5 (`##` à `#####`) ; le niveau 1 est réservé au titre du chapitre ;
-- un encadré est une citation dont la première ligne est `[!retenir]`, `[!change]`, `[!attention]`
-  ou `[!definition]` (voir « Encadrés ») ;
+- un encadré est une citation dont la première ligne est son marqueur : `[!retenir]`, `[!change]`,
+  `[!attention]`, `[!definition]`, `[!savoir]`, `[!noter]` ou `[!astuce]` (voir « Encadrés ») ;
 - une image est seule dans son paragraphe : `![texte alternatif](images/fig-01.svg "Légende")` ;
 - le HTML n'est pas interprété : il reste du texte.
 
@@ -52,6 +52,9 @@ Règles de `cours.md` :
 | `[!change]` | Ce qui a changé | Une évolution par rapport au support d'origine ou à une ancienne pratique. |
 | `[!attention]` | Attention | Un piège, une confusion fréquente, une erreur à éviter. |
 | `[!definition]` | Définition | La définition d'une notion, à l'endroit où le cours l'introduit. |
+| `[!savoir]` | À savoir | Une information utile autour du sujet : contexte, ordre de grandeur, usage courant. Elle éclaire le cours sans être à apprendre par cœur. |
+| `[!noter]` | À noter | Une précision ou une nuance sur ce qui vient d'être dit : cas particulier, limite, convention d'écriture. |
+| `[!astuce]` | Astuce | Un moyen pratique : raccourci, moyen mnémotechnique, méthode pour aller plus vite ou éviter une erreur. |
 
 ```markdown
 > [!definition]
@@ -62,6 +65,10 @@ Règles de `cours.md` :
 - un encadré « Définition » pose la notion dans le fil du cours ; il ne crée pas d'entrée dans les
   termes de l'UE. La notion qui mérite d'y figurer est aussi listée dans `termes.json` ;
 - le terme défini s'écrit en gras à sa première mention dans l'encadré.
+- choisir le type par ce que l'encadré apporte au lecteur : « À retenir » pour ce qui doit être su,
+  « Attention » pour ce qui fait se tromper, « À savoir » pour ce qui informe, « À noter » pour ce
+  qui précise, « Astuce » pour ce qui aide à faire. Un encadré reste court : il ne remplace pas le
+  texte du cours, et une page n'en aligne pas plusieurs à la suite.
 
 ### Fiche de révision
 

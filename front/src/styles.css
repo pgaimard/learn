@@ -34,6 +34,12 @@
   --color-callout-attention-soft: light-dark(#fcf1e0, #2b2113);
   --color-callout-definition: light-dark(#6a3fb5, #b9a2f2);
   --color-callout-definition-soft: light-dark(#f1ecfa, #231c38);
+  --color-callout-savoir: light-dark(#a82a63, #f29bc0);
+  --color-callout-savoir-soft: light-dark(#fbeaf1, #331a26);
+  --color-callout-noter: light-dark(#4b5563, #a9b3c2);
+  --color-callout-noter-soft: light-dark(#eef0f3, #20242b);
+  --color-callout-astuce: light-dark(#4a7410, #a3d65c);
+  --color-callout-astuce-soft: light-dark(#eef6e0, #1e2a12);
   --color-syntax-keyword: light-dark(#a31d5f, #f58bb8);
   --color-syntax-value: light-dark(#075e8c, #74c0f0);
   --color-syntax-comment: light-dark(#6b7280, #8c95a6);

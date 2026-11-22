@@ -180,7 +180,15 @@ describe('Import d’un paquet de cours', () => {
     const kinds = course.content.content
       ?.filter((node) => node.type === 'callout')
       .map((node) => node.attrs?.['kind']);
-    expect(kinds).toEqual(['retenir', 'change', 'attention', 'definition']);
+    expect(kinds).toEqual([
+      'retenir',
+      'change',
+      'attention',
+      'definition',
+      'savoir',
+      'noter',
+      'astuce',
+    ]);
   });
 
   it('crée les termes du paquet, rattachés au cours et à son UE', async () => {
