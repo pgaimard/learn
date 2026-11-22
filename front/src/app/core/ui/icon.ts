@@ -39,6 +39,8 @@ const ICONS = {
   'arrow-down': 'M12 5v14M6 13l6 6 6-6',
   pin: 'M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7',
   book: 'M6 4h12v16H7a2 2 0 0 1 0-4h11M9 8h6',
+  info: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18M12 11v6M12 7.5v.5',
+  bulb: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3',
   copy: 'M9 9h11v11H9zM5 15V4h11',
   heading: 'M5 5v14M13 5v14M5 12h8M17 10l2-1v10',
   change: 'M4 8h14l-3-3M20 16H6l3 3',

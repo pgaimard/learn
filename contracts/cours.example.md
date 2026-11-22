@@ -29,6 +29,15 @@ Un **processus** est un *programme en cours d'exécution*. Il est créé par l'a
 > [!definition]
 > Un **processus** est un programme en cours d'exécution, avec son contexte.
 
+> [!savoir]
+> Sous Linux, chaque processus a un répertoire à son numéro dans `/proc`.
+
+> [!noter]
+> Le numéro d'un processus terminé peut être réattribué plus tard.
+
+> [!astuce]
+> `ps -ef` liste tous les processus avec le numéro de leur parent.
+
 #### 1.1.1 Exemple
 
 ```c
