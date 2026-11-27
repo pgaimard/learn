@@ -32,6 +32,7 @@ const COURSE: Course = {
   ue: { code: 'UTC502', title: 'Systèmes' },
   content: { type: 'doc', content: [{ type: 'paragraph' }] },
   sheetContent: SHEET,
+  exercisesContent: null,
   bookmarkTitle: null,
   bookmarkBlock: null,
 };
@@ -49,7 +50,11 @@ describe('SheetEditPage', () => {
     confirmDeletion: vi.fn<DialogService['confirmDeletion']>(),
   };
 
-  async function setup(course: Course = COURSE, bloc?: string): Promise<void> {
+  async function setup(
+    course: Course = COURSE,
+    bloc?: string,
+    document?: 'exercises',
+  ): Promise<void> {
     service.get.mockReset().mockReturnValue(of(course));
     service.update.mockReset().mockReturnValue(of(course));
     TestBed.configureTestingModule({
@@ -64,6 +69,9 @@ describe('SheetEditPage', () => {
     fixture.componentRef.setInput('code', 'UTC502');
     fixture.componentRef.setInput('id', '7');
     fixture.componentRef.setInput('bloc', bloc);
+    if (document) {
+      fixture.componentRef.setInput('document', document);
+    }
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -126,6 +134,45 @@ describe('SheetEditPage', () => {
     await setup(COURSE, '1');
 
     expect(link('Terminer')?.getAttribute('href')).toBe('/ue/UTC502/cours/7?vue=fiche&bloc=1');
+  });
+
+  describe('exercices du cours', () => {
+    const EXERCISES: ContentNode = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          attrs: { pinned: false, textAlign: null },
+          content: [{ type: 'text', text: 'Série 1' }],
+        },
+      ],
+    };
+
+    it('charge les exercices, les enregistre dans leur champ et revient à leur vue', async () => {
+      await setup({ ...COURSE, exercisesContent: EXERCISES }, '2', 'exercises');
+
+      expect(element().querySelector('h1')?.textContent).toBe('Exercices');
+      expect(element().textContent).toContain('Série 1');
+      expect(link('Terminer')?.getAttribute('href')).toBe(
+        '/ue/UTC502/cours/7?vue=exercices&bloc=2',
+      );
+
+      edit();
+      button('Enregistrer')?.click();
+      await fixture.whenStable();
+
+      expect(service.update).toHaveBeenCalledWith(7, { exercisesContent: EXERCISES });
+    });
+
+    it('supprime les exercices sans toucher à la fiche', async () => {
+      await setup({ ...COURSE, exercisesContent: EXERCISES }, undefined, 'exercises');
+      dialog.confirmDeletion.mockReset().mockResolvedValue(true);
+
+      element().querySelector<HTMLButtonElement>('[aria-label="Supprimer les exercices"]')?.click();
+      await fixture.whenStable();
+
+      expect(service.update).toHaveBeenCalledWith(7, { exercisesContent: null });
+    });
   });
 
   it('supprime la fiche après confirmation, puis revient au cours', async () => {

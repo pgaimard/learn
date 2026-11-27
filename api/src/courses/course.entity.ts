@@ -39,6 +39,11 @@ export class Course {
   @Column({ name: 'sheet_content', type: 'jsonb', nullable: true })
   sheetContent!: ContentNode | null;
 
+  // Exercices du cours, au même format ; null quand il n'en a pas. C'est le seul document
+  // où se placent les QCM et les exercices. Ses images sont des images du cours.
+  @Column({ name: 'exercises_content', type: 'jsonb', nullable: true })
+  exercisesContent!: ContentNode | null;
+
   // Marque-page de lecture : le titre où l'on s'est arrêté et le rang de son bloc ;
   // tous deux null quand le cours n'en a pas.
   @Column({ name: 'bookmark_title', type: 'text', nullable: true })

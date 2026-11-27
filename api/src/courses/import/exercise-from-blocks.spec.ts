@@ -28,7 +28,7 @@ describe('exercice dans le Markdown', () => {
     const { document, errors } = markdownToContent(EXERCISE, 0);
 
     expect(errors).toEqual([]);
-    expect(validateContent(document)).toEqual([]);
+    expect(validateContent(document, { exercises: true })).toEqual([]);
     const exercise = document.content?.[0];
     expect(exercise).toMatchObject({
       type: 'exercise',
@@ -130,9 +130,28 @@ describe('exercice dans le Markdown', () => {
     const { document, errors } = markdownToContent(example, 0);
 
     expect(errors).toEqual([]);
-    expect(validateContent(document)).toEqual([]);
+    expect(validateContent(document, { exercises: true })).toEqual([]);
     expect(document.content?.[0].attrs?.['key']).toBe(
       'exercice-1-ordonnancement',
     );
+  });
+
+  it('lit les exercices d’exemple du contrat du paquet', () => {
+    const example = readFileSync(
+      join(import.meta.dirname, '../../../../contracts/exercices.example.md'),
+      'utf8',
+    );
+
+    const { document, errors } = markdownToContent(example, 0, 'exercices.md');
+
+    expect(errors).toEqual([]);
+    expect(validateContent(document, { exercises: true })).toEqual([]);
+    expect(document.content?.map((block) => block.type)).toEqual([
+      'heading',
+      'quiz',
+      'heading',
+      'paragraph',
+      'exercise',
+    ]);
   });
 });

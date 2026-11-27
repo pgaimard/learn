@@ -16,6 +16,8 @@ export interface SlashCommand {
   icon: IconName;
   // Autres mots par lesquels on peut le trouver.
   keywords: string[];
+  // Bloc réservé aux exercices d'un cours : proposé seulement dans leur éditeur.
+  exercisesOnly?: true;
   // Transforme le paragraphe courant ou insère le bloc ; absent pour l'image, qui passe
   // par le choix d'un fichier, et pour le tableau, qui passe par le choix de sa taille.
   apply?: (chain: Chain) => Chain;
@@ -131,6 +133,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   SLIDESHOW_COMMAND,
   {
     label: 'QCM',
+    exercisesOnly: true,
     group: 'Blocs',
     icon: 'quiz',
     keywords: ['quiz', 'question', 'exercice', 'choix'],
@@ -138,6 +141,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     label: 'Exercice',
+    exercisesOnly: true,
     group: 'Blocs',
     icon: 'pencil',
     keywords: ['enonce', 'corrige', 'probleme', 'question'],
@@ -153,11 +157,14 @@ function normalize(text: string): string {
 }
 
 // Blocs dont le nom ou un mot-clé contient la saisie, sans tenir compte de la casse
-// ni des accents. Ceux dont le nom commence par la saisie viennent en premier.
-export function filterSlashCommands(query: string): SlashCommand[] {
+// ni des accents. Ceux dont le nom commence par la saisie viennent en premier. Le QCM et
+// l'exercice ne sont proposés que dans l'éditeur des exercices d'un cours.
+export function filterSlashCommands(query: string, allowExercises = false): SlashCommand[] {
   const needle = normalize(query);
-  const matching = SLASH_COMMANDS.filter((command) =>
-    [command.label, ...command.keywords].some((word) => normalize(word).includes(needle)),
+  const matching = SLASH_COMMANDS.filter(
+    (command) =>
+      (allowExercises || command.exercisesOnly !== true) &&
+      [command.label, ...command.keywords].some((word) => normalize(word).includes(needle)),
   );
   const startsWith = (command: SlashCommand): boolean =>
     normalize(command.label).startsWith(needle);

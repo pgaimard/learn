@@ -49,13 +49,15 @@
 
     <article #article class="article">
       @if (shownContent(); as content) {
-        @if (isSheet()) {
-          <p class="sheet-note" role="status">Fiche de révision du chapitre.</p>
+        @if (isCompanion()) {
+          <p class="sheet-note" role="status">
+            {{ isExercises() ? 'Exercices du chapitre.' : 'Fiche de révision du chapitre.' }}
+          </p>
         }
         <app-course-content
           [content]="content"
           [startBlock]="startBlock()"
-          [bookmarkBlock]="isSheet() ? null : bookmarkBlock()"
+          [bookmarkBlock]="isCompanion() ? null : bookmarkBlock()"
           [terms]="allTerms()"
           (sectionReferenced)="followReference($event)"
           (termOpened)="openTerm($event)"
@@ -66,26 +68,43 @@
           (quizHistoryRequested)="showQuizHistory(course.id, $event)"
         />
       } @else {
-        <p class="empty sheet-empty">
-          Ce chapitre n’a pas encore de fiche de révision. Elle arrive avec le paquet du cours
-          (<code>fiche.md</code>), ou se rédige ici.
-        </p>
-        <a class="button button-primary" [routerLink]="editLink()">
-          <app-icon name="pencil" />Rédiger la fiche
-        </a>
+        @if (isExercises()) {
+          <p class="empty sheet-empty">
+            Ce chapitre n’a pas encore d’exercices. Ils arrivent avec le paquet du cours
+            (<code>exercices.md</code>), ou se rédigent ici.
+          </p>
+          <a class="button button-primary" [routerLink]="editLink()">
+            <app-icon name="pencil" />Rédiger les exercices
+          </a>
+        } @else {
+          <p class="empty sheet-empty">
+            Ce chapitre n’a pas encore de fiche de révision. Elle arrive avec le paquet du cours
+            (<code>fiche.md</code>), ou se rédige ici.
+          </p>
+          <a class="button button-primary" [routerLink]="editLink()">
+            <app-icon name="pencil" />Rédiger la fiche
+          </a>
+        }
       }
     </article>
 
     <!-- Colonne de droite : les actions sur le cours, puis ses termes et ses commandes. -->
     <div class="right">
       <div class="header-actions">
-        @if (isSheet()) {
+        <!-- Les trois documents du chapitre : on passe de l'un aux deux autres. -->
+        @if (isCompanion()) {
           <a class="button" [routerLink]="[]">Cours complet</a>
-        } @else {
+        }
+        @if (!isSheet()) {
           <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'fiche' }">Fiche de révision</a>
         }
+        @if (!isExercises()) {
+          <a class="button" [routerLink]="[]" [queryParams]="{ vue: 'exercices' }">Exercices</a>
+        }
         <a class="button button-primary" [routerLink]="editLink()">
-          <app-icon name="pencil" />{{ isSheet() ? 'Modifier la fiche' : 'Modifier' }}
+          <app-icon name="pencil" />{{
+            isExercises() ? 'Modifier les exercices' : isSheet() ? 'Modifier la fiche' : 'Modifier'
+          }}
         </a>
         <button
           type="button"
@@ -225,7 +244,7 @@
         }
       }
       <!-- Le marque-page se retire de n'importe où dans le cours, sans y remonter. -->
-      @if (!isSheet() && bookmarkBlock() !== null) {
+      @if (!isCompanion() && bookmarkBlock() !== null) {
         <button type="button" role="menuitem" class="menu-item" (click)="markPage(null)">
           <app-icon name="close" [size]="15" />Retirer le marque-page
         </button>

@@ -20,6 +20,9 @@ export interface Course extends CourseSummary {
   ue: { code: string; title: string };
   // Fiche de révision rédigée, au même format que le cours ; null quand il n'en a pas.
   sheetContent: ContentNode | null;
+  // Exercices du cours, au même format ; null quand il n'en a pas. C'est le seul document
+  // où se placent les QCM et les exercices.
+  exercisesContent: ContentNode | null;
   // Marque-page de lecture : le titre où l'on s'est arrêté et le rang de son bloc ; tous
   // deux null quand le cours n'en a pas.
   bookmarkTitle: string | null;
@@ -37,6 +40,8 @@ export interface CourseInput {
   content?: ContentNode;
   // Fiche de révision ; null la supprime.
   sheetContent?: ContentNode | null;
+  // Exercices du cours ; null les supprime.
+  exercisesContent?: ContentNode | null;
 }
 
 // Dossier de fichiers d'un cours, avec ce qu'il contient à tous les niveaux.

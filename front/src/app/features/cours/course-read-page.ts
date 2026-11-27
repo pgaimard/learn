@@ -81,7 +81,8 @@ export class CourseReadPage {
   // Paramètres de la route /ue/:code/cours/:id.
   readonly code = input.required<string>();
   readonly id = input.required<string>();
-  // Paramètre de requête ?vue=fiche : la fiche de révision du cours, à la place du cours.
+  // Paramètre de requête ?vue=fiche ou ?vue=exercices : la fiche de révision du cours, ou
+  // ses exercices, à la place du cours.
   readonly vue = input<string>();
   // Paramètre de requête ?bloc=n : rang du bloc où reprendre la lecture, au retour de
   // l'édition ouverte par « Modifier ici ».
@@ -102,6 +103,10 @@ export class CourseReadPage {
   protected readonly course = signal<Course | null>(null);
   protected readonly errors = signal<string[]>([]);
   protected readonly isSheet = computed(() => this.vue() === 'fiche');
+  protected readonly isExercises = computed(() => this.vue() === 'exercices');
+  // Vrai pour un document qui accompagne le cours, avec son propre sommaire et sans
+  // marque-page.
+  protected readonly isCompanion = computed(() => this.isSheet() || this.isExercises());
   // Rang du titre qui porte le marque-page de lecture ; null sans marque-page, ou si le
   // titre marqué n'existe plus.
   protected readonly bookmarkBlock = computed(() => {
@@ -119,7 +124,7 @@ export class CourseReadPage {
   protected readonly bookmarkHeading = computed(() => {
     const course = this.course();
     const block = this.bookmarkBlock();
-    return course && block !== null && !this.isSheet()
+    return course && block !== null && !this.isCompanion()
       ? headingRankOf(course.content, block)
       : null;
   });
@@ -130,14 +135,16 @@ export class CourseReadPage {
     if (this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0) {
       return rank;
     }
-    return this.isSheet() ? null : this.bookmarkBlock();
+    return this.isCompanion() ? null : this.bookmarkBlock();
   });
   // Section visée par le clic droit, où le marque-page se poserait ; null hors du texte,
   // dans la fiche, ou pour un cours sans titre.
   protected readonly menuSection = computed<Bookmark | null>(() => {
     const course = this.course();
     const block = this.contextMenu()?.block ?? null;
-    return course && block !== null && !this.isSheet() ? sectionAt(course.content, block) : null;
+    return course && block !== null && !this.isCompanion()
+      ? sectionAt(course.content, block)
+      : null;
   });
   // Document affiché : le cours, ou sa fiche de révision ; null pour une fiche qui
   // n'est pas encore rédigée.
@@ -145,6 +152,9 @@ export class CourseReadPage {
     const course = this.course();
     if (!course) {
       return null;
+    }
+    if (this.isExercises()) {
+      return course.exercisesContent;
     }
     return this.isSheet() ? course.sheetContent : course.content;
   });
@@ -154,7 +164,8 @@ export class CourseReadPage {
     this.code(),
     'cours',
     Number(this.id()),
-    ...(this.isSheet() ? ['fiche', 'edition'] : ['edition']),
+    ...(this.isExercises() ? ['exercices'] : this.isSheet() ? ['fiche'] : []),
+    'edition',
   ]);
   // Sommaire du document affiché.
   protected readonly outline = computed(() => {

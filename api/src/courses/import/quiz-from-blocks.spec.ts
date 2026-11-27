@@ -33,7 +33,7 @@ describe('QCM dans le Markdown', () => {
     const { document, errors } = markdownToContent(QUIZ, 0);
 
     expect(errors).toEqual([]);
-    expect(validateContent(document)).toEqual([]);
+    expect(validateContent(document, { exercises: true })).toEqual([]);
     const quiz = document.content?.[0];
     expect(quiz).toMatchObject({
       type: 'quiz',
@@ -173,7 +173,7 @@ describe('QCM dans le Markdown', () => {
     const { document, errors } = markdownToContent(example, 0);
 
     expect(errors).toEqual([]);
-    expect(validateContent(document)).toEqual([]);
+    expect(validateContent(document, { exercises: true })).toEqual([]);
     expect(document.content?.[0].content).toHaveLength(2);
   });
 });

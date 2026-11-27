@@ -138,6 +138,7 @@ describe('Import d’un paquet de cours', () => {
       duplicateTerms: [],
       hasSheet: false,
       sheetImageCount: 0,
+      hasExercises: false,
       sourceCount: 0,
       commands: {
         newTools: [],
@@ -723,6 +724,80 @@ describe('Import d’un paquet de cours', () => {
       await expectRefusal(
         createZip({ 'cours.md': MARKDOWN_FICHE, 'fiche.md': SHEET }),
         'fiche.md référence « images/fiche-01.svg », absent du paquet.',
+      );
+    });
+  });
+
+  describe('exercices', () => {
+    const MARKDOWN_EXERCICES =
+      '---\nue: UTC502\ntitre: Chapitre à exercices\nordre: 9\n---\n\n## Bases\n\nTexte.';
+    const QUIZ =
+      '> [!qcm] Bases\n>\n> 1. Vrai ?\n>    - [x] oui\n>    - [ ] non';
+    const EXERCISES = `## 1. QCM\n\n${QUIZ}\n\n## 2. Exercice\n\n> [!exercice] Exercice 1\n>\n> Calculez.\n>\n> > [!corrige]\n> > 42.`;
+    const withExercises = (): Buffer =>
+      createZip({ 'cours.md': MARKDOWN_EXERCICES, 'exercices.md': EXERCISES });
+    const withoutExercises = (): Buffer =>
+      createZip({ 'cours.md': MARKDOWN_EXERCICES });
+
+    it('annonce les exercices du paquet dans l’aperçu', async () => {
+      const response = await preview(withExercises());
+
+      expect(response.body).toMatchObject({
+        hasExercises: true,
+        existingCourse: null,
+      });
+    });
+
+    it('importe les exercices dans leur document, à part du cours', async () => {
+      const response = await importPackage(withExercises());
+
+      expect(response.status).toBe(201);
+      const course = response.body as Course;
+      expect(
+        course.exercisesContent?.content?.map((node) => node.type),
+      ).toEqual(['heading', 'quiz', 'heading', 'exercise']);
+      expect(course.content.content?.map((node) => node.type)).toEqual([
+        'heading',
+        'paragraph',
+      ]);
+    });
+
+    it('garde les exercices quand le paquet réimporté n’en a pas', async () => {
+      const announced = await preview(withoutExercises());
+      expect(announced.body).toMatchObject({
+        hasExercises: false,
+        existingCourse: { hasExercises: true },
+      });
+
+      const response = await importPackage(withoutExercises(), true);
+
+      expect((response.body as Course).exercisesContent?.content).toHaveLength(
+        4,
+      );
+    });
+
+    it('refuse un QCM ou un exercice écrit dans cours.md ou dans fiche.md', async () => {
+      await expectRefusal(
+        createZip({ 'cours.md': `${MARKDOWN_EXERCICES}\n\n${QUIZ}` }),
+        'cours.md : un QCM ou un exercice se place dans exercices.md, pas dans cours.md.',
+      );
+      await expectRefusal(
+        createZip({ 'cours.md': MARKDOWN_EXERCICES, 'fiche.md': QUIZ }),
+        'fiche.md : un QCM ou un exercice se place dans exercices.md, pas dans fiche.md.',
+      );
+    });
+
+    it('refuse des exercices vides ou invalides', async () => {
+      await expectRefusal(
+        createZip({ 'cours.md': MARKDOWN_EXERCICES, 'exercices.md': '  \n' }),
+        'exercices.md est vide.',
+      );
+      await expectRefusal(
+        createZip({
+          'cours.md': MARKDOWN_EXERCICES,
+          'exercices.md': '> [!qcm]\n>\n> Texte.',
+        }),
+        /exercices\.md.*liste numérotée/,
       );
     });
   });
