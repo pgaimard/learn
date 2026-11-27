@@ -1,5 +1,7 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Editor } from '@tiptap/core';
+import { CellSelection } from '@tiptap/pm/tables';
 import { ContentNode } from '../../content/content-node';
 import { createCourseExtensions } from '../../content/course-extensions';
 import { TableMenu } from './table-menu';
@@ -103,6 +105,76 @@ describe('TableMenu', () => {
     button('Ligne d’en-tête : oui / non').click();
 
     expect(grid()).toEqual(['A|B', 'a1|b1']);
+  });
+
+  it('bascule la colonne d’en-tête', () => {
+    setup('a1');
+
+    button('Colonne d’en-tête : oui / non').click();
+
+    expect(grid()).toEqual(['*A|*B', '*a1|b1']);
+  });
+
+  it('fusionne les cellules sélectionnées, puis scinde la cellule fusionnée', () => {
+    setup('a1');
+    expect(button('Fusionner les cellules').disabled).toBe(true);
+    expect(button('Scinder la cellule').disabled).toBe(true);
+    // Les deux cellules de la seconde ligne.
+    const positions: number[] = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableCell') {
+        positions.push(pos);
+      }
+    });
+    editor.view.dispatch(
+      editor.state.tr.setSelection(
+        CellSelection.create(editor.state.doc, positions[0], positions[1]),
+      ),
+    );
+    // En usage réel, le menu s'ouvre après la sélection ; ici il la découvre après coup.
+    const refresh = (): void => {
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+    };
+    refresh();
+
+    button('Fusionner les cellules').click();
+
+    expect(grid()).toEqual(['*A|*B', 'a1b1']);
+    expect(editor.state.doc.child(0).child(1).child(0).attrs['colspan']).toBe(2);
+    // Le curseur est dans la cellule fusionnée.
+    expect(editor.state.selection.empty).toBe(true);
+    expect(editor.state.selection.$from.node(-1).attrs['colspan']).toBe(2);
+
+    refresh();
+    button('Scinder la cellule').click();
+
+    expect(editor.state.doc.child(0).child(1).childCount).toBe(2);
+  });
+
+  it('place le curseur dans la cellule issue d’une fusion sur deux lignes', () => {
+    setup('a1');
+    editor.commands.addRowAfter();
+    const positions: number[] = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'tableCell') {
+        positions.push(pos);
+      }
+    });
+    // De « a1 » à la seconde cellule de la ligne ajoutée : quatre cellules.
+    editor.view.dispatch(
+      editor.state.tr.setSelection(
+        CellSelection.create(editor.state.doc, positions[0], positions[3]),
+      ),
+    );
+    fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+    fixture.detectChanges();
+
+    button('Fusionner les cellules').click();
+
+    const merged = editor.state.selection.$from.node(-1);
+    expect(editor.state.selection.empty).toBe(true);
+    expect([merged.attrs['colspan'], merged.attrs['rowspan']]).toEqual([2, 2]);
   });
 
   it('se ferme avec Échap ou par un clic en dehors', () => {

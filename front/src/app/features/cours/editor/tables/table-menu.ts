@@ -8,13 +8,15 @@ import {
   output,
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
+import { CellSelection } from '@tiptap/pm/tables';
 import { focusMenuItem, menuItems } from '../menu-keys';
 import { canMoveCurrent, moveCurrent, TableAxis } from './table-commands';
 
 type Chain = ReturnType<Editor['chain']>;
 
 // Menu d'un tableau, ouvert par un clic droit dans une cellule : il agit sur la ligne
-// et la colonne du curseur.
+// et la colonne du curseur, et sur les cellules sélectionnées.
 @Component({
   selector: 'app-table-menu',
   templateUrl: './table-menu.html',
@@ -43,6 +45,17 @@ export class TableMenu {
   protected readonly deleteRow = (chain: Chain): Chain => chain.deleteRow();
   protected readonly deleteColumn = (chain: Chain): Chain => chain.deleteColumn();
   protected readonly toggleHeaderRow = (chain: Chain): Chain => chain.toggleHeaderRow();
+  protected readonly toggleHeaderColumn = (chain: Chain): Chain => chain.toggleHeaderColumn();
+  // Après la fusion, le curseur entre dans la cellule obtenue, prêt pour la saisie.
+  protected readonly mergeCells = (chain: Chain): Chain =>
+    chain.mergeCells().command(({ tr }) => {
+      const { selection } = tr;
+      if (selection instanceof CellSelection) {
+        tr.setSelection(TextSelection.near(tr.doc.resolve(selection.$anchorCell.pos + 1)));
+      }
+      return true;
+    });
+  protected readonly splitCell = (chain: Chain): Chain => chain.splitCell();
   protected readonly deleteTable = (chain: Chain): Chain => chain.deleteTable();
 
   constructor() {
@@ -51,6 +64,15 @@ export class TableMenu {
 
   protected canMove(axis: TableAxis, step: -1 | 1): boolean {
     return canMoveCurrent(this.editor().state, axis, step);
+  }
+
+  // Fusionner demande plusieurs cellules sélectionnées ; scinder, une cellule fusionnée.
+  protected canMerge(): boolean {
+    return this.editor().can().mergeCells();
+  }
+
+  protected canSplit(): boolean {
+    return this.editor().can().splitCell();
   }
 
   protected run(command: (chain: Chain) => Chain): void {

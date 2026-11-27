@@ -2,7 +2,7 @@ import { Editor, Extension } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { cellAround, findTable, TableMap } from '@tiptap/pm/tables';
 import { EditorView } from '@tiptap/pm/view';
-import { moveInTable, TableAxis, targetIndex } from './table-commands';
+import { appendToTable, moveInTable, TableAxis, targetIndex } from './table-commands';
 
 export interface TableToolsOptions {
   // Clic droit dans une cellule : ouvre le menu du tableau à cet endroit
@@ -25,6 +25,10 @@ interface TableDrag {
 }
 
 const HIDE_DELAY_MS = 300;
+const ADDER_LABELS: Record<TableAxis, string> = {
+  row: 'Ajouter une ligne',
+  column: 'Ajouter une colonne',
+};
 const GRIP_LABELS: Record<TableAxis, string> = {
   row: 'Faire glisser pour déplacer la ligne',
   column: 'Faire glisser pour déplacer la colonne',
@@ -78,13 +82,16 @@ function nearestBoundary(edges: number[], coordinate: number): number {
   return nearest;
 }
 
-// Poignées de la ligne et de la colonne de la cellule survolée, et trait de dépôt.
+// Poignées de la ligne et de la colonne de la cellule survolée, trait de dépôt, et boutons
+// « + » au bord du tableau survolé : une ligne en bas, une colonne à droite.
 class TableGripsView {
   private readonly container: HTMLElement;
   private readonly grips: Record<TableAxis, HTMLButtonElement>;
+  private readonly adders: Record<TableAxis, HTMLButtonElement>;
   private readonly indicator: HTMLElement;
   private hovered: HoveredCell | null = null;
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
+  private hasJustAppended = false;
 
   constructor(
     private readonly view: EditorView,
@@ -95,24 +102,50 @@ class TableGripsView {
     this.indicator = document.createElement('div');
     this.indicator.className = 'table-drop-indicator';
     this.indicator.hidden = true;
-    this.container.append(this.grips.row, this.grips.column, this.indicator);
+    this.adders = { row: this.createAdder('row'), column: this.createAdder('column') };
+    this.container.append(
+      this.grips.row,
+      this.grips.column,
+      this.adders.row,
+      this.adders.column,
+      this.indicator,
+    );
     this.container.addEventListener('mousemove', this.onMouseMove);
     this.container.addEventListener('mouseleave', this.onMouseLeave);
   }
 
   update(): void {
-    // Le tableau a pu changer sous les poignées : elles réapparaîtront au prochain survol.
-    if (!this.drag.active) {
-      this.show(null);
+    if (this.drag.active) {
+      return;
     }
+    // Le tableau a pu changer sous les poignées : elles réapparaîtront au prochain survol.
+    // Les boutons « + » restent à son bord, pour ajouter plusieurs lignes de suite.
+    const tablePos = this.hovered?.tablePos;
+    this.show(null);
+    const table = tablePos === undefined ? null : this.tableElement(tablePos);
+    if (tablePos !== undefined && table) {
+      this.hovered = { tablePos, row: 0, column: 0, cell: table, table };
+      this.placeAdders(table);
+    }
+  }
+
+  // Tableau dessiné à cette position du document ; null s'il n'y en a plus.
+  private tableElement(tablePos: number): HTMLElement | null {
+    const { doc } = this.view.state;
+    if (tablePos >= doc.content.size || doc.nodeAt(tablePos)?.type.name !== 'table') {
+      return null;
+    }
+    const wrapper = this.view.nodeDOM(tablePos);
+    return wrapper instanceof HTMLElement ? wrapper.querySelector('table') : null;
   }
 
   destroy(): void {
     this.container.removeEventListener('mousemove', this.onMouseMove);
     this.container.removeEventListener('mouseleave', this.onMouseLeave);
     this.cancelHide();
-    this.grips.row.remove();
-    this.grips.column.remove();
+    for (const control of this.controls()) {
+      control.remove();
+    }
     this.indicator.remove();
   }
 
@@ -163,8 +196,64 @@ class TableGripsView {
     return grip;
   }
 
+  private createAdder(axis: TableAxis): HTMLButtonElement {
+    const adder = document.createElement('button');
+    adder.type = 'button';
+    adder.className = `table-adder table-adder-${axis}`;
+    adder.hidden = true;
+    adder.tabIndex = -1;
+    adder.setAttribute('aria-label', ADDER_LABELS[axis]);
+    adder.title = ADDER_LABELS[axis];
+    adder.textContent = '+';
+    adder.addEventListener('mouseenter', () => this.cancelHide());
+    adder.addEventListener('mouseleave', () => {
+      // Après un ajout, c'est le bouton qui a quitté la souris, pas l'inverse : il reste.
+      if (this.hasJustAppended) {
+        this.hasJustAppended = false;
+      } else {
+        this.hideSoon();
+      }
+    });
+    // Le clic ne déplace pas le curseur du texte.
+    adder.addEventListener('mousedown', (event) => event.preventDefault());
+    adder.addEventListener('click', () => this.append(axis));
+    return adder;
+  }
+
+  private controls(): HTMLButtonElement[] {
+    return [this.grips.row, this.grips.column, this.adders.row, this.adders.column];
+  }
+
+  // Ajoute une ligne ou une colonne au bout du tableau survolé.
+  private append(axis: TableAxis): void {
+    const tablePos = this.hovered?.tablePos;
+    const transaction =
+      tablePos === undefined ? null : appendToTable(this.view.state, tablePos, axis);
+    if (transaction) {
+      this.cancelHide();
+      this.hasJustAppended = true;
+      this.view.dispatch(transaction);
+    }
+  }
+
+  // Boutons « + » : une barre sous le tableau, une autre le long de son bord droit.
+  private placeAdders(table: HTMLElement): void {
+    const origin = this.container.getBoundingClientRect();
+    // Un tableau trop large défile dans son enveloppe : on s'aligne sur elle.
+    const frame = (table.closest('.tableWrapper') ?? table).getBoundingClientRect();
+    const { row, column } = this.adders;
+    row.hidden = false;
+    column.hidden = false;
+    row.style.left = `${frame.left - origin.left}px`;
+    row.style.top = `${frame.bottom - origin.top}px`;
+    row.style.width = `${frame.width}px`;
+    column.style.left = `${frame.right - origin.left}px`;
+    column.style.top = `${frame.top - origin.top}px`;
+    column.style.height = `${frame.height}px`;
+  }
+
   private readonly onMouseMove = (event: MouseEvent): void => {
-    if (this.drag.active || event.target === this.grips.row || event.target === this.grips.column) {
+    if (this.drag.active || this.controls().some((control) => control === event.target)) {
       this.cancelHide();
       return;
     }
@@ -181,11 +270,13 @@ class TableGripsView {
 
   private show(cell: HoveredCell | null): void {
     this.hovered = cell;
-    this.grips.row.hidden = cell === null;
-    this.grips.column.hidden = cell === null;
+    for (const control of this.controls()) {
+      control.hidden = cell === null;
+    }
     if (!cell) {
       return;
     }
+    this.placeAdders(cell.table);
     const origin = this.container.getBoundingClientRect();
     const frame = cell.table.getBoundingClientRect();
     const box = cell.cell.getBoundingClientRect();
@@ -286,7 +377,8 @@ function dropInTable(editor: Editor, view: EditorView, drag: TableDrag, event: D
   return true;
 }
 
-// Outils de tableau : menu au clic droit, poignées pour glisser une ligne ou une colonne.
+// Outils de tableau : menu au clic droit, poignées pour glisser une ligne ou une colonne,
+// boutons « + » pour en ajouter au bout.
 export const TableTools = Extension.create<TableToolsOptions>({
   name: 'tableTools',
   // Avant l'indicateur de dépôt de l'éditeur : pendant le déplacement d'une ligne ou

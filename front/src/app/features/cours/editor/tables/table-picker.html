@@ -1,0 +1,65 @@
+<!-- La grille est un raccourci à la souris ; les deux champs disent la même chose au clavier. -->
+<div class="grid" aria-hidden="true" (click)="choose()">
+  @for (row of gridRows; track row) {
+    @for (column of gridColumns; track column) {
+      <span
+        class="cell"
+        [class.is-aimed]="row <= rows() && column <= columns()"
+        [class.is-header]="
+          row <= rows() &&
+          column <= columns() &&
+          ((hasHeaderRow() && row === 1) || (hasHeaderColumn() && column === 1))
+        "
+        (mouseenter)="aim(row, column)"
+      ></span>
+    }
+  }
+</div>
+
+<div class="size">
+  <label>
+    Lignes
+    <input
+      #rowsField
+      type="number"
+      min="1"
+      [max]="maxRows"
+      [value]="rows()"
+      (change)="setRows(rowsField.value)"
+    />
+  </label>
+  <label>
+    Colonnes
+    <input
+      #columnsField
+      type="number"
+      min="1"
+      [max]="maxColumns"
+      [value]="columns()"
+      (change)="setColumns(columnsField.value)"
+    />
+  </label>
+</div>
+
+<label class="option">
+  <input
+    #headerRowField
+    type="checkbox"
+    [checked]="hasHeaderRow()"
+    (change)="hasHeaderRow.set(headerRowField.checked)"
+  />
+  Ligne d’en-tête
+</label>
+<label class="option">
+  <input
+    #headerColumnField
+    type="checkbox"
+    [checked]="hasHeaderColumn()"
+    (change)="hasHeaderColumn.set(headerColumnField.checked)"
+  />
+  Colonne d’en-tête
+</label>
+
+<button type="button" class="button button-primary" (click)="choose()">
+  Insérer {{ rows() }} × {{ columns() }}
+</button>

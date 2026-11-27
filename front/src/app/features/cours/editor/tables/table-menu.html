@@ -1,3 +1,13 @@
+<p class="title" id="table-menu-cells">Cellules</p>
+<div role="group" aria-labelledby="table-menu-cells">
+  <button type="button" role="menuitem" [disabled]="!canMerge()" (click)="run(mergeCells)">
+    Fusionner les cellules
+  </button>
+  <button type="button" role="menuitem" [disabled]="!canSplit()" (click)="run(splitCell)">
+    Scinder la cellule
+  </button>
+</div>
+
 <p class="title" id="table-menu-row">Ligne</p>
 <div role="group" aria-labelledby="table-menu-row">
   <button type="button" role="menuitem" (click)="run(addRowBefore)">Insérer au-dessus</button>
@@ -42,6 +52,9 @@
 <div role="group" aria-labelledby="table-menu-table">
   <button type="button" role="menuitem" (click)="run(toggleHeaderRow)">
     Ligne d’en-tête : oui / non
+  </button>
+  <button type="button" role="menuitem" (click)="run(toggleHeaderColumn)">
+    Colonne d’en-tête : oui / non
   </button>
   <button type="button" role="menuitem" class="danger" (click)="run(deleteTable)">
     Supprimer le tableau
