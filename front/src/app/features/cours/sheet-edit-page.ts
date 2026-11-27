@@ -16,6 +16,7 @@ import { Icon } from '../../core/ui/icon';
 import { shortcut } from '../../core/ui/platform';
 import { ContentNode } from './content/content-node';
 import { Course, CourseService } from './course.service';
+import { holdEditingLock } from './editing-lock';
 import { ContentEditor } from './editor/content-editor';
 
 // Document qui n'est pas encore rédigé : une page blanche.
@@ -110,6 +111,7 @@ export class SheetEditPage {
 
   constructor() {
     effect(() => this.load(Number(this.id())));
+    holdEditingLock(computed(() => Number(this.id())));
   }
 
   // Appelé par la garde de sortie de la route.

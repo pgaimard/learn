@@ -478,6 +478,32 @@ describe('Import d’un paquet de cours', () => {
     ]);
   });
 
+  it('refuse de remplacer un chapitre ouvert dans l’éditeur, jusqu’à sa fermeture ou l’expiration', async () => {
+    const dataSource = app.get(DataSource);
+    const [{ id }] = await dataSource.query<{ id: number }[]>(
+      'SELECT id FROM courses',
+    );
+    const path = `/api/courses/${id}/editing`;
+
+    const opened = await client('put', path);
+    const refused = await importPackage(validPackage(), true);
+    const closed = await client('delete', path);
+    const accepted = await importPackage(validPackage(), true);
+    // Un éditeur fermé sans prévenir : le délai passé, le cours est libre.
+    await client('put', path);
+    await dataSource.query(
+      `UPDATE courses SET editing_until = now() - interval '1 second'`,
+    );
+    const expired = await importPackage(validPackage(), true);
+
+    expect([opened.status, closed.status]).toEqual([204, 204]);
+    expect(refused.status).toBe(409);
+    expect((refused.body as ErrorResponse).messages).toEqual([
+      'Ce cours est ouvert dans l’éditeur. Fermez-le avant de le modifier autrement.',
+    ]);
+    expect([accepted.status, expired.status]).toEqual([201, 201]);
+  });
+
   it('remplace le chapitre et ses images quand c’est confirmé', async () => {
     const [before] = await app
       .get(DataSource)

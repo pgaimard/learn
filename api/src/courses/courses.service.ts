@@ -26,6 +26,8 @@ import { UpdateCourseDto } from './dto/update-course.dto.js';
 import { CourseImagesService } from './images/course-images.service.js';
 
 const UNIQUE_VIOLATION = '23505';
+// Durée pendant laquelle un cours reste « en édition » sans nouvelles de l'éditeur.
+const EDITING_SECONDS = 120;
 
 // Résumé d'un cours pour les listes ; les sections sont ses titres de premier niveau.
 export type CourseSummary = Pick<
@@ -156,6 +158,39 @@ export class CoursesService {
       [id, bookmark?.title ?? null, bookmark?.block ?? null],
     );
     return this.findById(id);
+  }
+
+  // L'éditeur déclare le cours « en édition » et le redit tant qu'il reste ouvert. Sans
+  // nouvelles de lui pendant ce délai (onglet fermé, poste en veille), le cours est libre.
+  async startEditing(id: number): Promise<void> {
+    await this.findById(id);
+    await this.courses.query(
+      `UPDATE courses SET editing_until = now() + make_interval(secs => $2)
+        WHERE id = $1`,
+      [id, EDITING_SECONDS],
+    );
+  }
+
+  async stopEditing(id: number): Promise<void> {
+    await this.findById(id);
+    await this.courses.query(
+      'UPDATE courses SET editing_until = NULL WHERE id = $1',
+      [id],
+    );
+  }
+
+  // Refuse une écriture qui ne vient pas de l'éditeur tant que le cours y est ouvert :
+  // l'éditeur enregistre le document entier et écraserait ce qu'elle aurait changé.
+  async assertNotEditing(manager: EntityManager, id: number): Promise<void> {
+    const editing = await manager.query<unknown[]>(
+      'SELECT 1 FROM courses WHERE id = $1 AND editing_until > now()',
+      [id],
+    );
+    if (editing.length > 0) {
+      throw new ConflictException(
+        'Ce cours est ouvert dans l’éditeur. Fermez-le avant de le modifier autrement.',
+      );
+    }
   }
 
   // Réordonne tous les cours d'une UE : la liste doit les contenir tous, une fois chacun.

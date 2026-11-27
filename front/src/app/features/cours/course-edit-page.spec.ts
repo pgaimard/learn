@@ -40,6 +40,8 @@ describe('CourseEditPage', () => {
   const service = {
     get: vi.fn<CourseService['get']>(),
     update: vi.fn<CourseService['update']>(),
+    startEditing: vi.fn<CourseService['startEditing']>().mockReturnValue(of(undefined)),
+    releaseEditing: vi.fn<CourseService['releaseEditing']>(),
     remove: vi.fn<CourseService['remove']>(),
     folder: vi.fn<CourseService['folder']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
@@ -108,6 +110,7 @@ describe('CourseEditPage', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    service.startEditing.mockReturnValue(of(undefined));
     service.get.mockReturnValue(of(COURSE));
   });
 

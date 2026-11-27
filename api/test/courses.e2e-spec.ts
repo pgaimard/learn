@@ -281,6 +281,34 @@ describe('Cours', () => {
     ]);
   });
 
+  it('laisse l’éditeur enregistrer un cours qu’il a déclaré en édition, sans changer sa révision', async () => {
+    const path = `/api/courses/${courseId}`;
+    const { revision } = (await client('get', path)).body as Course;
+
+    const opened = await client('put', `${path}/editing`);
+    const read = await client('get', path);
+    const saved = await client('patch', path).send({
+      revision,
+      content: CONTENT,
+    });
+    const closed = await client('delete', `${path}/editing`);
+
+    expect([opened.status, saved.status, closed.status]).toEqual([
+      204, 200, 204,
+    ]);
+    expect((read.body as Course).revision).toBe(revision);
+    expect(read.body).not.toHaveProperty('editingUntil');
+  });
+
+  it('refuse de déclarer en édition un cours inconnu ou sans session', async () => {
+    const unknown = await client('put', '/api/courses/9999/editing');
+    const anonymous = await request(app.getHttpServer()).put(
+      `/api/courses/${courseId}/editing`,
+    );
+
+    expect([unknown.status, anonymous.status]).toEqual([404, 401]);
+  });
+
   it('ne change pas la révision en posant le marque-page', async () => {
     const path = `/api/courses/${courseId}`;
     const { revision } = (await client('get', path)).body as Course;

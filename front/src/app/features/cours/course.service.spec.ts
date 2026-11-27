@@ -57,4 +57,22 @@ describe('CourseService', () => {
     expect(request.method).toBe('POST');
     expect((request.body as FormData).get('file')).toBe(file);
   });
+
+  it('déclare un cours en édition par l’API', () => {
+    service.startEditing(7).subscribe();
+
+    http.expectOne({ method: 'PUT', url: '/api/courses/7/editing' });
+  });
+
+  it('rend un cours par une requête qui survit à la fermeture de l’onglet', () => {
+    const sent = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response());
+
+    service.releaseEditing(7);
+
+    expect(sent).toHaveBeenCalledWith('/api/courses/7/editing', {
+      method: 'DELETE',
+      keepalive: true,
+    });
+    sent.mockRestore();
+  });
 });

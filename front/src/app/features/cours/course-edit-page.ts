@@ -17,6 +17,7 @@ import { Icon } from '../../core/ui/icon';
 import { shortcut } from '../../core/ui/platform';
 import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
+import { holdEditingLock } from './editing-lock';
 import { ContentEditor } from './editor/content-editor';
 
 @Component({
@@ -64,6 +65,7 @@ export class CourseEditPage {
 
   constructor() {
     effect(() => this.load(Number(this.id())));
+    holdEditingLock(computed(() => Number(this.id())));
   }
 
   // Appelé par la garde de sortie de la route.

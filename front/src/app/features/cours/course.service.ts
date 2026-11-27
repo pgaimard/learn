@@ -80,6 +80,18 @@ export class CourseService {
     return this.http.patch<Course>(`/api/courses/${id}`, changes);
   }
 
+  // Déclare le cours ouvert dans l'éditeur ; à redire tant qu'il le reste.
+  startEditing(id: number): Observable<void> {
+    return this.http.put<void>(`/api/courses/${id}/editing`, null);
+  }
+
+  // Rend le cours. La requête survit à la fermeture de l'onglet, d'où fetch et non HttpClient.
+  releaseEditing(id: number): void {
+    void fetch(`/api/courses/${id}/editing`, { method: 'DELETE', keepalive: true }).catch(
+      () => null,
+    );
+  }
+
   // Enregistre l'ordre des cours d'une UE : tous leurs numéros, dans l'ordre voulu.
   reorder(ueCode: string, ids: number[]): Observable<CourseSummary[]> {
     return this.http.put<CourseSummary[]>(`/api/ues/${encodeURIComponent(ueCode)}/courses/order`, {

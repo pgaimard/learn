@@ -78,11 +78,16 @@ l'identique.
 
 - Numéro de révision sur le cours ; toute écriture indique la révision lue, refus (409) si le
   cours a changé. L'éditeur y est soumis aussi.
-- Table des instantanés (cours, terme, outil, commande), pris avant toute écriture de l'IA,
-  avant le remplacement d'un chapitre par un paquet et avant une restauration.
+- Verrou d'édition : l'éditeur déclare le cours « en édition » tant qu'il est ouvert (redit
+  toutes les 30 secondes, expire après 2 minutes sans nouvelles). Pendant ce temps, l'IA, le
+  remplacement par un paquet et la restauration sont refusés (409), avec un message demandant
+  de fermer le cours.
+- Table des instantanés d'un cours, pris avant le remplacement d'un chapitre par un paquet et
+  avant une restauration, puis avant toute écriture de l'IA (8.4). Ceux des termes, des outils
+  et des commandes viennent en 8.5, avec les écritures de l'IA sur ces objets.
 - Écran : liste des instantanés d'un objet, restauration.
 - Le nettoyage des images tient compte des instantanés.
-- Rotation à définir avec Pierre.
+- Rotation : les dix derniers instantanés de chaque cours.
 
 Fait quand : le remplacement d'un chapitre par un paquet se retrouve dans la liste et se
 restaure, images comprises ; deux enregistrements concurrents ne s'écrasent plus.

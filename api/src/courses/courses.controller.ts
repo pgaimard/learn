@@ -78,6 +78,19 @@ export class CoursesController {
     return this.coursesService.setBookmark(id, null);
   }
 
+  // Appelé par l'éditeur à l'ouverture du cours, puis régulièrement tant qu'il reste ouvert.
+  @Put('courses/:id/editing')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  startEditing(@Param('id', parseId) id: number): Promise<void> {
+    return this.coursesService.startEditing(id);
+  }
+
+  @Delete('courses/:id/editing')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  stopEditing(@Param('id', parseId) id: number): Promise<void> {
+    return this.coursesService.stopEditing(id);
+  }
+
   // Dossier de fichiers du cours et ce qu'il contient ; null s'il n'en a pas.
   @Get('courses/:id/folder')
   findFolder(
