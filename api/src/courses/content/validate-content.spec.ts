@@ -181,6 +181,79 @@ describe('validateContent', () => {
     ]);
   });
 
+  describe('diaporama', () => {
+    const figure: ContentNode = {
+      type: 'figure',
+      attrs: { src: '/api/courses/1/images/2', alt: 'État initial' },
+      content: [{ type: 'text', text: 'Étape 1' }],
+    };
+    const slide = (...explanation: ContentNode[]): ContentNode => ({
+      type: 'slide',
+      content: [figure, ...explanation],
+    });
+    const slideshow = (...slides: ContentNode[]): ContentNode => ({
+      type: 'slideshow',
+      attrs: { title: 'Exécution d’une instruction' },
+      content: slides,
+    });
+
+    it('accepte des étapes faites d’une image puis de paragraphes et de listes', () => {
+      const list: ContentNode = {
+        type: 'bulletList',
+        content: [
+          { type: 'listItem', content: [paragraph('Bus d’adresses.')] },
+        ],
+      };
+
+      expect(
+        validateContent(
+          doc(
+            slideshow(slide(paragraph('Le compteur ordinal.'), list), slide()),
+          ),
+        ),
+      ).toEqual([]);
+    });
+
+    it('n’accepte le diaporama qu’au premier niveau du document', () => {
+      const callout: ContentNode = {
+        type: 'callout',
+        attrs: { kind: 'retenir' },
+        content: [slideshow(slide())],
+      };
+
+      expect(validateContent(doc(callout))).toEqual([
+        'Le bloc « slideshow » n’est pas autorisé dans « callout ».',
+      ]);
+    });
+
+    it('impose une image en tête de chaque étape, et une seule', () => {
+      const withoutImage: ContentNode = {
+        type: 'slide',
+        content: [paragraph('Texte seul.')],
+      };
+
+      expect(validateContent(doc(slideshow(withoutImage)))).toEqual([
+        'Le bloc « paragraph » n’est pas autorisé dans « slide ».',
+      ]);
+      expect(validateContent(doc(slideshow(slide(figure))))).toEqual([
+        'Le bloc « figure » n’est pas autorisé dans « slide ».',
+      ]);
+    });
+
+    it('refuse un diaporama vide, ou de plus de 60 étapes', () => {
+      expect(validateContent(doc(slideshow()))).toEqual([
+        'Le bloc « slideshow » ne peut pas être vide.',
+      ]);
+      expect(
+        validateContent(
+          doc(slideshow(...Array.from({ length: 61 }, () => slide()))),
+        ),
+      ).toEqual([
+        'Le bloc « slideshow » ne peut pas contenir plus de 60 éléments.',
+      ]);
+    });
+  });
+
   it('refuse une liste vide', () => {
     expect(validateContent(doc({ type: 'bulletList' }))).toEqual([
       'Le bloc « bulletList » ne peut pas être vide.',

@@ -2,7 +2,11 @@
      la feuille, et le reste (erreurs) entre la barre et la feuille. -->
 <div class="bar">
   @if (view.editor(); as editor) {
-    <app-editor-toolbar [editor]="editor" (imagePicked)="imageAdded.emit($event)" />
+    <app-editor-toolbar
+      [editor]="editor"
+      (imagePicked)="enqueue($event)"
+      (slideshowRequested)="view.pickSlideshow()"
+    />
   }
   <div class="bar-actions"><ng-content select="[editorActions]" /></div>
 </div>
@@ -29,7 +33,7 @@
       [editable]="true"
       [startBlock]="startBlock()"
       (edited)="onEdited()"
-      (imageReceived)="imageAdded.emit($event)"
+      (imageReceived)="enqueue($event)"
     />
     @if (view.blockMenu(); as target) {
       @if (view.editor(); as editor) {

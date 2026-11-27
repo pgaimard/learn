@@ -146,6 +146,80 @@ describe('markdownToContent', () => {
     },
   );
 
+  describe('diaporama', () => {
+    const SLIDESHOW = [
+      '> [!diaporama] Exécution d’une instruction',
+      '>',
+      '> ![État initial](images/etape-01.svg "Étape 1 : état initial")',
+      '>',
+      '> Le **compteur ordinal** contient l’adresse.',
+      '>',
+      '> - bus d’adresses',
+      '>',
+      '> ![Lecture](images/etape-02.svg)',
+    ].join('\n');
+
+    it('ouvre une étape à chaque image et lui rattache le texte qui suit', () => {
+      const { document, errors, imagePaths } = markdownToContent(SLIDESHOW, 0);
+
+      expect(errors).toEqual([]);
+      expect(imagePaths).toEqual([
+        'images/etape-01.svg',
+        'images/etape-02.svg',
+      ]);
+      const slideshow = document.content?.[0];
+      expect(slideshow).toMatchObject({
+        type: 'slideshow',
+        attrs: { title: 'Exécution d’une instruction' },
+      });
+      expect(
+        slideshow?.content?.map((slide) =>
+          slide.content?.map((block) => block.type),
+        ),
+      ).toEqual([
+        ['figure', 'paragraph', 'bulletList'],
+        // Une étape sans explication reçoit un paragraphe vide, où la saisir.
+        ['figure', 'paragraph'],
+      ]);
+      expect(slideshow?.content?.[0].content?.[0]).toMatchObject({
+        attrs: { src: 'images/etape-01.svg', alt: 'État initial' },
+        content: [{ type: 'text', text: 'Étape 1 : état initial' }],
+      });
+    });
+
+    it('accepte un diaporama sans titre', () => {
+      const { document, errors } = markdownToContent(
+        '> [!diaporama]\n>\n> ![Un](images/a.png)',
+        0,
+      );
+
+      expect(errors).toEqual([]);
+      expect(document.content?.[0]).toMatchObject({
+        type: 'slideshow',
+        attrs: { title: '' },
+      });
+    });
+
+    it.each([
+      [
+        'du texte avant la première image',
+        '> [!diaporama]\n>\n> Texte.\n>\n> ![Un](images/a.png)',
+        /commence par une image/,
+      ],
+      ['aucune image', '> [!diaporama] Titre', /diaporama sans image/],
+      [
+        'un tableau dans une étape',
+        '> [!diaporama]\n>\n> ![Un](images/a.png)\n>\n> | a |\n> |---|\n> | b |',
+        /paragraphes et à des listes/,
+      ],
+    ])('refuse %s', (_label, markdown, message) => {
+      const { errors } = markdownToContent(markdown, 0);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(message);
+    });
+  });
+
   it('reconnaît un encadré « Définition »', () => {
     const { document, errors } = markdownToContent(
       '> [!definition]\n> Un **processus** est un programme en cours d’exécution.',
