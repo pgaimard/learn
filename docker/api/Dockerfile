@@ -14,6 +14,9 @@ WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# Référence du format du contenu, que le serveur MCP donne à lire à l'IA. L'application la
+# cherche à côté de son dossier, comme dans le dépôt.
+COPY contracts/README.md /contracts/README.md
 # Le volume des fichiers envoyés hérite de ce dossier et de son propriétaire.
 RUN mkdir -p /data/uploads && chown node:node /data/uploads
 USER node

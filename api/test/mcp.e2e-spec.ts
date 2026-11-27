@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AddressInfo } from 'node:net';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { markdownToContent } from '../src/courses/import/markdown-to-content.js';
 import { ErrorResponse } from '../src/common/http-error.filter.js';
 import { GeneratedAiAccess } from '../src/mcp/ai-access.controller.js';
 import { AiAccessStatus } from '../src/mcp/ai-access.service.js';
@@ -13,6 +14,7 @@ import {
 } from './authenticated-client.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const INITIALIZE = {
   jsonrpc: '2.0',
@@ -25,6 +27,30 @@ const INITIALIZE = {
   },
 };
 
+const COURSE = `## 1. Processus
+
+Un **processus** est un programme en cours d'exécution.
+
+### 1.1 États
+
+- Prêt
+- Élu
+
+## 2. Ordonnancement
+
+Texte de la seconde section.
+`;
+
+const EXERCISES = `## 1. Exercices
+
+> [!exercice] Exercice 1 : tourniquet
+>
+> Énoncé.
+>
+> > [!corrige]
+> > Corrigé.
+`;
+
 interface ToolResult {
   isError?: boolean;
   content: { type: string; text: string }[];
@@ -35,6 +61,7 @@ describe('Serveur MCP', () => {
   let client: AuthenticatedClient;
   let url: URL;
   let token: string;
+  let courseId: number;
 
   async function generate(password = 'mot de passe long'): Promise<string> {
     const response = await client('post', '/api/ai-access').send({ password });
@@ -91,9 +118,10 @@ describe('Serveur MCP', () => {
       code: 'UTC502',
       title: 'Systèmes',
     });
-    await client('post', '/api/ues/UTC502/courses').send({
+    const created = await client('post', '/api/ues/UTC502/courses').send({
       title: 'Les processus',
     });
+    courseId = (created.body as { id: number }).id;
   });
 
   afterAll(async () => {
@@ -189,6 +217,9 @@ describe('Serveur MCP', () => {
     expect(tools.map((tool) => tool.name)).toEqual([
       'list_ues',
       'list_courses',
+      'get_course_outline',
+      'read_course_document',
+      'read_content_format',
     ]);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect((await status())?.lastUsedAt).toEqual(expect.any(String));
@@ -215,6 +246,110 @@ describe('Serveur MCP', () => {
         updatedAt: expect.any(String) as string,
       },
     ]);
+  });
+
+  it('donne le plan d’un cours, document par document, avec sa révision', async () => {
+    const saved = await saveCourse(client, courseId, {
+      content: markdownToContent(COURSE).document,
+      exercisesContent: markdownToContent(EXERCISES).document,
+    });
+    expect(saved.status).toBe(200);
+
+    const outline = await call('get_course_outline', { course: courseId });
+
+    expect(JSON.parse(outline.content[0].text)).toEqual({
+      id: courseId,
+      ue: 'UTC502',
+      title: 'Les processus',
+      revision: 2,
+      updatedAt: expect.any(String) as string,
+      documents: {
+        cours: {
+          sections: [
+            { rank: 1, level: 2, title: '1. Processus' },
+            { rank: 2, level: 3, title: '1.1 États' },
+            { rank: 3, level: 2, title: '2. Ordonnancement' },
+          ],
+        },
+        fiche: null,
+        exercices: {
+          sections: [{ rank: 1, level: 2, title: '1. Exercices' }],
+          exercises: [
+            { key: 'exercice-1-tourniquet', title: 'Exercice 1 : tourniquet' },
+          ],
+        },
+      },
+    });
+  });
+
+  it('rend un document en Markdown, en entier ou une seule section', async () => {
+    const whole = await call('read_course_document', {
+      course: courseId,
+      document: 'cours',
+    });
+    const section = await call('read_course_document', {
+      course: courseId,
+      document: 'cours',
+      section: 1,
+    });
+    const exercises = await call('read_course_document', {
+      course: courseId,
+      document: 'exercices',
+    });
+
+    expect(whole.content[1].text).toBe(COURSE);
+    expect(JSON.parse(whole.content[0].text)).toEqual({
+      course: courseId,
+      document: 'cours',
+      revision: 2,
+      losses: [],
+    });
+    expect(section.content[1].text).toBe(
+      COURSE.slice(0, COURSE.indexOf('## 2.')).trimEnd() + '\n',
+    );
+    expect(JSON.parse(section.content[0].text)).toMatchObject({
+      section: { rank: 1, level: 2, title: '1. Processus' },
+    });
+    expect(exercises.content[1].text).toBe(EXERCISES);
+  });
+
+  it('refuse un cours, un document ou une section qui n’existent pas', async () => {
+    const course = await call('read_course_document', {
+      course: courseId + 1000,
+      document: 'cours',
+    });
+    const sheet = await call('read_course_document', {
+      course: courseId,
+      document: 'fiche',
+    });
+    const section = await call('read_course_document', {
+      course: courseId,
+      document: 'cours',
+      section: 9,
+    });
+    const unknown = await call('read_course_document', {
+      course: courseId,
+      document: 'autre',
+    });
+
+    expect(course.content[0].text).toBe('Ce cours n’existe pas.');
+    expect(sheet.content[0].text).toBe(
+      'Ce cours n’a pas de fiche de révision.',
+    );
+    expect(section.content[0].text).toBe(
+      'Ce document n’a pas de section de rang 9 : il en compte 3.',
+    );
+    expect(
+      [course, sheet, section, unknown].every((result) => result.isError),
+    ).toBe(true);
+  });
+
+  it('donne la référence du format du contenu', async () => {
+    const format = await call('read_content_format');
+
+    expect(format.isError).toBeUndefined();
+    expect(format.content[0].text).toContain('# Contrats partagés');
+    expect(format.content[0].text).toContain('[!exercice]');
   });
 
   it('rend un refus de l’application comme une erreur d’outil lisible', async () => {

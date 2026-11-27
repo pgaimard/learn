@@ -16,6 +16,18 @@ cloud d'Anthropic : il ne fonctionne qu'avec l'application en production, pas av
      `Authorization` à OAuth.
 3. Dans une conversation où le connecteur est activé, demander « liste mes UE ».
 
+## Outils offerts
+
+Tous en lecture seule pour l'instant.
+
+| Outil | Rôle |
+|---|---|
+| `list_ues` | Les UE, avec leur nombre de cours, de termes et de fichiers. |
+| `list_courses` | Les cours d'une UE, dans leur ordre. |
+| `get_course_outline` | Le plan d'un cours : révision, sections du cours, de la fiche et des exercices, clés des exercices. |
+| `read_course_document` | Un document d'un cours en Markdown, en entier ou une section désignée par son rang, avec ce qu'une réécriture perdrait. |
+| `read_content_format` | La référence du format (`contracts/README.md`). |
+
 ## Révoquer l'accès
 
 Écran Administration → « Révoquer l'accès » : le jeton cesse aussitôt de fonctionner. Créer un
