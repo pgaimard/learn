@@ -28,6 +28,7 @@ const LOGIN_ATTEMPTS_WINDOW_MS = 15 * 60 * 1000;
     SessionService,
     { provide: APP_GUARD, useClass: SessionGuard },
   ],
+  exports: [AuthService],
 })
 export class AuthModule implements NestModule {
   constructor(private readonly sessionService: SessionService) {}
