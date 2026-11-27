@@ -249,7 +249,8 @@
     {
       "type": "table",
       "attrs": {
-        "pinned": true
+        "pinned": true,
+        "grid": false
       },
       "content": [
         {
@@ -262,7 +263,8 @@
                 "rowspan": 1,
                 "colwidth": null,
                 "align": null,
-                "verticalAlign": null
+                "verticalAlign": null,
+                "checked": false
               },
               "content": [
                 {
@@ -292,7 +294,8 @@
                 "rowspan": 1,
                 "colwidth": null,
                 "align": null,
-                "verticalAlign": "middle"
+                "verticalAlign": "middle",
+                "checked": false
               },
               "content": [
                 {
@@ -307,6 +310,163 @@
                       "text": "Cellule"
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "attrs": {
+        "pinned": true,
+        "grid": true
+      },
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "0"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "P1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": true
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "align": null,
+                "verticalAlign": null,
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "pinned": false,
+                    "textAlign": null
+                  }
                 }
               ]
             }

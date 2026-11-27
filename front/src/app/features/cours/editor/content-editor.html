@@ -86,6 +86,7 @@
           [style.top.px]="target.top"
           [style.left.px]="target.left"
           (picked)="insertTable(editor, $event); view.tablePicker.set(null)"
+          (gridPicked)="insertGrid(editor, $event); view.tablePicker.set(null)"
           (closed)="view.tablePicker.set(null); editor.commands.focus()"
         />
       }

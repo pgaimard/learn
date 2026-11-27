@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { GridShape } from '../../content/check-grid';
 import { TableShape } from './table-commands';
 import { TablePicker } from './table-picker';
 
@@ -32,7 +33,7 @@ describe('TablePicker', () => {
   }
 
   it('propose un tableau de 3 × 3 avec une ligne d’en-tête', () => {
-    host.querySelector<HTMLButtonElement>('button')?.click();
+    host.querySelector<HTMLButtonElement>('.button-primary')?.click();
 
     expect(picked).toEqual([{ rows: 3, columns: 3, hasHeaderRow: true, hasHeaderColumn: false }]);
   });
@@ -44,7 +45,7 @@ describe('TablePicker', () => {
     fixture.detectChanges();
 
     expect(host.querySelectorAll('.cell.is-aimed')).toHaveLength(10);
-    expect(host.querySelector('button')?.textContent.trim()).toBe('Insérer 2 × 5');
+    expect(host.querySelector('.button-primary')?.textContent.trim()).toBe('Insérer 2 × 5');
 
     cells[14].click();
 
@@ -62,6 +63,31 @@ describe('TablePicker', () => {
     host.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
     expect(picked).toEqual([{ rows: 12, columns: 20, hasHeaderRow: false, hasHeaderColumn: true }]);
+  });
+
+  it('propose une grille à cocher, par les noms de ses lignes et de ses colonnes', () => {
+    const grids: GridShape[] = [];
+    fixture.componentInstance.gridPicked.subscribe((shape) => grids.push(shape));
+    const mode = Array.from(host.querySelectorAll('button')).find(
+      (button) => button.textContent.trim() === 'Grille à cocher',
+    );
+    mode?.click();
+    fixture.detectChanges();
+    const insert = host.querySelector<HTMLButtonElement>('.button-primary');
+    expect(insert?.disabled).toBe(true);
+
+    const [rows, columns] = fields();
+    rows.value = 'P1, P2';
+    rows.dispatchEvent(new Event('input'));
+    columns.value = '0-2';
+    columns.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(insert?.textContent.trim()).toBe('Insérer 2 × 3');
+    insert?.click();
+
+    expect(grids).toEqual([{ rowLabels: ['P1', 'P2'], columnLabels: ['0', '1', '2'] }]);
+    expect(picked).toEqual([]);
   });
 
   it('se ferme avec Échap ou par un clic en dehors', () => {

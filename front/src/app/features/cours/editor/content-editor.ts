@@ -11,6 +11,7 @@ import { Editor } from '@tiptap/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
 import { buildOutline } from '../content/build-outline';
 import { ContentNode } from '../content/content-node';
+import { GridShape, insertCheckGrid } from '../content/check-grid';
 import { CourseContent } from '../content/course-content';
 import { CourseOutline } from '../content/course-outline';
 import { BlockMenu } from './blocks/block-menu';
@@ -114,6 +115,10 @@ export class ContentEditor {
   // … ou quand son envoi a échoué : les suivantes ne restent pas bloquées.
   imageFailed(): void {
     this.sendNext();
+  }
+
+  protected insertGrid(editor: Editor, shape: GridShape): void {
+    insertCheckGrid(editor, shape);
   }
 
   protected insertTable(editor: Editor, shape: TableShape): void {
