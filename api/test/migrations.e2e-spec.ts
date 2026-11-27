@@ -45,6 +45,7 @@ describe('Migrations', () => {
     await dataSource.runMigrations();
 
     expect(await readTableNames()).toEqual([
+      'ai_access_tokens',
       'command_courses',
       'command_examples',
       'command_option_variants',

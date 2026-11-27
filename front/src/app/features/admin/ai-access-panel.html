@@ -1,0 +1,97 @@
+<section class="card" aria-labelledby="ai-access-title">
+  <h2 id="ai-access-title">Accès de l’IA</h2>
+  <p class="meta">
+    Claude lit les données de l’application par un connecteur personnalisé, qui présente un jeton à
+    chaque appel. Dans Claude, ajoutez un connecteur avec l’adresse ci-dessous et l’en-tête
+    <code>Authorization</code>.
+  </p>
+
+  <div class="value">
+    <span class="field-label">Adresse du serveur</span>
+    <div class="copyable">
+      <code>{{ serverUrl }}</code>
+      <button type="button" class="button" (click)="copy(serverUrl)">
+        <app-icon name="copy" [size]="15" />{{ copied() === serverUrl ? 'Copié' : 'Copier' }}
+      </button>
+    </div>
+  </div>
+
+  @if (token(); as token) {
+    <div class="value fresh" role="status">
+      <span class="field-label">Valeur de l’en-tête Authorization</span>
+      <div class="copyable">
+        <code>Bearer {{ token }}</code>
+        <button type="button" class="button" (click)="copy('Bearer ' + token)">
+          <app-icon name="copy" [size]="15" />{{
+            copied() === 'Bearer ' + token ? 'Copié' : 'Copier'
+          }}
+        </button>
+      </div>
+      <p class="field-hint">
+        Copiez-la maintenant : elle ne sera plus affichée. Seule son empreinte est conservée.
+      </p>
+    </div>
+  }
+
+  @if (isLoaded()) {
+    @if (access(); as access) {
+      <p class="state">
+        Jeton créé le {{ access.createdAt | date: 'dd/MM/yyyy à HH:mm' }}.
+        @if (access.lastUsedAt; as lastUsedAt) {
+          Dernière utilisation le {{ lastUsedAt | date: 'dd/MM/yyyy à HH:mm' }}.
+        } @else {
+          Pas encore utilisé.
+        }
+      </p>
+    } @else {
+      <p class="state">Aucun jeton : l’IA n’a pas accès aux données.</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="generate()" novalidate>
+      <div class="field">
+        <label for="ai-access-password">Mot de passe</label>
+        <input
+          id="ai-access-password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+          aria-describedby="ai-access-password-hint"
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <p class="field-error">Le mot de passe est requis.</p>
+        }
+        <p id="ai-access-password-hint" class="field-hint">
+          @if (access()) {
+            Créer un nouveau jeton révoque le précédent.
+          } @else {
+            Il est redemandé pour créer un jeton.
+          }
+        </p>
+      </div>
+
+      <div role="alert">
+        @for (error of errors(); track error) {
+          <p class="form-error">{{ error }}</p>
+        }
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="button button-primary" [disabled]="isSubmitting()">
+          {{ access() ? 'Créer un nouveau jeton' : 'Créer un jeton' }}
+        </button>
+        @if (access()) {
+          <button type="button" class="button button-danger" (click)="revoke()">
+            Révoquer l’accès
+          </button>
+        }
+      </div>
+    </form>
+  } @else {
+    <div role="alert">
+      @for (error of errors(); track error) {
+        <p class="form-error">{{ error }}</p>
+      }
+    </div>
+  }
+</section>

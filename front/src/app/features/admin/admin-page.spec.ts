@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { ApiError } from '../../core/http/api-error';
 import { AdminPage } from './admin-page';
+import { AiAccessService } from './ai-access.service';
 import { ExportService } from './export.service';
 
 describe('AdminPage', () => {
@@ -13,7 +14,10 @@ describe('AdminPage', () => {
     authorize = vi.fn<ExportService['authorize']>().mockReturnValue(result);
     download = vi.fn<ExportService['download']>();
     TestBed.configureTestingModule({
-      providers: [{ provide: ExportService, useValue: { authorize, download } }],
+      providers: [
+        { provide: ExportService, useValue: { authorize, download } },
+        { provide: AiAccessService, useValue: { status: () => of(null) } },
+      ],
     });
     fixture = TestBed.createComponent(AdminPage);
     fixture.detectChanges();
