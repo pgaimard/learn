@@ -19,6 +19,8 @@ const ICONS = {
   warning: 'M12 4l9 16H3zM12 10v4M12 17v.5',
   grip: 'M8 6a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 6a1 1 0 1 0 2 0a1 1 0 1 0-2 0M8 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M8 18a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14 18a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
   upload: 'M12 16V5M7 10l5-5 5 5M5 19h14',
+  download: 'M12 5v11M7 11l5 5 5-5M5 19h14',
+  sliders: 'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M6 15v4',
   folder: 'M3 6h6l2 2h10v11H3z',
   file: 'M6 3h8l4 4v14H6zM14 3v4h4',
   move: 'M4 12h14M13 7l5 5-5 5',

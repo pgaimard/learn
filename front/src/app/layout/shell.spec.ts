@@ -31,11 +31,11 @@ describe('Shell', () => {
 
   // Le bouton de déconnexion est dans le menu du compte, ouvert par la pastille.
   function logoutButton(): HTMLButtonElement {
-    if (!element('.account-item')) {
+    if (!element('button.account-item')) {
       element('.avatar').click();
       fixture.detectChanges();
     }
-    return element('.account-item');
+    return element('button.account-item');
   }
 
   it('affiche les initiales du compte, puis son identifiant dans le menu', () => {

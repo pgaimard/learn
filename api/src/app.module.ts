@@ -11,6 +11,7 @@ import { FilesModule } from './files/files.module.js';
 import { HealthModule } from './health/health.module.js';
 import { SearchModule } from './search/search.module.js';
 import { ExercisesModule } from './exercises/exercises.module.js';
+import { ExportsModule } from './exports/exports.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
 import { TermsModule } from './terms/terms.module.js';
 import { ToolsModule } from './tools/tools.module.js';
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module.js';
     TasksModule,
     ExercisesModule,
     EventsModule,
+    ExportsModule,
   ],
   providers: [
     {

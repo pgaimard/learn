@@ -40,6 +40,12 @@ export const routes: Routes = [
           import('./features/taches/tasks-page').then((module) => module.TasksPage),
       },
       {
+        path: 'administration',
+        title: 'Administration',
+        loadComponent: () =>
+          import('./features/admin/admin-page').then((module) => module.AdminPage),
+      },
+      {
         path: 'outils',
         title: 'Outils',
         loadChildren: () =>

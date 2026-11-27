@@ -54,6 +54,7 @@ Procédures complètes : `docs/deploiement.md`, `docs/sauvegarde.md`, `docs/rest
 | Sauvegarder maintenant | `sudo -u deploy -H ./deploy/backup.sh` |
 | Lister les sauvegardes | `sudo -u deploy -H ./deploy/restore.sh` |
 | Restaurer une sauvegarde | `sudo -u deploy -H ./deploy/restore.sh <horodatage>` |
+| Restaurer un export téléchargé (écran Administration) | `sudo -u deploy -H ./deploy/restore.sh --fichier <archive>` |
 
 ### API (dans `api/`)
 
@@ -72,7 +73,7 @@ Procédures complètes : `docs/deploiement.md`, `docs/sauvegarde.md`, `docs/rest
 | Annuler la dernière migration | `npm run build && npm run migration:revert` |
 | État des migrations | `npm run build && npm run migration:show` |
 
-Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la base publiée sur l'hôte (complément `compose.dev.yaml`). Les tests d'intégration recréent à chaque exécution une base `<DATABASE_NAME>_test`.
+Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la base publiée sur l'hôte (complément `compose.dev.yaml`). L'export de l'écran Administration a besoin de `pg_dump`, installé dans l'image de l'API : il ne fonctionne que dans la pile Docker, et les tests d'intégration le simulent. Les tests d'intégration recréent à chaque exécution une base `<DATABASE_NAME>_test`.
 
 ### Front (dans `front/`)
 
@@ -113,7 +114,7 @@ Hors Docker, l'API, les tests d'intégration et les migrations ont besoin de la 
 
 ## NestJS
 
-- Un module par domaine (`ue`, `courses`, `terms`, `tools`, `files`, `search`, `auth`).
+- Un module par domaine (`ue`, `courses`, `terms`, `tools`, `files`, `search`, `auth`, `exports`).
 - Contrôleurs fins : validation et routage uniquement. La logique métier est dans les services.
 - Toute entrée validée par un DTO ; `ValidationPipe` global en mode liste blanche, propriétés inconnues rejetées.
 - Authentification par garde globale ; une route publique est une exception explicite.

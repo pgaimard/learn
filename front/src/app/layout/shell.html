@@ -47,6 +47,14 @@
             [value]="themeChoice()"
             (valueChange)="chooseTheme($event)"
           />
+          <a
+            routerLink="/administration"
+            role="menuitem"
+            class="account-item"
+            (click)="isAccountOpen.set(false)"
+          >
+            <app-icon name="sliders" [size]="15" />Administration
+          </a>
           <button
             type="button"
             role="menuitem"
