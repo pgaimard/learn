@@ -7,12 +7,15 @@ describe('menu « / »', () => {
   let editor: Editor;
   let state: SlashMenuState;
   let imagePicks: number;
+  let slideshowPicks: number;
 
   beforeEach(() => {
     imagePicks = 0;
+    slideshowPicks = 0;
     state = new SlashMenuState(
       () => editor,
       () => imagePicks++,
+      () => slideshowPicks++,
     );
     editor = new Editor({
       extensions: createCourseExtensions({

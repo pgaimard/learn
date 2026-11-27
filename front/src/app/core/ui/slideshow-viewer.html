@@ -1,0 +1,48 @@
+<!-- (close) : fermeture par Échap. -->
+<dialog
+  #dialog
+  class="modal"
+  aria-labelledby="slideshow-title"
+  appBackdropClick
+  (backdropClick)="viewer.close()"
+  (close)="viewer.close()"
+>
+  @if (viewer.slideshow(); as slideshow) {
+    <div class="modal-header">
+      <h2 id="slideshow-title">{{ slideshow.title || 'Diaporama' }}</h2>
+      <span class="meta counter" aria-live="polite">{{ index() + 1 }} / {{ slides().length }}</span>
+      <button
+        type="button"
+        class="button button-icon button-ghost"
+        aria-label="Fermer le diaporama"
+        (click)="viewer.close()"
+      >
+        <app-icon name="close" [size]="15" />
+      </button>
+    </div>
+
+    <!-- Toutes les images sont chargées d'avance et occupent la même place : en passant
+         d'une étape à l'autre, seul ce qui change dans le schéma bouge. -->
+    <div class="stage">
+      @for (slide of slides(); track $index) {
+        <img [src]="slide.src" [alt]="slide.alt" [hidden]="$index !== index()" />
+      }
+    </div>
+
+    <div class="explanation">
+      @if (current()?.caption; as caption) {
+        <p class="step-title">{{ caption }}</p>
+      }
+      <div #body class="course-content"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="button" [disabled]="isFirst()" (click)="step(-1)">
+        <app-icon name="arrow-left" />Précédent
+      </button>
+      <button type="button" class="button button-primary" [disabled]="isLast()" (click)="step(1)">
+        Suivant<app-icon name="arrow-right" />
+      </button>
+    </div>
+  }
+</dialog>

@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { DialogService } from '../../core/dialog/dialog.service';
 import { ApiError } from '../../core/http/api-error';
 import { ImageViewerService } from '../../core/ui/image-viewer.service';
+import { ContentNode } from './content/content-node';
 import { CourseContent } from './content/course-content';
 import { CourseEditPage } from './course-edit-page';
-import { Course, CourseService } from './course.service';
+import { Course, CourseService, UploadedImage } from './course.service';
 
 const COURSE: Course = {
   id: 7,
@@ -358,6 +359,76 @@ describe('CourseEditPage', () => {
     image.click();
     expect(image.hasAttribute('tabindex')).toBe(false);
     expect(TestBed.inject(ImageViewerService).image()).toBeNull();
+  });
+
+  // Plusieurs images choisies d'un coup, comme pour les étapes d'un diaporama.
+  function pickImages(...names: string[]): void {
+    const field = element().querySelector<HTMLInputElement>('input[type="file"]');
+    const files = names.map((name) => new File(['x'], name, { type: 'image/png' }));
+    Object.defineProperty(field, 'files', { value: files, configurable: true });
+    field?.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  it('envoie les images une à une, pour les insérer dans l’ordre où elles ont été choisies', async () => {
+    const first = new Subject<UploadedImage>();
+    service.uploadImage
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(of({ id: 5, src: '/api/courses/7/images/5', altText: '' }));
+    await setup();
+
+    pickImages('un.png', 'deux.png');
+    // La seconde attend que la première soit enregistrée, même si elle serait prête avant.
+    expect(service.uploadImage).toHaveBeenCalledTimes(1);
+
+    first.next({ id: 4, src: '/api/courses/7/images/4', altText: '' });
+    first.complete();
+    fixture.detectChanges();
+
+    expect(service.uploadImage).toHaveBeenCalledTimes(2);
+    expect(
+      Array.from(element().querySelectorAll('figure img')).map((image) =>
+        image.getAttribute('src'),
+      ),
+    ).toEqual(['/api/courses/7/images/4', '/api/courses/7/images/5']);
+  });
+
+  it('n’arrête pas la file d’envoi sur une image refusée', async () => {
+    service.uploadImage
+      .mockReturnValueOnce(throwError(() => new ApiError(400, ['Format non pris en charge.'])))
+      .mockReturnValueOnce(of({ id: 5, src: '/api/courses/7/images/5', altText: '' }));
+    await setup();
+
+    pickImages('refusee.bmp', 'deux.png');
+
+    expect(element().querySelector('figure img')?.getAttribute('src')).toBe(
+      '/api/courses/7/images/5',
+    );
+  });
+
+  it('compose un diaporama : une étape par image, dans l’ordre', async () => {
+    service.uploadImage
+      .mockReturnValueOnce(of({ id: 4, src: '/api/courses/7/images/4', altText: '' }))
+      .mockReturnValueOnce(of({ id: 5, src: '/api/courses/7/images/5', altText: '' }));
+    service.update.mockReturnValue(of(COURSE));
+    await setup();
+
+    element().querySelector<HTMLButtonElement>('[aria-label="Diaporama"]')?.click();
+    pickImages('etape-1.png', 'etape-2.png');
+
+    const steps = Array.from(element().querySelectorAll('.slideshow .slide'));
+    expect(steps.map((step) => step.querySelector('img')?.getAttribute('src'))).toEqual([
+      '/api/courses/7/images/4',
+      '/api/courses/7/images/5',
+    ]);
+    expect(element().querySelector('.slideshow-count')?.textContent).toBe('Diaporama · 2 étapes');
+    click('Enregistrer');
+    const saved = service.update.mock.calls[0][1].content as ContentNode;
+    const slideshow = saved.content?.find((block) => block.type === 'slideshow');
+    expect(slideshow?.content?.map((step) => step.content?.map((block) => block.type))).toEqual([
+      ['figure', 'paragraph'],
+      ['figure', 'paragraph'],
+    ]);
   });
 
   it('affiche le refus de l’API quand l’image n’est pas acceptée', async () => {

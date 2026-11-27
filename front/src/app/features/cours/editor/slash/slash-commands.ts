@@ -36,6 +36,14 @@ export const IMAGE_COMMAND: SlashCommand = {
   keywords: ['figure', 'photo', 'capture', 'schema'],
 };
 
+// Diaporama : comme l'image, il passe par le choix de fichiers, une image par étape.
+export const SLIDESHOW_COMMAND: SlashCommand = {
+  label: 'Diaporama',
+  group: 'Blocs',
+  icon: 'slides',
+  keywords: ['etapes', 'images', 'deroulement', 'animation'],
+};
+
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
     label: 'Section',
@@ -116,6 +124,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     apply: (chain) => chain.setHorizontalRule(),
   },
   IMAGE_COMMAND,
+  SLIDESHOW_COMMAND,
 ];
 
 function normalize(text: string): string {

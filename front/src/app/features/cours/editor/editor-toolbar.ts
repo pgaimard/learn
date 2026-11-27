@@ -42,6 +42,8 @@ export class EditorToolbar {
 
   // Image choisie par le bouton « Image » ; l'envoi est fait par la page.
   readonly imagePicked = output<File>();
+  // Bouton « Diaporama » : la feuille ouvre le choix de ses images, une par étape.
+  readonly slideshowRequested = output();
 
   // Chaque style de titre se montre à sa taille dans la liste.
   protected readonly blockStyles: DropdownOption[] = [

@@ -628,3 +628,128 @@
     left: -1.125rem;
   }
 }
+
+/* Diaporama. En édition, un cadre qui montre ses étapes l'une sous l'autre ; en lecture,
+   sa première image, qui ouvre la fenêtre du diaporama. */
+.course-content .slideshow {
+  margin: 1.25rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-raised);
+  counter-reset: slide;
+}
+
+.course-content .slideshow-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 0.8125rem;
+}
+
+.course-content .slideshow-count {
+  flex: none;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.course-content .slideshow-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.course-content .slideshow-title-field {
+  flex: 1;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.course-content .slideshow-steps {
+  padding: 0 0.75rem;
+}
+
+.course-content .slide {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-border-soft);
+  counter-increment: slide;
+}
+
+.course-content .slide:first-child {
+  border-top: 0;
+}
+
+.course-content .slide-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.course-content .slide-number {
+  margin-right: auto;
+}
+
+.course-content .slide-number::before {
+  content: 'Étape ' counter(slide);
+}
+
+.course-content .slide-action {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.course-content .slide-action:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .slide figure {
+  margin-top: 0;
+}
+
+/* Lecture : seul l'appel du diaporama reste dans la page. Les étapes y sont toujours,
+   pour la fenêtre qui les montre, mais on n'en voit que la première image. */
+.course-content:not(.is-editable) .slideshow {
+  cursor: pointer;
+}
+
+.course-content:not(.is-editable) .slideshow:hover,
+.course-content:not(.is-editable) .slideshow:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.course-content:not(.is-editable) .slideshow-title-field,
+.course-content:not(.is-editable) .slide-bar,
+.course-content:not(.is-editable) .slide:not(:first-child),
+.course-content:not(.is-editable) .slide-body > :not(figure),
+.course-content:not(.is-editable) .slide figcaption {
+  display: none;
+}
+
+.course-content:not(.is-editable) .slide {
+  padding: 0.75rem 0 0.25rem;
+}
+
+/* Édition : le titre se saisit dans son champ. */
+.course-content.is-editable .slideshow-title {
+  display: none;
+}

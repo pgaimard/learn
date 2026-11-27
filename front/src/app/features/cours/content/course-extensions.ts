@@ -12,6 +12,7 @@ import { BookmarkMark } from '../bookmark/bookmark-mark';
 import { RevisionPin } from '../revision/revision-pin';
 import { Callout } from './callout';
 import { Figure } from './figure';
+import { CourseDocument, Slide, Slideshow } from '../slideshow/slideshow';
 import { SectionReferences } from './section-references';
 import { TermMentions } from './term-mentions';
 
@@ -32,6 +33,8 @@ export interface EditingTools {
 export function createCourseExtensions(tools?: EditingTools): Extensions {
   return [
     StarterKit.configure({
+      // Le document accepte aussi les diaporamas : il est défini avec eux.
+      document: false,
       // Le niveau 1 est réservé au titre du cours.
       heading: { levels: [2, 3, 4, 5] },
       codeBlock: false,
@@ -44,6 +47,9 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     TableKit.configure({ table: { resizable: false } }),
     Figure,
     Callout,
+    CourseDocument,
+    Slideshow,
+    Slide,
     SectionFolding,
     SectionReferences,
     TermMentions,
