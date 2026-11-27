@@ -44,6 +44,8 @@ describe('SheetEditPage', () => {
   const service = {
     get: vi.fn<CourseService['get']>(),
     update: vi.fn<CourseService['update']>(),
+    startEditing: vi.fn<CourseService['startEditing']>().mockReturnValue(of(undefined)),
+    releaseEditing: vi.fn<CourseService['releaseEditing']>(),
     uploadImage: vi.fn<CourseService['uploadImage']>(),
   };
   const dialog = {

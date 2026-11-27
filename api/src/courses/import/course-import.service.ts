@@ -230,6 +230,7 @@ export class CourseImportService {
     // Remplacer un chapitre le modifie : un éditeur resté ouvert sur l'ancienne version
     // ne pourra pas l'écraser.
     if (existing) {
+      await this.coursesService.assertNotEditing(manager, existing.id);
       course.revision += 1;
     }
     // Un paquet sans fiche laisse en place celle du chapitre, avec ses images.
