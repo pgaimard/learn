@@ -9,6 +9,9 @@ export interface NodeRule {
   // Groupe ou liste de types acceptés comme enfants ; « text » pour du texte sans marque.
   children: 'none' | 'text' | 'inline' | 'block' | readonly string[];
   minChildren?: number;
+  maxChildren?: number;
+  // Type imposé au premier enfant ; il n'est accepté qu'à cette place.
+  firstChild?: string;
   attrs?: Record<string, AttributeCheck>;
 }
 
@@ -55,6 +58,10 @@ export const BLOCK_TYPES = [
 
 export const INLINE_TYPES = ['text', 'hardBreak'] as const;
 
+// Un diaporama ne se place qu'au premier niveau du document : ni dans un encadré, ni
+// dans un tableau, ni dans un autre diaporama.
+export const MAX_SLIDES = 60;
+
 const cellAttrs: Record<string, AttributeCheck> = {
   colspan: isIntegerBetween(1, 50),
   rowspan: isIntegerBetween(1, 500),
@@ -68,7 +75,7 @@ const pinned: Record<string, AttributeCheck> = {
 };
 
 export const NODE_RULES: Record<string, NodeRule> = {
-  doc: { children: 'block', minChildren: 1 },
+  doc: { children: [...BLOCK_TYPES, 'slideshow'], minChildren: 1 },
   paragraph: { children: 'inline', attrs: pinned },
   heading: {
     children: 'inline',
@@ -122,6 +129,23 @@ export const NODE_RULES: Record<string, NodeRule> = {
         'astuce',
       ]),
     },
+  },
+  // Diaporama : une suite d'étapes qu'on fait défiler, pour suivre un déroulement image
+  // par image. Son titre est facultatif.
+  slideshow: {
+    children: ['slide'],
+    minChildren: 1,
+    maxChildren: MAX_SLIDES,
+    attrs: {
+      title: (value) => typeof value === 'string' && value.length <= 200,
+    },
+  },
+  // Étape d'un diaporama : son image (dont la légende sert de titre d'étape), puis son
+  // explication.
+  slide: {
+    children: ['paragraph', 'bulletList', 'orderedList'],
+    firstChild: 'figure',
+    minChildren: 1,
   },
   hardBreak: { children: 'none' },
 };

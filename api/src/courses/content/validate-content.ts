@@ -75,8 +75,19 @@ class ContentValidator {
     if (children.length < (rule.minChildren ?? 0)) {
       this.errors.add(`Le bloc « ${type} » ne peut pas être vide.`);
     }
-    const allowed = allowedChildren(rule);
-    for (const child of children as unknown[]) {
+    if (children.length > (rule.maxChildren ?? Infinity)) {
+      this.errors.add(
+        `Le bloc « ${type} » ne peut pas contenir plus de ${rule.maxChildren} éléments.`,
+      );
+      return;
+    }
+    const others = allowedChildren(rule);
+    for (const [index, child] of (children as unknown[]).entries()) {
+      // Le premier enfant imposé n'est accepté qu'à sa place ; les autres suivent la liste.
+      const allowed =
+        rule.firstChild !== undefined && index === 0
+          ? [rule.firstChild]
+          : others;
       if (this.errors.size >= MAX_ERRORS) {
         return;
       }

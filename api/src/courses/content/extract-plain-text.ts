@@ -14,6 +14,11 @@ function inlineText(node: ContentNode): string {
 }
 
 function collect(node: ContentNode, lines: string[]): void {
+  // Le titre d'un diaporama est un attribut : il se cherche comme le reste.
+  const title: unknown = node.type === 'slideshow' ? node.attrs?.['title'] : '';
+  if (typeof title === 'string' && title.trim().length > 0) {
+    lines.push(title.trim());
+  }
   if (INLINE_CONTAINERS.has(node.type)) {
     const text = inlineText(node).trim();
     if (text.length > 0) {
