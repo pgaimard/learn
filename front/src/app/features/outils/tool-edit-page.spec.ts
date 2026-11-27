@@ -9,7 +9,11 @@ import { Tool, ToolService } from './tool.service';
 const CONTENT = {
   type: 'doc',
   content: [
-    { type: 'paragraph', attrs: { pinned: false }, content: [{ type: 'text', text: 'Fiche.' }] },
+    {
+      type: 'paragraph',
+      attrs: { pinned: false, textAlign: null },
+      content: [{ type: 'text', text: 'Fiche.' }],
+    },
   ],
 };
 

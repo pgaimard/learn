@@ -25,7 +25,7 @@ const COURSE: Course = {
       {
         type: 'paragraph',
         // L'éditeur précise pour chaque bloc s'il est épinglé à la fiche de révision.
-        attrs: { pinned: false },
+        attrs: { pinned: false, textAlign: null },
         content: [{ type: 'text', text: 'Un programme.' }],
       },
     ],
@@ -174,7 +174,7 @@ describe('CourseEditPage', () => {
   it('place le curseur dans le bloc demandé par la lecture (?bloc=n)', async () => {
     const second = {
       type: 'paragraph',
-      attrs: { pinned: false },
+      attrs: { pinned: false, textAlign: null },
       content: [{ type: 'text', text: 'Deux.' }],
     };
     service.get.mockReturnValue(
@@ -246,10 +246,14 @@ describe('CourseEditPage', () => {
           content: [
             {
               type: 'heading',
-              attrs: { level: 2, pinned: false },
+              attrs: { level: 2, pinned: false, textAlign: null },
               content: [{ type: 'text', text: '1. Notion' }],
             },
-            { type: 'paragraph', attrs: { pinned: false }, content: [{ type: 'text', text: 'x' }] },
+            {
+              type: 'paragraph',
+              attrs: { pinned: false, textAlign: null },
+              content: [{ type: 'text', text: 'x' }],
+            },
           ],
         },
       }),

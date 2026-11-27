@@ -11,20 +11,36 @@ import {
 import { Editor } from '@tiptap/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
 import { Dropdown, DropdownOption } from '../../../core/ui/dropdown';
-import { Icon } from '../../../core/ui/icon';
+import { Icon, IconName } from '../../../core/ui/icon';
 import { MenuButton } from '../../../core/ui/menu-button';
 import { shortcut } from '../../../core/ui/platform';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
+import {
+  setCellVerticalAlign,
+  setTextAlign,
+  TEXT_ALIGNMENTS,
+  TextAlignment,
+  VERTICAL_ALIGNMENTS,
+  VerticalAlignment,
+} from '../content/text-align';
 import { editLink } from './selection/edit-link';
+import { insertShapedTable, TableShape } from './tables/table-commands';
+import { TablePicker } from './tables/table-picker';
 
 type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4' | 'h5';
 type Mark = 'bold' | 'italic' | 'underline' | 'strike' | 'code';
 type Chain = ReturnType<Editor['chain']>;
 type Command = (chain: Chain) => Chain;
 
+interface AlignmentOption<T> {
+  value: T;
+  label: string;
+  icon: IconName;
+}
+
 @Component({
   selector: 'app-editor-toolbar',
-  imports: [Dropdown, Icon, MenuButton],
+  imports: [Dropdown, Icon, MenuButton, TablePicker],
   host: {
     role: 'toolbar',
     'aria-label': 'Mise en forme',
@@ -44,6 +60,22 @@ export class EditorToolbar {
   readonly imagePicked = output<File>();
   // Bouton « Diaporama » : la feuille ouvre le choix de ses images, une par étape.
   readonly slideshowRequested = output();
+
+  protected readonly alignments: AlignmentOption<TextAlignment>[] = [
+    { value: 'left', label: 'À gauche', icon: 'align-left' },
+    { value: 'center', label: 'Centré', icon: 'align-center' },
+    { value: 'right', label: 'À droite', icon: 'align-right' },
+    { value: 'justify', label: 'Justifié', icon: 'align-justify' },
+  ];
+
+  protected readonly verticalAlignments: AlignmentOption<VerticalAlignment>[] = [
+    { value: 'top', label: 'En haut', icon: 'valign-top' },
+    { value: 'middle', label: 'Au milieu', icon: 'valign-middle' },
+    { value: 'bottom', label: 'En bas', icon: 'valign-bottom' },
+  ];
+
+  // Choix de la taille du tableau à insérer, ouvert sous son bouton.
+  protected readonly isPickingTable = signal(false);
 
   // Chaque style de titre se montre à sa taille dans la liste.
   protected readonly blockStyles: DropdownOption[] = [
@@ -86,9 +118,49 @@ export class EditorToolbar {
     inject(DestroyRef).onDestroy(() => watched?.off('transaction', refresh));
   }
 
-  protected isActive(name: string, attributes?: Record<string, unknown>): boolean {
+  protected isActive(
+    name: string | Record<string, unknown>,
+    attributes?: Record<string, unknown>,
+  ): boolean {
     this.revision();
-    return this.editor().isActive(name, attributes);
+    return typeof name === 'string'
+      ? this.editor().isActive(name, attributes)
+      : this.editor().isActive(name);
+  }
+
+  // Alignement du bloc du curseur ; à gauche tant qu'aucun autre n'est choisi.
+  protected alignment(): TextAlignment {
+    return TEXT_ALIGNMENTS.find((value) => this.isActive({ textAlign: value })) ?? 'left';
+  }
+
+  // Pictogramme du bouton du menu : celui de l'alignement en cours.
+  protected alignmentIcon(): IconName {
+    const current = this.alignment();
+    return this.alignments.find((option) => option.value === current)?.icon ?? 'align-left';
+  }
+
+  // L'alignement à gauche est celui par défaut : il ne s'enregistre pas.
+  protected align(alignment: TextAlignment): void {
+    setTextAlign(this.editor(), alignment === 'left' ? null : alignment);
+  }
+
+  protected isInTable(): boolean {
+    return this.isActive('table');
+  }
+
+  // Alignement vertical de la cellule du curseur ; en haut tant qu'aucun autre n'est choisi.
+  protected verticalAlignment(): VerticalAlignment {
+    return VERTICAL_ALIGNMENTS.find((value) => this.isActive({ verticalAlign: value })) ?? 'top';
+  }
+
+  protected verticalAlignmentIcon(): IconName {
+    const current = this.isInTable() ? this.verticalAlignment() : 'top';
+    return this.verticalAlignments.find((option) => option.value === current)?.icon ?? 'valign-top';
+  }
+
+  // L'alignement en haut est celui par défaut : il ne s'enregistre pas.
+  protected alignVertically(alignment: VerticalAlignment): void {
+    setCellVerticalAlign(this.editor(), alignment === 'top' ? null : alignment);
   }
 
   protected blockStyle(): BlockStyle {
@@ -156,8 +228,9 @@ export class EditorToolbar {
     }
   }
 
-  protected insertTable(): void {
-    this.editor().chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  protected insertTable(shape: TableShape): void {
+    this.isPickingTable.set(false);
+    insertShapedTable(this.editor(), shape);
   }
 
   protected run(command: Command): void {

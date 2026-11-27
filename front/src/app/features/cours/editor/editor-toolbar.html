@@ -72,6 +72,52 @@
   </button>
 </div>
 
+<div class="group">
+  <app-menu-button label="Alignement du texte" buttonClass="tool tool-outlined">
+    <span menuTrigger class="callout-trigger">
+      <app-icon [name]="alignmentIcon()" [size]="15" />
+      <app-icon name="chevron-down" [size]="15" />
+    </span>
+    @for (option of alignments; track option.value) {
+      <button
+        type="button"
+        role="menuitem"
+        class="menu-item"
+        [class.is-current]="alignment() === option.value"
+        [attr.aria-current]="alignment() === option.value ? 'true' : null"
+        (click)="align(option.value)"
+      >
+        <app-icon [name]="option.icon" [size]="15" />
+        {{ option.label }}
+      </button>
+    }
+  </app-menu-button>
+  <!-- Dans une cellule de tableau : où placer son contenu en hauteur. -->
+  <app-menu-button
+    label="Alignement vertical de la cellule"
+    buttonClass="tool tool-outlined"
+    [disabled]="!isInTable()"
+  >
+    <span menuTrigger class="callout-trigger">
+      <app-icon [name]="verticalAlignmentIcon()" [size]="15" />
+      <app-icon name="chevron-down" [size]="15" />
+    </span>
+    @for (option of verticalAlignments; track option.value) {
+      <button
+        type="button"
+        role="menuitem"
+        class="menu-item"
+        [class.is-current]="verticalAlignment() === option.value"
+        [attr.aria-current]="verticalAlignment() === option.value ? 'true' : null"
+        (click)="alignVertically(option.value)"
+      >
+        <app-icon [name]="option.icon" [size]="15" />
+        {{ option.label }}
+      </button>
+    }
+  </app-menu-button>
+</div>
+
 <div class="group" role="group" aria-label="Blocs">
   <button
     type="button"
@@ -113,15 +159,22 @@
   >
     <app-icon name="code-block" [size]="15" />
   </button>
-  <button
-    type="button"
-    class="tool"
-    title="Insérer un tableau"
-    aria-label="Tableau"
-    (click)="insertTable()"
-  >
-    <app-icon name="table" [size]="15" />
-  </button>
+  <span class="anchor">
+    <button
+      type="button"
+      class="tool"
+      title="Insérer un tableau"
+      aria-label="Tableau"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="isPickingTable()"
+      (click)="isPickingTable.set(!isPickingTable())"
+    >
+      <app-icon name="table" [size]="15" />
+    </button>
+    @if (isPickingTable()) {
+      <app-table-picker (picked)="insertTable($event)" (closed)="isPickingTable.set(false)" />
+    }
+  </span>
   <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">
     <app-icon name="image" [size]="15" />
     <span class="visually-hidden">Image</span>

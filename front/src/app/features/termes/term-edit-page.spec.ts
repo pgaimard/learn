@@ -14,7 +14,7 @@ const CONTENT = {
     {
       type: 'paragraph',
       // L'éditeur précise pour chaque bloc s'il est épinglé à la fiche de révision.
-      attrs: { pinned: false },
+      attrs: { pinned: false, textAlign: null },
       content: [{ type: 'text', text: 'Numéro d’un processus.' }],
     },
   ],

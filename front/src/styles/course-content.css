@@ -102,6 +102,32 @@
   font-size: calc(0.78125rem * var(--reading-scale));
 }
 
+/* Alignement choisi pour un paragraphe ou un titre. */
+.course-content .align-left {
+  text-align: left;
+}
+
+.course-content .align-center {
+  text-align: center;
+}
+
+.course-content .align-right {
+  text-align: right;
+}
+
+.course-content .align-justify {
+  text-align: justify;
+}
+
+/* Alignement vertical choisi pour une cellule de tableau ; en haut par défaut. */
+.course-content .valign-middle {
+  vertical-align: middle;
+}
+
+.course-content .valign-bottom {
+  vertical-align: bottom;
+}
+
 /* Le cadre arrondi est porté par l'enveloppe : le tableau y défile s'il est trop large. */
 .course-content .tableWrapper {
   margin: 0 0 1em;
@@ -504,6 +530,51 @@
 
 .course-content .table-grip:active {
   cursor: grabbing;
+}
+
+/* Boutons « + » au bord du tableau survolé : une ligne sous la dernière, une colonne à
+   droite de la dernière. */
+.course-content .table-adder {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* « display: flex » l'emporterait sur l'attribut hidden. */
+.course-content .table-adder[hidden] {
+  display: none;
+}
+
+.course-content .table-adder-row {
+  height: 1rem;
+  margin-top: 2px;
+}
+
+.course-content .table-adder-column {
+  width: 1rem;
+  margin-left: 2px;
+}
+
+.course-content .table-adder:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+/* Cellules sélectionnées ensemble, en glissant de l'une à l'autre : à fusionner, par exemple. */
+.course-content.is-editable .selectedCell {
+  background: var(--color-accent-soft);
 }
 
 /* Trait qui montre où la ligne ou la colonne sera déposée. */

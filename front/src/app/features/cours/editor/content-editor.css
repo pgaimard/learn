@@ -8,9 +8,8 @@
   top: var(--sticky-top);
   z-index: 2;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.375rem;
+  flex-direction: column;
+  gap: 0.375rem;
   margin-bottom: 0.75rem;
   padding: 0.375rem 0.625rem;
   border: 1px solid var(--color-border);
@@ -20,13 +19,26 @@
   box-shadow: var(--shadow-bar);
 }
 
-app-editor-toolbar {
-  flex: 1 1 auto;
+/* Première ligne : le document à gauche, ses actions à droite. */
+.bar-document {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.bar-title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 .bar-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   gap: 0.375rem;
   margin-left: auto;

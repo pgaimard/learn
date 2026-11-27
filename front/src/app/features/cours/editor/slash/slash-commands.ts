@@ -16,7 +16,7 @@ export interface SlashCommand {
   // Autres mots par lesquels on peut le trouver.
   keywords: string[];
   // Transforme le paragraphe courant ou insère le bloc ; absent pour l'image, qui passe
-  // par le choix d'un fichier.
+  // par le choix d'un fichier, et pour le tableau, qui passe par le choix de sa taille.
   apply?: (chain: Chain) => Chain;
 }
 
@@ -43,6 +43,14 @@ export const SLIDESHOW_COMMAND: SlashCommand = {
   group: 'Blocs',
   icon: 'slides',
   keywords: ['etapes', 'images', 'deroulement', 'animation'],
+};
+
+// Tableau : il passe par le choix de sa taille et de ses en-têtes.
+export const TABLE_COMMAND: SlashCommand = {
+  label: 'Tableau',
+  group: 'Blocs',
+  icon: 'table',
+  keywords: ['table', 'grille'],
 };
 
 export const SLASH_COMMANDS: SlashCommand[] = [
@@ -110,13 +118,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     keywords: ['code', 'programme'],
     apply: (chain) => chain.setCodeBlock(),
   },
-  {
-    label: 'Tableau',
-    group: 'Blocs',
-    icon: 'table',
-    keywords: ['table', 'grille'],
-    apply: (chain) => chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
-  },
+  TABLE_COMMAND,
   {
     label: 'Séparateur',
     group: 'Blocs',

@@ -2,7 +2,9 @@ import { Editor } from '@tiptap/core';
 import { ContentNode } from '../../content/content-node';
 import { createCourseExtensions } from '../../content/course-extensions';
 import {
+  appendToTable,
   canMoveCurrent,
+  insertShapedTable,
   moveCurrent,
   moveInTable,
   tableLocation,
@@ -131,5 +133,41 @@ describe('commandes de tableau', () => {
     expect(targetIndex(1, 1)).toBeNull();
     expect(targetIndex(1, 2)).toBeNull();
     expect(targetIndex(1, 3)).toBe(2);
+  });
+
+  it('ajoute une ligne sous la dernière et une colonne à droite de la dernière', () => {
+    const tablePos = editor.state.doc.child(0).nodeSize;
+
+    const withRow = appendToTable(editor.state, tablePos, 'row');
+    if (withRow) {
+      editor.view.dispatch(withRow);
+    }
+    expect(grid()).toEqual(['A B C', 'a1 b1 c1', 'a2 b2 c2', '  ']);
+
+    const withColumn = appendToTable(editor.state, tablePos, 'column');
+    if (withColumn) {
+      editor.view.dispatch(withColumn);
+    }
+    expect(grid()).toEqual(['A B C ', 'a1 b1 c1 ', 'a2 b2 c2 ', '   ']);
+    // La nouvelle colonne prolonge la ligne d'en-tête.
+    expect(editor.state.doc.child(1).child(0).child(3).type.name).toBe('tableHeader');
+    expect(appendToTable(editor.state, 0, 'row')).toBeNull();
+  });
+
+  it('insère un tableau de la taille demandée, avec ses en-têtes', () => {
+    editor.commands.setTextSelection(1);
+
+    insertShapedTable(editor, { rows: 2, columns: 4, hasHeaderRow: false, hasHeaderColumn: true });
+
+    let table = editor.state.doc.child(0);
+    editor.state.doc.forEach((node) => {
+      if (node.type.name === 'table' && node.child(0).childCount === 4) {
+        table = node;
+      }
+    });
+    expect(table.childCount).toBe(2);
+    const types: string[] = [];
+    table.child(1).forEach((tableCell) => types.push(tableCell.type.name));
+    expect(types).toEqual(['tableHeader', 'tableCell', 'tableCell', 'tableCell']);
   });
 });

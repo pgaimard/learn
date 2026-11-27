@@ -91,3 +91,20 @@
 .check {
   margin-left: auto;
 }
+
+/* Repère du panneau ouvert sous un outil. */
+.anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.anchor app-table-picker {
+  top: calc(100% + 0.25rem);
+  left: 0;
+}
+
+/* Alignement en cours, dans son menu. */
+.menu-item.is-current {
+  color: var(--color-accent);
+  font-weight: 600;
+}
