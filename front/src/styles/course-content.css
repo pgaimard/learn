@@ -834,10 +834,6 @@
   content: 'Question ' counter(quiz-question);
 }
 
-.course-content .quiz-hint {
-  font-weight: 400;
-}
-
 /* Les boutons de la question se rangent à droite de sa barre. */
 .course-content .quiz-bar .quiz-action:first-of-type {
   margin-left: auto;
@@ -941,8 +937,7 @@
 .course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-explanation,
 .course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-retry,
 .course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-verdict,
-.course-content:not(.is-editable) .quiz.is-checked .quiz-check,
-.course-content:not(.is-editable) .quiz.is-checked .quiz-hint {
+.course-content:not(.is-editable) .quiz.is-checked .quiz-check {
   display: none;
 }
 
@@ -985,7 +980,6 @@
 .course-content.is-editable .quiz-check,
 .course-content.is-editable .quiz-retry,
 .course-content.is-editable .quiz-score,
-.course-content.is-editable .quiz-hint,
 .course-content.is-editable .quiz-verdict {
   display: none;
 }

@@ -73,6 +73,41 @@ describe('QCM dans le Markdown', () => {
     });
   });
 
+  it('accepte une explication longue, avec tableau, image et encadré', () => {
+    const { document, errors, imagePaths } = markdownToContent(
+      [
+        '> [!qcm]',
+        '>',
+        '> 1. Vrai ?',
+        '>    - [x] oui',
+        '>    - [ ] non',
+        '>',
+        '>    Premier paragraphe.',
+        '>',
+        '>    | Cas | Effet |',
+        '>    |-----|-------|',
+        '>    | a   | b     |',
+        '>',
+        '>    ![Schéma](images/fig-01.svg "Légende")',
+        '>',
+        '>    > [!retenir]',
+        '>    > À retenir.',
+      ].join('\n'),
+      0,
+    );
+
+    // La source de l'image est encore son chemin dans le paquet : l'import la remplace.
+    expect(errors).toEqual([]);
+    expect(imagePaths).toEqual(['images/fig-01.svg']);
+    const explanation = document.content?.[0].content?.[0].content?.at(-1);
+    expect(explanation?.content?.map((block) => block.type)).toEqual([
+      'paragraph',
+      'table',
+      'figure',
+      'callout',
+    ]);
+  });
+
   it('accepte un QCM sans titre', () => {
     const { document, errors } = markdownToContent(
       '> [!qcm]\n>\n> 1. Vrai ?\n>    - [x] oui\n>    - [ ] non',
@@ -116,8 +151,8 @@ describe('QCM dans le Markdown', () => {
       /énoncé d’une question/,
     ],
     [
-      'un tableau dans l’explication',
-      '> [!qcm]\n>\n> 1. Vrai ?\n>    - [x] oui\n>    - [ ] non\n>\n>    | a |\n>    |---|\n>    | b |',
+      'un titre dans l’explication',
+      '> [!qcm]\n>\n> 1. Vrai ?\n>    - [x] oui\n>    - [ ] non\n>\n>    ### Titre',
       /explication d’une question/,
     ],
   ])('refuse %s', (_case, markdown, message) => {

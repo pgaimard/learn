@@ -187,8 +187,7 @@ export class CourseContent {
       return;
     }
     const mention = image.closest<HTMLElement>('.term-mention');
-    // Dans un choix de QCM, le clic sur un terme coche le choix, comme le reste du texte.
-    if (mention && !mention.closest('.quiz-choice')) {
+    if (mention) {
       event.preventDefault();
       this.termOpened.emit(Number(mention.dataset['termId']));
       return;

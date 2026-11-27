@@ -2,17 +2,18 @@ import { ContentNode } from '../content/content-node.js';
 import {
   MAX_QUIZ_CHOICES,
   MAX_QUIZ_QUESTIONS,
+  QUIZ_EXPLANATION,
 } from '../content/content-schema.js';
 
 // Case d'un choix, en tête de son texte : « [x] » pour une bonne réponse, « [ ] » sinon.
 const CHOICE_MARKER = /^\[( |x|X)\](\s+|$)/;
-const EXPLANATION_BLOCKS = [
+const PROMPT_BLOCKS = [
   'paragraph',
   'bulletList',
   'orderedList',
   'codeBlock',
+  'figure',
 ];
-const PROMPT_BLOCKS = [...EXPLANATION_BLOCKS, 'figure'];
 
 type Fail = (message: string) => void;
 
@@ -78,9 +79,9 @@ function questionOf(item: ContentNode, fail: Fail): ContentNode {
       'l’énoncé d’une question de QCM se compose de paragraphes, de listes, de code ou d’images, avant ses choix.',
     );
   }
-  if (!areAll(explanation, EXPLANATION_BLOCKS)) {
+  if (!areAll(explanation, QUIZ_EXPLANATION)) {
     fail(
-      'l’explication d’une question de QCM se limite à des paragraphes, des listes et du code.',
+      'l’explication d’une question de QCM ne contient ni titre, ni diaporama, ni QCM.',
     );
   }
   return {

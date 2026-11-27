@@ -154,11 +154,14 @@ avec la question.
   De 2 à 10 choix, dont au moins une bonne réponse ; le texte d'un choix accepte gras, italique,
   code en ligne et liens ;
 - ce qui suit les choix, dans le même élément numéroté, est l'explication : pourquoi la ou les
-  bonnes réponses sont justes, et si utile pourquoi les autres sont fausses. Des paragraphes, des
-  listes et du code ; pas d'image, de tableau ni d'encadré. Elle est facultative mais attendue ;
-- une seule case `[x]` : la question se présente avec des boutons radio. Plusieurs : avec des cases
-  à cocher et la mention « Plusieurs réponses possibles ». Une question est juste quand les choix
-  cochés sont exactement les bonnes réponses ;
+  bonnes réponses sont justes, et si utile pourquoi les autres sont fausses. Elle garde la longueur
+  et la richesse d'un corrigé rédigé : paragraphes, listes, tableaux, blocs de code, images,
+  citations et encadrés, indentés sous le numéro comme l'énoncé. Seuls un titre, un diaporama et
+  un autre QCM y sont refusés. Elle est facultative mais attendue ;
+- toutes les questions se présentent avec des cases à cocher, qu'elles aient une ou plusieurs
+  bonnes réponses : rien n'indique combien il y en a. Si le support le précise (« une seule
+  réponse », « plusieurs réponses possibles »), l'écrire dans l'énoncé. Une question est juste
+  quand les choix cochés sont exactement les bonnes réponses ;
 - ne pas écrire « Question 1 : » dans l'énoncé : l'application numérote les questions ;
 - un QCM se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste ou un
   tableau.

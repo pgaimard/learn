@@ -14,8 +14,8 @@ import {
 
 type Change = (state: EditorState, pos: number) => Transaction | null;
 
-// Numéro des groupes de cases : les boutons radio d'une question partagent un nom.
-let groupCount = 0;
+// Numéro des choix dessinés : chaque case est nommée par le texte de son choix.
+let choiceCount = 0;
 
 function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -62,17 +62,8 @@ function isInside(target: EventTarget | null, parent: HTMLElement): boolean {
   return target instanceof globalThis.Node && parent.contains(target);
 }
 
-function correctCount(question: ProseMirrorNode): number {
-  let count = 0;
-  question.forEach((child) => {
-    if (child.type.name === 'quizChoice' && child.attrs['correct'] === true) {
-      count += 1;
-    }
-  });
-  return count;
-}
-
-// QCM : une suite de questions. En lecture, on coche ses réponses puis on valide : chaque
+// QCM : une suite de questions. En lecture, on coche ses réponses (des cases partout, pour
+// ne pas dire combien sont justes) puis on valide : chaque
 // question est corrigée et son explication apparaît. En édition, on rédige les questions,
 // on coche les bonnes réponses et on écrit les explications.
 export const Quiz = Node.create({
@@ -180,12 +171,11 @@ export const QuizQuestion = Node.create({
   },
 
   addNodeView() {
-    return ({ node, editor, getPos }) => {
+    return ({ editor, getPos }) => {
       const dom = element('div', 'quiz-question');
       // Barre de la question : son numéro (posé par la feuille de style), puis en lecture
       // son verdict, en édition de quoi la monter, la descendre ou la supprimer.
       const bar = chrome('quiz-bar');
-      const hint = element('span', 'quiz-hint');
       const verdict = element('span', 'quiz-verdict');
       const up = button('quiz-action', '↑', 'Monter la question');
       up.addEventListener('click', () =>
@@ -197,34 +187,14 @@ export const QuizQuestion = Node.create({
       );
       const remove = button('quiz-action', '✕', 'Supprimer la question');
       remove.addEventListener('click', () => act(editor, getPos, removeQuestion));
-      bar.append(element('span', 'quiz-number'), hint, verdict, up, down, remove);
+      bar.append(element('span', 'quiz-number'), verdict, up, down, remove);
       const contentDOM = element('div', 'quiz-question-body');
       dom.append(bar, contentDOM);
-
-      // En lecture, une seule bonne réponse se choisit par des boutons radio, plusieurs
-      // par des cases à cocher. En édition, les cases désignent les bonnes réponses.
-      const group = `quiz-${++groupCount}`;
-      const sync = (shown: ProseMirrorNode): void => {
-        const isSingle = !editor.isEditable && correctCount(shown) === 1;
-        hint.textContent = isSingle ? '' : 'Plusieurs réponses possibles';
-        for (const box of contentDOM.querySelectorAll<HTMLInputElement>('.quiz-choice-box')) {
-          box.type = isSingle ? 'radio' : 'checkbox';
-          box.name = group;
-        }
-      };
-      // Les choix ne sont dessinés qu'après leur question.
-      queueMicrotask(() => sync(node));
 
       return {
         dom,
         contentDOM,
-        update: (updated) => {
-          if (updated.type.name !== 'quizQuestion') {
-            return false;
-          }
-          queueMicrotask(() => sync(updated));
-          return true;
-        },
+        update: (updated) => updated.type.name === 'quizQuestion',
         stopEvent: (event) => isInside(event.target, bar),
         ignoreMutation: (mutation) => !contentDOM.contains(mutation.target),
       };
@@ -298,7 +268,7 @@ export const QuizChoice = Node.create({
       const box = element('input', 'quiz-choice-box');
       box.type = 'checkbox';
       const contentDOM = element('div', 'quiz-choice-text');
-      contentDOM.id = `quiz-choice-${++groupCount}`;
+      contentDOM.id = `quiz-choice-${++choiceCount}`;
       box.setAttribute('aria-labelledby', contentDOM.id);
       const remove = button('quiz-action', '✕', 'Supprimer le choix');
       remove.contentEditable = 'false';
@@ -314,11 +284,12 @@ export const QuizChoice = Node.create({
           );
         }
       });
-      // Lecture : un clic sur le texte du choix coche sa case, sauf sur un lien ou un
-      // renvoi, qui gardent leur action.
+      // Lecture : un clic sur le texte du choix coche sa case, sauf sur un lien, un terme
+      // ou un renvoi, qui gardent leur action.
       contentDOM.addEventListener('click', (event) => {
         const target = event.target;
-        const isLink = target instanceof Element && target.closest('a, .section-ref') !== null;
+        const isLink =
+          target instanceof Element && target.closest('a, .term-mention, .section-ref') !== null;
         if (!editor.isEditable && !box.disabled && !isLink) {
           box.click();
         }
@@ -354,7 +325,9 @@ export const QuizChoice = Node.create({
 // Explication d'une question, montrée en lecture une fois le QCM validé.
 export const QuizExplanation = Node.create({
   name: 'quizExplanation',
-  content: '(paragraph | bulletList | orderedList | codeBlock)+',
+  // Tout bloc du cours sauf un titre, qui entrerait dans le sommaire.
+  content:
+    '(paragraph | bulletList | orderedList | blockquote | codeBlock | table | figure | callout)+',
   defining: true,
 
   parseHTML() {

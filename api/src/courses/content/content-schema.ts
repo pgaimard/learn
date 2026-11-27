@@ -67,7 +67,24 @@ export const MAX_SLIDES = 60;
 // Un QCM ne se place lui aussi qu'au premier niveau du document.
 export const MAX_QUIZ_QUESTIONS = 50;
 export const MAX_QUIZ_CHOICES = 10;
-const QUIZ_TEXT = ['paragraph', 'bulletList', 'orderedList', 'codeBlock'];
+const QUIZ_PROMPT = [
+  'paragraph',
+  'bulletList',
+  'orderedList',
+  'codeBlock',
+  'figure',
+];
+// L'explication accepte tout bloc du cours sauf un titre, qui entrerait dans le sommaire.
+export const QUIZ_EXPLANATION = [
+  'paragraph',
+  'bulletList',
+  'orderedList',
+  'blockquote',
+  'codeBlock',
+  'table',
+  'figure',
+  'callout',
+];
 
 const cellAttrs: Record<string, AttributeCheck> = {
   colspan: isIntegerBetween(1, 50),
@@ -173,12 +190,12 @@ export const NODE_RULES: Record<string, NodeRule> = {
     minChildren: 4,
     maxChildren: MAX_QUIZ_CHOICES + 2,
   },
-  quizPrompt: { children: [...QUIZ_TEXT, 'figure'], minChildren: 1 },
+  quizPrompt: { children: QUIZ_PROMPT, minChildren: 1 },
   quizChoice: {
     children: 'inline',
     attrs: { correct: (value) => typeof value === 'boolean' },
   },
-  quizExplanation: { children: QUIZ_TEXT, minChildren: 1 },
+  quizExplanation: { children: QUIZ_EXPLANATION, minChildren: 1 },
   hardBreak: { children: 'none' },
 };
 

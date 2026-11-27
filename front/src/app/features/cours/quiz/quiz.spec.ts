@@ -41,7 +41,7 @@ describe('QCM', () => {
   let editor: Editor;
   let host: HTMLElement;
 
-  async function setup(editable: boolean): Promise<void> {
+  function setup(editable: boolean): void {
     host = document.createElement('div');
     document.body.append(host);
     editor = new Editor({
@@ -50,8 +50,6 @@ describe('QCM', () => {
       extensions: createCourseExtensions(),
       content: { type: 'doc', content: [QUIZ] },
     });
-    // Le type des cases est posé une fois les choix dessinés.
-    await Promise.resolve();
   }
 
   afterEach(() => {
@@ -67,23 +65,17 @@ describe('QCM', () => {
     host.querySelector<HTMLElement>(selector)?.click();
   }
 
-  it('en lecture, propose des boutons radio pour une seule bonne réponse, des cases sinon', async () => {
-    await setup(false);
+  it('en lecture, ne propose que des cases à cocher, toutes vides', () => {
+    setup(false);
 
-    expect(boxes().map((box) => box.type)).toEqual([
-      'radio',
-      'radio',
-      'checkbox',
-      'checkbox',
-      'checkbox',
-    ]);
+    expect(boxes().map((box) => box.type)).toEqual(Array(5).fill('checkbox'));
     expect(boxes().some((box) => box.checked)).toBe(false);
     expect(host.querySelector('.quiz-count')?.textContent).toBe('QCM · 2 questions');
     expect(host.querySelector('.quiz-title')?.textContent).toBe('Processus');
   });
 
-  it('en lecture, coche un choix par un clic sur son texte, sans toucher au cours', async () => {
-    await setup(false);
+  it('en lecture, coche un choix par un clic sur son texte, sans toucher au cours', () => {
+    setup(false);
     const before = editor.getJSON();
 
     host.querySelectorAll<HTMLElement>('.quiz-choice-text')[1].click();
@@ -92,8 +84,8 @@ describe('QCM', () => {
     expect(editor.getJSON()).toEqual(before);
   });
 
-  it('corrige les réponses à la validation, puis les efface pour recommencer', async () => {
-    await setup(false);
+  it('corrige les réponses à la validation, puis les efface pour recommencer', () => {
+    setup(false);
     const [a, , c] = boxes();
     a.click();
     c.click();
@@ -122,8 +114,8 @@ describe('QCM', () => {
     expect(host.querySelector('.quiz-score')?.textContent).toBe('');
   });
 
-  it('signale un choix coché à tort', async () => {
-    await setup(false);
+  it('signale un choix coché à tort', () => {
+    setup(false);
     boxes()[1].click();
 
     click('.quiz-check');
@@ -131,8 +123,8 @@ describe('QCM', () => {
     expect(host.querySelector('.quiz-choice.is-mistake .quiz-choice-text')?.textContent).toBe('b');
   });
 
-  it('marque l’explication laissée vide, pour ne pas l’afficher en lecture', async () => {
-    await setup(false);
+  it('marque l’explication laissée vide, pour ne pas l’afficher en lecture', () => {
+    setup(false);
 
     const explanations = Array.from(host.querySelectorAll('.quiz-explanation'));
 
@@ -142,8 +134,8 @@ describe('QCM', () => {
     ]);
   });
 
-  it('en édition, la case d’un choix désigne une bonne réponse', async () => {
-    await setup(true);
+  it('en édition, la case d’un choix désigne une bonne réponse', () => {
+    setup(true);
     expect(boxes().map((box) => box.checked)).toEqual([true, false, true, true, false]);
 
     boxes()[1].click();
@@ -157,8 +149,8 @@ describe('QCM', () => {
     expect(choices).toEqual([true, true, true, true, false]);
   });
 
-  it('en édition, le titre se saisit dans son champ', async () => {
-    await setup(true);
+  it('en édition, le titre se saisit dans son champ', () => {
+    setup(true);
     const field = host.querySelector<HTMLInputElement>('.quiz-title-field');
 
     if (field) {
