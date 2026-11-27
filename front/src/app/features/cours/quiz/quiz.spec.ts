@@ -149,6 +149,30 @@ describe('QCM', () => {
     expect(choices).toEqual([true, true, true, true, false]);
   });
 
+  it('en édition, cocher une bonne réponse ou saisir le titre ne déplace ni le curseur ni la page', () => {
+    setup(true);
+    editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+    const before = editor.state.selection.from;
+    const field = host.querySelector<HTMLInputElement>('.quiz-title-field');
+    let scrolls = 0;
+    const dispatch = editor.view.dispatch.bind(editor.view);
+    editor.view.dispatch = (transaction) => {
+      scrolls += transaction.scrolledIntoView ? 1 : 0;
+      dispatch(transaction);
+    };
+
+    boxes()[1].click();
+    field?.focus();
+    if (field) {
+      field.value = 'Mémoire';
+      field.dispatchEvent(new Event('input'));
+    }
+
+    expect(editor.state.selection.from).toBe(before);
+    expect(scrolls).toBe(0);
+    expect(document.activeElement).toBe(field);
+  });
+
   it('en édition, le titre se saisit dans son champ', () => {
     setup(true);
     const field = host.querySelector<HTMLInputElement>('.quiz-title-field');

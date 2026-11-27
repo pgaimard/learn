@@ -2,6 +2,7 @@ import MarkdownIt from 'markdown-it';
 import type { Token } from 'markdown-it';
 import { ContentMark, ContentNode } from '../content/content-node.js';
 import { isSafeLink, MAX_SLIDES } from '../content/content-schema.js';
+import { tableFromRows } from './check-grid.js';
 import { quizFromBlocks } from './quiz-from-blocks.js';
 
 export interface ConvertedMarkdown {
@@ -96,7 +97,7 @@ class Converter {
       case 'hr':
         return { type: 'horizontalRule' };
       case 'table_open':
-        return { type: 'table', content: this.parseTableRows() };
+        return tableFromRows(this.parseTableRows());
       default:
         this.fail(
           token,

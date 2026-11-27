@@ -98,6 +98,8 @@ const cellAttrs: Record<string, AttributeCheck> = {
   align: isNullable(isOneOf(['left', 'center', 'right'])),
   // Alignement vertical du contenu ; absent ou null, en haut.
   verticalAlign: isNullable(isOneOf(['top', 'middle', 'bottom'])),
+  // Case remplie d'une grille à cocher.
+  checked: (value) => typeof value === 'boolean',
 };
 
 // Bloc épinglé à la fiche de révision du cours.
@@ -129,7 +131,12 @@ export const NODE_RULES: Record<string, NodeRule> = {
     children: 'text',
     attrs: { ...pinned, language: isNullable(isShortString) },
   },
-  table: { children: ['tableRow'], minChildren: 1, attrs: pinned },
+  // « grid » : grille à cocher, dont les cellules ordinaires sont des cases.
+  table: {
+    children: ['tableRow'],
+    minChildren: 1,
+    attrs: { ...pinned, grid: (value) => typeof value === 'boolean' },
+  },
   tableRow: { children: ['tableCell', 'tableHeader'], minChildren: 1 },
   tableCell: { children: 'block', minChildren: 1, attrs: cellAttrs },
   tableHeader: { children: 'block', minChildren: 1, attrs: cellAttrs },

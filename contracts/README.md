@@ -166,6 +166,40 @@ avec la question.
 - un QCM se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste ou un
   tableau.
 
+### Grille à cocher
+
+Une grille à cocher est un tableau dont la première ligne et la première colonne nomment les
+colonnes et les lignes, et dont toutes les autres cellules sont des cases, remplies ou vides. Dans
+le cours, une case remplie est une cellule colorée : plusieurs cases remplies à la suite dessinent
+une barre.
+
+À utiliser pour un chronogramme ou un diagramme de Gantt (un processus par ligne, une unité de
+temps par colonne), une table de vérité, une matrice de droits ou d'allocation : partout où la
+réponse tient en « oui / non » par case. Ne pas en faire pour un tableau qui porte du texte ou des
+nombres dans son corps.
+
+```markdown
+| Processus | 0   | 1   | 2   | 3   | 4   | 5   |
+|-----------|-----|-----|-----|-----|-----|-----|
+| P1        | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| P2        | [ ] | [ ] | [ ] | [x] | [x] | [ ] |
+| P3        | [ ] | [ ] | [ ] | [ ] | [ ] | [x] |
+```
+
+- c'est un tableau Markdown ordinaire : il devient une grille quand, sous la ligne d'en-tête,
+  chaque cellule après la première colonne vaut exactement `[x]` (case remplie) ou `[ ]` (case
+  vide, avec une espace entre les crochets) ;
+- la première colonne nomme chaque ligne ; la ligne d'en-tête nomme chaque colonne (sa première
+  cellule nomme la première colonne, ou reste vide) ;
+- une seule cellule du corps qui porte autre chose (du texte, un nombre, rien du tout) et le
+  tableau reste un tableau ordinaire, où `[x]` s'affiche tel quel ;
+- garder des en-têtes de colonne courts (un nombre, une lettre) : les colonnes ont toutes la même
+  largeur. 60 colonnes au plus pour rester lisible ;
+- une grille n'a qu'un état par case. Pour distinguer plusieurs états (prêt, élu, bloqué), faire
+  une ligne par état, ou une grille par état ;
+- une grille se place partout où un tableau est accepté, y compris dans l'explication d'une
+  question de QCM.
+
 ### Fiche de révision
 
 `fiche.md` est la fiche de révision du chapitre : un document à part, rédigé pour réviser, et non

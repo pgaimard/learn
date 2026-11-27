@@ -49,6 +49,9 @@
   --color-tone-3: light-dark(#a31d5f, #f58bb8);
   --color-tone-3-soft: light-dark(#fbe8f1, #3a1528);
   --color-backdrop: rgb(0 0 0 / 45%);
+  /* Curseur des barres de défilement, au repos et sous la souris. */
+  --color-scrollbar: light-dark(rgb(86 96 112 / 28%), rgb(155 164 180 / 26%));
+  --color-scrollbar-hover: light-dark(rgb(86 96 112 / 50%), rgb(155 164 180 / 48%));
   --shadow-popover: 0 10px 30px rgb(0 0 0 / 18%);
   --shadow-bar: 0 4px 14px light-dark(rgb(15 23 42 / 10%), rgb(0 0 0 / 45%));
 
@@ -77,6 +80,37 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
+}
+
+/* Barres de défilement : fines, sans fond, le curseur seul se voit. Elles valent pour la
+   page comme pour tout ce qui défile dedans (menus, tableaux, panneaux). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+
+/* Navigateurs qui ne connaissent pas les deux propriétés ci-dessus. */
+@supports not (scrollbar-width: thin) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background: var(--color-scrollbar);
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-scrollbar-hover);
+  }
 }
 
 @media (min-width: 64rem) {
