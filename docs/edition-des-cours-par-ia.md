@@ -37,7 +37,7 @@ L'import d'un paquet reste possible.
 | L'éditeur ne relit pas le contenu après un enregistrement | `front/.../course-edit-page.ts`, `save` |
 | Les titres n'ont aucun identifiant ; le marque-page repère une section par son texte | `content-schema.ts`, `bookmark_title` |
 | Les exercices ont une clé stable, à laquelle les tentatives sont rattachées | attribut `key`, `exercise_attempts.exercise_key` |
-| Conversion Markdown → contenu en place ; pas de sens inverse | `import/markdown-to-content.ts` |
+| Conversion Markdown → contenu, et son inverse, qui signale ce que le Markdown perdrait | `import/markdown-to-content.ts`, `content/content-to-markdown.ts` |
 | Liste blanche du contenu, partagée par les cours, les termes et les fiches d'outils | `content/validate-content.ts` |
 | Contrat du format documenté et testé des deux côtés | `contracts/` |
 | Les images qui ne sont plus référencées sont effacées à l'enregistrement | `courses.service.ts`, `update` |
