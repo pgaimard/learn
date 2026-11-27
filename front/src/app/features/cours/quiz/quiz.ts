@@ -44,8 +44,19 @@ function button(className: string, text: string, label = text): HTMLButtonElemen
   return created;
 }
 
-// Applique au document le changement calculé à la position du bloc.
-function act(editor: Editor, getPos: () => number | undefined, change: Change): void {
+// Applique au document le changement calculé à la position du bloc, sans toucher au
+// focus ni au défilement : la page reste où elle est, le curseur aussi.
+function apply(editor: Editor, getPos: () => number | undefined, change: Change): void {
+  const pos = getPos();
+  const transaction = typeof pos === 'number' ? change(editor.state, pos) : null;
+  if (transaction) {
+    editor.view.dispatch(transaction);
+  }
+}
+
+// Ajoute un élément où le curseur entre aussitôt : l'éditeur reprend le focus et montre
+// l'endroit.
+function insert(editor: Editor, getPos: () => number | undefined, change: Change): void {
   const pos = getPos();
   const transaction = typeof pos === 'number' ? change(editor.state, pos) : null;
   if (transaction) {
@@ -104,13 +115,13 @@ export const Quiz = Node.create({
       field.placeholder = 'Titre du QCM (facultatif)';
       field.setAttribute('aria-label', 'Titre du QCM');
       field.addEventListener('input', () =>
-        act(editor, getPos, (state, pos) => state.tr.setNodeAttribute(pos, 'title', field.value)),
+        apply(editor, getPos, (state, pos) => state.tr.setNodeAttribute(pos, 'title', field.value)),
       );
       header.append(count, title, field);
       const contentDOM = element('div', 'quiz-questions');
       const footer = chrome('quiz-footer');
       const add = button('button quiz-add', '+ Question');
-      add.addEventListener('click', () => act(editor, getPos, addQuestion));
+      add.addEventListener('click', () => insert(editor, getPos, addQuestion));
       const check = button('button button-primary quiz-check', 'Valider');
       const score = element('span', 'quiz-score');
       score.setAttribute('role', 'status');
@@ -179,14 +190,14 @@ export const QuizQuestion = Node.create({
       const verdict = element('span', 'quiz-verdict');
       const up = button('quiz-action', '↑', 'Monter la question');
       up.addEventListener('click', () =>
-        act(editor, getPos, (state, pos) => moveQuestion(state, pos, -1)),
+        apply(editor, getPos, (state, pos) => moveQuestion(state, pos, -1)),
       );
       const down = button('quiz-action', '↓', 'Descendre la question');
       down.addEventListener('click', () =>
-        act(editor, getPos, (state, pos) => moveQuestion(state, pos, 1)),
+        apply(editor, getPos, (state, pos) => moveQuestion(state, pos, 1)),
       );
       const remove = button('quiz-action', '✕', 'Supprimer la question');
-      remove.addEventListener('click', () => act(editor, getPos, removeQuestion));
+      remove.addEventListener('click', () => apply(editor, getPos, removeQuestion));
       bar.append(element('span', 'quiz-number'), verdict, up, down, remove);
       const contentDOM = element('div', 'quiz-question-body');
       dom.append(bar, contentDOM);
@@ -272,14 +283,18 @@ export const QuizChoice = Node.create({
       box.setAttribute('aria-labelledby', contentDOM.id);
       const remove = button('quiz-action', '✕', 'Supprimer le choix');
       remove.contentEditable = 'false';
-      remove.addEventListener('click', () => act(editor, getPos, removeChoice));
-      dom.append(box, contentDOM, remove);
+      remove.addEventListener('click', () => apply(editor, getPos, removeChoice));
+      // Hors du texte éditable, la case reste cliquable dans tous les navigateurs.
+      const check = element('span', 'quiz-choice-check');
+      check.contentEditable = 'false';
+      check.append(box);
+      dom.append(check, contentDOM, remove);
 
       // Édition : la case désigne une bonne réponse. Lecture : elle porte la réponse
       // donnée, qui reste dans la page.
       box.addEventListener('change', () => {
         if (editor.isEditable) {
-          act(editor, getPos, (state, pos) =>
+          apply(editor, getPos, (state, pos) =>
             state.tr.setNodeAttribute(pos, 'correct', box.checked),
           );
         }
@@ -349,7 +364,7 @@ export const QuizExplanation = Node.create({
       const tools = chrome('quiz-explanation-tools');
       const add = button('button quiz-add', '+ Choix');
       add.addEventListener('click', () =>
-        act(editor, getPos, (state, pos) => addChoice(state, state.doc.resolve(pos).before())),
+        insert(editor, getPos, (state, pos) => addChoice(state, state.doc.resolve(pos).before())),
       );
       const label = element('span', 'quiz-explanation-label');
       label.textContent = 'Explication';
