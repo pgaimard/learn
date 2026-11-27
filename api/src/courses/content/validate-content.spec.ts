@@ -10,6 +10,8 @@ function paragraph(text: string, marks?: ContentNode['marks']): ContentNode {
   return { type: 'paragraph', content: [{ type: 'text', text, marks }] };
 }
 
+const EXERCISES = { exercises: true };
+
 describe('validateContent', () => {
   it('accepte le cours d’exemple partagé avec le front', () => {
     const example: unknown = JSON.parse(
@@ -23,6 +25,23 @@ describe('validateContent', () => {
     );
 
     expect(validateContent(example)).toEqual([]);
+  });
+
+  it('accepte les exercices d’exemple partagés avec le front, comme exercices seulement', () => {
+    const example: unknown = JSON.parse(
+      readFileSync(
+        new URL(
+          '../../../../contracts/exercises-content.example.json',
+          import.meta.url,
+        ),
+        'utf8',
+      ),
+    );
+
+    expect(validateContent(example, { exercises: true })).toEqual([]);
+    expect(validateContent(example)).toEqual([
+      'Un QCM ou un exercice se place dans les exercices du cours, pas ailleurs.',
+    ]);
   });
 
   it('accepte un document utilisant tous les blocs autorisés', () => {
@@ -243,14 +262,18 @@ describe('validateContent', () => {
     });
 
     it('accepte un énoncé suivi d’un corrigé', () => {
-      expect(validateContent(doc(exercise([statement, solution])))).toEqual([]);
+      expect(
+        validateContent(doc(exercise([statement, solution])), EXERCISES),
+      ).toEqual([]);
     });
 
     it('refuse un exercice sans corrigé, ou dont l’ordre est inversé', () => {
-      expect(validateContent(doc(exercise([statement])))).toEqual([
+      expect(validateContent(doc(exercise([statement])), EXERCISES)).toEqual([
         'Le bloc « exercise » ne peut pas être vide.',
       ]);
-      expect(validateContent(doc(exercise([solution, statement])))).toEqual([
+      expect(
+        validateContent(doc(exercise([solution, statement])), EXERCISES),
+      ).toEqual([
         'Le bloc « exerciseSolution » n’est pas autorisé dans « exercise ».',
         'Le bloc « exerciseStatement » n’est pas autorisé dans « exercise ».',
       ]);
@@ -258,7 +281,10 @@ describe('validateContent', () => {
 
     it('refuse une clé mal formée, et un titre dans l’énoncé', () => {
       expect(
-        validateContent(doc(exercise([statement, solution], 'Exercice 1'))),
+        validateContent(
+          doc(exercise([statement, solution], 'Exercice 1')),
+          EXERCISES,
+        ),
       ).toEqual(['Valeur non autorisée pour « key » sur « exercise ».']);
       const heading: ContentNode = {
         type: 'heading',
@@ -273,6 +299,7 @@ describe('validateContent', () => {
               solution,
             ]),
           ),
+          EXERCISES,
         ),
       ).toEqual([
         'Le bloc « heading » n’est pas autorisé dans « exerciseStatement ».',
@@ -286,7 +313,7 @@ describe('validateContent', () => {
         content: [exercise([statement, solution])],
       };
 
-      expect(validateContent(doc(callout))).toEqual([
+      expect(validateContent(doc(callout), EXERCISES)).toEqual([
         'Le bloc « exercise » n’est pas autorisé dans « callout ».',
       ]);
     });
@@ -318,7 +345,7 @@ describe('validateContent', () => {
     const valid = question(prompt, choice(true), choice(false), explanation);
 
     it('accepte une question faite d’un énoncé, de choix puis d’une explication', () => {
-      expect(validateContent(doc(quiz(valid)))).toEqual([]);
+      expect(validateContent(doc(quiz(valid)), EXERCISES)).toEqual([]);
     });
 
     it('n’accepte le QCM qu’au premier niveau du document', () => {
@@ -328,7 +355,7 @@ describe('validateContent', () => {
         content: [quiz(valid)],
       };
 
-      expect(validateContent(doc(callout))).toEqual([
+      expect(validateContent(doc(callout), EXERCISES)).toEqual([
         'Le bloc « quiz » n’est pas autorisé dans « callout ».',
       ]);
     });
@@ -337,6 +364,7 @@ describe('validateContent', () => {
       expect(
         validateContent(
           doc(quiz(question(choice(true), prompt, choice(false), explanation))),
+          EXERCISES,
         ),
       ).toEqual([
         'Le bloc « quizChoice » n’est pas autorisé dans « quizQuestion ».',
@@ -345,6 +373,7 @@ describe('validateContent', () => {
       expect(
         validateContent(
           doc(quiz(question(prompt, choice(true), explanation, choice(false)))),
+          EXERCISES,
         ),
       ).toEqual([
         'Le bloc « quizExplanation » n’est pas autorisé dans « quizQuestion ».',
@@ -354,9 +383,12 @@ describe('validateContent', () => {
 
     it('refuse une question de moins de deux choix, et un QCM vide', () => {
       expect(
-        validateContent(doc(quiz(question(prompt, choice(true), explanation)))),
+        validateContent(
+          doc(quiz(question(prompt, choice(true), explanation))),
+          EXERCISES,
+        ),
       ).toEqual(['Le bloc « quizQuestion » ne peut pas être vide.']);
-      expect(validateContent(doc(quiz()))).toEqual([
+      expect(validateContent(doc(quiz()), EXERCISES)).toEqual([
         'Le bloc « quiz » ne peut pas être vide.',
       ]);
     });
@@ -367,6 +399,7 @@ describe('validateContent', () => {
       expect(
         validateContent(
           doc(quiz(question(prompt, odd, choice(false), explanation))),
+          EXERCISES,
         ),
       ).toEqual(['Valeur non autorisée pour « correct » sur « quizChoice ».']);
     });

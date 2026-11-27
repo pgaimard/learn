@@ -48,6 +48,10 @@
         <dd>{{ preview.termCount }}</dd>
       </div>
       <div>
+        <dt>Exercices</dt>
+        <dd>{{ preview.hasExercises ? 'oui' : 'non' }}</dd>
+      </div>
+      <div>
         <dt>Fiche de révision</dt>
         <dd>
           @if (preview.hasSheet) {
@@ -101,6 +105,13 @@
             preview.hasSheet
               ? 'Sa fiche de révision sera remplacée par celle du paquet.'
               : 'Sa fiche de révision est gardée : le paquet n’en contient pas.'
+          }}
+        }
+        @if (existing.hasExercises) {
+          {{
+            preview.hasExercises
+              ? 'Ses exercices seront remplacés par ceux du paquet.'
+              : 'Ses exercices sont gardés : le paquet n’en contient pas.'
           }}
         }
       </p>

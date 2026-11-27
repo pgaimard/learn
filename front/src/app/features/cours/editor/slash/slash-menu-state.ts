@@ -15,7 +15,9 @@ import { SlashTrigger } from './slash-watcher';
 export class SlashMenuState {
   readonly trigger = signal<SlashTrigger | null>(null);
   readonly activeIndex = signal(0);
-  readonly commands = computed(() => filterSlashCommands(this.trigger()?.query ?? ''));
+  readonly commands = computed(() =>
+    filterSlashCommands(this.trigger()?.query ?? '', this.allowExercises()),
+  );
 
   constructor(
     private readonly editor: () => Editor | null,
@@ -25,6 +27,8 @@ export class SlashMenuState {
     private readonly pickSlideshow: () => void,
     // Ouvre le choix d'un tableau à l'endroit du menu.
     private readonly pickTable: (place: { top: number; left: number }) => void,
+    // Vrai dans l'éditeur des exercices d'un cours : le QCM et l'exercice y sont proposés.
+    private readonly allowExercises: () => boolean = () => false,
   ) {}
 
   show(trigger: SlashTrigger | null): void {

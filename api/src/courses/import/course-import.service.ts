@@ -19,7 +19,8 @@ import {
 } from '../content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from '../content/content-node.js';
 import { extractPlainText } from '../content/extract-plain-text.js';
-import { validateContent } from '../content/validate-content.js';
+import { EXERCISE_ONLY_TYPES } from '../content/content-schema.js';
+import { ContentRules, validateContent } from '../content/validate-content.js';
 import { Course } from '../course.entity.js';
 import { CoursesService } from '../courses.service.js';
 import { CourseImage } from '../images/course-image.entity.js';
@@ -68,13 +69,20 @@ export interface ImportPreview {
   // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
   hasSheet: boolean;
   sheetImageCount: number;
+  // Le paquet contient les exercices du chapitre (exercices.md).
+  hasExercises: boolean;
   // Documents de sources/, que l'import range dans le dossier de fichiers du cours.
   sourceCount: number;
   // Outils et commandes de commandes.json : ceux que l'import créera, ceux déjà présents.
   commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche
   // de révision, s'il en a une, est gardée quand le paquet n'en apporte pas.
-  existingCourse: { id: number; title: string; hasSheet: boolean } | null;
+  existingCourse: {
+    id: number;
+    title: string;
+    hasSheet: boolean;
+    hasExercises: boolean;
+  } | null;
 }
 
 // Images d'un import : celles écrites sur disque, à effacer s'il échoue, ou celles
@@ -90,6 +98,8 @@ interface AnalysedPackage {
   images: Map<string, Buffer>;
   // Fiche de révision de fiche.md et ses images ; null quand le paquet n'en a pas.
   sheet: { document: ContentNode; images: Map<string, Buffer> } | null;
+  // Exercices de exercices.md et leurs images ; null quand le paquet n'en a pas.
+  exercises: { document: ContentNode; images: Map<string, Buffer> } | null;
   // Images référencées par les définitions de termes.json.
   termImages: Map<string, Buffer>;
   sectionCount: number;
@@ -133,12 +143,14 @@ export class CourseImportService {
       commands: await previewCommands(this.dataSource.manager, analysed.tools),
       hasSheet: analysed.sheet !== null,
       sheetImageCount: analysed.sheet?.images.size ?? 0,
+      hasExercises: analysed.exercises !== null,
       sourceCount: files.sources.size,
       existingCourse: existing
         ? {
             id: existing.id,
             title: existing.title,
             hasSheet: existing.sheetContent !== null,
+            hasExercises: existing.exercisesContent !== null,
           }
         : null,
     };
@@ -217,9 +229,12 @@ export class CourseImportService {
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
     // Un paquet sans fiche laisse en place celle du chapitre, avec ses images.
     const keptSheet = analysed.sheet ? null : course.sheetContent;
-    const keptIds = collectFigures(keptSheet ?? EMPTY_CONTENT).map(
-      (figure) => figure.imageId,
-    );
+    // De même pour ses exercices.
+    const keptExercises = analysed.exercises ? null : course.exercisesContent;
+    const keptIds = [
+      ...collectFigures(keptSheet ?? EMPTY_CONTENT),
+      ...collectFigures(keptExercises ?? EMPTY_CONTENT),
+    ].map((figure) => figure.imageId);
     const obsolete = (
       await manager.findBy(CourseImage, { courseId: course.id })
     ).filter((image) => !keptIds.includes(image.id));
@@ -232,6 +247,7 @@ export class CourseImportService {
     const store = async (
       document: ContentNode,
       images: Map<string, Buffer>,
+      rules: ContentRules = {},
     ): Promise<ContentNode> => {
       const sources = new Map<string, string>();
       for (const [path, data] of images) {
@@ -245,7 +261,7 @@ export class CourseImportService {
         sources.set(path, buildImageSource('courses', course.id, image.id));
       }
       const content = placeImages(document, sources);
-      throwIfAny(validateContent(content));
+      throwIfAny(validateContent(content, rules));
       return content;
     };
     const content = await store(analysed.document, analysed.images);
@@ -255,6 +271,11 @@ export class CourseImportService {
     course.sheetContent = analysed.sheet
       ? await store(analysed.sheet.document, analysed.sheet.images)
       : keptSheet;
+    course.exercisesContent = analysed.exercises
+      ? await store(analysed.exercises.document, analysed.exercises.images, {
+          exercises: true,
+        })
+      : keptExercises;
     await manager.save(course);
     await this.courseFolders.rename(manager, course);
     const terms = await sortTerms(manager, analysed.terms, ue.id);
@@ -390,6 +411,25 @@ function analyse(files: PackageFiles): AnalysedPackage {
       collect(path, 'fiche.md', sheet.images);
     }
   }
+  errors.push(...misplacedExercises(converted.document, 'cours.md'));
+  if (sheet) {
+    errors.push(...misplacedExercises(sheet.document, 'fiche.md'));
+  }
+  let exercises: AnalysedPackage['exercises'] = null;
+  if (files.exercises !== null) {
+    const parsed = markdownToContent(files.exercises, 0, 'exercices.md');
+    errors.push(...parsed.errors);
+    const isBlank =
+      extractPlainText(parsed.document).trim() === '' &&
+      parsed.imagePaths.length === 0;
+    if (parsed.errors.length === 0 && isBlank) {
+      errors.push('exercices.md est vide.');
+    }
+    exercises = { document: parsed.document, images: new Map() };
+    for (const path of parsed.imagePaths) {
+      collect(path, 'exercices.md', exercises.images);
+    }
+  }
   const terms = parseTerms(files.terms);
   errors.push(...terms.errors);
   const termImages = new Map<string, Buffer>();
@@ -408,11 +448,24 @@ function analyse(files: PackageFiles): AnalysedPackage {
     document: converted.document,
     images,
     sheet,
+    exercises,
     termImages,
     sectionCount: converted.sectionCount,
     terms: terms.terms,
     tools: commands.tools,
   };
+}
+
+// Un QCM ou un exercice écrit ailleurs que dans exercices.md fait refuser le paquet.
+function misplacedExercises(document: ContentNode, source: string): string[] {
+  const isMisplaced = (document.content ?? []).some((block) =>
+    EXERCISE_ONLY_TYPES.includes(block.type),
+  );
+  return isMisplaced
+    ? [
+        `${source} : un QCM ou un exercice se place dans exercices.md, pas dans ${source}.`,
+      ]
+    : [];
 }
 
 function checkImage(path: string, data: Buffer): string[] {

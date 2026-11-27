@@ -46,6 +46,7 @@ function fromMarkdown(markdown: string): PackageFiles {
     markdown,
     images: new Map(),
     sheet: null,
+    exercises: null,
     terms: null,
     commands: null,
     sources: new Map(),

@@ -18,11 +18,51 @@ import { ContentNode } from './content/content-node';
 import { Course, CourseService } from './course.service';
 import { ContentEditor } from './editor/content-editor';
 
-// Fiche qui n'est pas encore rédigée : une page blanche.
+// Document qui n'est pas encore rédigé : une page blanche.
 const BLANK: ContentNode = { type: 'doc', content: [{ type: 'paragraph' }] };
 
-// Édition de la fiche de révision d'un cours : un document à part, écrit avec le même
-// éditeur que le cours. Ses images sont des images du cours.
+// Documents qui accompagnent un cours, et ce qui change de l'un à l'autre.
+interface Companion {
+  field: 'sheetContent' | 'exercisesContent';
+  // Nom affiché, et valeur de ?vue= qui le montre en lecture.
+  label: string;
+  view: string;
+  tabTitle: string;
+  removeLabel: string;
+  removeTitle: string;
+  removeMessage: (courseTitle: string) => string;
+  // Vrai pour les exercices : le seul document où s'insèrent un QCM et un exercice.
+  allowsExercises: boolean;
+}
+
+const COMPANIONS: Record<'sheet' | 'exercises', Companion> = {
+  sheet: {
+    field: 'sheetContent',
+    label: 'Fiche de révision',
+    view: 'fiche',
+    tabTitle: 'Fiche',
+    removeLabel: 'Supprimer la fiche',
+    removeTitle: 'Supprimer la fiche de révision',
+    removeMessage: (title) =>
+      `La fiche de « ${title} » et ses images seront supprimées définitivement. Le cours n’est pas touché.`,
+    allowsExercises: false,
+  },
+  exercises: {
+    field: 'exercisesContent',
+    label: 'Exercices',
+    view: 'exercices',
+    tabTitle: 'Exercices',
+    removeLabel: 'Supprimer les exercices',
+    removeTitle: 'Supprimer les exercices',
+    removeMessage: (title) =>
+      `Les exercices de « ${title} » et leurs images seront supprimés définitivement. Le cours et les réponses déjà enregistrées ne sont pas touchés.`,
+    allowsExercises: true,
+  },
+};
+
+// Édition d'un document qui accompagne un cours : sa fiche de révision, ou ses exercices.
+// C'est un document à part, écrit avec le même éditeur que le cours ; ses images sont des
+// images du cours.
 @Component({
   selector: 'app-sheet-edit-page',
   imports: [ContentEditor, Icon, RouterLink],
@@ -36,8 +76,10 @@ const BLANK: ContentNode = { type: 'doc', content: [{ type: 'paragraph' }] };
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SheetEditPage {
-  // Paramètres de la route /ue/:code/cours/:id/fiche/edition.
+  // Paramètres des routes /ue/:code/cours/:id/fiche/edition et …/exercices/edition.
   readonly code = input.required<string>();
+  // Donnée de la route : le document édité ; la fiche de révision par défaut.
+  readonly document = input<'sheet' | 'exercises'>('sheet');
   readonly id = input.required<string>();
   // Paramètre de requête ?bloc=n : rang du bloc où reprendre, venu de la lecture.
   readonly bloc = input<string>();
@@ -55,8 +97,9 @@ export class SheetEditPage {
   protected readonly course = signal<Course | null>(null);
   // Fiche chargée dans l'éditeur ; elle n'y est pas rechargée après un enregistrement,
   // ce qui déplacerait le curseur.
-  protected readonly sheet = computed(() => this.course()?.sheetContent ?? BLANK);
-  // Vrai quand la fiche existe en base : elle peut alors être supprimée.
+  protected readonly companion = computed(() => COMPANIONS[this.document()]);
+  protected readonly sheet = computed(() => this.course()?.[this.companion().field] ?? BLANK);
+  // Vrai quand le document existe en base : il peut alors être supprimé.
   protected readonly isSaved = signal(false);
   protected readonly errors = signal<string[]>([]);
   protected readonly saveKey = shortcut('S');
@@ -89,13 +132,14 @@ export class SheetEditPage {
     if (!this.isDirty()) {
       return;
     }
-    const sheetContent = this.editor()?.getContent();
-    if (this.isSaving() || !sheetContent) {
+    const content = this.editor()?.getContent();
+    if (this.isSaving() || !content) {
       return;
     }
     this.isSaving.set(true);
     this.errors.set([]);
-    this.courseService.update(Number(this.id()), { sheetContent }).subscribe({
+    const changes = { [this.companion().field]: content };
+    this.courseService.update(Number(this.id()), changes).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.isDirty.set(false);
@@ -125,13 +169,13 @@ export class SheetEditPage {
     if (
       !course ||
       !(await this.dialog.confirmDeletion(
-        'Supprimer la fiche de révision',
-        `La fiche de « ${course.title} » et ses images seront supprimées définitivement. Le cours n’est pas touché.`,
+        this.companion().removeTitle,
+        this.companion().removeMessage(course.title),
       ))
     ) {
       return;
     }
-    this.courseService.update(course.id, { sheetContent: null }).subscribe({
+    this.courseService.update(course.id, { [this.companion().field]: null }).subscribe({
       next: () => {
         this.isDirty.set(false);
         void this.router.navigate(['/ue', this.code(), 'cours', course.id]);
@@ -155,9 +199,9 @@ export class SheetEditPage {
     this.courseService.get(id).subscribe({
       next: (course) => {
         this.course.set(course);
-        this.isSaved.set(course.sheetContent !== null);
+        this.isSaved.set(course[this.companion().field] !== null);
         this.isDirty.set(false);
-        this.title.setTitle(`Fiche – ${course.title}`);
+        this.title.setTitle(`${this.companion().tabTitle} – ${course.title}`);
       },
       error: (error: ApiError) => this.errors.set(error.messages),
     });

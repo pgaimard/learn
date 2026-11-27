@@ -278,6 +278,58 @@ describe('Cours', () => {
     ]);
   });
 
+  it('n’accepte un QCM que dans les exercices du cours, pas dans son texte ni sa fiche', async () => {
+    const [course] = (await client('get', '/api/ues/UTC502/courses'))
+      .body as Course[];
+    const path = `/api/courses/${course.id}`;
+    const choice = (correct: boolean): Record<string, unknown> => ({
+      type: 'quizChoice',
+      attrs: { correct },
+      content: [{ type: 'text', text: 'oui' }],
+    });
+    const exercises = {
+      type: 'doc',
+      content: [
+        {
+          type: 'quiz',
+          attrs: { title: 'Bases' },
+          content: [
+            {
+              type: 'quizQuestion',
+              content: [
+                { type: 'quizPrompt', content: [{ type: 'paragraph' }] },
+                choice(true),
+                choice(false),
+                { type: 'quizExplanation', content: [{ type: 'paragraph' }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const saved = await client('patch', path).send({
+      exercisesContent: exercises,
+    });
+
+    expect(saved.status).toBe(200);
+    expect((saved.body as Course).exercisesContent).toEqual(exercises);
+    const inCourse = await client('patch', path).send({ content: exercises });
+    const inSheet = await client('patch', path).send({
+      sheetContent: exercises,
+    });
+    expect(inCourse.status).toBe(400);
+    expect(inSheet.status).toBe(400);
+    expect((inCourse.body as { messages: string[] }).messages).toEqual([
+      'Un QCM ou un exercice se place dans les exercices du cours, pas ailleurs.',
+    ]);
+
+    const removed = await client('patch', path).send({
+      exercisesContent: null,
+    });
+    expect((removed.body as Course).exercisesContent).toBeNull();
+  });
+
   it('enregistre, remplace et supprime la fiche de révision sans toucher au cours', async () => {
     const [course] = (await client('get', '/api/ues/UTC502/courses'))
       .body as Course[];

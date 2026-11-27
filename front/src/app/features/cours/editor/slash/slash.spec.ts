@@ -115,6 +115,16 @@ describe('menu « / »', () => {
       expect(groups.filter((group, index) => group !== groups[index - 1])).toHaveLength(3);
     });
 
+    it('ne propose le QCM et l’exercice que dans l’éditeur des exercices', () => {
+      const labels = (allowExercises?: boolean): string[] =>
+        filterSlashCommands('', allowExercises).map((command) => command.label);
+
+      expect(labels()).not.toContain('QCM');
+      expect(labels()).not.toContain('Exercice');
+      expect(labels(true)).toEqual(expect.arrayContaining(['QCM', 'Exercice']));
+      expect(filterSlashCommands('qcm')).toEqual([]);
+    });
+
     it('ne propose rien pour une saisie inconnue', () => {
       expect(filterSlashCommands('zzz')).toEqual([]);
     });

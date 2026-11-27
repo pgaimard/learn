@@ -9,6 +9,8 @@ export interface PackageFiles {
   images: Map<string, Buffer>;
   // Contenu de fiche.md, la fiche de révision ; null quand le paquet n'en a pas.
   sheet: string | null;
+  // Contenu de exercices.md, les exercices du chapitre ; null quand le paquet n'en a pas.
+  exercises: string | null;
   terms: string | null;
   // Contenu de commandes.json ; null quand le paquet n'en a pas.
   commands: string | null;
@@ -119,6 +121,7 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
       markdown: '',
       images: new Map(),
       sheet: null,
+      exercises: null,
       terms: null,
       commands: null,
       sources: new Map(),
@@ -131,6 +134,8 @@ export async function readPackage(zip: Buffer): Promise<PackageFiles> {
         hasMarkdown = true;
       } else if (name === 'fiche.md') {
         files.sheet = (await extract(zipFile, entry)).toString('utf8');
+      } else if (name === 'exercices.md') {
+        files.exercises = (await extract(zipFile, entry)).toString('utf8');
       } else if (name === 'termes.json') {
         files.terms = (await extract(zipFile, entry)).toString('utf8');
       } else if (name === 'commandes.json') {

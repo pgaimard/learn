@@ -65,6 +65,10 @@ export const BLOCK_TYPES = [
 
 export const INLINE_TYPES = ['text', 'hardBreak'] as const;
 
+// Blocs réservés au document « Exercices » d'un cours : refusés dans le texte du cours,
+// sa fiche de révision, une définition ou la fiche d'un outil.
+export const EXERCISE_ONLY_TYPES = ['quiz', 'exercise'];
+
 // Un diaporama ne se place qu'au premier niveau du document : ni dans un encadré, ni
 // dans un tableau, ni dans un autre diaporama.
 export const MAX_SLIDES = 60;

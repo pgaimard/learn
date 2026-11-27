@@ -1,6 +1,7 @@
 import { ContentNode } from './content-node.js';
 import {
   BLOCK_TYPES,
+  EXERCISE_ONLY_TYPES,
   INLINE_TYPES,
   MARK_RULES,
   NODE_RULES,
@@ -47,9 +48,16 @@ function imposedChild(
   return null;
 }
 
+export interface ContentRules {
+  // Document « Exercices » d'un cours : les QCM et les exercices y sont admis.
+  exercises?: boolean;
+}
+
 class ContentValidator {
   readonly errors = new Set<string>();
   private nodeCount = 0;
+
+  constructor(private readonly rules: ContentRules) {}
 
   checkDocument(value: unknown): void {
     if (!isRecord(value) || value['type'] !== 'doc') {
@@ -109,6 +117,10 @@ class ContentValidator {
         this.errors.add(`Le contenu du bloc « ${type} » est mal formé.`);
       } else if (!(child['type'] in NODE_RULES) && child['type'] !== 'text') {
         this.errors.add(`Bloc non autorisé : « ${child['type']} ».`);
+      } else if (this.isMisplacedExercise(type, child['type'])) {
+        this.errors.add(
+          'Un QCM ou un exercice se place dans les exercices du cours, pas ailleurs.',
+        );
       } else if (!allowed.includes(child['type'])) {
         this.errors.add(
           `Le bloc « ${child['type']} » n’est pas autorisé dans « ${type} ».`,
@@ -117,6 +129,15 @@ class ContentValidator {
         this.checkNode(child, depth + 1);
       }
     }
+  }
+
+  // QCM ou exercice au premier niveau d'un document qui n'est pas celui des exercices.
+  private isMisplacedExercise(parent: string, child: string): boolean {
+    return (
+      parent === 'doc' &&
+      this.rules.exercises !== true &&
+      EXERCISE_ONLY_TYPES.includes(child)
+    );
   }
 
   private checkText(node: Record<string, unknown>): void {
@@ -186,8 +207,11 @@ class ContentValidator {
 }
 
 // Renvoie les erreurs trouvées ; une liste vide signifie que le contenu est accepté.
-export function validateContent(value: unknown): string[] {
-  const validator = new ContentValidator();
+export function validateContent(
+  value: unknown,
+  rules: ContentRules = {},
+): string[] {
+  const validator = new ContentValidator(rules);
   validator.checkDocument(value);
   return [...validator.errors].slice(0, MAX_ERRORS);
 }

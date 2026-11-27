@@ -34,6 +34,7 @@ function course(...content: ContentNode[]): Course {
     ue: { code: 'UTC502', title: 'Systèmes' },
     content: { type: 'doc', content },
     sheetContent: null,
+    exercisesContent: null,
     bookmarkTitle: null,
     bookmarkBlock: null,
   };
@@ -407,6 +408,46 @@ describe('CourseReadPage', () => {
       '/ue/UTC502/cours/7/fiche/edition',
     );
     expect(element().querySelector('.sheet-note')).not.toBeNull();
+  });
+
+  it('affiche les exercices du chapitre à la place du cours, avec leur sommaire', async () => {
+    const exercises: ContentNode = {
+      type: 'doc',
+      content: [
+        heading(2, '1. QCM'),
+        paragraph('Série 1'),
+        heading(2, '2. Exercices'),
+        paragraph('Série 2'),
+      ],
+    };
+    await setup({ ...COURSE, exercisesContent: exercises }, 'exercices');
+
+    expect(visibleBlocks()).toEqual(['1. QCM', 'Série 1', '2. Exercices', 'Série 2']);
+    expect(outline()).toEqual(['1. QCM', '2. Exercices']);
+    expect(link('Cours complet')?.getAttribute('href')).toBe('/');
+    expect(link('Fiche de révision')?.getAttribute('href')).toBe('/?vue=fiche');
+    expect(link('Exercices')).toBeUndefined();
+    expect(link('Modifier les exercices')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/exercices/edition',
+    );
+    expect(element().querySelector('.sheet-note')?.textContent.trim()).toBe(
+      'Exercices du chapitre.',
+    );
+  });
+
+  it('propose de rédiger les exercices d’un chapitre qui n’en a pas', async () => {
+    await setup(COURSE, 'exercices');
+
+    expect(element().querySelector('.sheet-empty')?.textContent).toContain('exercices.md');
+    expect(link('Rédiger les exercices')?.getAttribute('href')).toBe(
+      '/ue/UTC502/cours/7/exercices/edition',
+    );
+  });
+
+  it('mène aux exercices depuis le cours', async () => {
+    await setup(COURSE);
+
+    expect(link('Exercices')?.getAttribute('href')).toBe('/?vue=exercices');
   });
 
   it('revient au cours complet quand la vue change', async () => {

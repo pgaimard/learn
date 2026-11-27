@@ -53,6 +53,8 @@ export class ContentEditor {
   // Nom accessible de la zone de saisie.
   readonly label = input.required<string>();
 
+  // Éditeur des exercices d'un cours : le seul où s'insèrent un QCM et un exercice.
+  readonly exercises = input(false);
   // Plan du chapitre à gauche de la feuille, pour un texte long et structuré.
   readonly outline = input(false);
   // Rang du bloc où placer le curseur à l'ouverture ; null pour ne pas le placer.
