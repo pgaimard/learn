@@ -37,6 +37,7 @@ function course(...content: ContentNode[]): Course {
     exercisesContent: null,
     bookmarkTitle: null,
     bookmarkBlock: null,
+    revision: 4,
   };
 }
 

@@ -103,9 +103,10 @@ export class CoursesService {
       changes.sheetContent === undefined &&
       changes.exercisesContent === undefined
     ) {
-      await this.dataSource.transaction((manager) =>
-        this.saveWithFolder(manager, course),
-      );
+      await this.dataSource.transaction(async (manager) => {
+        await this.claimRevision(manager, course, changes.revision);
+        await this.saveWithFolder(manager, course);
+      });
       return this.findById(id);
     }
     if (changes.content !== undefined) {
@@ -135,6 +136,7 @@ export class CoursesService {
     await this.imagesService.assertFiguresExist(id, figures);
     // Le cours et ses images changent ensemble ou pas du tout.
     const unused = await this.dataSource.transaction(async (manager) => {
+      await this.claimRevision(manager, course, changes.revision);
       await this.saveWithFolder(manager, course);
       return this.imagesService.reconcile(manager, id, figures);
     });
@@ -216,6 +218,28 @@ export class CoursesService {
     });
     await this.imagesService.removeFiles(images);
     await this.courseFolders.removeStored(storedFiles);
+  }
+
+  // Passe le cours à la révision suivante, à condition qu'il soit encore à celle que
+  // l'appelant a lue. Le test et l'incrément ne font qu'une requête : de deux
+  // enregistrements simultanés partis de la même révision, un seul passe.
+  private async claimRevision(
+    manager: EntityManager,
+    course: Course,
+    readRevision: number,
+  ): Promise<void> {
+    const [rows] = await manager.query<[{ revision: number }[], number]>(
+      `UPDATE courses SET revision = revision + 1
+        WHERE id = $1 AND revision = $2
+        RETURNING revision`,
+      [course.id, readRevision],
+    );
+    if (rows.length === 0) {
+      throw new ConflictException(
+        'Ce cours a été modifié depuis son ouverture. Rechargez la page pour repartir de sa version actuelle.',
+      );
+    }
+    course.revision = rows[0].revision;
   }
 
   private async nextPosition(ueId: number): Promise<number> {

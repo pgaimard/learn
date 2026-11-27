@@ -13,6 +13,7 @@ import {
 import { createTestApp } from './create-test-app.js';
 import { createZip } from './create-zip.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const MARKDOWN = readFileSync(
   new URL('../../contracts/cours.example.md', import.meta.url),
@@ -457,7 +458,7 @@ describe('Import d’un paquet de cours', () => {
     const course = (await client('get', `/api/courses/${courses[0].id}`))
       .body as Course;
 
-    const saved = await client('patch', `/api/courses/${course.id}`).send({
+    const saved = await saveCourse(client, course.id, {
       content: course.content,
     });
 
@@ -478,6 +479,11 @@ describe('Import d’un paquet de cours', () => {
   });
 
   it('remplace le chapitre et ses images quand c’est confirmé', async () => {
+    const [before] = await app
+      .get(DataSource)
+      .query<{ id: number; revision: number }[]>(
+        'SELECT id, revision FROM courses',
+      );
     // Même titre, à la casse près, et un autre « ordre » : c'est le titre qui désigne le chapitre.
     const replaced = await importPackage(
       createZip({
@@ -492,6 +498,11 @@ describe('Import d’un paquet de cours', () => {
     expect(replaced.status).toBe(201);
     const course = replaced.body as Course;
     expect(course.title).toBe('Les processus : NOTIONS DE BASE');
+    // Un éditeur resté ouvert sur l'ancienne version ne peut plus l'écraser.
+    expect([course.id, course.revision]).toEqual([
+      before.id,
+      before.revision + 1,
+    ]);
     expect(course.position).toBe(1);
     expect(JSON.stringify(course.content)).toContain('Ordonnancement revu');
     expect(await countCourses()).toBe(1);

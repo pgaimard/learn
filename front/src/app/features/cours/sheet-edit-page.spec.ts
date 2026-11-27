@@ -35,6 +35,7 @@ const COURSE: Course = {
   exercisesContent: null,
   bookmarkTitle: null,
   bookmarkBlock: null,
+  revision: 4,
 };
 
 describe('SheetEditPage', () => {
@@ -108,7 +109,7 @@ describe('SheetEditPage', () => {
     button('Enregistrer')?.click();
     fixture.detectChanges();
 
-    expect(service.update).toHaveBeenCalledWith(7, { sheetContent: SHEET });
+    expect(service.update).toHaveBeenCalledWith(7, { revision: 4, sheetContent: SHEET });
     expect(button('Enregistrer')?.disabled).toBe(true);
   });
 
@@ -161,7 +162,7 @@ describe('SheetEditPage', () => {
       button('Enregistrer')?.click();
       await fixture.whenStable();
 
-      expect(service.update).toHaveBeenCalledWith(7, { exercisesContent: EXERCISES });
+      expect(service.update).toHaveBeenCalledWith(7, { revision: 4, exercisesContent: EXERCISES });
     });
 
     it('supprime les exercices sans toucher à la fiche', async () => {
@@ -171,7 +172,7 @@ describe('SheetEditPage', () => {
       element().querySelector<HTMLButtonElement>('[aria-label="Supprimer les exercices"]')?.click();
       await fixture.whenStable();
 
-      expect(service.update).toHaveBeenCalledWith(7, { exercisesContent: null });
+      expect(service.update).toHaveBeenCalledWith(7, { revision: 4, exercisesContent: null });
     });
   });
 
@@ -182,7 +183,7 @@ describe('SheetEditPage', () => {
     element().querySelector<HTMLButtonElement>('[aria-label="Supprimer la fiche"]')?.click();
     await fixture.whenStable();
 
-    expect(service.update).toHaveBeenCalledWith(7, { sheetContent: null });
+    expect(service.update).toHaveBeenCalledWith(7, { revision: 4, sheetContent: null });
     expect(navigate).toHaveBeenCalledWith(['/ue', 'UTC502', 'cours', 7]);
   });
 

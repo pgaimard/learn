@@ -27,6 +27,8 @@ export interface Course extends CourseSummary {
   // deux null quand le cours n'en a pas.
   bookmarkTitle: string | null;
   bookmarkBlock: number | null;
+  // Augmentée par l'API à chaque enregistrement du cours.
+  revision: number;
 }
 
 export interface UploadedImage {
@@ -38,6 +40,12 @@ export interface UploadedImage {
 export interface CourseInput {
   title?: string;
   content?: ContentNode;
+}
+
+// Enregistrement d'un cours existant.
+export interface CourseChanges extends CourseInput {
+  // Révision lue avant de modifier : l'API refuse l'enregistrement si le cours a changé depuis.
+  revision: number;
   // Fiche de révision ; null la supprime.
   sheetContent?: ContentNode | null;
   // Exercices du cours ; null les supprime.
@@ -68,7 +76,7 @@ export class CourseService {
     return this.http.post<Course>(`/api/ues/${encodeURIComponent(ueCode)}/courses`, input);
   }
 
-  update(id: number, changes: CourseInput): Observable<Course> {
+  update(id: number, changes: CourseChanges): Observable<Course> {
     return this.http.patch<Course>(`/api/courses/${id}`, changes);
   }
 

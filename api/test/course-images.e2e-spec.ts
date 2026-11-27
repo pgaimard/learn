@@ -12,6 +12,7 @@ import {
 } from './authenticated-client.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -183,7 +184,7 @@ describe('Images de cours', () => {
     const kept = await uploadPng();
     const dropped = await uploadPng();
 
-    const saved = await client('patch', `/api/courses/${courseId}`).send({
+    const saved = await saveCourse(client, courseId, {
       content: doc(figure(kept.src, 'Schéma des états')),
     });
 
@@ -204,7 +205,7 @@ describe('Images de cours', () => {
     const foreign = (await upload(PNG, 'autre.png', otherCourseId))
       .body as UploadedImageResponse;
 
-    const response = await client('patch', `/api/courses/${courseId}`).send({
+    const response = await saveCourse(client, courseId, {
       content: doc(figure(foreign.src)),
     });
 
@@ -219,7 +220,7 @@ describe('Images de cours', () => {
     'data:image/png;base64,AAAA',
     '/api/ues',
   ])('refuse une image dont la source est « %s »', async (src) => {
-    const response = await client('patch', `/api/courses/${courseId}`).send({
+    const response = await saveCourse(client, courseId, {
       content: doc(figure(src)),
     });
 

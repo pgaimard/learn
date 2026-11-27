@@ -20,6 +20,7 @@ const COURSE: Course = {
   exercisesContent: null,
   bookmarkTitle: null,
   bookmarkBlock: null,
+  revision: 4,
   content: {
     type: 'doc',
     content: [
@@ -127,10 +128,35 @@ describe('CourseEditPage', () => {
     click('Enregistrer');
 
     expect(service.update).toHaveBeenCalledWith(7, {
+      revision: 4,
       title: 'Les processus',
       content: COURSE.content,
     });
     expect(saveButton()?.disabled).toBe(true);
+  });
+
+  it('repart, à l’enregistrement suivant, de la révision renvoyée par l’API', async () => {
+    service.update.mockReturnValue(of({ ...COURSE, revision: 5 }));
+    await setup();
+    typeTitle('Les processus');
+    click('Enregistrer');
+    typeTitle('Les processus légers');
+
+    click('Enregistrer');
+
+    expect(service.update.mock.calls.map(([, changes]) => changes.revision)).toEqual([4, 5]);
+  });
+
+  it('signale un cours modifié ailleurs depuis son ouverture, sans perdre la saisie', async () => {
+    const conflict = 'Ce cours a été modifié depuis son ouverture.';
+    service.update.mockReturnValue(throwError(() => new ApiError(409, [conflict])));
+    await setup();
+    typeTitle('Autre titre');
+
+    click('Enregistrer');
+
+    expect(element().textContent).toContain(conflict);
+    expect(saveButton()?.disabled).toBe(false);
   });
 
   it('affiche le refus de l’API et garde les modifications en attente', async () => {

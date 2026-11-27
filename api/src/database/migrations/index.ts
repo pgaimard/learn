@@ -24,6 +24,7 @@ import { AddCourseFolders1795700000000 } from './1795700000000-add-course-folder
 import { CreateExerciseAttempts1795800000000 } from './1795800000000-create-exercise-attempts.js';
 import { AllowQuizDrafts1795900000000 } from './1795900000000-allow-quiz-drafts.js';
 import { AddCourseExercises1796000000000 } from './1796000000000-add-course-exercises.js';
+import { AddCourseRevision1796100000000 } from './1796100000000-add-course-revision.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -52,4 +53,5 @@ export const migrations = [
   CreateExerciseAttempts1795800000000,
   AllowQuizDrafts1795900000000,
   AddCourseExercises1796000000000,
+  AddCourseRevision1796100000000,
 ];
