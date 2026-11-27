@@ -102,3 +102,9 @@
   top: calc(100% + 0.25rem);
   left: 0;
 }
+
+/* Alignement en cours, dans son menu. */
+.menu-item.is-current {
+  color: var(--color-accent);
+  font-weight: 600;
+}

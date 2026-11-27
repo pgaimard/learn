@@ -16,6 +16,7 @@ import { CourseDocument, Slide, Slideshow } from '../slideshow/slideshow';
 import { Quiz, QuizChoice, QuizExplanation, QuizPrompt, QuizQuestion } from '../quiz/quiz';
 import { SectionReferences } from './section-references';
 import { TermMentions } from './term-mentions';
+import { TextAlign } from './text-align';
 
 const lowlight = createLowlight(common);
 
@@ -48,6 +49,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     TableKit.configure({ table: { resizable: false } }),
     Figure,
     Callout,
+    TextAlign,
     CourseDocument,
     Slideshow,
     Slide,

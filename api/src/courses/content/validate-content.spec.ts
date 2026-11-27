@@ -181,6 +181,49 @@ describe('validateContent', () => {
     ]);
   });
 
+  it('accepte l’alignement d’un paragraphe ou d’un titre, parmi quatre valeurs', () => {
+    const aligned = (textAlign: unknown): ContentNode => ({
+      type: 'paragraph',
+      attrs: { textAlign },
+      content: [{ type: 'text', text: 'Texte' }],
+    });
+    const heading: ContentNode = {
+      type: 'heading',
+      attrs: { level: 2, textAlign: 'center' },
+      content: [{ type: 'text', text: 'Titre' }],
+    };
+
+    expect(
+      validateContent(doc(heading, aligned('justify'), aligned(null))),
+    ).toEqual([]);
+    expect(validateContent(doc(aligned('start; color: red')))).toEqual([
+      'Valeur non autorisée pour « textAlign » sur « paragraph ».',
+    ]);
+  });
+
+  it('accepte l’alignement vertical d’une cellule, parmi trois valeurs', () => {
+    const table = (verticalAlign: unknown): ContentNode => ({
+      type: 'table',
+      content: [
+        {
+          type: 'tableRow',
+          content: [
+            {
+              type: 'tableCell',
+              attrs: { verticalAlign },
+              content: [paragraph('a')],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(validateContent(doc(table('middle'), table(null)))).toEqual([]);
+    expect(validateContent(doc(table('baseline')))).toEqual([
+      'Valeur non autorisée pour « verticalAlign » sur « tableCell ».',
+    ]);
+  });
+
   describe('QCM', () => {
     const choice = (correct: boolean, text = 'oui'): ContentNode => ({
       type: 'quizChoice',

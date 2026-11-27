@@ -162,6 +162,9 @@
       (edited)="markDirty()"
       (imageAdded)="refuseImage()"
     >
+      <ng-container editorDocument>
+        <span class="document-title">{{ form.controls.name.value }}</span>
+      </ng-container>
       <div editorActions class="actions">
         <p class="status" aria-live="polite">
           @if (isSaving()) {

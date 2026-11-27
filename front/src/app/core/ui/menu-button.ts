@@ -21,6 +21,7 @@ import {
       [class]="buttonClass()"
       [attr.aria-label]="label()"
       [attr.aria-expanded]="isOpen()"
+      [disabled]="disabled()"
       (click)="isOpen.set(!isOpen())"
     >
       <ng-content select="[menuTrigger]" />
@@ -49,6 +50,8 @@ export class MenuButton {
   readonly label = input.required<string>();
   // Classes du bouton, celles de la feuille globale.
   readonly buttonClass = input('button');
+  // Bouton inactif : le menu ne s'ouvre pas.
+  readonly disabled = input(false);
   // Menu aligné sur le bord droit du bouton.
   readonly alignEnd = input(false);
 
