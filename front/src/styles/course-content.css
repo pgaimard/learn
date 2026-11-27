@@ -995,12 +995,18 @@
   background: var(--color-surface);
 }
 
-.course-content .quiz-choice-box {
+/* La case occupe la hauteur d'une ligne du choix : elle se centre sur la première. */
+.course-content .quiz-choice-check {
+  display: flex;
   flex: none;
+  align-items: center;
+  height: 1lh;
+}
+
+.course-content .quiz-choice-box {
   width: 1rem;
   height: 1rem;
-  /* Aligne la case sur la première ligne du texte. */
-  margin: calc((1lh - 1rem) / 2) 0 0;
+  margin: 0;
   accent-color: var(--color-accent);
 }
 
@@ -1101,6 +1107,16 @@
 .course-content.is-editable .quiz-score,
 .course-content.is-editable .quiz-verdict {
   display: none;
+}
+
+/* Édition : la case d'un choix dit s'il est juste ; on le rappelle au-dessus des choix. */
+.course-content.is-editable .quiz-prompt::after {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  content: 'Choix — cochez la ou les bonnes réponses';
 }
 
 .course-content.is-editable .quiz-prompt::before {
