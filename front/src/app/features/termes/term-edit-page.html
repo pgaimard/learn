@@ -76,6 +76,10 @@
       (edited)="markDirty()"
       (imageAdded)="addImage($event)"
     >
+      <ng-container editorDocument>
+        <span class="code-chip">{{ ueCode() }}</span>
+        <span class="document-title">{{ form.controls.label.value }}</span>
+      </ng-container>
       <div editorActions class="actions">
         <p class="status" aria-live="polite">
           @if (isSaving()) {

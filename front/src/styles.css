@@ -154,6 +154,13 @@ a:hover {
   white-space: nowrap;
 }
 
+/* Titre de ce qu'on édite, rappelé dans la barre de l'éditeur : il se tronque. */
+.document-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pill {
   padding: 0.125rem 0.5rem;
   border-radius: 99px;

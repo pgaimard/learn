@@ -1,6 +1,13 @@
-<!-- Trois emplacements : [editorActions] à droite de la barre, [sheetHeader] en tête de
-     la feuille, et le reste (erreurs) entre la barre et la feuille. -->
+<!-- Quatre emplacements : [editorDocument] et [editorActions] sur la première ligne de la
+     barre, [sheetHeader] en tête de la feuille, et le reste (erreurs) entre la barre et la
+     feuille. -->
 <div class="bar">
+  <!-- Ligne du document : ce qu'on édite à gauche, ses actions à droite. -->
+  <div class="bar-document">
+    <div class="bar-title"><ng-content select="[editorDocument]" /></div>
+    <div class="bar-actions"><ng-content select="[editorActions]" /></div>
+  </div>
+  <!-- Ligne des outils. -->
   @if (view.editor(); as editor) {
     <app-editor-toolbar
       [editor]="editor"
@@ -8,7 +15,6 @@
       (slideshowRequested)="view.pickSlideshow()"
     />
   }
-  <div class="bar-actions"><ng-content select="[editorActions]" /></div>
 </div>
 
 <ng-content />

@@ -62,16 +62,16 @@ export class EditorToolbar {
   readonly slideshowRequested = output();
 
   protected readonly alignments: AlignmentOption<TextAlignment>[] = [
-    { value: 'left', label: 'Aligner à gauche', icon: 'align-left' },
-    { value: 'center', label: 'Centrer', icon: 'align-center' },
-    { value: 'right', label: 'Aligner à droite', icon: 'align-right' },
-    { value: 'justify', label: 'Justifier', icon: 'align-justify' },
+    { value: 'left', label: 'À gauche', icon: 'align-left' },
+    { value: 'center', label: 'Centré', icon: 'align-center' },
+    { value: 'right', label: 'À droite', icon: 'align-right' },
+    { value: 'justify', label: 'Justifié', icon: 'align-justify' },
   ];
 
   protected readonly verticalAlignments: AlignmentOption<VerticalAlignment>[] = [
-    { value: 'top', label: 'Cellule : aligner en haut', icon: 'valign-top' },
-    { value: 'middle', label: 'Cellule : aligner au milieu', icon: 'valign-middle' },
-    { value: 'bottom', label: 'Cellule : aligner en bas', icon: 'valign-bottom' },
+    { value: 'top', label: 'Aligner en haut', icon: 'valign-top' },
+    { value: 'middle', label: 'Centrer verticalement', icon: 'valign-middle' },
+    { value: 'bottom', label: 'Aligner en bas', icon: 'valign-bottom' },
   ];
 
   // Choix de la taille du tableau à insérer, ouvert sous son bouton.
@@ -131,6 +131,12 @@ export class EditorToolbar {
   // Alignement du bloc du curseur ; à gauche tant qu'aucun autre n'est choisi.
   protected alignment(): TextAlignment {
     return TEXT_ALIGNMENTS.find((value) => this.isActive({ textAlign: value })) ?? 'left';
+  }
+
+  // Pictogramme du bouton du menu : celui de l'alignement en cours.
+  protected alignmentIcon(): IconName {
+    const current = this.alignment();
+    return this.alignments.find((option) => option.value === current)?.icon ?? 'align-left';
   }
 
   // L'alignement à gauche est celui par défaut : il ne s'enregistre pas.
