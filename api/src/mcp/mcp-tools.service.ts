@@ -9,6 +9,11 @@ import {
   CourseReaderService,
   DocumentReading,
 } from './course-reader.service.js';
+import {
+  MarkdownReading,
+  ReferenceReaderService,
+  TERM_TYPE_CHOICES,
+} from './reference-reader.service.js';
 
 const READ_ONLY = { readOnlyHint: true, openWorldHint: false };
 
@@ -30,6 +35,24 @@ function asReading({ markdown, ...about }: DocumentReading): CallToolResult {
   };
 }
 
+function asAboutAndMarkdown({
+  about,
+  markdown,
+}: MarkdownReading): CallToolResult {
+  return {
+    content: [
+      { type: 'text', text: JSON.stringify(about, null, 2) },
+      { type: 'text', text: markdown },
+    ],
+  };
+}
+
+const toolId = z
+  .number()
+  .int()
+  .positive()
+  .describe('Identifiant de l’outil, donné par list_tools.');
+
 const courseId = z
   .number()
   .int()
@@ -46,6 +69,7 @@ export class McpToolsService {
     private readonly ueService: UeService,
     private readonly coursesService: CoursesService,
     private readonly courseReader: CourseReaderService,
+    private readonly referenceReader: ReferenceReaderService,
   ) {}
 
   // Un serveur par requête : le point d'entrée ne garde aucun état entre deux appels.
@@ -75,6 +99,9 @@ export class McpToolsService {
       ({ ue }) => this.run('list_courses', () => this.listCourses(ue)),
     );
     this.registerCourseReading(server);
+    this.registerTermReading(server);
+    this.registerToolReading(server);
+    this.registerSearch(server);
     return server;
   }
 
@@ -136,6 +163,112 @@ export class McpToolsService {
           () => this.courseReader.readFormat(),
           asMarkdown,
         ),
+    );
+  }
+
+  private registerTermReading(server: McpServer): void {
+    server.registerTool(
+      'list_terms',
+      {
+        title: 'Lister les termes d’une UE',
+        description:
+          'Liste les termes d’une UE (définitions et acronymes) : identifiant, type, libellé, forme développée et cours d’origine. Un terme appartient à une UE ; le même libellé peut exister dans deux UE. À consulter avant de proposer un terme, pour ne pas créer de doublon.',
+        inputSchema: {
+          ue: z.string().describe('Code de l’UE, par exemple UTC502.'),
+          course: courseId
+            .optional()
+            .describe('Ne garder que les termes issus de ce cours.'),
+          type: z
+            .enum(TERM_TYPE_CHOICES)
+            .optional()
+            .describe('Ne garder que les définitions ou que les acronymes.'),
+        },
+        annotations: READ_ONLY,
+      },
+      (filters) =>
+        this.run('list_terms', () => this.referenceReader.listTerms(filters)),
+    );
+    server.registerTool(
+      'read_term',
+      {
+        title: 'Lire un terme',
+        description:
+          'Rend un terme avec les clés de termes.json (type, libelle, forme_developpee), puis sa définition en Markdown. Le premier bloc donne aussi « losses », ce qu’une réécriture de la définition perdrait.',
+        inputSchema: {
+          term: z
+            .number()
+            .int()
+            .positive()
+            .describe('Identifiant du terme, donné par list_terms.'),
+        },
+        annotations: READ_ONLY,
+      },
+      ({ term }) =>
+        this.run(
+          'read_term',
+          () => this.referenceReader.readTerm(term),
+          asAboutAndMarkdown,
+        ),
+    );
+  }
+
+  private registerToolReading(server: McpServer): void {
+    server.registerTool(
+      'list_tools',
+      {
+        title: 'Lister les outils',
+        description:
+          'Liste les outils dont on apprend les commandes (bash, Cisco IOS, git…) : identifiant, nom, présentation et UE où ils servent.',
+        annotations: READ_ONLY,
+      },
+      () => this.run('list_tools', () => this.referenceReader.listTools()),
+    );
+    server.registerTool(
+      'read_tool',
+      {
+        title: 'Lire un outil',
+        description:
+          'Rend un outil avec les clés de commandes.json (outil, presentation, modes, declinaisons), ses UE et la liste de ses commandes (identifiant, nom, description), puis sa fiche « fonctionnement » en Markdown.',
+        inputSchema: { tool: toolId },
+        annotations: READ_ONLY,
+      },
+      ({ tool }) =>
+        this.run(
+          'read_tool',
+          () => this.referenceReader.readTool(tool),
+          asAboutAndMarkdown,
+        ),
+    );
+    server.registerTool(
+      'read_commands',
+      {
+        title: 'Lire les commandes d’un outil',
+        description:
+          'Rend toutes les commandes d’un outil avec les clés de commandes.json (nom, description, syntaxe, mode, declinaisons, themes, notes, options, exemples), et les UE et les cours où chacune sert.',
+        inputSchema: { tool: toolId },
+        annotations: READ_ONLY,
+      },
+      ({ tool }) =>
+        this.run('read_commands', () =>
+          this.referenceReader.readCommands(tool),
+        ),
+    );
+  }
+
+  private registerSearch(server: McpServer): void {
+    server.registerTool(
+      'search',
+      {
+        title: 'Rechercher',
+        description:
+          'Recherche des mots dans toute l’application, comme la recherche de l’interface : cours, définitions, acronymes, fichiers (par leur nom), outils et commandes. Rend pour chaque groupe le nombre de résultats et les vingt plus pertinents, avec un extrait. Utile pour retrouver où une notion est traitée, ou repérer une répétition entre deux cours.',
+        inputSchema: {
+          query: z.string().min(1).max(100).describe('Mots à chercher.'),
+        },
+        annotations: READ_ONLY,
+      },
+      ({ query }) =>
+        this.run('search', () => this.referenceReader.search(query)),
     );
   }
 

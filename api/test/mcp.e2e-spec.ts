@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { readFileSync } from 'node:fs';
 import { AddressInfo } from 'node:net';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
@@ -50,6 +51,11 @@ const EXERCISES = `## 1. Exercices
 > > [!corrige]
 > > Corrigé.
 `;
+
+const COMMANDS = readFileSync(
+  new URL('../../contracts/commandes.example.json', import.meta.url),
+  'utf8',
+);
 
 interface ToolResult {
   isError?: boolean;
@@ -220,6 +226,12 @@ describe('Serveur MCP', () => {
       'get_course_outline',
       'read_course_document',
       'read_content_format',
+      'list_terms',
+      'read_term',
+      'list_tools',
+      'read_tool',
+      'read_commands',
+      'search',
     ]);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect((await status())?.lastUsedAt).toEqual(expect.any(String));
@@ -350,6 +362,135 @@ describe('Serveur MCP', () => {
     expect(format.isError).toBeUndefined();
     expect(format.content[0].text).toContain('# Contrats partagés');
     expect(format.content[0].text).toContain('[!exercice]');
+  });
+
+  it('liste les termes d’une UE et rend une définition en Markdown', async () => {
+    const definition =
+      '> [!definition]\n> Un **processus** est un programme en cours d’exécution.\n';
+    const created = await client('post', '/api/terms').send({
+      type: 'definition',
+      label: 'Processus',
+      content: markdownToContent(definition).document,
+      courseId,
+    });
+    await client('post', '/api/terms').send({
+      type: 'acronym',
+      label: 'PID',
+      expandedForm: 'Process Identifier',
+      ueCode: 'UTC502',
+    });
+    const termId = (created.body as { id: number }).id;
+
+    const all = await call('list_terms', { ue: 'UTC502' });
+    const acronyms = await call('list_terms', {
+      ue: 'UTC502',
+      type: 'acronyme',
+    });
+    const term = await call('read_term', { term: termId });
+    const unknown = await call('read_term', { term: termId + 1000 });
+
+    expect(JSON.parse(all.content[0].text)).toEqual([
+      {
+        id: expect.any(Number) as number,
+        type: 'acronyme',
+        libelle: 'PID',
+        forme_developpee: 'Process Identifier',
+        cours: null,
+      },
+      {
+        id: termId,
+        type: 'definition',
+        libelle: 'Processus',
+        forme_developpee: null,
+        cours: courseId,
+      },
+    ]);
+    expect(JSON.parse(acronyms.content[0].text)).toHaveLength(1);
+    expect(JSON.parse(term.content[0].text)).toEqual({
+      id: termId,
+      ue: 'UTC502',
+      type: 'definition',
+      libelle: 'Processus',
+      forme_developpee: null,
+      cours: { id: courseId, title: 'Les processus' },
+      losses: [],
+    });
+    expect(term.content[1].text).toBe(definition);
+    expect(unknown.isError).toBe(true);
+    expect(unknown.content[0].text).toBe('Ce terme n’existe pas.');
+  });
+
+  it('liste les outils, rend une fiche d’outil et ses commandes aux clés de commandes.json', async () => {
+    const imported = await client('post', '/api/command-imports').send({
+      content: COMMANDS,
+    });
+    expect(imported.status).toBe(201);
+
+    const tools = JSON.parse((await call('list_tools')).content[0].text) as {
+      id: number;
+      name: string;
+    }[];
+    const cisco = tools.find((tool) => tool.name === 'Cisco IOS')?.id;
+    const tool = await call('read_tool', { tool: cisco });
+    const commands = JSON.parse(
+      (await call('read_commands', { tool: cisco })).content[0].text,
+    ) as { nom: string }[];
+    const unknown = await call('read_commands', { tool: 100000 });
+
+    expect(tools.map((item) => item.name)).toEqual(['Cisco IOS', 'Shell Unix']);
+    expect(JSON.parse(tool.content[0].text)).toMatchObject({
+      outil: 'Cisco IOS',
+      presentation: 'Terminal des routeurs et commutateurs Cisco.',
+      modes: [
+        { nom: 'Utilisateur', invite: 'Router>', entree: '' },
+        { nom: 'Privilégié', invite: 'Router#', entree: 'enable' },
+        {
+          nom: 'Configuration globale',
+          invite: 'Router(config)#',
+          entree: 'configure terminal',
+        },
+      ],
+      declinaisons: ['IOS', 'IOS-XE'],
+      commandes: [
+        { nom: 'ping', description: 'Teste si une machine répond.' },
+        { nom: 'show ip route', description: 'Affiche la table de routage.' },
+      ],
+      losses: [],
+    });
+    expect(tool.content[1].text).toContain(
+      '## À quoi il sert\n\nIOS se pilote',
+    );
+    expect(commands.find((command) => command.nom === 'ping')).toMatchObject({
+      syntaxe: 'ping <adresse> [repeat <nombre>]',
+      mode: 'Privilégié',
+      declinaisons: [],
+      themes: ['réseau', 'diagnostic'],
+      options: [
+        { texte: 'repeat <nombre>', declinaisons: [] },
+        { texte: 'source <interface>', declinaisons: ['IOS-XE'] },
+      ],
+      exemples: [{ ligne: 'ping 192.168.1.1' }],
+    });
+    expect(unknown.content[0].text).toBe('Cet outil n’existe pas.');
+  });
+
+  it('recherche dans toute l’application, extrait en texte seul', async () => {
+    const found = JSON.parse(
+      (await call('search', { query: 'processus' })).content[0].text,
+    ) as Record<string, { total: number; items: { excerpt: string }[] }>;
+    const empty = await call('search', { query: '' });
+
+    expect(Object.keys(found)).toEqual([
+      'courses',
+      'definitions',
+      'acronyms',
+      'files',
+      'tools',
+      'commands',
+    ]);
+    expect(found['courses'].total).toBe(1);
+    expect(found['definitions'].items[0].excerpt).toContain('processus');
+    expect(empty.isError).toBe(true);
   });
 
   it('rend un refus de l’application comme une erreur d’outil lisible', async () => {

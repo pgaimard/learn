@@ -34,5 +34,6 @@ import { ToolsService } from './tools.service.js';
     CommandImportsController,
   ],
   providers: [ToolsService, CommandsService, CommandImportService],
+  exports: [ToolsService, CommandsService],
 })
 export class ToolsModule {}
