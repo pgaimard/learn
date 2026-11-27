@@ -103,22 +103,6 @@
   left: 0;
 }
 
-/* Outils propres au tableau du curseur : à droite de la ligne, sans filet. */
-.table-context {
-  margin-left: auto;
-}
-
-.table-context::before {
-  display: none;
-}
-
-.context-label {
-  margin-right: 0.25rem;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
 /* Alignement en cours, dans son menu. */
 .menu-item.is-current {
   color: var(--color-accent);

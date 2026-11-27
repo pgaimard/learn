@@ -281,6 +281,12 @@ a.button:hover {
   background: var(--color-raised);
 }
 
+/* Outil sans objet à l'endroit du curseur. */
+.tool:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .tool[aria-pressed='true'] {
   background: var(--color-accent-soft);
   color: var(--color-accent);

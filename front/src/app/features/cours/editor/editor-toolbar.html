@@ -92,6 +92,30 @@
       </button>
     }
   </app-menu-button>
+  <!-- Dans une cellule de tableau : où placer son contenu en hauteur. -->
+  <app-menu-button
+    label="Alignement vertical de la cellule"
+    buttonClass="tool tool-outlined"
+    [disabled]="!isInTable()"
+  >
+    <span menuTrigger class="callout-trigger">
+      <app-icon [name]="verticalAlignmentIcon()" [size]="15" />
+      <app-icon name="chevron-down" [size]="15" />
+    </span>
+    @for (option of verticalAlignments; track option.value) {
+      <button
+        type="button"
+        role="menuitem"
+        class="menu-item"
+        [class.is-current]="verticalAlignment() === option.value"
+        [attr.aria-current]="verticalAlignment() === option.value ? 'true' : null"
+        (click)="alignVertically(option.value)"
+      >
+        <app-icon [name]="option.icon" [size]="15" />
+        {{ option.label }}
+      </button>
+    }
+  </app-menu-button>
 </div>
 
 <div class="group" role="group" aria-label="Blocs">
@@ -228,25 +252,6 @@
     <app-icon name="redo" [size]="15" />
   </button>
 </div>
-
-<!-- Dans un tableau seulement : où placer le contenu de la cellule en hauteur. -->
-@if (isInTable()) {
-  <div class="group table-context" role="group" aria-label="Cellule du tableau">
-    <span class="context-label" aria-hidden="true">Tableau</span>
-    @for (option of verticalAlignments; track option.value) {
-      <button
-        type="button"
-        class="tool"
-        [title]="option.label"
-        [attr.aria-label]="option.label"
-        [attr.aria-pressed]="verticalAlignment() === option.value"
-        (click)="alignVertically(option.value)"
-      >
-        <app-icon [name]="option.icon" [size]="15" />
-      </button>
-    }
-  </div>
-}
 
 @if (isActive('figure')) {
   <div class="group context" role="group" aria-label="Image">

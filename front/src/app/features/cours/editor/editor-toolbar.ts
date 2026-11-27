@@ -69,9 +69,9 @@ export class EditorToolbar {
   ];
 
   protected readonly verticalAlignments: AlignmentOption<VerticalAlignment>[] = [
-    { value: 'top', label: 'Aligner en haut', icon: 'valign-top' },
-    { value: 'middle', label: 'Centrer verticalement', icon: 'valign-middle' },
-    { value: 'bottom', label: 'Aligner en bas', icon: 'valign-bottom' },
+    { value: 'top', label: 'En haut', icon: 'valign-top' },
+    { value: 'middle', label: 'Au milieu', icon: 'valign-middle' },
+    { value: 'bottom', label: 'En bas', icon: 'valign-bottom' },
   ];
 
   // Choix de la taille du tableau à insérer, ouvert sous son bouton.
@@ -151,6 +151,11 @@ export class EditorToolbar {
   // Alignement vertical de la cellule du curseur ; en haut tant qu'aucun autre n'est choisi.
   protected verticalAlignment(): VerticalAlignment {
     return VERTICAL_ALIGNMENTS.find((value) => this.isActive({ verticalAlign: value })) ?? 'top';
+  }
+
+  protected verticalAlignmentIcon(): IconName {
+    const current = this.isInTable() ? this.verticalAlignment() : 'top';
+    return this.verticalAlignments.find((option) => option.value === current)?.icon ?? 'valign-top';
   }
 
   // L'alignement en haut est celui par défaut : il ne s'enregistre pas.
