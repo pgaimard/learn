@@ -1,5 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { IconName } from '../../../../core/ui/icon';
+import { insertExercise } from '../../exercise/exercise';
 import { insertQuiz } from '../../quiz/quiz-commands';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../../content/callout';
 
@@ -134,6 +135,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     icon: 'quiz',
     keywords: ['quiz', 'question', 'exercice', 'choix'],
     apply: (chain) => chain.command(({ tr }) => insertQuiz(tr)),
+  },
+  {
+    label: 'Exercice',
+    group: 'Blocs',
+    icon: 'pencil',
+    keywords: ['enonce', 'corrige', 'probleme', 'question'],
+    apply: (chain) => chain.command(({ tr }) => insertExercise(tr)),
   },
 ];
 

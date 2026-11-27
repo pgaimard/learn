@@ -224,6 +224,74 @@ describe('validateContent', () => {
     ]);
   });
 
+  describe('exercice', () => {
+    const statement: ContentNode = {
+      type: 'exerciseStatement',
+      content: [paragraph('Calculez.')],
+    };
+    const solution: ContentNode = {
+      type: 'exerciseSolution',
+      content: [paragraph('42.')],
+    };
+    const exercise = (
+      children: ContentNode[],
+      key: unknown = 'exercice-1',
+    ): ContentNode => ({
+      type: 'exercise',
+      attrs: { title: 'Exercice 1', key },
+      content: children,
+    });
+
+    it('accepte un énoncé suivi d’un corrigé', () => {
+      expect(validateContent(doc(exercise([statement, solution])))).toEqual([]);
+    });
+
+    it('refuse un exercice sans corrigé, ou dont l’ordre est inversé', () => {
+      expect(validateContent(doc(exercise([statement])))).toEqual([
+        'Le bloc « exercise » ne peut pas être vide.',
+      ]);
+      expect(validateContent(doc(exercise([solution, statement])))).toEqual([
+        'Le bloc « exerciseSolution » n’est pas autorisé dans « exercise ».',
+        'Le bloc « exerciseStatement » n’est pas autorisé dans « exercise ».',
+      ]);
+    });
+
+    it('refuse une clé mal formée, et un titre dans l’énoncé', () => {
+      expect(
+        validateContent(doc(exercise([statement, solution], 'Exercice 1'))),
+      ).toEqual(['Valeur non autorisée pour « key » sur « exercise ».']);
+      const heading: ContentNode = {
+        type: 'heading',
+        attrs: { level: 3 },
+        content: [{ type: 'text', text: 'Question 1' }],
+      };
+      expect(
+        validateContent(
+          doc(
+            exercise([
+              { type: 'exerciseStatement', content: [heading] },
+              solution,
+            ]),
+          ),
+        ),
+      ).toEqual([
+        'Le bloc « heading » n’est pas autorisé dans « exerciseStatement ».',
+      ]);
+    });
+
+    it('n’accepte l’exercice qu’au premier niveau du document', () => {
+      const callout: ContentNode = {
+        type: 'callout',
+        attrs: { kind: 'retenir' },
+        content: [exercise([statement, solution])],
+      };
+
+      expect(validateContent(doc(callout))).toEqual([
+        'Le bloc « exercise » n’est pas autorisé dans « callout ».',
+      ]);
+    });
+  });
+
   describe('QCM', () => {
     const choice = (correct: boolean, text = 'oui'): ContentNode => ({
       type: 'quizChoice',

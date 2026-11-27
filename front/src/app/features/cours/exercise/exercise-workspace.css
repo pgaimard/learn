@@ -1,0 +1,220 @@
+:host {
+  display: contents;
+}
+
+/* La fenêtre occupe presque tout l'écran : deux volets côte à côte, qui défilent chacun. */
+.workspace {
+  /* La barre de l'éditeur colle en haut de son volet, pas sous l'en-tête de l'application. */
+  --sticky-top: 0px;
+
+  flex-direction: column;
+  width: min(96vw, 100rem);
+  max-width: none;
+  height: 94vh;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-background);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.workspace[open] {
+  display: flex;
+}
+
+.workspace::backdrop {
+  background: var(--color-backdrop);
+}
+
+.workspace-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.kind {
+  color: var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panes {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pane + .pane {
+  border-left: 1px solid var(--color-border);
+}
+
+.pane-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.pane-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.pane-body {
+  flex: 1;
+  min-height: 0;
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+}
+
+/* L'éditeur apporte sa barre et sa feuille : le volet ne garde qu'une marge fine. */
+.pane-editor {
+  padding: 0.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--color-raised);
+}
+
+.tabs button {
+  height: 1.625rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.tabs button[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.tabs button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Écran étroit : l'énoncé au-dessus, la réponse en dessous. */
+@media (max-width: 56rem) {
+  .panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
+  }
+
+  .pane + .pane {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+}
+
+/* Historique des tentatives, sous son bouton. */
+.history {
+  position: relative;
+}
+
+.history-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 3;
+  width: 15rem;
+  max-height: 18rem;
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+  list-style: none;
+}
+
+.history-list button {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.3125rem 0.5rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.history-list button:hover,
+.history-list button:focus-visible {
+  background: var(--color-border-soft);
+}
+
+.history-score {
+  color: var(--color-text-muted);
+}
+
+/* Note que l'on se donne après avoir lu le corrigé. */
+.grade {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
+  font-size: 0.8125rem;
+}
+
+.grade input {
+  width: 4rem;
+  height: 1.75rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.draft-state {
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+  white-space: nowrap;
+}
+
+.pane-message {
+  margin: 0.5rem 0.75rem 0;
+}

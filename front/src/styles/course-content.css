@@ -1054,6 +1054,15 @@
   font-weight: 600;
 }
 
+.course-content .quiz-saved {
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+}
+
+.course-content .quiz-history {
+  margin-left: auto;
+}
+
 /* Lecture : ni outils d'édition, ni explication avant d'avoir validé. */
 .course-content:not(.is-editable) .quiz-title-field,
 .course-content:not(.is-editable) .quiz-action,
@@ -1105,6 +1114,8 @@
 .course-content.is-editable .quiz-check,
 .course-content.is-editable .quiz-retry,
 .course-content.is-editable .quiz-score,
+.course-content.is-editable .quiz-history,
+.course-content.is-editable .quiz-saved,
 .course-content.is-editable .quiz-verdict {
   display: none;
 }
@@ -1125,4 +1136,100 @@
   font-size: 0.75rem;
   font-weight: 600;
   content: 'Énoncé';
+}
+
+/* Exercice. En édition, son énoncé puis son corrigé ; en lecture, l'énoncé seul et le
+   bouton qui ouvre la fenêtre où l'on répond. */
+.course-content .exercise {
+  margin: 1.25rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-raised);
+}
+
+.course-content .exercise-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 0.8125rem;
+}
+
+.course-content .exercise-label {
+  flex: none;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.course-content .exercise-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.course-content .exercise-title-field {
+  flex: 1;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.course-content .exercise-body {
+  padding: 0.75rem;
+}
+
+.course-content .exercise-statement > :first-child,
+.course-content .exercise-solution > :first-child {
+  margin-top: 0;
+}
+
+.course-content .exercise-statement > :last-child,
+.course-content .exercise-solution > :last-child {
+  margin-bottom: 0;
+}
+
+.course-content .exercise-footer {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+/* Lecture : ni champ de titre, ni corrigé dans la page. */
+.course-content:not(.is-editable) .exercise-title-field,
+.course-content:not(.is-editable) .exercise-solution {
+  display: none;
+}
+
+/* Édition : le titre se saisit dans son champ, et rien ne s'ouvre. */
+.course-content.is-editable .exercise-title,
+.course-content.is-editable .exercise-footer {
+  display: none;
+}
+
+.course-content.is-editable .exercise-statement::before,
+.course-content.is-editable .exercise-solution::before {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.course-content.is-editable .exercise-statement::before {
+  content: 'Énoncé';
+}
+
+.course-content.is-editable .exercise-solution::before {
+  content: 'Corrigé — caché en lecture tant qu’on n’a pas répondu';
+}
+
+.course-content.is-editable .exercise-solution {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--color-border);
 }

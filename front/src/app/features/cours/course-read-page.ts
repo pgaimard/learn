@@ -2,14 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   input,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Observable } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/dialog/dialog.service';
@@ -27,12 +30,22 @@ import {
   sectionAt,
 } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
-import { CourseContent } from './content/course-content';
+import { OpenedExercise } from './exercise/exercise';
+import {
+  AttemptSummary,
+  ExerciseAttemptsService,
+  isQuizAnswers,
+} from './exercise/exercise-attempts.service';
+import { ExerciseWorkspace } from './exercise/exercise-workspace';
+import { ContentNode } from './content/content-node';
+import { ChangedQuiz, CheckedQuiz, CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
 import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
 
 const SHOWN_TERMS = 6;
+// Délai après le dernier clic avant d'enregistrer les réponses en cours d'un QCM.
+const QUIZ_DRAFT_DELAY_MS = 600;
 // Hauteur, dans la fenêtre, sous laquelle un titre ouvre la section en cours de lecture.
 const READING_LINE_PX = 160;
 // Place à garder à droite du menu du clic droit pour qu'il ne sorte pas de la fenêtre.
@@ -40,7 +53,16 @@ const MENU_WIDTH_PX = 200;
 
 @Component({
   selector: 'app-course-read-page',
-  imports: [CommandSheet, CourseContent, CourseOutline, DatePipe, Icon, Modal, RouterLink],
+  imports: [
+    CommandSheet,
+    CourseContent,
+    CourseOutline,
+    DatePipe,
+    ExerciseWorkspace,
+    Icon,
+    Modal,
+    RouterLink,
+  ],
   host: {
     '(window:scroll)': 'followReading()',
     // L'utilisateur reprend la main sur le défilement.
@@ -66,6 +88,7 @@ export class CourseReadPage {
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly attemptsService = inject(ExerciseAttemptsService);
   private readonly courseRemoval = inject(CourseRemoval);
   private readonly termService = inject(TermService);
   private readonly commandService = inject(CommandService);
@@ -173,6 +196,14 @@ export class CourseReadPage {
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
   // Tous les termes de l'UE : ceux que le texte cite y deviennent cliquables.
   protected readonly allTerms = signal<TermSummary[]>([]);
+  // Cases cochées des QCM commencés puis quittés, par clé.
+  protected readonly quizDrafts = signal<Record<string, boolean[][]>>({});
+  // Enregistrements des réponses en cours en attente, par clé de QCM.
+  private readonly quizTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  // Historique d'un QCM, affiché dans une fenêtre ; null quand elle est fermée.
+  protected readonly quizHistory = signal<AttemptSummary[] | null>(null);
+  // Exercice ouvert dans sa fenêtre de travail.
+  protected readonly exercise = signal<OpenedExercise | null>(null);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownTerm = signal<Term | null>(null);
   // Commandes étiquetées avec ce cours, rangées sous leur outil.
@@ -181,6 +212,15 @@ export class CourseReadPage {
   protected readonly shownCommand = signal<{ command: Command; tool: CommandTool } | null>(null);
   constructor() {
     effect(() => this.load(Number(this.id())));
+    // Les QCM du document affiché (le cours, ou sa fiche) retrouvent leurs réponses en cours.
+    effect(() => {
+      const course = this.course();
+      const content = this.shownContent();
+      if (course) {
+        untracked(() => this.loadQuizDrafts(course.id, content));
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.quizTimers.forEach((timer) => clearTimeout(timer)));
     // Le menu ouvert reçoit le curseur : il se parcourt et se valide au clavier.
     effect(() => this.menuItem()?.nativeElement.focus());
   }
@@ -266,6 +306,64 @@ export class CourseReadPage {
   }
 
   // Ouvre la définition complète d'un terme cité dans le texte.
+  // Garde les cases cochées d'un QCM en cours, peu après le dernier clic : on le reprendra
+  // plus tard. Un QCM sans case cochée n'a plus de réponses à garder.
+  protected keepQuiz(courseId: number, quiz: ChangedQuiz): void {
+    clearTimeout(this.quizTimers.get(quiz.key));
+    this.contentView()?.setQuizStatus(quiz.key, '');
+    this.quizTimers.set(
+      quiz.key,
+      setTimeout(() => {
+        this.quizTimers.delete(quiz.key);
+        const hasAnswer = quiz.checked.some((question) => question.includes(true));
+        const saving: Observable<unknown> = hasAnswer
+          ? this.attemptsService.saveQuizDraft(courseId, quiz.key, quiz.checked)
+          : this.attemptsService.removeDraft(courseId, quiz.key);
+        saving.subscribe({
+          next: () =>
+            this.contentView()?.setQuizStatus(quiz.key, hasAnswer ? 'Réponses enregistrées' : ''),
+          error: () => this.contentView()?.setQuizStatus(quiz.key, 'Réponses non enregistrées'),
+        });
+      }, QUIZ_DRAFT_DELAY_MS),
+    );
+  }
+
+  // Garde le score du QCM qui vient d'être validé ; ses réponses en cours n'ont plus lieu
+  // d'être. Un échec ne gêne pas la lecture.
+  protected recordQuiz(courseId: number, quiz: CheckedQuiz): void {
+    clearTimeout(this.quizTimers.get(quiz.key));
+    this.quizTimers.delete(quiz.key);
+    this.contentView()?.setQuizStatus(quiz.key, '');
+    this.attemptsService
+      .submitQuiz(courseId, quiz.key, quiz.right, quiz.total)
+      .subscribe({ error: () => undefined });
+  }
+
+  // Relit les réponses en cours des QCM du document affiché.
+  private loadQuizDrafts(courseId: number, content: ContentNode | null): void {
+    this.quizDrafts.set({});
+    const count = (content?.content ?? []).filter((block) => block.type === 'quiz').length;
+    for (let rank = 1; rank <= count; rank++) {
+      const key = `qcm-${rank}`;
+      this.attemptsService.progress(courseId, key).subscribe({
+        next: ({ draft }) => {
+          const answer = draft?.answer ?? null;
+          if (isQuizAnswers(answer)) {
+            this.quizDrafts.update((drafts) => ({ ...drafts, [key]: answer.checked }));
+          }
+        },
+        error: () => undefined,
+      });
+    }
+  }
+
+  protected showQuizHistory(courseId: number, key: string): void {
+    this.attemptsService.progress(courseId, key).subscribe({
+      next: (progress) => this.quizHistory.set(progress.attempts),
+      error: () => this.quizHistory.set([]),
+    });
+  }
+
   protected openTerm(id: number): void {
     this.termService.get(id).subscribe({
       next: (term) => this.shownTerm.set(term),

@@ -91,6 +91,14 @@ export const QUIZ_EXPLANATION = [
   'callout',
 ];
 
+// Un exercice ne se place lui aussi qu'au premier niveau du document. Son énoncé et son
+// corrigé acceptent tout bloc du cours sauf un titre, qui entrerait dans le sommaire.
+export const EXERCISE_BLOCKS = QUIZ_EXPLANATION;
+const EXERCISE_KEY = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+export const isExerciseKey: AttributeCheck = (value) =>
+  typeof value === 'string' && EXERCISE_KEY.test(value);
+
 const cellAttrs: Record<string, AttributeCheck> = {
   colspan: isIntegerBetween(1, 50),
   rowspan: isIntegerBetween(1, 500),
@@ -108,7 +116,10 @@ const pinned: Record<string, AttributeCheck> = {
 };
 
 export const NODE_RULES: Record<string, NodeRule> = {
-  doc: { children: [...BLOCK_TYPES, 'slideshow', 'quiz'], minChildren: 1 },
+  doc: {
+    children: [...BLOCK_TYPES, 'slideshow', 'quiz', 'exercise'],
+    minChildren: 1,
+  },
   paragraph: { children: 'inline', attrs: { ...pinned, ...textAlign } },
   heading: {
     children: 'inline',
@@ -210,6 +221,21 @@ export const NODE_RULES: Record<string, NodeRule> = {
     attrs: { correct: (value) => typeof value === 'boolean' },
   },
   quizExplanation: { children: QUIZ_EXPLANATION, minChildren: 1 },
+  // Exercice : un énoncé et son corrigé, caché en lecture tant qu'on n'a pas répondu. Sa
+  // clé le désigne dans le cours ; elle rattachera ses réponses enregistrées.
+  exercise: {
+    children: [],
+    firstChild: 'exerciseStatement',
+    lastChild: 'exerciseSolution',
+    minChildren: 2,
+    maxChildren: 2,
+    attrs: {
+      title: (value) => typeof value === 'string' && value.length <= 200,
+      key: isExerciseKey,
+    },
+  },
+  exerciseStatement: { children: EXERCISE_BLOCKS, minChildren: 1 },
+  exerciseSolution: { children: EXERCISE_BLOCKS, minChildren: 1 },
   hardBreak: { children: 'none' },
 };
 

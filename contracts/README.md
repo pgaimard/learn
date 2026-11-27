@@ -166,6 +166,60 @@ avec la question.
 - un QCM se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste ou un
   tableau.
 
+### Exercice
+
+Un exercice se fait dans une fenêtre : l'énoncé à gauche, la réponse à droite. Dans le cours, on
+ne voit que son énoncé ; son corrigé reste caché tant que la réponse n'est pas validée, puis
+s'affiche à côté d'elle.
+
+À utiliser pour chaque exercice du support d'origine qui n'est pas un QCM, à sa place dans la
+section « Exercices ». Le corrigé n'est plus dans une section « Corrigés » à part : il s'écrit avec
+son exercice.
+
+```markdown
+> [!exercice] Exercice 1 : ordonnancement
+>
+> On considère trois processus, soumis dans l'ordre P1, P2, P3.
+>
+> | Processus | Temps d'exécution |
+> |-----------|-------------------|
+> | P1        | 3                 |
+> | P2        | 2                 |
+> | P3        | 1                 |
+>
+> **Question 1.** Dessinez l'ordonnancement FIFO.
+>
+> **Question 2.** Donnez le temps de réponse moyen.
+>
+> > [!corrige]
+> > **La méthode.** Dresser la file des processus prêts, puis dessiner le diagramme de Gantt.
+> >
+> > | Processus | 0   | 1   | 2   | 3   | 4   | 5   |
+> > |-----------|-----|-----|-----|-----|-----|-----|
+> > | P1        | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+> > | P2        | [ ] | [ ] | [ ] | [x] | [x] | [ ] |
+> > | P3        | [ ] | [ ] | [ ] | [ ] | [ ] | [x] |
+> >
+> > Temps de réponse : 3, 5 et 6, soit une moyenne de **4,67**.
+```
+
+- l'exercice s'écrit comme un encadré, avec le marqueur `[!exercice]`, suivi sur la même ligne de
+  son titre (200 caractères au plus). Donner à chaque exercice du chapitre un titre différent,
+  et le garder d'un paquet à l'autre : c'est par lui que l'application retrouvera plus tard les
+  réponses déjà données, après un réimport ;
+- une ligne `>` vide sépare le marqueur de l'énoncé, puis chaque bloc du suivant ;
+- l'énoncé reprend celui du support, mot pour mot : paragraphes, listes, tableaux, grilles à
+  cocher, blocs de code, images, citations, encadrés. Ses questions s'écrivent en gras en tête de
+  paragraphe (`**Question 1.**`), pas en titres : un titre est refusé dans un exercice ;
+- le corrigé est un encadré `[!corrige]` imbriqué (`> >`), placé en dernier dans l'exercice. Il
+  accepte les mêmes blocs que l'énoncé, et garde la longueur d'un corrigé rédigé : la méthode, le
+  raisonnement pas à pas, le résultat. Un chronogramme s'y écrit en grille à cocher ;
+- un seul corrigé par exercice, et rien après lui. Un exercice sans `[!corrige]` est accepté :
+  son corrigé reste à rédiger dans l'application ;
+- un `[!corrige]` hors d'un exercice fait refuser le paquet ;
+- un exercice se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste
+  ou un tableau, ni dans un QCM ou un autre exercice.
+
 ### Grille à cocher
 
 Une grille à cocher est un tableau dont la première ligne et la première colonne nomment les

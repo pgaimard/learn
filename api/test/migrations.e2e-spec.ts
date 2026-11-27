@@ -55,6 +55,7 @@ describe('Migrations', () => {
       'course_images',
       'courses',
       'events',
+      'exercise_attempts',
       'files',
       'folders',
       'migrations',

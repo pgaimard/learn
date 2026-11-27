@@ -1,7 +1,7 @@
 import { Editor, mergeAttributes, Node } from '@tiptap/core';
 import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { EditorState, Transaction } from '@tiptap/pm/state';
-import { gradeQuiz, resetQuiz, scoreLabel } from './quiz-answers';
+import { gradeQuiz, readChecked, resetQuiz, scoreLabel } from './quiz-answers';
 import {
   addChoice,
   addChoiceAfterSelection,
@@ -11,6 +11,13 @@ import {
   removeEmptyChoiceAtSelection,
   removeQuestion,
 } from './quiz-commands';
+
+// Événements émis par un QCM en lecture : il vient d'être validé (avec son score), ou son
+// historique est demandé.
+export const QUIZ_CHECKED = 'quizchecked';
+// … ou une de ses cases vient de changer : la page garde les réponses en cours.
+export const QUIZ_CHANGED = 'quizchanged';
+export const QUIZ_HISTORY = 'quizhistory';
 
 type Change = (state: EditorState, pos: number) => Transaction | null;
 
@@ -126,12 +133,37 @@ export const Quiz = Node.create({
       const score = element('span', 'quiz-score');
       score.setAttribute('role', 'status');
       const retry = button('button quiz-retry', 'Recommencer');
-      check.addEventListener('click', () => (score.textContent = scoreLabel(gradeQuiz(dom))));
+      // La page est prévenue du score : c'est elle qui l'enregistre dans l'historique.
+      check.addEventListener('click', () => {
+        const result = gradeQuiz(dom);
+        score.textContent = scoreLabel(result);
+        dom.dispatchEvent(new CustomEvent(QUIZ_CHECKED, { bubbles: true, detail: result }));
+      });
+      const history = button('button button-ghost quiz-history', 'Historique');
+      history.addEventListener('click', () =>
+        dom.dispatchEvent(new CustomEvent(QUIZ_HISTORY, { bubbles: true })),
+      );
+      const announceChange = (): void => {
+        dom.dispatchEvent(
+          new CustomEvent(QUIZ_CHANGED, { bubbles: true, detail: readChecked(dom) }),
+        );
+      };
       retry.addEventListener('click', () => {
         resetQuiz(dom);
         score.textContent = '';
+        announceChange();
       });
-      footer.append(add, check, score, retry);
+      // Lecture : chaque case cochée ou décochée est signalée, pour reprendre le QCM plus tard.
+      dom.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!editor.isEditable && target instanceof Element && target.matches('.quiz-choice-box')) {
+          announceChange();
+        }
+      });
+      // Dit que les réponses en cours sont gardées ; la page le renseigne.
+      const saved = element('span', 'quiz-saved');
+      saved.setAttribute('role', 'status');
+      footer.append(add, check, score, retry, saved, history);
       dom.append(header, contentDOM, footer);
 
       const show = (shown: ProseMirrorNode): void => {
