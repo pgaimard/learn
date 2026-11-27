@@ -60,6 +60,10 @@
           (sectionReferenced)="followReference($event)"
           (termOpened)="openTerm($event)"
           (exerciseOpened)="exercise.set($event)"
+          [quizDrafts]="quizDrafts()"
+          (quizChanged)="keepQuiz(course.id, $event)"
+          (quizChecked)="recordQuiz(course.id, $event)"
+          (quizHistoryRequested)="showQuizHistory(course.id, $event)"
         />
       } @else {
         <p class="empty sheet-empty">
@@ -229,8 +233,26 @@
     </div>
   }
 
+  @if (quizHistory(); as history) {
+    <app-modal heading="Historique du QCM" (closed)="quizHistory.set(null)">
+      @if (history.length === 0) {
+        <p class="empty">Ce QCM n’a pas encore été validé.</p>
+      } @else {
+        <ul class="quiz-history">
+          @for (attempt of history; track attempt.id) {
+            <li>
+              <span>{{ attempt.submittedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              <span class="quiz-history-score">{{ attempt.score }} / {{ attempt.maxScore }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </app-modal>
+  }
+
   @if (exercise(); as opened) {
     <app-exercise-workspace
+      [courseId]="course.id"
       [exercise]="opened"
       [terms]="allTerms()"
       (termOpened)="openTerm($event)"

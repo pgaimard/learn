@@ -1054,6 +1054,15 @@
   font-weight: 600;
 }
 
+.course-content .quiz-saved {
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+}
+
+.course-content .quiz-history {
+  margin-left: auto;
+}
+
 /* Lecture : ni outils d'édition, ni explication avant d'avoir validé. */
 .course-content:not(.is-editable) .quiz-title-field,
 .course-content:not(.is-editable) .quiz-action,
@@ -1105,6 +1114,8 @@
 .course-content.is-editable .quiz-check,
 .course-content.is-editable .quiz-retry,
 .course-content.is-editable .quiz-score,
+.course-content.is-editable .quiz-history,
+.course-content.is-editable .quiz-saved,
 .course-content.is-editable .quiz-verdict {
   display: none;
 }

@@ -295,3 +295,26 @@
     display: block;
   }
 }
+
+/* Historique d'un QCM : une ligne par validation, la plus récente en premier. */
+.quiz-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.375rem 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.quiz-history li:first-child {
+  border-top: 0;
+}
+
+.quiz-history-score {
+  font-weight: 600;
+}

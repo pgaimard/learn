@@ -1,6 +1,7 @@
 import { Editor } from '@tiptap/core';
 import { ContentNode } from '../content/content-node';
 import { createCourseExtensions } from '../content/course-extensions';
+import { applyChecked, readChecked } from './quiz-answers';
 
 function choice(label: string, correct: boolean): ContentNode {
   return { type: 'quizChoice', attrs: { correct }, content: [{ type: 'text', text: label }] };
@@ -112,6 +113,68 @@ describe('QCM', () => {
     expect(boxes().some((box) => box.checked || box.disabled)).toBe(false);
     expect(host.querySelector('.is-checked, .is-right, .is-wrong, .is-expected')).toBeNull();
     expect(host.querySelector('.quiz-score')?.textContent).toBe('');
+  });
+
+  it('prévient la page du score à la validation, et de la demande d’historique', () => {
+    setup(false);
+    const events: { type: string; detail: unknown }[] = [];
+    for (const type of ['quizchecked', 'quizhistory']) {
+      host.addEventListener(type, (event) =>
+        events.push({ type, detail: (event as CustomEvent<unknown>).detail }),
+      );
+    }
+    boxes()[0].click();
+
+    click('.quiz-check');
+    click('.quiz-history');
+
+    expect(events).toEqual([
+      { type: 'quizchecked', detail: { right: 1, total: 2 } },
+      { type: 'quizhistory', detail: null },
+    ]);
+  });
+
+  it('signale chaque case cochée, pour garder les réponses en cours', () => {
+    setup(false);
+    const changes: boolean[][][] = [];
+    host.addEventListener('quizchanged', (event) =>
+      changes.push((event as CustomEvent<boolean[][]>).detail),
+    );
+
+    boxes()[0].click();
+    boxes()[3].click();
+
+    expect(changes.at(-1)).toEqual([
+      [true, false],
+      [false, true, false],
+    ]);
+
+    click('.quiz-check');
+    click('.quiz-retry');
+    // « Recommencer » vide les réponses en cours.
+    expect(changes.at(-1)).toEqual([
+      [false, false],
+      [false, false, false],
+    ]);
+  });
+
+  it('recoche les cases d’un QCM repris, sans toucher à un QCM déjà validé', () => {
+    setup(false);
+    const quiz = host.querySelector<HTMLElement>('.quiz');
+    if (!quiz) {
+      throw new Error('QCM absent');
+    }
+
+    // Une question de plus que dans le QCM : elle est ignorée.
+    applyChecked(quiz, [[false, true], [true], [true]]);
+    expect(readChecked(quiz)).toEqual([
+      [false, true],
+      [true, false, false],
+    ]);
+
+    click('.quiz-check');
+    applyChecked(quiz, [[true, false], []]);
+    expect(readChecked(quiz)[0]).toEqual([false, true]);
   });
 
   it('signale un choix coché à tort', () => {

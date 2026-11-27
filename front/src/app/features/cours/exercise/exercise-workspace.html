@@ -1,4 +1,4 @@
-<!-- (cancel) : fermeture par Échap, qui passe par la même confirmation que le bouton. -->
+<!-- (cancel) : fermeture par Échap, qui enregistre le brouillon comme le bouton. -->
 <dialog
   #dialog
   class="workspace"
@@ -8,6 +8,36 @@
   <header class="workspace-header">
     <span class="kind">Exercice</span>
     <h2 id="exercise-workspace-title">{{ exercise().title || 'Sans titre' }}</h2>
+    <div class="history">
+      <button
+        type="button"
+        class="button"
+        aria-haspopup="true"
+        [attr.aria-expanded]="isHistoryOpen()"
+        [disabled]="attempts().length === 0"
+        (click)="isHistoryOpen.set(!isHistoryOpen())"
+      >
+        Historique ({{ attempts().length }})
+      </button>
+      @if (isHistoryOpen()) {
+        <ul class="history-list" aria-label="Tentatives précédentes">
+          @for (attempt of attempts(); track attempt.id) {
+            <li>
+              <button type="button" (click)="open(attempt)">
+                <span>{{ attempt.submittedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                <span class="history-score">
+                  @if (attempt.score === null) {
+                    non notée
+                  } @else {
+                    {{ scoreLabel(attempt.score) }} / {{ attempt.maxScore }}
+                  }
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
     <button
       type="button"
       class="button button-icon button-ghost"
@@ -32,8 +62,8 @@
           <button
             type="button"
             [attr.aria-pressed]="side() === 'solution'"
-            [disabled]="!isChecked()"
-            [title]="isChecked() ? '' : 'Le corrigé s’affiche une fois la réponse validée'"
+            [disabled]="shownAttempt() === null"
+            [title]="shownAttempt() ? '' : 'Le corrigé s’affiche une fois la réponse validée'"
             (click)="side.set('solution')"
           >
             Corrigé
@@ -53,15 +83,38 @@
     </section>
 
     <section class="pane" aria-label="Ma réponse">
-      @if (isChecked()) {
+      @if (shownAttempt(); as attempt) {
         <div class="pane-header">
-          <span class="pane-title">Ma réponse</span>
-          <button type="button" class="button" (click)="retry()">Reprendre ma réponse</button>
+          <span class="pane-title">
+            Ma réponse du {{ attempt.submittedAt | date: 'dd/MM/yyyy à HH:mm' }}
+          </span>
+          <form class="grade" (submit)="$event.preventDefault(); grade(score.value)">
+            <label for="exercise-score">Ma note</label>
+            <input
+              #score
+              id="exercise-score"
+              type="number"
+              min="0"
+              [max]="maxScore"
+              step="0.5"
+              [value]="attempt.score ?? ''"
+            />
+            <span aria-hidden="true">/ {{ maxScore }}</span>
+            <button type="submit" class="button">Noter</button>
+          </form>
+          <button type="button" class="button" (click)="retry()">Refaire l’exercice</button>
         </div>
+        @if (message()) {
+          <p class="form-error pane-message" role="alert">{{ message() }}</p>
+        }
         <div class="pane-body">
-          <app-course-content [content]="answer()" label="Ma réponse" />
+          @if (shownAnswer(); as given) {
+            @for (content of [given]; track content) {
+              <app-course-content [content]="content" label="Ma réponse" />
+            }
+          }
         </div>
-      } @else {
+      } @else if (isReady()) {
         <div class="pane-body pane-editor">
           <app-content-editor
             [content]="answer()"
@@ -70,14 +123,17 @@
             (imageAdded)="refuseImage()"
           >
             <span editorDocument class="document-title">Ma réponse</span>
-            <button editorActions type="button" class="button button-primary" (click)="check()">
-              Valider
-            </button>
+            <ng-container editorActions>
+              <span class="draft-state" aria-live="polite">{{ draftLabel() }}</span>
+              <button type="button" class="button button-primary" (click)="check()">Valider</button>
+            </ng-container>
             @if (message()) {
               <p class="form-error" role="alert">{{ message() }}</p>
             }
           </app-content-editor>
         </div>
+      } @else {
+        <p class="pane-body">Chargement…</p>
       }
     </section>
   </div>
