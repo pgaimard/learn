@@ -16,14 +16,19 @@ import {
   CourseFoldersService,
 } from '../files/folders/course-folders.service.js';
 import { UeService } from '../ue/ue.service.js';
-import { collectFigures } from './content/collect-figures.js';
+import { collectFigures, FigureReference } from './content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from './content/content-node.js';
 import { extractPlainText } from './content/extract-plain-text.js';
 import { ContentRules, validateContent } from './content/validate-content.js';
 import { Course } from './course.entity.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
 import { UpdateCourseDto } from './dto/update-course.dto.js';
+import { CourseImage } from './images/course-image.entity.js';
 import { CourseImagesService } from './images/course-images.service.js';
+import {
+  CourseSnapshotsService,
+  documentsOf,
+} from './snapshots/course-snapshots.service.js';
 
 const UNIQUE_VIOLATION = '23505';
 // Durée pendant laquelle un cours reste « en édition » sans nouvelles de l'éditeur.
@@ -43,6 +48,7 @@ export class CoursesService {
     private readonly ueService: UeService,
     private readonly imagesService: CourseImagesService,
     private readonly courseFolders: CourseFoldersService,
+    private readonly snapshots: CourseSnapshotsService,
   ) {}
 
   async findAllByUe(ueCode: string): Promise<CourseSummary[]> {
@@ -127,20 +133,50 @@ export class CoursesService {
           ? null
           : checkContent(changes.exercisesContent, { exercises: true });
     }
-    // Les images du cours servent à son texte, à sa fiche de révision et à ses exercices.
-    const figures = [
-      ...collectFigures(course.content),
-      ...(course.sheetContent ? collectFigures(course.sheetContent) : []),
-      ...(course.exercisesContent
-        ? collectFigures(course.exercisesContent)
-        : []),
-    ];
-    await this.imagesService.assertFiguresExist(id, figures);
+    const figures = await this.checkFigures(course);
     // Le cours et ses images changent ensemble ou pas du tout.
     const unused = await this.dataSource.transaction(async (manager) => {
       await this.claimRevision(manager, course, changes.revision);
       await this.saveWithFolder(manager, course);
-      return this.imagesService.reconcile(manager, id, figures);
+      return this.reconcileImages(manager, id, figures);
+    });
+    await this.imagesService.removeFiles(unused);
+    return this.findById(id);
+  }
+
+  // Remet le cours dans l'état d'un de ses instantanés. L'état actuel est d'abord gardé :
+  // une restauration se défait comme toute autre écriture.
+  async restoreSnapshot(
+    id: number,
+    snapshotId: number,
+    readRevision: number,
+  ): Promise<Course> {
+    const course = await this.findById(id);
+    const snapshot = await this.snapshots.findOne(id, snapshotId);
+    // L'instantané a pu être pris sous d'anciennes règles : il repasse par la liste blanche.
+    const content = checkContent(snapshot.content);
+    const sheetContent =
+      snapshot.sheetContent && checkContent(snapshot.sheetContent);
+    const exercisesContent =
+      snapshot.exercisesContent &&
+      checkContent(snapshot.exercisesContent, { exercises: true });
+    const figures = await this.checkFigures({
+      id,
+      content,
+      sheetContent,
+      exercisesContent,
+    });
+    const unused = await this.dataSource.transaction(async (manager) => {
+      await this.assertNotEditing(manager, id);
+      await this.snapshots.take(manager, course, 'restore');
+      await this.claimRevision(manager, course, readRevision);
+      course.title = snapshot.title;
+      course.content = content;
+      course.plainText = extractPlainText(content);
+      course.sheetContent = sheetContent;
+      course.exercisesContent = exercisesContent;
+      await this.saveWithFolder(manager, course);
+      return this.reconcileImages(manager, id, figures);
     });
     await this.imagesService.removeFiles(unused);
     return this.findById(id);
@@ -255,6 +291,29 @@ export class CoursesService {
     await this.courseFolders.removeStored(storedFiles);
   }
 
+  // Images des trois documents du cours : elles servent à son texte, à sa fiche de révision
+  // et à ses exercices. Refuse une image inconnue ou d'un autre cours.
+  private async checkFigures(
+    course: Pick<
+      Course,
+      'id' | 'content' | 'sheetContent' | 'exercisesContent'
+    >,
+  ): Promise<FigureReference[]> {
+    const figures = documentsOf(course).flatMap(collectFigures);
+    await this.imagesService.assertFiguresExist(course.id, figures);
+    return figures;
+  }
+
+  // Supprime les images que ni le cours ni un de ses instantanés n'utilisent plus.
+  private async reconcileImages(
+    manager: EntityManager,
+    id: number,
+    figures: FigureReference[],
+  ): Promise<CourseImage[]> {
+    const kept = await this.snapshots.referencedImageIds(manager, id);
+    return this.imagesService.reconcile(manager, id, figures, kept);
+  }
+
   // Passe le cours à la révision suivante, à condition qu'il soit encore à celle que
   // l'appelant a lue. Le test et l'incrément ne font qu'une requête : de deux
   // enregistrements simultanés partis de la même révision, un seul passe.
@@ -263,18 +322,32 @@ export class CoursesService {
     course: Course,
     readRevision: number,
   ): Promise<void> {
-    const [rows] = await manager.query<[{ revision: number }[], number]>(
-      `UPDATE courses SET revision = revision + 1
-        WHERE id = $1 AND revision = $2
-        RETURNING revision`,
-      [course.id, readRevision],
-    );
+    // Le cours donné doit être celui que l'appelant a lu : c'est son état qui est modifié,
+    // et gardé dans un instantané.
+    const rows =
+      course.revision === readRevision
+        ? await this.bumpRevision(manager, course.id, readRevision)
+        : [];
     if (rows.length === 0) {
       throw new ConflictException(
         'Ce cours a été modifié depuis son ouverture. Rechargez la page pour repartir de sa version actuelle.',
       );
     }
     course.revision = rows[0].revision;
+  }
+
+  private async bumpRevision(
+    manager: EntityManager,
+    id: number,
+    readRevision: number,
+  ): Promise<{ revision: number }[]> {
+    const [rows] = await manager.query<[{ revision: number }[], number]>(
+      `UPDATE courses SET revision = revision + 1
+        WHERE id = $1 AND revision = $2
+        RETURNING revision`,
+      [id, readRevision],
+    );
+    return rows;
   }
 
   private async nextPosition(ueId: number): Promise<number> {
