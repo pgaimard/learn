@@ -113,6 +113,59 @@ indépendantes, ni pour remplacer un texte : les figures ordinaires suffisent.
 - un diaporama se place au premier niveau du cours ou de la fiche : pas dans un encadré, une
   liste ou un tableau.
 
+### QCM
+
+Un QCM se fait dans le cours : chaque question montre ses choix, à cocher. Un clic sur « Valider »
+corrige toutes les questions, dit lesquelles sont justes et affiche l'explication de chacune.
+
+À utiliser pour tout QCM du support d'origine, à sa place dans la section « Exercices ». Le corrigé
+n'est plus un tableau à part dans « Corrigés » : la bonne réponse et sa justification s'écrivent
+avec la question.
+
+```markdown
+> [!qcm] Autour des processus
+>
+> 1. Un processus est :
+>    - [x] la dynamique de l'exécution d'un programme
+>    - [ ] un programme exécutable
+>    - [ ] un logiciel
+>
+>    Un programme n'est que du code rangé sur disque ; le **processus** est ce programme en
+>    cours d'exécution, avec son état.
+>
+> 2. Une ressource critique :
+>    - [ ] est une ressource qui peut être partagée entre plusieurs processus
+>    - [x] est une ressource qui ne peut pas être partagée entre plusieurs processus
+>    - [x] est une ressource à un seul point d'accès
+>    - [x] est une ressource accédée en exclusion mutuelle
+>
+>    Les trois dernières formulations disent la même chose : un seul processus à la fois.
+```
+
+- le QCM s'écrit comme un encadré, avec le marqueur `[!qcm]`, suivi sur la même ligne de son titre
+  (facultatif, 200 caractères au plus) ;
+- une ligne `>` vide sépare le marqueur de la liste, puis chaque question de la suivante ;
+- le QCM est une liste numérotée : chaque élément est une question, 50 au plus. Rien d'autre que
+  cette liste dans le QCM ;
+- une question commence par son énoncé, mot pour mot celui du support : un ou plusieurs
+  paragraphes, des listes, un bloc de code ou une image, indentés sous le numéro ;
+- viennent ensuite ses choix : une liste à puces dont chaque élément commence par `[x]` (bonne
+  réponse) ou `[ ]` (mauvaise réponse), suivi d'une espace et du texte du choix, sur une ligne.
+  De 2 à 10 choix, dont au moins une bonne réponse ; le texte d'un choix accepte gras, italique,
+  code en ligne et liens ;
+- ce qui suit les choix, dans le même élément numéroté, est l'explication : pourquoi la ou les
+  bonnes réponses sont justes, et si utile pourquoi les autres sont fausses. Elle garde la longueur
+  et la richesse d'un corrigé rédigé : paragraphes, listes, tableaux, blocs de code, images,
+  citations et encadrés, indentés sous le numéro comme l'énoncé. Seuls un titre, un diaporama et
+  un autre QCM y sont refusés. Elle est facultative mais attendue ;
+- toutes les questions se présentent avec des cases à cocher, qu'elles aient une ou plusieurs
+  bonnes réponses : rien n'indique combien il y en a. Si le support le précise (« une seule
+  réponse », « plusieurs réponses possibles »), l'écrire dans l'énoncé. Une question est juste
+  quand les choix cochés sont exactement les bonnes réponses ;
+- ne pas écrire « Question 1 : » dans l'énoncé : l'application numérote les questions ;
+- un QCM se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste ou un
+  tableau.
+
 ### Fiche de révision
 
 `fiche.md` est la fiche de révision du chapitre : un document à part, rédigé pour réviser, et non

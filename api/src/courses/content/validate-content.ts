@@ -32,6 +32,21 @@ function allowedChildren(rule: NodeRule): readonly string[] {
   }
 }
 
+// Type imposé à l'enfant de ce rang par sa place, s'il y en a un.
+function imposedChild(
+  rule: NodeRule,
+  index: number,
+  last: number,
+): string[] | null {
+  if (rule.firstChild !== undefined && index === 0) {
+    return [rule.firstChild];
+  }
+  if (rule.lastChild !== undefined && index === last) {
+    return [rule.lastChild];
+  }
+  return null;
+}
+
 class ContentValidator {
   readonly errors = new Set<string>();
   private nodeCount = 0;
@@ -82,12 +97,11 @@ class ContentValidator {
       return;
     }
     const others = allowedChildren(rule);
+    const last = children.length - 1;
     for (const [index, child] of (children as unknown[]).entries()) {
-      // Le premier enfant imposé n'est accepté qu'à sa place ; les autres suivent la liste.
-      const allowed =
-        rule.firstChild !== undefined && index === 0
-          ? [rule.firstChild]
-          : others;
+      // Le premier et le dernier enfant imposés ne sont acceptés qu'à leur place ; les
+      // autres suivent la liste.
+      const allowed = imposedChild(rule, index, last) ?? others;
       if (this.errors.size >= MAX_ERRORS) {
         return;
       }

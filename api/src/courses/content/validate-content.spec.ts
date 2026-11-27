@@ -181,6 +181,86 @@ describe('validateContent', () => {
     ]);
   });
 
+  describe('QCM', () => {
+    const choice = (correct: boolean, text = 'oui'): ContentNode => ({
+      type: 'quizChoice',
+      attrs: { correct },
+      content: [{ type: 'text', text }],
+    });
+    const prompt: ContentNode = {
+      type: 'quizPrompt',
+      content: [paragraph('Vrai ?')],
+    };
+    const explanation: ContentNode = {
+      type: 'quizExplanation',
+      content: [{ type: 'paragraph' }],
+    };
+    const question = (...children: ContentNode[]): ContentNode => ({
+      type: 'quizQuestion',
+      content: children,
+    });
+    const quiz = (...questions: ContentNode[]): ContentNode => ({
+      type: 'quiz',
+      attrs: { title: 'Processus' },
+      content: questions,
+    });
+    const valid = question(prompt, choice(true), choice(false), explanation);
+
+    it('accepte une question faite d’un énoncé, de choix puis d’une explication', () => {
+      expect(validateContent(doc(quiz(valid)))).toEqual([]);
+    });
+
+    it('n’accepte le QCM qu’au premier niveau du document', () => {
+      const callout: ContentNode = {
+        type: 'callout',
+        attrs: { kind: 'retenir' },
+        content: [quiz(valid)],
+      };
+
+      expect(validateContent(doc(callout))).toEqual([
+        'Le bloc « quiz » n’est pas autorisé dans « callout ».',
+      ]);
+    });
+
+    it('refuse une question sans énoncé en tête ou sans explication en fin', () => {
+      expect(
+        validateContent(
+          doc(quiz(question(choice(true), prompt, choice(false), explanation))),
+        ),
+      ).toEqual([
+        'Le bloc « quizChoice » n’est pas autorisé dans « quizQuestion ».',
+        'Le bloc « quizPrompt » n’est pas autorisé dans « quizQuestion ».',
+      ]);
+      expect(
+        validateContent(
+          doc(quiz(question(prompt, choice(true), explanation, choice(false)))),
+        ),
+      ).toEqual([
+        'Le bloc « quizExplanation » n’est pas autorisé dans « quizQuestion ».',
+        'Le bloc « quizChoice » n’est pas autorisé dans « quizQuestion ».',
+      ]);
+    });
+
+    it('refuse une question de moins de deux choix, et un QCM vide', () => {
+      expect(
+        validateContent(doc(quiz(question(prompt, choice(true), explanation)))),
+      ).toEqual(['Le bloc « quizQuestion » ne peut pas être vide.']);
+      expect(validateContent(doc(quiz()))).toEqual([
+        'Le bloc « quiz » ne peut pas être vide.',
+      ]);
+    });
+
+    it('refuse un choix dont la bonne réponse n’est pas un booléen', () => {
+      const odd: ContentNode = { ...choice(true), attrs: { correct: 'oui' } };
+
+      expect(
+        validateContent(
+          doc(quiz(question(prompt, odd, choice(false), explanation))),
+        ),
+      ).toEqual(['Valeur non autorisée pour « correct » sur « quizChoice ».']);
+    });
+  });
+
   describe('diaporama', () => {
     const figure: ContentNode = {
       type: 'figure',

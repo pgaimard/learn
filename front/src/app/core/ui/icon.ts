@@ -39,6 +39,7 @@ const ICONS = {
   'arrow-left': 'M19 12H5M11 6l-6 6 6 6',
   'arrow-right': 'M5 12h14M13 6l6 6-6 6',
   slides: 'M4 5h16v11H4zM9 20h6M12 16v4M10 8.5v4l3.5-2z',
+  quiz: 'M4 5h4v4H4zM4 15h4v4H4zM11 7h9M11 17h9M5 16.8l1 1 1.6-2',
   'arrow-down': 'M12 5v14M6 13l6 6 6-6',
   pin: 'M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7',
   book: 'M6 4h12v16H7a2 2 0 0 1 0-4h11M9 8h6',

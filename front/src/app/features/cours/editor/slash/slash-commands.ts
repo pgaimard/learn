@@ -1,5 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { IconName } from '../../../../core/ui/icon';
+import { insertQuiz } from '../../quiz/quiz-commands';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../../content/callout';
 
 type Chain = ReturnType<Editor['chain']>;
@@ -125,6 +126,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   IMAGE_COMMAND,
   SLIDESHOW_COMMAND,
+  {
+    label: 'QCM',
+    group: 'Blocs',
+    icon: 'quiz',
+    keywords: ['quiz', 'question', 'exercice', 'choix'],
+    apply: (chain) => chain.command(({ tr }) => insertQuiz(tr)),
+  },
 ];
 
 function normalize(text: string): string {
