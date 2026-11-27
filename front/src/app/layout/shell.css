@@ -141,6 +141,12 @@ app-search-box {
   cursor: pointer;
 }
 
+/* Un lien du menu a la même allure qu'un bouton. */
+a.account-item {
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
 .account-item:hover:not(:disabled) {
   background: var(--color-raised);
 }

@@ -27,6 +27,8 @@ export interface Course extends CourseSummary {
   // deux null quand le cours n'en a pas.
   bookmarkTitle: string | null;
   bookmarkBlock: number | null;
+  // Augmentée par l'API à chaque enregistrement du cours.
+  revision: number;
 }
 
 export interface UploadedImage {
@@ -38,6 +40,12 @@ export interface UploadedImage {
 export interface CourseInput {
   title?: string;
   content?: ContentNode;
+}
+
+// Enregistrement d'un cours existant.
+export interface CourseChanges extends CourseInput {
+  // Révision lue avant de modifier : l'API refuse l'enregistrement si le cours a changé depuis.
+  revision: number;
   // Fiche de révision ; null la supprime.
   sheetContent?: ContentNode | null;
   // Exercices du cours ; null les supprime.
@@ -68,8 +76,20 @@ export class CourseService {
     return this.http.post<Course>(`/api/ues/${encodeURIComponent(ueCode)}/courses`, input);
   }
 
-  update(id: number, changes: CourseInput): Observable<Course> {
+  update(id: number, changes: CourseChanges): Observable<Course> {
     return this.http.patch<Course>(`/api/courses/${id}`, changes);
+  }
+
+  // Déclare le cours ouvert dans l'éditeur ; à redire tant qu'il le reste.
+  startEditing(id: number): Observable<void> {
+    return this.http.put<void>(`/api/courses/${id}/editing`, null);
+  }
+
+  // Rend le cours. La requête survit à la fermeture de l'onglet, d'où fetch et non HttpClient.
+  releaseEditing(id: number): void {
+    void fetch(`/api/courses/${id}/editing`, { method: 'DELETE', keepalive: true }).catch(
+      () => null,
+    );
   }
 
   // Enregistre l'ordre des cours d'une UE : tous leurs numéros, dans l'ordre voulu.

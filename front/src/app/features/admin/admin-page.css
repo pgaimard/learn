@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+h2 {
+  margin: 0 0 0.375rem;
+  font-size: 0.9375rem;
+}
+
+form {
+  margin-top: 0.875rem;
+}
+
+.field {
+  max-width: 18rem;
+}
+
+.started {
+  min-height: 1.25rem;
+  margin: 0.625rem 0 0;
+}

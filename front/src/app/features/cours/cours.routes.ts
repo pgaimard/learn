@@ -6,6 +6,11 @@ import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 export const coursRoutes: Routes = [
   { path: ':id', component: CourseReadPage },
+  {
+    path: ':id/versions',
+    loadComponent: () =>
+      import('./versions/course-versions-page').then((module) => module.CourseVersionsPage),
+  },
   { path: ':id/edition', component: CourseEditPage, canDeactivate: [unsavedChangesGuard] },
   {
     path: ':id/fiche/edition',

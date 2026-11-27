@@ -41,7 +41,7 @@ describe('CourseService', () => {
 
   it('lit, modifie et supprime un cours par son numéro', () => {
     service.get(7).subscribe();
-    service.update(7, { title: 'Nouveau titre' }).subscribe();
+    service.update(7, { revision: 4, title: 'Nouveau titre' }).subscribe();
     service.remove(7).subscribe();
 
     const methods = http.match('/api/courses/7').map((match) => match.request.method);
@@ -56,5 +56,23 @@ describe('CourseService', () => {
     const request = http.expectOne('/api/courses/7/images').request;
     expect(request.method).toBe('POST');
     expect((request.body as FormData).get('file')).toBe(file);
+  });
+
+  it('déclare un cours en édition par l’API', () => {
+    service.startEditing(7).subscribe();
+
+    http.expectOne({ method: 'PUT', url: '/api/courses/7/editing' });
+  });
+
+  it('rend un cours par une requête qui survit à la fermeture de l’onglet', () => {
+    const sent = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response());
+
+    service.releaseEditing(7);
+
+    expect(sent).toHaveBeenCalledWith('/api/courses/7/editing', {
+      method: 'DELETE',
+      keepalive: true,
+    });
+    sent.mockRestore();
   });
 });

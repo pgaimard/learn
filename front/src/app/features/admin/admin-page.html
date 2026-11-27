@@ -1,0 +1,51 @@
+<div class="page-header">
+  <h1>Administration</h1>
+</div>
+
+<section class="card" aria-labelledby="export-title">
+  <h2 id="export-title">Export des données</h2>
+  <p class="meta">
+    Télécharge une archive de toute la donnée : la base et tous les fichiers envoyés (images,
+    schémas, documents). Elle se conserve ailleurs et se réinjecte sur le serveur par la procédure
+    de restauration.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="exportAll()" novalidate>
+    <div class="field">
+      <label for="export-password">Mot de passe</label>
+      <input
+        id="export-password"
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+        [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+        aria-describedby="export-password-hint"
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <p class="field-error">Le mot de passe est requis.</p>
+      }
+      <p id="export-password-hint" class="field-hint">
+        Il est redemandé à chaque export : l’archive contient tout.
+      </p>
+    </div>
+
+    <div role="alert">
+      @for (error of errors(); track error) {
+        <p class="form-error">{{ error }}</p>
+      }
+    </div>
+
+    <button type="submit" class="button button-primary" [disabled]="isSubmitting()">
+      <app-icon name="download" [size]="15" />
+      {{ isSubmitting() ? 'Vérification…' : 'Exporter toutes les données' }}
+    </button>
+
+    <p class="meta started" role="status">
+      @if (hasStarted()) {
+        Le téléchargement a commencé.
+      }
+    </p>
+  </form>
+</section>
+
+<app-ai-access-panel />

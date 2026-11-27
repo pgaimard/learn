@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { hashPassword } from '../users/password-hasher.js';
 import { User } from '../users/user.entity.js';
 import { UsersService } from '../users/users.service.js';
@@ -58,6 +58,22 @@ describe('AuthService', () => {
 
     await expect(service.getCurrentUser(2)).rejects.toBeInstanceOf(
       UnauthorizedException,
+    );
+  });
+
+  it('confirme le mot de passe du compte connecté', async () => {
+    const service = await createService();
+
+    await expect(
+      service.confirmPassword(1, 'mot de passe long'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('refuse une confirmation par un mauvais mot de passe, sans fermer la session', async () => {
+    const service = await createService();
+
+    await expect(service.confirmPassword(1, 'mauvais')).rejects.toBeInstanceOf(
+      ForbiddenException,
     );
   });
 });

@@ -13,6 +13,7 @@ import {
 } from './authenticated-client.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -206,7 +207,7 @@ describe('Images de terme', () => {
       ]);
     }
 
-    const inCourse = await client('patch', `/api/courses/${courseId}`).send({
+    const inCourse = await saveCourse(client, courseId, {
       content: doc(foreign.src),
     });
     expect(inCourse.status).toBe(400);

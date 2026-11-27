@@ -28,6 +28,7 @@ import {
   CourseImagesService,
   prepareImage,
 } from '../images/course-images.service.js';
+import { CourseSnapshotsService } from '../snapshots/course-snapshots.service.js';
 import { markdownToContent } from './markdown-to-content.js';
 import { TermImage } from '../../terms/images/term-image.entity.js';
 import { TermImagesService } from '../../terms/images/term-images.service.js';
@@ -118,6 +119,7 @@ export class CourseImportService {
     private readonly coursesService: CoursesService,
     private readonly termImagesService: TermImagesService,
     private readonly courseFolders: CourseFoldersService,
+    private readonly snapshots: CourseSnapshotsService,
   ) {}
 
   async preview(files: PackageFiles): Promise<ImportPreview> {
@@ -227,6 +229,14 @@ export class CourseImportService {
   ): Promise<{ courseId: number; obsolete: PackageImages }> {
     const { metadata } = analysed;
     const course = existing ?? (await this.insertAtRank(manager, ue, metadata));
+    // Remplacer un chapitre le modifie : un éditeur resté ouvert sur l'ancienne version
+    // ne pourra pas l'écraser.
+    if (existing) {
+      await this.coursesService.assertNotEditing(manager, existing.id);
+      // Le chapitre remplacé reste restaurable, avec ses images.
+      await this.snapshots.take(manager, existing, 'package');
+      course.revision += 1;
+    }
     // Un paquet sans fiche laisse en place celle du chapitre, avec ses images.
     const keptSheet = analysed.sheet ? null : course.sheetContent;
     // De même pour ses exercices.
@@ -235,6 +245,9 @@ export class CourseImportService {
       ...collectFigures(keptSheet ?? EMPTY_CONTENT),
       ...collectFigures(keptExercises ?? EMPTY_CONTENT),
     ].map((figure) => figure.imageId);
+    keptIds.push(
+      ...(await this.snapshots.referencedImageIds(manager, course.id)),
+    );
     const obsolete = (
       await manager.findBy(CourseImage, { courseId: course.id })
     ).filter((image) => !keptIds.includes(image.id));

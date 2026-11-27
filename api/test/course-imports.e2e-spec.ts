@@ -13,6 +13,7 @@ import {
 import { createTestApp } from './create-test-app.js';
 import { createZip } from './create-zip.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const MARKDOWN = readFileSync(
   new URL('../../contracts/cours.example.md', import.meta.url),
@@ -457,7 +458,7 @@ describe('Import d’un paquet de cours', () => {
     const course = (await client('get', `/api/courses/${courses[0].id}`))
       .body as Course;
 
-    const saved = await client('patch', `/api/courses/${course.id}`).send({
+    const saved = await saveCourse(client, course.id, {
       content: course.content,
     });
 
@@ -477,7 +478,38 @@ describe('Import d’un paquet de cours', () => {
     ]);
   });
 
+  it('refuse de remplacer un chapitre ouvert dans l’éditeur, jusqu’à sa fermeture ou l’expiration', async () => {
+    const dataSource = app.get(DataSource);
+    const [{ id }] = await dataSource.query<{ id: number }[]>(
+      'SELECT id FROM courses',
+    );
+    const path = `/api/courses/${id}/editing`;
+
+    const opened = await client('put', path);
+    const refused = await importPackage(validPackage(), true);
+    const closed = await client('delete', path);
+    const accepted = await importPackage(validPackage(), true);
+    // Un éditeur fermé sans prévenir : le délai passé, le cours est libre.
+    await client('put', path);
+    await dataSource.query(
+      `UPDATE courses SET editing_until = now() - interval '1 second'`,
+    );
+    const expired = await importPackage(validPackage(), true);
+
+    expect([opened.status, closed.status]).toEqual([204, 204]);
+    expect(refused.status).toBe(409);
+    expect((refused.body as ErrorResponse).messages).toEqual([
+      'Ce cours est ouvert dans l’éditeur. Fermez-le avant de le modifier autrement.',
+    ]);
+    expect([accepted.status, expired.status]).toEqual([201, 201]);
+  });
+
   it('remplace le chapitre et ses images quand c’est confirmé', async () => {
+    const [before] = await app
+      .get(DataSource)
+      .query<{ id: number; revision: number; content: object }[]>(
+        'SELECT id, revision, content FROM courses',
+      );
     // Même titre, à la casse près, et un autre « ordre » : c'est le titre qui désigne le chapitre.
     const replaced = await importPackage(
       createZip({
@@ -492,11 +524,21 @@ describe('Import d’un paquet de cours', () => {
     expect(replaced.status).toBe(201);
     const course = replaced.body as Course;
     expect(course.title).toBe('Les processus : NOTIONS DE BASE');
+    // Un éditeur resté ouvert sur l'ancienne version ne peut plus l'écraser.
+    expect([course.id, course.revision]).toEqual([
+      before.id,
+      before.revision + 1,
+    ]);
     expect(course.position).toBe(1);
     expect(JSON.stringify(course.content)).toContain('Ordonnancement revu');
     expect(await countCourses()).toBe(1);
-    // L'image du chapitre remplacé, et celle de la définition importée la première fois.
-    expect(storedFiles()).toHaveLength(2);
+    // Les images du chapitre remplacé restent, pour son instantané ; le paquet apporte la sienne.
+    const figure = /\/api\/courses\/\d+\/images\/\d+/;
+    const oldFigure = figure.exec(JSON.stringify(before.content))![0];
+    const newFigure = figure.exec(JSON.stringify(course.content))![0];
+    expect(newFigure).not.toBe(oldFigure);
+    expect((await client('get', oldFigure)).status).toBe(200);
+    expect((await client('get', newFigure)).status).toBe(200);
   });
 
   it('accepte un paquet créé en compressant un dossier', async () => {
@@ -700,7 +742,7 @@ describe('Import d’un paquet de cours', () => {
       expect((await client('get', figureOf(course))).status).toBe(200);
     });
 
-    it('remplace la fiche et efface ses anciennes images au réimport', async () => {
+    it('remplace la fiche au réimport et garde ses anciennes images pour l’instantané', async () => {
       const before = (await importPackage(withoutSheet(), true)).body as Course;
       const oldFigure = figureOf(before);
 
@@ -708,7 +750,7 @@ describe('Import d’un paquet de cours', () => {
 
       const course = response.body as Course;
       expect(figureOf(course)).not.toBe(oldFigure);
-      expect((await client('get', oldFigure)).status).toBe(404);
+      expect((await client('get', oldFigure)).status).toBe(200);
       expect((await client('get', figureOf(course))).status).toBe(200);
     });
 

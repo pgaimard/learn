@@ -14,6 +14,7 @@ import {
 } from './authenticated-client.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 function doc(...paragraphs: string[]): object {
   return {
@@ -42,7 +43,7 @@ describe('Recherche', () => {
       title,
     });
     const id = (created.body as Course).id;
-    await client('patch', `/api/courses/${id}`).send({ content });
+    await saveCourse(client, id, { content });
     return id;
   }
 
@@ -222,7 +223,7 @@ describe('Recherche', () => {
   });
 
   it('suit les modifications d’un cours', async () => {
-    await client('patch', `/api/courses/${memoryCourseId}`).send({
+    await saveCourse(client, memoryCourseId, {
       title: 'La segmentation',
     });
 

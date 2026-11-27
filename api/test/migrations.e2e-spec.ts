@@ -45,6 +45,7 @@ describe('Migrations', () => {
     await dataSource.runMigrations();
 
     expect(await readTableNames()).toEqual([
+      'ai_access_tokens',
       'command_courses',
       'command_examples',
       'command_option_variants',
@@ -53,6 +54,7 @@ describe('Migrations', () => {
       'command_variants',
       'commands',
       'course_images',
+      'course_snapshots',
       'courses',
       'events',
       'exercise_attempts',
