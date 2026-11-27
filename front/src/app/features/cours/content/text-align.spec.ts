@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { createCourseExtensions } from './course-extensions';
-import { setTextAlign } from './text-align';
+import { setCellVerticalAlign, setTextAlign } from './text-align';
 
 describe('alignement du texte', () => {
   let editor: Editor;
@@ -66,5 +66,36 @@ describe('alignement du texte', () => {
     editor.commands.setContent('<p class="align-right">a</p><p class="align-evil">b</p>');
 
     expect(alignments()).toEqual(['right', null]);
+  });
+
+  it('aligne en hauteur la cellule du curseur, et le montre par une classe', () => {
+    editor.commands.setContent({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: ['a', 'b'].map((text) => ({
+                type: 'tableCell',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+              })),
+            },
+          ],
+        },
+      ],
+    });
+    editor.commands.setTextSelection(5);
+
+    setCellVerticalAlign(editor, 'middle');
+
+    const cells = Array.from(host.querySelectorAll('td'));
+    expect(cells.map((cell) => cell.className)).toEqual(['valign-middle', '']);
+    expect(editor.isActive({ verticalAlign: 'middle' })).toBe(true);
+
+    setCellVerticalAlign(editor, null);
+
+    expect(host.querySelector('.valign-middle')).toBeNull();
   });
 });

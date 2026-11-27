@@ -119,6 +119,15 @@
   text-align: justify;
 }
 
+/* Alignement vertical choisi pour une cellule de tableau ; en haut par défaut. */
+.course-content .valign-middle {
+  vertical-align: middle;
+}
+
+.course-content .valign-bottom {
+  vertical-align: bottom;
+}
+
 /* Le cadre arrondi est porté par l'enveloppe : le tableau y défile s'il est trop large. */
 .course-content .tableWrapper {
   margin: 0 0 1em;

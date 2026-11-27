@@ -96,6 +96,8 @@ const cellAttrs: Record<string, AttributeCheck> = {
   rowspan: isIntegerBetween(1, 500),
   colwidth: isNullable(isColumnWidths),
   align: isNullable(isOneOf(['left', 'center', 'right'])),
+  // Alignement vertical du contenu ; absent ou null, en haut.
+  verticalAlign: isNullable(isOneOf(['top', 'middle', 'bottom'])),
 };
 
 // Bloc épinglé à la fiche de révision du cours.

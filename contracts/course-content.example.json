@@ -261,7 +261,8 @@
                 "colspan": 1,
                 "rowspan": 1,
                 "colwidth": null,
-                "align": null
+                "align": null,
+                "verticalAlign": null
               },
               "content": [
                 {
@@ -290,7 +291,8 @@
                 "colspan": 1,
                 "rowspan": 1,
                 "colwidth": null,
-                "align": null
+                "align": null,
+                "verticalAlign": "middle"
               },
               "content": [
                 {

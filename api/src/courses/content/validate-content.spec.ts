@@ -201,6 +201,29 @@ describe('validateContent', () => {
     ]);
   });
 
+  it('accepte l’alignement vertical d’une cellule, parmi trois valeurs', () => {
+    const table = (verticalAlign: unknown): ContentNode => ({
+      type: 'table',
+      content: [
+        {
+          type: 'tableRow',
+          content: [
+            {
+              type: 'tableCell',
+              attrs: { verticalAlign },
+              content: [paragraph('a')],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(validateContent(doc(table('middle'), table(null)))).toEqual([]);
+    expect(validateContent(doc(table('baseline')))).toEqual([
+      'Valeur non autorisée pour « verticalAlign » sur « tableCell ».',
+    ]);
+  });
+
   describe('QCM', () => {
     const choice = (correct: boolean, text = 'oui'): ContentNode => ({
       type: 'quizChoice',

@@ -6,6 +6,16 @@
   <button type="button" role="menuitem" [disabled]="!canSplit()" (click)="run(splitCell)">
     Scinder la cellule
   </button>
+  @for (option of verticalAlignments; track option.value) {
+    <button
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="verticalAlignment() === option.value"
+      (click)="alignVertically(option.value)"
+    >
+      {{ option.label }}
+    </button>
+  }
 </div>
 
 <p class="title" id="table-menu-row">Ligne</p>

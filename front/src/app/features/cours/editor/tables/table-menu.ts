@@ -10,6 +10,11 @@ import {
 import { Editor } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
 import { CellSelection } from '@tiptap/pm/tables';
+import {
+  setCellVerticalAlign,
+  VERTICAL_ALIGNMENTS,
+  VerticalAlignment,
+} from '../../content/text-align';
 import { focusMenuItem, menuItems } from '../menu-keys';
 import { canMoveCurrent, moveCurrent, TableAxis } from './table-commands';
 
@@ -58,6 +63,12 @@ export class TableMenu {
   protected readonly splitCell = (chain: Chain): Chain => chain.splitCell();
   protected readonly deleteTable = (chain: Chain): Chain => chain.deleteTable();
 
+  protected readonly verticalAlignments: { value: VerticalAlignment; label: string }[] = [
+    { value: 'top', label: 'Aligner en haut' },
+    { value: 'middle', label: 'Aligner au milieu' },
+    { value: 'bottom', label: 'Aligner en bas' },
+  ];
+
   constructor() {
     afterNextRender(() => menuItems(this.host.nativeElement)[0]?.focus());
   }
@@ -73,6 +84,19 @@ export class TableMenu {
 
   protected canSplit(): boolean {
     return this.editor().can().splitCell();
+  }
+
+  // Alignement vertical de la cellule du curseur ; en haut tant qu'aucun autre n'est choisi.
+  protected verticalAlignment(): VerticalAlignment {
+    return (
+      VERTICAL_ALIGNMENTS.find((value) => this.editor().isActive({ verticalAlign: value })) ?? 'top'
+    );
+  }
+
+  // L'alignement en haut est celui par défaut : il ne s'enregistre pas.
+  protected alignVertically(alignment: VerticalAlignment): void {
+    setCellVerticalAlign(this.editor(), alignment === 'top' ? null : alignment);
+    this.closed.emit();
   }
 
   protected run(command: (chain: Chain) => Chain): void {
