@@ -41,7 +41,7 @@ describe('CourseService', () => {
 
   it('lit, modifie et supprime un cours par son numéro', () => {
     service.get(7).subscribe();
-    service.update(7, { title: 'Nouveau titre' }).subscribe();
+    service.update(7, { revision: 4, title: 'Nouveau titre' }).subscribe();
     service.remove(7).subscribe();
 
     const methods = http.match('/api/courses/7').map((match) => match.request.method);

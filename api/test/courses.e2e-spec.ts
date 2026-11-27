@@ -9,6 +9,7 @@ import {
 } from './authenticated-client.js';
 import { createTestApp } from './create-test-app.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const CONTENT = {
   type: 'doc',
@@ -128,7 +129,7 @@ describe('Cours', () => {
       title: 'Doublon',
       position: 1,
     });
-    const updated = await client('patch', `/api/courses/${courseId}`).send({
+    const updated = await saveCourse(client, courseId, {
       position: 5,
     });
 
@@ -219,7 +220,7 @@ describe('Cours', () => {
   });
 
   it('enregistre un nouveau contenu et met à jour le texte brut', async () => {
-    const response = await client('patch', `/api/courses/${courseId}`).send({
+    const response = await saveCourse(client, courseId, {
       content: CONTENT,
     });
 
@@ -231,8 +232,72 @@ describe('Cours', () => {
     );
   });
 
-  it('refuse d’enregistrer un contenu hors liste blanche', async () => {
+  it('refuse un enregistrement sans la révision lue', async () => {
     const response = await client('patch', `/api/courses/${courseId}`).send({
+      title: 'Introduction',
+    });
+
+    expect(response.status).toBe(400);
+    expect((response.body as ErrorResponse).messages).toEqual([
+      'La révision lue du cours est requise.',
+    ]);
+  });
+
+  it('augmente la révision à chaque enregistrement et refuse celui qui part d’une révision dépassée', async () => {
+    const path = `/api/courses/${courseId}`;
+    const { revision } = (await client('get', path)).body as Course;
+
+    const first = await client('patch', path).send({
+      revision,
+      content: CONTENT,
+    });
+    const late = await client('patch', path).send({
+      revision,
+      title: 'Écrasé',
+    });
+
+    expect(first.status).toBe(200);
+    expect((first.body as Course).revision).toBe(revision + 1);
+    expect(late.status).toBe(409);
+    expect((late.body as ErrorResponse).messages).toEqual([
+      'Ce cours a été modifié depuis son ouverture. Rechargez la page pour repartir de sa version actuelle.',
+    ]);
+    expect(((await client('get', path)).body as Course).title).toBe(
+      'Introduction',
+    );
+  });
+
+  it('ne laisse passer qu’un seul de deux enregistrements simultanés', async () => {
+    const path = `/api/courses/${courseId}`;
+    const { revision } = (await client('get', path)).body as Course;
+
+    const responses = await Promise.all([
+      client('patch', path).send({ revision, content: CONTENT }),
+      client('patch', path).send({ revision, content: CONTENT }),
+    ]);
+
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      200, 409,
+    ]);
+  });
+
+  it('ne change pas la révision en posant le marque-page', async () => {
+    const path = `/api/courses/${courseId}`;
+    const { revision } = (await client('get', path)).body as Course;
+
+    await client('put', `${path}/bookmark`).send({
+      title: 'Processus',
+      block: 0,
+    });
+    await client('delete', `${path}/bookmark`);
+
+    expect(((await client('get', path)).body as Course).revision).toBe(
+      revision,
+    );
+  });
+
+  it('refuse d’enregistrer un contenu hors liste blanche', async () => {
+    const response = await saveCourse(client, courseId, {
       content: {
         type: 'doc',
         content: [
@@ -262,7 +327,7 @@ describe('Cours', () => {
       type: 'paragraph',
       content: [{ type: 'text', text: 'x'.repeat(1000) }],
     };
-    const response = await client('patch', `/api/courses/${courseId}`).send({
+    const response = await saveCourse(client, courseId, {
       content: { type: 'doc', content: Array<object>(200).fill(paragraph) },
     });
 
@@ -281,7 +346,6 @@ describe('Cours', () => {
   it('n’accepte un QCM que dans les exercices du cours, pas dans son texte ni sa fiche', async () => {
     const [course] = (await client('get', '/api/ues/UTC502/courses'))
       .body as Course[];
-    const path = `/api/courses/${course.id}`;
     const choice = (correct: boolean): Record<string, unknown> => ({
       type: 'quizChoice',
       attrs: { correct },
@@ -308,14 +372,16 @@ describe('Cours', () => {
       ],
     };
 
-    const saved = await client('patch', path).send({
+    const saved = await saveCourse(client, course.id, {
       exercisesContent: exercises,
     });
 
     expect(saved.status).toBe(200);
     expect((saved.body as Course).exercisesContent).toEqual(exercises);
-    const inCourse = await client('patch', path).send({ content: exercises });
-    const inSheet = await client('patch', path).send({
+    const inCourse = await saveCourse(client, course.id, {
+      content: exercises,
+    });
+    const inSheet = await saveCourse(client, course.id, {
       sheetContent: exercises,
     });
     expect(inCourse.status).toBe(400);
@@ -324,7 +390,7 @@ describe('Cours', () => {
       'Un QCM ou un exercice se place dans les exercices du cours, pas ailleurs.',
     ]);
 
-    const removed = await client('patch', path).send({
+    const removed = await saveCourse(client, course.id, {
       exercisesContent: null,
     });
     expect((removed.body as Course).exercisesContent).toBeNull();
@@ -349,7 +415,7 @@ describe('Cours', () => {
       ],
     };
 
-    const saved = await client('patch', `/api/courses/${course.id}`).send({
+    const saved = await saveCourse(client, course.id, {
       sheetContent: sheet,
     });
 
@@ -357,10 +423,10 @@ describe('Cours', () => {
     expect((saved.body as Course).sheetContent).toEqual(sheet);
     expect((saved.body as Course).content).toEqual(before.content);
 
-    const invalid = await client('patch', `/api/courses/${course.id}`).send({
+    const invalid = await saveCourse(client, course.id, {
       sheetContent: { type: 'doc', content: [{ type: 'script' }] },
     });
-    const foreign = await client('patch', `/api/courses/${course.id}`).send({
+    const foreign = await saveCourse(client, course.id, {
       sheetContent: {
         type: 'doc',
         content: [
@@ -374,7 +440,7 @@ describe('Cours', () => {
     expect(invalid.status).toBe(400);
     expect(foreign.status).toBe(400);
 
-    const removed = await client('patch', `/api/courses/${course.id}`).send({
+    const removed = await saveCourse(client, course.id, {
       sheetContent: null,
     });
     expect((removed.body as Course).sheetContent).toBeNull();

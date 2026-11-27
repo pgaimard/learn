@@ -52,6 +52,11 @@ export class Course {
   @Column({ name: 'bookmark_block', type: 'integer', nullable: true })
   bookmarkBlock!: number | null;
 
+  // Augmenté à chaque enregistrement du cours (titre, contenu, fiche, exercices) : une
+  // écriture qui part d'une révision dépassée est refusée.
+  @Column({ type: 'integer', default: 1 })
+  revision!: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

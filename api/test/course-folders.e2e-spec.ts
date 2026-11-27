@@ -14,6 +14,7 @@ import {
 import { createTestApp } from './create-test-app.js';
 import { createZip } from './create-zip.js';
 import { resetDatabase } from './reset-database.js';
+import { saveCourse } from './save-course.js';
 
 const MARKDOWN = `---
 ue: UTC502
@@ -123,12 +124,12 @@ describe('Dossier de fichiers d’un cours', () => {
     const courseId = await createCourse('Brouillon');
     await client('post', '/api/ues/UTC502/folders').send({ name: 'Annales' });
 
-    await client('patch', `/api/courses/${courseId}`).send({
+    await saveCourse(client, courseId, {
       title: 'Fichiers',
     });
     expect((await folderOf(courseId)).name).toBe('Fichiers');
 
-    await client('patch', `/api/courses/${courseId}`).send({
+    await saveCourse(client, courseId, {
       title: 'Annales',
     });
     expect((await folderOf(courseId)).name).toBe('Annales - 2');

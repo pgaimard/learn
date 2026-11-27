@@ -95,6 +95,8 @@ export class SheetEditPage {
     return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
   });
   protected readonly course = signal<Course | null>(null);
+  // Révision du cours lue au chargement, puis après chaque enregistrement.
+  private revision = 0;
   // Fiche chargée dans l'éditeur ; elle n'y est pas rechargée après un enregistrement,
   // ce qui déplacerait le curseur.
   protected readonly companion = computed(() => COMPANIONS[this.document()]);
@@ -138,9 +140,10 @@ export class SheetEditPage {
     }
     this.isSaving.set(true);
     this.errors.set([]);
-    const changes = { [this.companion().field]: content };
+    const changes = { revision: this.revision, [this.companion().field]: content };
     this.courseService.update(Number(this.id()), changes).subscribe({
-      next: () => {
+      next: (course) => {
+        this.revision = course.revision;
         this.isSaving.set(false);
         this.isDirty.set(false);
         this.isSaved.set(true);
@@ -175,7 +178,8 @@ export class SheetEditPage {
     ) {
       return;
     }
-    this.courseService.update(course.id, { [this.companion().field]: null }).subscribe({
+    const changes = { revision: this.revision, [this.companion().field]: null };
+    this.courseService.update(course.id, changes).subscribe({
       next: () => {
         this.isDirty.set(false);
         void this.router.navigate(['/ue', this.code(), 'cours', course.id]);
@@ -199,6 +203,7 @@ export class SheetEditPage {
     this.courseService.get(id).subscribe({
       next: (course) => {
         this.course.set(course);
+        this.revision = course.revision;
         this.isSaved.set(course[this.companion().field] !== null);
         this.isDirty.set(false);
         this.title.setTitle(`${this.companion().tabTitle} – ${course.title}`);

@@ -51,6 +51,8 @@ export class CourseEditPage {
     return this.bloc() !== undefined && Number.isInteger(rank) && rank >= 0 ? rank : null;
   });
   protected readonly course = signal<Course | null>(null);
+  // Révision du cours lue au chargement, puis après chaque enregistrement.
+  private revision = 0;
   protected readonly errors = signal<string[]>([]);
   protected readonly saveKey = shortcut('S');
   protected readonly isSaving = signal(false);
@@ -94,8 +96,10 @@ export class CourseEditPage {
     const { title } = this.form.getRawValue();
     this.isSaving.set(true);
     this.errors.set([]);
-    this.courseService.update(Number(this.id()), { title: title.trim(), content }).subscribe({
+    const changes = { revision: this.revision, title: title.trim(), content };
+    this.courseService.update(Number(this.id()), changes).subscribe({
       next: (course) => {
+        this.revision = course.revision;
         this.isSaving.set(false);
         this.isDirty.set(false);
         this.title.setTitle(`Édition – ${course.title}`);
@@ -149,6 +153,7 @@ export class CourseEditPage {
     this.courseService.get(id).subscribe({
       next: (course) => {
         this.course.set(course);
+        this.revision = course.revision;
         this.form.setValue({ title: course.title });
         this.isDirty.set(false);
         this.title.setTitle(`Édition – ${course.title}`);
