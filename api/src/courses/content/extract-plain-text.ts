@@ -5,7 +5,10 @@ const INLINE_CONTAINERS = new Set([
   'heading',
   'codeBlock',
   'figure',
+  'quizChoice',
 ]);
+// Blocs dont le titre est un attribut : il se cherche comme le reste.
+const TITLED = new Set(['slideshow', 'quiz']);
 
 function inlineText(node: ContentNode): string {
   return (node.content ?? [])
@@ -14,8 +17,7 @@ function inlineText(node: ContentNode): string {
 }
 
 function collect(node: ContentNode, lines: string[]): void {
-  // Le titre d'un diaporama est un attribut : il se cherche comme le reste.
-  const title: unknown = node.type === 'slideshow' ? node.attrs?.['title'] : '';
+  const title: unknown = TITLED.has(node.type) ? node.attrs?.['title'] : '';
   if (typeof title === 'string' && title.trim().length > 0) {
     lines.push(title.trim());
   }

@@ -42,4 +42,38 @@ describe('extractPlainText', () => {
       '1. Processus\nUn processus\nen exécution.\nPrêt\nfork();',
     );
   });
+  it('reprend le titre d’un QCM et le texte de ses choix', () => {
+    const text = extractPlainText({
+      type: 'doc',
+      content: [
+        {
+          type: 'quiz',
+          attrs: { title: 'Processus' },
+          content: [
+            {
+              type: 'quizQuestion',
+              content: [
+                {
+                  type: 'quizPrompt',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [{ type: 'text', text: 'Vrai ?' }],
+                    },
+                  ],
+                },
+                {
+                  type: 'quizChoice',
+                  attrs: { correct: true },
+                  content: [{ type: 'text', text: 'oui' }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(text).toBe('Processus\nVrai ?\noui');
+  });
 });
