@@ -7,14 +7,15 @@
     <a [routerLink]="['/ue', code(), 'cours', course.id]">{{ course.title }}</a>
   }
   <span aria-hidden="true">/</span>
-  <span>Fiche de révision</span>
+  <span>{{ companion().label }}</span>
 </nav>
 
 @if (course(); as course) {
   <div class="edit">
     <app-content-editor
       [content]="sheet()"
-      label="Fiche de révision"
+      [label]="companion().label"
+      [exercises]="companion().allowsExercises"
       [outline]="true"
       [startBlock]="startBlock()"
       (edited)="markDirty()"
@@ -22,7 +23,7 @@
     >
       <ng-container editorDocument>
         <span class="code-chip">{{ code() }}</span>
-        <span class="document-title">{{ course.title }} · Fiche de révision</span>
+        <span class="document-title">{{ course.title }} · {{ companion().label }}</span>
       </ng-container>
       <div editorActions class="actions">
         <p class="status" aria-live="polite">
@@ -35,7 +36,9 @@
           class="button"
           [routerLink]="['/ue', code(), 'cours', course.id]"
           [queryParams]="
-            startBlock() === null ? { vue: 'fiche' } : { vue: 'fiche', bloc: startBlock() }
+            startBlock() === null
+              ? { vue: companion().view }
+              : { vue: companion().view, bloc: startBlock() }
           "
         >
           Terminer
@@ -52,8 +55,8 @@
           <button
             type="button"
             class="button button-icon button-ghost"
-            aria-label="Supprimer la fiche"
-            title="Supprimer la fiche"
+            [attr.aria-label]="companion().removeLabel"
+            [title]="companion().removeLabel"
             (click)="remove()"
           >
             <app-icon name="trash" [size]="15" />
@@ -68,7 +71,7 @@
       </div>
 
       <div sheetHeader class="heading">
-        <h1 class="title">Fiche de révision</h1>
+        <h1 class="title">{{ companion().label }}</h1>
         <p class="meta origin">
           <span class="code-chip">{{ code() }}</span>
           {{ course.title }}

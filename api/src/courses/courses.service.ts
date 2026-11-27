@@ -19,7 +19,7 @@ import { UeService } from '../ue/ue.service.js';
 import { collectFigures } from './content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from './content/content-node.js';
 import { extractPlainText } from './content/extract-plain-text.js';
-import { validateContent } from './content/validate-content.js';
+import { ContentRules, validateContent } from './content/validate-content.js';
 import { Course } from './course.entity.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
 import { UpdateCourseDto } from './dto/update-course.dto.js';
@@ -98,7 +98,11 @@ export class CoursesService {
   async update(id: number, changes: UpdateCourseDto): Promise<Course> {
     const course = await this.findById(id);
     course.title = changes.title ?? course.title;
-    if (changes.content === undefined && changes.sheetContent === undefined) {
+    if (
+      changes.content === undefined &&
+      changes.sheetContent === undefined &&
+      changes.exercisesContent === undefined
+    ) {
       await this.dataSource.transaction((manager) =>
         this.saveWithFolder(manager, course),
       );
@@ -114,10 +118,19 @@ export class CoursesService {
           ? null
           : checkContent(changes.sheetContent);
     }
-    // Les images du cours servent à son texte comme à sa fiche de révision.
+    if (changes.exercisesContent !== undefined) {
+      course.exercisesContent =
+        changes.exercisesContent === null
+          ? null
+          : checkContent(changes.exercisesContent, { exercises: true });
+    }
+    // Les images du cours servent à son texte, à sa fiche de révision et à ses exercices.
     const figures = [
       ...collectFigures(course.content),
       ...(course.sheetContent ? collectFigures(course.sheetContent) : []),
+      ...(course.exercisesContent
+        ? collectFigures(course.exercisesContent)
+        : []),
     ];
     await this.imagesService.assertFiguresExist(id, figures);
     // Le cours et ses images changent ensemble ou pas du tout.
@@ -233,8 +246,8 @@ export class CoursesService {
   }
 }
 
-function checkContent(content: unknown): ContentNode {
-  const errors = validateContent(content);
+function checkContent(content: unknown, rules: ContentRules = {}): ContentNode {
+  const errors = validateContent(content, rules);
   if (errors.length > 0) {
     throw new BadRequestException(errors);
   }

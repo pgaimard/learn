@@ -10,6 +10,10 @@ produits par l'éditeur. Il est testé des deux côtés :
 
 Ajouter un bloc à l'éditeur impose donc de l'ajouter ici, puis à la liste blanche de l'API.
 
+`exercises-content.example.json` joue le même rôle pour les exercices d'un cours : c'est le seul
+document où se placent les QCM et les exercices. L'API l'accepte comme exercices, et le refuse
+comme texte de cours.
+
 L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) date de
 l'ancienne fiche de révision, calculée à partir des blocs épinglés. Il n'a plus d'effet, mais reste
 accepté : les cours déjà enregistrés le portent. La fiche de révision est désormais un document
@@ -23,6 +27,8 @@ Un paquet de cours est une archive `.zip` qui contient :
 - `images/` : un fichier par figure du cours (`fig-01.svg`, `fig-02.png`…) ou d'une définition
   (`def-commutation-01.svg`…), en SVG, PNG ou JPEG ;
 - `fiche.md` (facultatif) : la fiche de révision du chapitre (voir « Fiche de révision ») ;
+- `exercices.md` (facultatif) : les exercices du chapitre, QCM compris (voir « Exercices du
+  chapitre ») ;
 - `termes.json` (facultatif) : les termes du chapitre (définitions et acronymes), rangés dans
   l'UE du chapitre.
 - `commandes.json` (facultatif) : les outils et les commandes appris dans le chapitre (voir
@@ -115,12 +121,13 @@ indépendantes, ni pour remplacer un texte : les figures ordinaires suffisent.
 
 ### QCM
 
-Un QCM se fait dans le cours : chaque question montre ses choix, à cocher. Un clic sur « Valider »
-corrige toutes les questions, dit lesquelles sont justes et affiche l'explication de chacune.
+Un QCM se fait dans les exercices du chapitre : chaque question montre ses choix, à cocher. Un clic
+sur « Valider » corrige toutes les questions, dit lesquelles sont justes et affiche l'explication de
+chacune.
 
-À utiliser pour tout QCM du support d'origine, à sa place dans la section « Exercices ». Le corrigé
-n'est plus un tableau à part dans « Corrigés » : la bonne réponse et sa justification s'écrivent
-avec la question.
+À utiliser pour tout QCM du support d'origine. Il s'écrit dans `exercices.md`, jamais dans
+`cours.md` ni dans `fiche.md` (voir « Exercices du chapitre »). Le corrigé n'est plus un tableau à
+part : la bonne réponse et sa justification s'écrivent avec la question.
 
 ```markdown
 > [!qcm] Autour des processus
@@ -163,18 +170,18 @@ avec la question.
   réponse », « plusieurs réponses possibles »), l'écrire dans l'énoncé. Une question est juste
   quand les choix cochés sont exactement les bonnes réponses ;
 - ne pas écrire « Question 1 : » dans l'énoncé : l'application numérote les questions ;
-- un QCM se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste ou un
+- un QCM se place au premier niveau de `exercices.md` : pas dans un encadré, une liste ou un
   tableau.
 
 ### Exercice
 
-Un exercice se fait dans une fenêtre : l'énoncé à gauche, la réponse à droite. Dans le cours, on
-ne voit que son énoncé ; son corrigé reste caché tant que la réponse n'est pas validée, puis
-s'affiche à côté d'elle.
+Un exercice se fait dans une fenêtre : l'énoncé à gauche, la réponse à droite. Dans les exercices
+du chapitre, on ne voit que son énoncé ; son corrigé reste caché tant que la réponse n'est pas
+validée, puis s'affiche à côté d'elle.
 
-À utiliser pour chaque exercice du support d'origine qui n'est pas un QCM, à sa place dans la
-section « Exercices ». Le corrigé n'est plus dans une section « Corrigés » à part : il s'écrit avec
-son exercice.
+À utiliser pour chaque exercice du support d'origine qui n'est pas un QCM. Il s'écrit dans
+`exercices.md`, jamais dans `cours.md` ni dans `fiche.md` (voir « Exercices du chapitre »). Le
+corrigé n'est plus dans une section « Corrigés » à part : il s'écrit avec son exercice.
 
 ```markdown
 > [!exercice] Exercice 1 : ordonnancement
@@ -217,7 +224,7 @@ son exercice.
 - un seul corrigé par exercice, et rien après lui. Un exercice sans `[!corrige]` est accepté :
   son corrigé reste à rédiger dans l'application ;
 - un `[!corrige]` hors d'un exercice fait refuser le paquet ;
-- un exercice se place au premier niveau du cours ou de la fiche : pas dans un encadré, une liste
+- un exercice se place au premier niveau de `exercices.md` : pas dans un encadré, une liste
   ou un tableau, ni dans un QCM ou un autre exercice.
 
 ### Grille à cocher
@@ -253,6 +260,40 @@ nombres dans son corps.
   une ligne par état, ou une grille par état ;
 - une grille se place partout où un tableau est accepté, y compris dans l'explication d'une
   question de QCM.
+
+### Exercices du chapitre
+
+`exercices.md` rassemble les exercices du chapitre : c'est un document à part, comme la fiche de
+révision. Dans l'application, il s'ouvre par le bouton « Exercices » du cours.
+`exercices.example.md` en montre la forme.
+
+- pas d'en-tête : le fichier commence directement par son contenu ; il est rattaché au chapitre de
+  `cours.md` ;
+- **c'est le seul fichier où s'écrivent les QCM (`[!qcm]`) et les exercices (`[!exercice]`)**. Un
+  QCM ou un exercice dans `cours.md` ou dans `fiche.md` fait refuser tout le paquet. `cours.md` n'a
+  donc plus de sections « Exercices » ni « Corrigés » ;
+- y mettre tous les exercices du support d'origine, énoncés mot pour mot, chacun avec son corrigé ;
+- autour des QCM et des exercices, les mêmes constructions que `cours.md` : titres de niveau 2 à 5
+  pour ranger les séries (« 1. QCM », « 2. Exercices »), paragraphes de consigne, listes,
+  tableaux, grilles à cocher, blocs de code, encadrés, images ;
+- une image s'écrit comme dans le cours, et son fichier est dans le dossier `images/` du paquet. Le
+  préfixe `exo-` évite toute collision avec les figures du cours ;
+- les exercices ont leurs propres titres et leur propre sommaire ;
+- un `exercices.md` vide, invalide, ou qui référence une image absente fait refuser tout le
+  paquet.
+
+Ce que fait l'import :
+
+- un paquet avec `exercices.md` crée les exercices du chapitre, ou remplace ceux qui existent ;
+- un paquet sans `exercices.md` ne touche pas aux exercices du chapitre : réimporter le cours seul
+  les garde ;
+- les réponses déjà enregistrées restent attachées au chapitre. Celles d'un exercice se retrouvent
+  tant que son titre ne change pas ; celles d'un QCM tiennent à son rang parmi les QCM du fichier
+  (le premier, le deuxième…) : garder le même ordre d'un paquet à l'autre ;
+- les exercices se retouchent dans l'application, avec le même éditeur que le cours ;
+- le Markdown collé, sans paquet, ne transporte pas d'exercices.
+
+`exercices.example.md` est lu par les tests de l'API (`exercise-from-blocks.spec.ts`).
 
 ### Fiche de révision
 
@@ -294,7 +335,8 @@ sujets, annexes. Ils y restent consultables à côté du cours réécrit.
 - Les placer dans le dossier `sources/` du paquet, directement dedans : un sous-dossier fait
   refuser le paquet.
 - Y mettre les documents d'origine tels qu'ils ont été fournis, sous leur nom d'origine, sans les
-  convertir ni les renommer. Ne pas y remettre `cours.md`, `fiche.md` ni les figures de `images/`.
+  convertir ni les renommer. Ne pas y remettre `cours.md`, `fiche.md`, `exercices.md` ni les figures
+  de `images/`.
 - Un nom de fichier ne contient ni « / », ni « \ », ni caractère de contrôle, et fait 255
   caractères au plus. Tous les formats sont acceptés : un document source n'est jamais affiché
   ni exécuté par l'application, seulement téléchargé.

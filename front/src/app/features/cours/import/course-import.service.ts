@@ -23,6 +23,8 @@ export interface ImportPreview {
   duplicateTerms: ImportedTerm[];
   // Le paquet contient une fiche de révision (fiche.md), et le nombre de ses images.
   hasSheet: boolean;
+  // Le paquet contient les exercices du chapitre (exercices.md).
+  hasExercises: boolean;
   sheetImageCount: number;
   // Documents de sources/, rangés dans le dossier de fichiers du cours.
   sourceCount: number;
@@ -30,7 +32,12 @@ export interface ImportPreview {
   commands: CommandImportPreview;
   // Chapitre de même titre déjà présent dans l'UE : l'import le remplacerait. Sa fiche de
   // révision, s'il en a une, est gardée quand le paquet n'en apporte pas.
-  existingCourse: { id: number; title: string; hasSheet: boolean } | null;
+  existingCourse: {
+    id: number;
+    title: string;
+    hasSheet: boolean;
+    hasExercises: boolean;
+  } | null;
 }
 
 // Ce que l'on importe : un paquet .zip ou du Markdown collé.

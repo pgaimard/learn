@@ -20,6 +20,7 @@ const PREVIEW: ImportPreview = {
   ],
   duplicateTerms: [{ type: 'acronym', label: 'PID' }],
   hasSheet: true,
+  hasExercises: false,
   sheetImageCount: 2,
   sourceCount: 0,
   commands: { newTools: [], existingTools: [], newCommands: [], duplicateCommands: [] },
@@ -155,7 +156,10 @@ describe('CourseImportPage', () => {
 
   it('prévient du remplacement d’un chapitre existant et le confirme à l’import', () => {
     service.preview.mockReturnValue(
-      of({ ...PREVIEW, existingCourse: { id: 5, title: 'Ancienne version', hasSheet: true } }),
+      of({
+        ...PREVIEW,
+        existingCourse: { id: 5, title: 'Ancienne version', hasSheet: true, hasExercises: false },
+      }),
     );
     service.import.mockReturnValue(of(IMPORTED));
     setup();

@@ -13,4 +13,11 @@ export class UpdateCourseDto extends CreateCourseDto {
     message: 'La fiche de révision doit être un document de l’éditeur.',
   })
   sheetContent?: Record<string, unknown> | null;
+
+  // Exercices du cours ; null les supprime. Même vérification.
+  @IsOptional()
+  @IsObject({
+    message: 'Les exercices doivent être un document de l’éditeur.',
+  })
+  exercisesContent?: Record<string, unknown> | null;
 }

@@ -67,6 +67,9 @@ export class CourseContent {
   // Cases cochées des QCM commencés puis quittés, par clé : elles sont remises en place.
   readonly quizDrafts = input<Record<string, boolean[][]>>({});
 
+  // Éditeur des exercices d'un cours : le seul où s'insèrent un QCM et un exercice.
+  readonly exercises = input(false);
+
   // Termes à rendre cliquables dans le texte, en lecture.
   readonly terms = input<MentionTerm[]>([]);
 
@@ -106,6 +109,7 @@ export class CourseContent {
     () => this.pickImages(),
     () => this.pickSlideshow(),
     (place) => this.tablePicker.set(place),
+    () => this.exercises(),
   );
 
   // Les prochaines images reçues ouvrent un diaporama au lieu de s'insérer seules.

@@ -12,4 +12,11 @@ export const coursRoutes: Routes = [
     component: SheetEditPage,
     canDeactivate: [unsavedChangesGuard],
   },
+  // Les exercices du cours s'éditent comme sa fiche : un document à part.
+  {
+    path: ':id/exercices/edition',
+    component: SheetEditPage,
+    data: { document: 'exercises' },
+    canDeactivate: [unsavedChangesGuard],
+  },
 ];

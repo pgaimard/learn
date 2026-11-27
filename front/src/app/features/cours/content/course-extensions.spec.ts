@@ -1,5 +1,6 @@
 import { Editor } from '@tiptap/core';
 import example from '../../../../../../contracts/course-content.example.json';
+import exercises from '../../../../../../contracts/exercises-content.example.json';
 import { createCourseExtensions } from './course-extensions';
 
 describe('createCourseExtensions', () => {
@@ -9,6 +10,14 @@ describe('createCourseExtensions', () => {
     const editor = new Editor({ extensions: createCourseExtensions(), content: example });
 
     expect(editor.getJSON()).toEqual(example);
+
+    editor.destroy();
+  });
+
+  it('relit et réécrit à l’identique les exercices d’exemple partagés avec l’API', () => {
+    const editor = new Editor({ extensions: createCourseExtensions(), content: exercises });
+
+    expect(editor.getJSON()).toEqual(exercises);
 
     editor.destroy();
   });
