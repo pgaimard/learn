@@ -3,6 +3,11 @@ import type { Token } from 'markdown-it';
 import { ContentMark, ContentNode } from '../content/content-node.js';
 import { isSafeLink, MAX_SLIDES } from '../content/content-schema.js';
 import { tableFromRows } from './check-grid.js';
+import {
+  exerciseFromBlocks,
+  keyExercises,
+  solutionFromBlocks,
+} from './exercise-from-blocks.js';
 import { quizFromBlocks } from './quiz-from-blocks.js';
 
 export interface ConvertedMarkdown {
@@ -29,6 +34,9 @@ const SLIDESHOW_MARKER = 'diaporama';
 const SLIDE_TEXT = ['paragraph', 'bulletList', 'orderedList'];
 // Marqueur d'un QCM, écrit lui aussi comme celui d'un encadré.
 const QUIZ_MARKER = 'qcm';
+// Marqueurs d'un exercice et de son corrigé, écrits eux aussi comme ceux d'un encadré.
+const EXERCISE_MARKER = 'exercice';
+const SOLUTION_MARKER = 'corrige';
 
 export const IMAGE_PATH =
   /^images\/[A-Za-z0-9][A-Za-z0-9._-]*\.(svg|png|jpe?g)$/i;
@@ -165,6 +173,19 @@ class Converter {
       return quizFromBlocks(
         titleAfterMarker(content[0], marker[0].length),
         content.slice(1),
+        (message) => this.fail(token, message),
+      );
+    }
+    if (marker[1] === EXERCISE_MARKER) {
+      return exerciseFromBlocks(
+        titleAfterMarker(content[0], marker[0].length),
+        content.slice(1),
+        (message) => this.fail(token, message),
+      );
+    }
+    if (marker[1] === SOLUTION_MARKER) {
+      return solutionFromBlocks(
+        stripMarker(content, marker[0].length),
         (message) => this.fail(token, message),
       );
     }
@@ -428,6 +449,13 @@ export function markdownToContent(
     source,
   );
   const content = converter.parseBlocks(null);
+  keyExercises(content);
+  const errors = [...converter.errors];
+  if (content.some((block) => block.type === 'exerciseSolution')) {
+    errors.push(
+      `${source} : un corrigé « [!corrige] » se place à la fin d’un exercice « [!exercice] ».`,
+    );
+  }
   return {
     document: {
       type: 'doc',
@@ -435,6 +463,6 @@ export function markdownToContent(
     },
     imagePaths: [...new Set(converter.imagePaths)],
     sectionCount: converter.sectionCount,
-    errors: converter.errors,
+    errors,
   };
 }

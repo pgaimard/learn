@@ -644,6 +644,51 @@
       ]
     },
     {
+      "type": "exercise",
+      "attrs": {
+        "title": "Exercice 1",
+        "key": "exercice-1"
+      },
+      "content": [
+        {
+          "type": "exerciseStatement",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "pinned": false,
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Combien d'accès à la mémoire pour exécuter une addition ?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "exerciseSolution",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "pinned": false,
+                "textAlign": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Un seul : la lecture de l'instruction."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "type": "paragraph",
       "attrs": {
         "pinned": false,

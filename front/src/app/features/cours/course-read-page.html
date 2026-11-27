@@ -59,6 +59,7 @@
           [terms]="allTerms()"
           (sectionReferenced)="followReference($event)"
           (termOpened)="openTerm($event)"
+          (exerciseOpened)="exercise.set($event)"
         />
       } @else {
         <p class="empty sheet-empty">
@@ -226,6 +227,15 @@
         </button>
       }
     </div>
+  }
+
+  @if (exercise(); as opened) {
+    <app-exercise-workspace
+      [exercise]="opened"
+      [terms]="allTerms()"
+      (termOpened)="openTerm($event)"
+      (closed)="exercise.set(null)"
+    />
   }
 } @else {
   <nav class="breadcrumb" aria-label="Fil d’Ariane">

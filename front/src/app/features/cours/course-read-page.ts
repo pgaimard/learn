@@ -27,6 +27,8 @@ import {
   sectionAt,
 } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
+import { OpenedExercise } from './exercise/exercise';
+import { ExerciseWorkspace } from './exercise/exercise-workspace';
 import { CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
 import { CourseRemoval } from './course-removal';
@@ -40,7 +42,16 @@ const MENU_WIDTH_PX = 200;
 
 @Component({
   selector: 'app-course-read-page',
-  imports: [CommandSheet, CourseContent, CourseOutline, DatePipe, Icon, Modal, RouterLink],
+  imports: [
+    CommandSheet,
+    CourseContent,
+    CourseOutline,
+    DatePipe,
+    ExerciseWorkspace,
+    Icon,
+    Modal,
+    RouterLink,
+  ],
   host: {
     '(window:scroll)': 'followReading()',
     // L'utilisateur reprend la main sur le défilement.
@@ -173,6 +184,8 @@ export class CourseReadPage {
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
   // Tous les termes de l'UE : ceux que le texte cite y deviennent cliquables.
   protected readonly allTerms = signal<TermSummary[]>([]);
+  // Exercice ouvert dans sa fenêtre de travail.
+  protected readonly exercise = signal<OpenedExercise | null>(null);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
   protected readonly shownTerm = signal<Term | null>(null);
   // Commandes étiquetées avec ce cours, rangées sous leur outil.

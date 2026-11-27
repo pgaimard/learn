@@ -8,7 +8,7 @@ const INLINE_CONTAINERS = new Set([
   'quizChoice',
 ]);
 // Blocs dont le titre est un attribut : il se cherche comme le reste.
-const TITLED = new Set(['slideshow', 'quiz']);
+const TITLED = new Set(['slideshow', 'quiz', 'exercise']);
 
 function inlineText(node: ContentNode): string {
   return (node.content ?? [])
