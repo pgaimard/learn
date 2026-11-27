@@ -84,7 +84,7 @@
         role="menuitem"
         class="menu-item"
         [class.is-current]="alignment() === option.value"
-        [attr.aria-current]="alignment() === option.value ? \'true\' : null"
+        [attr.aria-current]="alignment() === option.value ? 'true' : null"
         (click)="align(option.value)"
       >
         <app-icon [name]="option.icon" [size]="15" />
