@@ -105,8 +105,8 @@ Décisions prises avec Pierre :
 1. Cowork se branche par un connecteur personnalisé distant : c'est le cloud d'Anthropic qui
    appelle `https://<domaine>/api/mcp`. Le serveur doit donc être public ; une instance locale
    ne se teste qu'avec un client MCP lancé sur le poste.
-2. Authentification par un jeton unique, envoyé dans l'en-tête `Authorization: Bearer …`,
-   créé (mot de passe redemandé) et révoqué depuis l'écran d'administration. Seule son
+2. Authentification par un jeton unique, envoyé dans l'en-tête `X-API-Key` (Claude réserve
+   `Authorization` à OAuth et impose une liste de noms), créé (mot de passe redemandé) et révoqué depuis l'écran d'administration. Seule son
    empreinte SHA-256 est en base. Procédure : `docs/connecteur-claude.md`.
 3. Dépendances : `@modelcontextprotocol/sdk` et `zod`.
 4. Le point d'entrée est sans état, répond en JSON, et n'accepte que POST ; 120 appels par
