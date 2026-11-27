@@ -105,6 +105,23 @@ describe('diaporama', () => {
     expect(captions()).toEqual([]);
   });
 
+  it('déplace une étape par son bouton sans faire défiler la page vers le curseur', () => {
+    setup(slide('1'), slide('2'));
+    // Le curseur est ailleurs, dans le paragraphe qui précède le diaporama.
+    editor.commands.setTextSelection(2);
+    let scrolls = 0;
+    const dispatch = editor.view.dispatch.bind(editor.view);
+    editor.view.dispatch = (transaction) => {
+      scrolls += transaction.scrolledIntoView ? 1 : 0;
+      dispatch(transaction);
+    };
+
+    editor.view.dom.querySelector<HTMLButtonElement>('[aria-label="Descendre l’étape"]')?.click();
+
+    expect(captions()).toEqual(['Étape 2', 'Étape 1']);
+    expect(scrolls).toBe(0);
+  });
+
   it('sait si le curseur est dans un diaporama, et où finit son étape', () => {
     setup(slide('1'), slide('2'));
     expect(slideshowAtSelection(editor.state)).toBeNull();

@@ -214,8 +214,9 @@ export const Slide = Node.create({
       const act = (change: (state: EditorState, pos: number) => Transaction | null): void => {
         const pos = getPos();
         const transaction = typeof pos === 'number' ? change(editor.state, pos) : null;
+        // Sans défilement : la page reste où elle est, même si le curseur est ailleurs.
         if (transaction) {
-          editor.view.dispatch(transaction.scrollIntoView());
+          editor.view.dispatch(transaction);
         }
       };
       const up = button('Monter l’étape', '↑');
