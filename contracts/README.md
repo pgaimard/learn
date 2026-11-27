@@ -70,6 +70,49 @@ Règles de `cours.md` :
   qui précise, « Astuce » pour ce qui aide à faire. Un encadré reste court : il ne remplace pas le
   texte du cours, et une page n'en aligne pas plusieurs à la suite.
 
+### Diaporama
+
+Un diaporama montre un déroulement image par image. Dans le cours, il apparaît par sa première
+image ; un clic ouvre une fenêtre où l'on passe d'une étape à l'autre, l'explication de chaque
+étape sous son image.
+
+À utiliser quand le support d'origine déroule un mécanisme sur une suite d'images presque
+identiques, où seul un état change : exécution d'une instruction dans l'unité centrale, échange de
+trames, évolution d'une pile ou d'une table. Ne pas en faire pour deux ou trois figures
+indépendantes, ni pour remplacer un texte : les figures ordinaires suffisent.
+
+```markdown
+> [!diaporama] Exécution d'une instruction
+>
+> ![Unité centrale, état initial](images/etape-01.svg "Étape 1 : état initial")
+>
+> Le **compteur ordinal** contient l'adresse de la prochaine instruction.
+>
+> ![Unité centrale, lecture](images/etape-02.svg "Étape 2 : lecture de l'instruction")
+>
+> L'adresse passe sur le bus d'adresses :
+>
+> - la mémoire répond ;
+> - le registre d'instruction est chargé.
+```
+
+- le diaporama s'écrit comme un encadré, avec le marqueur `[!diaporama]`, suivi sur la même ligne
+  de son titre (facultatif, 200 caractères au plus) ;
+- une ligne `>` vide sépare le marqueur de la première image, et chaque bloc du suivant ;
+- chaque image ouvre une étape : elle est seule dans son paragraphe, comme toute figure. Sa légende
+  (entre guillemets) est le titre de l'étape ; son texte alternatif décrit ce que montre l'image ;
+- ce qui suit l'image, jusqu'à l'image suivante, est l'explication de l'étape : des paragraphes et
+  des listes, avec gras, italique, code en ligne et liens. Pas de tableau, de bloc de code,
+  d'encadré ni de titre dans une étape ;
+- le diaporama commence par une image : aucun texte entre le marqueur et elle ;
+- 60 étapes au plus ; chaque image est un fichier du dossier `images/`, aux mêmes formats et
+  limites que les autres ;
+- toutes les images d'un diaporama ont les mêmes dimensions et le même cadrage : d'une étape à
+  l'autre, seul ce qui change doit bouger. Les redessiner en SVG à partir d'un même gabarit est le
+  plus sûr ;
+- un diaporama se place au premier niveau du cours ou de la fiche : pas dans un encadré, une
+  liste ou un tableau.
+
 ### Fiche de révision
 
 `fiche.md` est la fiche de révision du chapitre : un document à part, rédigé pour réviser, et non
