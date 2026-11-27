@@ -507,8 +507,8 @@ describe('Import d’un paquet de cours', () => {
   it('remplace le chapitre et ses images quand c’est confirmé', async () => {
     const [before] = await app
       .get(DataSource)
-      .query<{ id: number; revision: number }[]>(
-        'SELECT id, revision FROM courses',
+      .query<{ id: number; revision: number; content: object }[]>(
+        'SELECT id, revision, content FROM courses',
       );
     // Même titre, à la casse près, et un autre « ordre » : c'est le titre qui désigne le chapitre.
     const replaced = await importPackage(
@@ -532,8 +532,13 @@ describe('Import d’un paquet de cours', () => {
     expect(course.position).toBe(1);
     expect(JSON.stringify(course.content)).toContain('Ordonnancement revu');
     expect(await countCourses()).toBe(1);
-    // L'image du chapitre remplacé, et celle de la définition importée la première fois.
-    expect(storedFiles()).toHaveLength(2);
+    // Les images du chapitre remplacé restent, pour son instantané ; le paquet apporte la sienne.
+    const figure = /\/api\/courses\/\d+\/images\/\d+/;
+    const oldFigure = figure.exec(JSON.stringify(before.content))![0];
+    const newFigure = figure.exec(JSON.stringify(course.content))![0];
+    expect(newFigure).not.toBe(oldFigure);
+    expect((await client('get', oldFigure)).status).toBe(200);
+    expect((await client('get', newFigure)).status).toBe(200);
   });
 
   it('accepte un paquet créé en compressant un dossier', async () => {
@@ -737,7 +742,7 @@ describe('Import d’un paquet de cours', () => {
       expect((await client('get', figureOf(course))).status).toBe(200);
     });
 
-    it('remplace la fiche et efface ses anciennes images au réimport', async () => {
+    it('remplace la fiche au réimport et garde ses anciennes images pour l’instantané', async () => {
       const before = (await importPackage(withoutSheet(), true)).body as Course;
       const oldFigure = figureOf(before);
 
@@ -745,7 +750,7 @@ describe('Import d’un paquet de cours', () => {
 
       const course = response.body as Course;
       expect(figureOf(course)).not.toBe(oldFigure);
-      expect((await client('get', oldFigure)).status).toBe(404);
+      expect((await client('get', oldFigure)).status).toBe(200);
       expect((await client('get', figureOf(course))).status).toBe(200);
     });
 

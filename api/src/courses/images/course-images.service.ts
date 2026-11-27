@@ -88,11 +88,13 @@ export class CourseImagesService {
 
   // Aligne les images sur le contenu enregistré : met à jour les textes alternatifs et
   // supprime les lignes des images qui ne sont plus utilisées. Renvoie ces dernières,
-  // dont les fichiers restent à effacer une fois la transaction validée.
+  // dont les fichiers restent à effacer une fois la transaction validée. keptIds : images
+  // à garder bien que le contenu ne les montre plus (celles des instantanés du cours).
   async reconcile(
     manager: EntityManager,
     courseId: number,
     figures: FigureReference[],
+    keptIds: number[] = [],
   ): Promise<CourseImage[]> {
     for (const figure of figures) {
       await manager.update(
@@ -101,7 +103,7 @@ export class CourseImagesService {
         { altText: figure.altText },
       );
     }
-    const usedIds = figures.map((figure) => figure.imageId);
+    const usedIds = [...figures.map((figure) => figure.imageId), ...keptIds];
     const unused = await manager.findBy(CourseImage, {
       courseId,
       id: Not(In(usedIds)),

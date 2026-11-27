@@ -53,6 +53,7 @@ describe('Migrations', () => {
       'command_variants',
       'commands',
       'course_images',
+      'course_snapshots',
       'courses',
       'events',
       'exercise_attempts',
