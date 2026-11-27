@@ -27,6 +27,12 @@ Tous en lecture seule pour l'instant.
 | `get_course_outline` | Le plan d'un cours : révision, sections du cours, de la fiche et des exercices, clés des exercices. |
 | `read_course_document` | Un document d'un cours en Markdown, en entier ou une section désignée par son rang, avec ce qu'une réécriture perdrait. |
 | `read_content_format` | La référence du format (`contracts/README.md`). |
+| `list_terms` | Les termes d'une UE, filtrables par cours et par type. |
+| `read_term` | Un terme aux clés de `termes.json`, et sa définition en Markdown. |
+| `list_tools` | Les outils, avec les UE où ils servent. |
+| `read_tool` | Un outil aux clés de `commandes.json`, la liste de ses commandes et sa fiche en Markdown. |
+| `read_commands` | Toutes les commandes d'un outil, aux clés de `commandes.json`. |
+| `search` | La recherche de l'interface : cours, définitions, acronymes, fichiers, outils, commandes. |
 
 ## Révoquer l'accès
 
