@@ -84,12 +84,12 @@ export function selectSlideText(transaction: Transaction, slidePos: number): Tra
   return transaction.setSelection(TextSelection.create(transaction.doc, explanation));
 }
 
-// Document d'un cours : des blocs, et des diaporamas et des QCM, qui ne se placent qu'à ce
-// niveau (ni dans un encadré, ni dans un tableau, ni l'un dans l'autre).
+// Document d'un cours : des blocs, et des diaporamas, des QCM et des exercices, qui ne se
+// placent qu'à ce niveau (ni dans un encadré, ni dans un tableau, ni l'un dans l'autre).
 export const CourseDocument = Node.create({
   name: 'doc',
   topNode: true,
-  content: '(block | slideshow | quiz)+',
+  content: '(block | slideshow | quiz | exercise)+',
 });
 
 // Diaporama : une suite d'étapes qu'on fait défiler dans une fenêtre, en lecture, pour

@@ -14,6 +14,7 @@ import { Callout } from './callout';
 import { CheckGrid } from './check-grid';
 import { Figure } from './figure';
 import { CourseDocument, Slide, Slideshow } from '../slideshow/slideshow';
+import { Exercise, ExerciseSolution, ExerciseStatement } from '../exercise/exercise';
 import { Quiz, QuizChoice, QuizExplanation, QuizPrompt, QuizQuestion } from '../quiz/quiz';
 import { SectionReferences } from './section-references';
 import { TermMentions } from './term-mentions';
@@ -60,6 +61,9 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     QuizPrompt,
     QuizChoice,
     QuizExplanation,
+    Exercise,
+    ExerciseStatement,
+    ExerciseSolution,
     SectionFolding,
     SectionReferences,
     TermMentions,

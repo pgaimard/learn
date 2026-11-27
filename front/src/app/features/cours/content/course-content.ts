@@ -14,6 +14,7 @@ import {
 import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
 import { SlideshowViewerService, ViewedSlideshow } from '../../../core/ui/slideshow-viewer.service';
+import { OpenedExercise, openedExercise } from '../exercise/exercise';
 import { MAX_SLIDES, selectSlideText, slideshowAtSelection } from '../slideshow/slideshow';
 import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
@@ -59,6 +60,8 @@ export class CourseContent {
   readonly sectionReferenced = output<number>();
   // Émis en lecture quand un terme cité dans le texte est choisi : son identifiant.
   readonly termOpened = output<number>();
+  // Émis en lecture par « Faire l'exercice » : son énoncé et son corrigé.
+  readonly exerciseOpened = output<OpenedExercise>();
 
   // L'éditeur n'existe qu'après le premier rendu ; la barre d'outils s'y branche.
   readonly editor = signal<Editor | null>(null);
@@ -176,6 +179,22 @@ export class CourseContent {
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
   }
 
+  // Retrouve dans le document l'exercice dessiné par cet élément, et le fait ouvrir.
+  private openExercise(element: HTMLElement): void {
+    const editor = this.editor();
+    if (!editor) {
+      return;
+    }
+    const $pos = editor.state.doc.resolve(editor.view.posAtDOM(element, 0));
+    for (let depth = $pos.depth; depth >= 0; depth--) {
+      const node = $pos.node(depth);
+      if (node.type.name === 'exercise') {
+        this.exerciseOpened.emit(openedExercise(node));
+        return;
+      }
+    }
+  }
+
   // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ouvre la définition
   // d'un terme cité, ouvre un diaporama, ou ouvre en grand l'image d'une figure.
   protected activate(event: Event): void {
@@ -193,6 +212,12 @@ export class CourseContent {
     if (mention) {
       event.preventDefault();
       this.termOpened.emit(Number(mention.dataset['termId']));
+      return;
+    }
+    const exercise = image.closest('.exercise-open')?.closest<HTMLElement>('.exercise');
+    if (exercise) {
+      event.preventDefault();
+      this.openExercise(exercise);
       return;
     }
     const slideshow = image.closest<HTMLElement>('.slideshow');

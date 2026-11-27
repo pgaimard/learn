@@ -1,0 +1,84 @@
+<!-- (cancel) : fermeture par Échap, qui passe par la même confirmation que le bouton. -->
+<dialog
+  #dialog
+  class="workspace"
+  aria-labelledby="exercise-workspace-title"
+  (cancel)="close($event)"
+>
+  <header class="workspace-header">
+    <span class="kind">Exercice</span>
+    <h2 id="exercise-workspace-title">{{ exercise().title || 'Sans titre' }}</h2>
+    <button
+      type="button"
+      class="button button-icon button-ghost"
+      aria-label="Fermer l’exercice"
+      (click)="close()"
+    >
+      <app-icon name="close" [size]="15" />
+    </button>
+  </header>
+
+  <div class="panes">
+    <section class="pane" aria-label="Énoncé et corrigé">
+      <div class="pane-header">
+        <div class="tabs" role="group" aria-label="Volet de gauche">
+          <button
+            type="button"
+            [attr.aria-pressed]="side() === 'statement'"
+            (click)="side.set('statement')"
+          >
+            Énoncé
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="side() === 'solution'"
+            [disabled]="!isChecked()"
+            [title]="isChecked() ? '' : 'Le corrigé s’affiche une fois la réponse validée'"
+            (click)="side.set('solution')"
+          >
+            Corrigé
+          </button>
+        </div>
+      </div>
+      <div class="pane-body">
+        @for (content of [shown()]; track content) {
+          <app-course-content
+            [content]="content"
+            [terms]="terms()"
+            [label]="side() === 'solution' ? 'Corrigé' : 'Énoncé'"
+            (termOpened)="termOpened.emit($event)"
+          />
+        }
+      </div>
+    </section>
+
+    <section class="pane" aria-label="Ma réponse">
+      @if (isChecked()) {
+        <div class="pane-header">
+          <span class="pane-title">Ma réponse</span>
+          <button type="button" class="button" (click)="retry()">Reprendre ma réponse</button>
+        </div>
+        <div class="pane-body">
+          <app-course-content [content]="answer()" label="Ma réponse" />
+        </div>
+      } @else {
+        <div class="pane-body pane-editor">
+          <app-content-editor
+            [content]="answer()"
+            label="Ma réponse"
+            (edited)="markDirty()"
+            (imageAdded)="refuseImage()"
+          >
+            <span editorDocument class="document-title">Ma réponse</span>
+            <button editorActions type="button" class="button button-primary" (click)="check()">
+              Valider
+            </button>
+            @if (message()) {
+              <p class="form-error" role="alert">{{ message() }}</p>
+            }
+          </app-content-editor>
+        </div>
+      }
+    </section>
+  </div>
+</dialog>
