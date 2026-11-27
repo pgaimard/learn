@@ -11,6 +11,7 @@ import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { BookmarkMark } from '../bookmark/bookmark-mark';
 import { RevisionPin } from '../revision/revision-pin';
 import { Callout } from './callout';
+import { CheckGrid } from './check-grid';
 import { Figure } from './figure';
 import { CourseDocument, Slide, Slideshow } from '../slideshow/slideshow';
 import { Quiz, QuizChoice, QuizExplanation, QuizPrompt, QuizQuestion } from '../quiz/quiz';
@@ -50,6 +51,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     Figure,
     Callout,
     TextAlign,
+    CheckGrid,
     CourseDocument,
     Slideshow,
     Slide,

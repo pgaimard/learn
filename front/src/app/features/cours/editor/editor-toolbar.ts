@@ -14,6 +14,7 @@ import { Dropdown, DropdownOption } from '../../../core/ui/dropdown';
 import { Icon, IconName } from '../../../core/ui/icon';
 import { MenuButton } from '../../../core/ui/menu-button';
 import { shortcut } from '../../../core/ui/platform';
+import { GridShape, insertCheckGrid } from '../content/check-grid';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 import {
   setCellVerticalAlign,
@@ -226,6 +227,11 @@ export class EditorToolbar {
     } else {
       chain.wrapIn('callout', { kind }).run();
     }
+  }
+
+  protected insertGrid(shape: GridShape): void {
+    this.isPickingTable.set(false);
+    insertCheckGrid(this.editor(), shape);
   }
 
   protected insertTable(shape: TableShape): void {

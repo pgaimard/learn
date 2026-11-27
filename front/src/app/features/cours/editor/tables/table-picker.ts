@@ -2,12 +2,20 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   output,
   signal,
   viewChild,
 } from '@angular/core';
+import {
+  GridShape,
+  MAX_GRID_COLUMNS,
+  MAX_GRID_ROWS,
+  parseColumns,
+  parseLabels,
+} from '../../content/check-grid';
 import { MAX_TABLE_COLUMNS, MAX_TABLE_ROWS, TableShape } from './table-commands';
 
 const GRID_ROWS = 8;
@@ -22,7 +30,7 @@ function clamp(value: number, max: number): number {
 }
 
 // Choix d'un tableau à insérer : sa taille, prise d'un geste sur la grille ou saisie, et
-// ses en-têtes.
+// ses en-têtes ; ou une grille à cocher, par les noms de ses lignes et de ses colonnes.
 @Component({
   selector: 'app-table-picker',
   templateUrl: './table-picker.html',
@@ -38,12 +46,24 @@ function clamp(value: number, max: number): number {
 })
 export class TablePicker {
   readonly picked = output<TableShape>();
+  readonly gridPicked = output<GridShape>();
   readonly closed = output();
 
   protected readonly gridRows = range(GRID_ROWS);
   protected readonly gridColumns = range(GRID_COLUMNS);
   protected readonly maxRows = MAX_TABLE_ROWS;
   protected readonly maxColumns = MAX_TABLE_COLUMNS;
+
+  protected readonly maxGridRows = MAX_GRID_ROWS;
+  protected readonly maxGridColumns = MAX_GRID_COLUMNS;
+
+  // Tableau ordinaire, ou grille à cocher.
+  protected readonly isGrid = signal(false);
+  protected readonly rowLabels = signal<string[]>([]);
+  protected readonly columnLabels = signal<string[]>([]);
+  protected readonly canInsertGrid = computed(
+    () => this.rowLabels().length > 0 && this.columnLabels().length > 0,
+  );
 
   protected readonly rows = signal(3);
   protected readonly columns = signal(3);
@@ -70,8 +90,22 @@ export class TablePicker {
     this.columns.set(clamp(Number(value), MAX_TABLE_COLUMNS));
   }
 
+  protected setRowLabels(value: string): void {
+    this.rowLabels.set(parseLabels(value, MAX_GRID_ROWS));
+  }
+
+  protected setColumnLabels(value: string): void {
+    this.columnLabels.set(parseColumns(value));
+  }
+
   protected choose(event?: Event): void {
     event?.preventDefault();
+    if (this.isGrid()) {
+      if (this.canInsertGrid()) {
+        this.gridPicked.emit({ rowLabels: this.rowLabels(), columnLabels: this.columnLabels() });
+      }
+      return;
+    }
     this.picked.emit({
       rows: this.rows(),
       columns: this.columns(),

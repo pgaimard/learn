@@ -172,7 +172,11 @@
       <app-icon name="table" [size]="15" />
     </button>
     @if (isPickingTable()) {
-      <app-table-picker (picked)="insertTable($event)" (closed)="isPickingTable.set(false)" />
+      <app-table-picker
+        (picked)="insertTable($event)"
+        (gridPicked)="insertGrid($event)"
+        (closed)="isPickingTable.set(false)"
+      />
     }
   </span>
   <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">

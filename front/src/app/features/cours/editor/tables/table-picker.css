@@ -70,3 +70,55 @@
   margin: 0;
   accent-color: var(--color-accent);
 }
+
+/* Tableau ordinaire ou grille à cocher. */
+.modes {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--color-raised);
+}
+
+.modes button {
+  flex: 1;
+  height: 1.625rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.modes button[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+}
+
+.labels input {
+  width: 15rem;
+  height: 1.75rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.hint {
+  max-width: 15rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}

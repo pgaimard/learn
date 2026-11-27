@@ -1,65 +1,105 @@
-<!-- La grille est un raccourci à la souris ; les deux champs disent la même chose au clavier. -->
-<div class="grid" aria-hidden="true" (click)="choose()">
-  @for (row of gridRows; track row) {
-    @for (column of gridColumns; track column) {
-      <span
-        class="cell"
-        [class.is-aimed]="row <= rows() && column <= columns()"
-        [class.is-header]="
-          row <= rows() &&
-          column <= columns() &&
-          ((hasHeaderRow() && row === 1) || (hasHeaderColumn() && column === 1))
-        "
-        (mouseenter)="aim(row, column)"
-      ></span>
-    }
-  }
+<div class="modes" role="group" aria-label="Genre de tableau">
+  <button type="button" [attr.aria-pressed]="!isGrid()" (click)="isGrid.set(false)">Tableau</button>
+  <button type="button" [attr.aria-pressed]="isGrid()" (click)="isGrid.set(true)">
+    Grille à cocher
+  </button>
 </div>
 
-<div class="size">
-  <label>
+@if (isGrid()) {
+  <label class="labels">
     Lignes
     <input
-      #rowsField
-      type="number"
-      min="1"
-      [max]="maxRows"
-      [value]="rows()"
-      (change)="setRows(rowsField.value)"
+      #rowLabelsField
+      type="text"
+      placeholder="P1, P2, P3"
+      (input)="setRowLabels(rowLabelsField.value)"
     />
   </label>
-  <label>
+  <label class="labels">
     Colonnes
     <input
-      #columnsField
-      type="number"
-      min="1"
-      [max]="maxColumns"
-      [value]="columns()"
-      (change)="setColumns(columnsField.value)"
+      #columnLabelsField
+      type="text"
+      placeholder="0-30, ou A, B, C"
+      (input)="setColumnLabels(columnLabelsField.value)"
     />
   </label>
-</div>
+  <p class="hint">
+    Des noms séparés par des virgules, ou une plage de nombres. {{ maxGridRows }} lignes et
+    {{ maxGridColumns }} colonnes au plus.
+  </p>
+  <button
+    type="button"
+    class="button button-primary"
+    [disabled]="!canInsertGrid()"
+    (click)="choose()"
+  >
+    Insérer {{ rowLabels().length }} × {{ columnLabels().length }}
+  </button>
+} @else {
+  <!-- La grille est un raccourci à la souris ; les deux champs disent la même chose au clavier. -->
+  <div class="grid" aria-hidden="true" (click)="choose()">
+    @for (row of gridRows; track row) {
+      @for (column of gridColumns; track column) {
+        <span
+          class="cell"
+          [class.is-aimed]="row <= rows() && column <= columns()"
+          [class.is-header]="
+            row <= rows() &&
+            column <= columns() &&
+            ((hasHeaderRow() && row === 1) || (hasHeaderColumn() && column === 1))
+          "
+          (mouseenter)="aim(row, column)"
+        ></span>
+      }
+    }
+  </div>
 
-<label class="option">
-  <input
-    #headerRowField
-    type="checkbox"
-    [checked]="hasHeaderRow()"
-    (change)="hasHeaderRow.set(headerRowField.checked)"
-  />
-  Ligne d’en-tête
-</label>
-<label class="option">
-  <input
-    #headerColumnField
-    type="checkbox"
-    [checked]="hasHeaderColumn()"
-    (change)="hasHeaderColumn.set(headerColumnField.checked)"
-  />
-  Colonne d’en-tête
-</label>
+  <div class="size">
+    <label>
+      Lignes
+      <input
+        #rowsField
+        type="number"
+        min="1"
+        [max]="maxRows"
+        [value]="rows()"
+        (change)="setRows(rowsField.value)"
+      />
+    </label>
+    <label>
+      Colonnes
+      <input
+        #columnsField
+        type="number"
+        min="1"
+        [max]="maxColumns"
+        [value]="columns()"
+        (change)="setColumns(columnsField.value)"
+      />
+    </label>
+  </div>
 
-<button type="button" class="button button-primary" (click)="choose()">
-  Insérer {{ rows() }} × {{ columns() }}
-</button>
+  <label class="option">
+    <input
+      #headerRowField
+      type="checkbox"
+      [checked]="hasHeaderRow()"
+      (change)="hasHeaderRow.set(headerRowField.checked)"
+    />
+    Ligne d’en-tête
+  </label>
+  <label class="option">
+    <input
+      #headerColumnField
+      type="checkbox"
+      [checked]="hasHeaderColumn()"
+      (change)="hasHeaderColumn.set(headerColumnField.checked)"
+    />
+    Colonne d’en-tête
+  </label>
+
+  <button type="button" class="button button-primary" (click)="choose()">
+    Insérer {{ rows() }} × {{ columns() }}
+  </button>
+}
