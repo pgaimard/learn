@@ -82,14 +82,12 @@ export function toggleCheckAt(state: EditorState, pos: number): Transaction | nu
 // Marque les grilles d'une classe : la feuille de style en fait des cases.
 function gridDecorations(doc: ProseMirrorNode): DecorationSet {
   const decorations: Decoration[] = [];
+  // Une grille peut se trouver dans la cellule d'un autre tableau : on descend partout.
   doc.descendants((node, pos) => {
-    if (node.type.name !== 'table') {
-      return true;
-    }
-    if (node.attrs['grid'] === true) {
+    if (node.type.name === 'table' && node.attrs['grid'] === true) {
       decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: 'check-grid' }));
     }
-    return false;
+    return !node.isTextblock;
   });
   return DecorationSet.create(doc, decorations);
 }

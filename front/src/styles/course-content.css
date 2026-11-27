@@ -129,18 +129,24 @@
 }
 
 /* Grille à cocher : sous la ligne et la colonne d'en-tête, des cases de même largeur,
-   remplies ou vides. */
-.course-content .check-grid table {
-  table-layout: fixed;
-}
-
+   remplies ou vides. Un en-tête tient toujours sur une ligne : quand la place manque, la
+   grille déborde et défile dans son enveloppe au lieu de se tasser. */
 .course-content .check-grid th {
   padding: 0.25rem 0.375rem;
   text-align: center;
+  white-space: nowrap;
 }
 
+/* Les colonnes de cases partent de la même largeur et se partagent la place restante. */
+.course-content .check-grid th:not(:first-child),
+.course-content .check-grid td {
+  width: 2rem;
+  min-width: 2rem;
+}
+
+/* La colonne des noms de ligne se limite à son texte. */
 .course-content .check-grid th:first-child {
-  width: 6rem;
+  width: 1%;
   text-align: left;
 }
 
