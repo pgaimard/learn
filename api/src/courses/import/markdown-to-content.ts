@@ -1,7 +1,7 @@
 import MarkdownIt from 'markdown-it';
 import type { Token } from 'markdown-it';
 import { ContentMark, ContentNode } from '../content/content-node.js';
-import { isSafeLink } from '../content/content-schema.js';
+import { isSafeLink, MAX_SLIDES } from '../content/content-schema.js';
 
 export interface ConvertedMarkdown {
   // Document de l'éditeur ; la source des figures est encore le chemin dans le paquet.
@@ -21,6 +21,11 @@ const CALLOUT_KINDS = [
   'noter',
   'astuce',
 ];
+// Marqueur d'un diaporama, écrit comme celui d'un encadré, et blocs admis dans
+// l'explication d'une étape.
+const SLIDESHOW_MARKER = 'diaporama';
+const SLIDE_TEXT = ['paragraph', 'bulletList', 'orderedList'];
+
 export const IMAGE_PATH =
   /^images\/[A-Za-z0-9][A-Za-z0-9._-]*\.(svg|png|jpe?g)$/i;
 const MAX_ERRORS = 10;
@@ -149,6 +154,9 @@ class Converter {
     if (!firstText || !marker) {
       return { type: 'blockquote', content };
     }
+    if (marker[1] === SLIDESHOW_MARKER) {
+      return this.slideshow(token, content, marker[0].length);
+    }
     if (!CALLOUT_KINDS.includes(marker[1])) {
       this.fail(
         token,
@@ -160,6 +168,54 @@ class Converter {
       this.fail(token, 'encadré vide.');
     }
     return { type: 'callout', attrs: { kind: marker[1] }, content: body };
+  }
+
+  // Diaporama : la première ligne porte le marqueur et, s'il y en a un, le titre. Ensuite,
+  // chaque image ouvre une étape ; ce qui la suit jusqu'à l'image suivante l'explique.
+  private slideshow(
+    token: Token,
+    content: ContentNode[],
+    markerLength: number,
+  ): ContentNode {
+    const [first, ...blocks] = content;
+    const title = (first.content ?? [])
+      .map((inline) => inline.text ?? '')
+      .join('')
+      .slice(markerLength)
+      .trim();
+    const slides: ContentNode[] = [];
+    for (const block of blocks) {
+      if (block.type === 'figure') {
+        slides.push({ type: 'slide', content: [block] });
+      } else if (slides.length === 0) {
+        this.fail(token, 'un diaporama commence par une image.');
+        break;
+      } else if (SLIDE_TEXT.includes(block.type)) {
+        slides.at(-1)?.content?.push(block);
+      } else {
+        this.fail(
+          token,
+          'l’explication d’une étape de diaporama se limite à des paragraphes et à des listes.',
+        );
+        break;
+      }
+    }
+    if (blocks.length === 0) {
+      this.fail(token, 'diaporama sans image.');
+    }
+    if (slides.length > MAX_SLIDES) {
+      this.fail(
+        token,
+        `un diaporama compte ${MAX_SLIDES} étapes au plus (${slides.length} ici).`,
+      );
+    }
+    // Une étape a toujours une explication, fût-elle vide : c'est là qu'on la saisit ensuite.
+    for (const slide of slides) {
+      if (slide.content?.length === 1) {
+        slide.content.push({ type: 'paragraph' });
+      }
+    }
+    return { type: 'slideshow', attrs: { title }, content: slides };
   }
 
   private parseTableRows(): ContentNode[] {
