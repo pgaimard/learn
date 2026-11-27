@@ -4,7 +4,8 @@
     {
       "type": "heading",
       "attrs": {
-        "level": 2
+        "level": 2,
+        "textAlign": null
       },
       "content": [
         {
@@ -16,7 +17,8 @@
     {
       "type": "paragraph",
       "attrs": {
-        "pinned": false
+        "pinned": false,
+        "textAlign": "center"
       },
       "content": [
         {
@@ -120,7 +122,8 @@
     {
       "type": "heading",
       "attrs": {
-        "level": 3
+        "level": 3,
+        "textAlign": null
       },
       "content": [
         {
@@ -141,7 +144,8 @@
             {
               "type": "paragraph",
               "attrs": {
-                "pinned": false
+                "pinned": false,
+                "textAlign": null
               },
               "content": [
                 {
@@ -168,7 +172,8 @@
             {
               "type": "paragraph",
               "attrs": {
-                "pinned": false
+                "pinned": false,
+                "textAlign": null
               },
               "content": [
                 {
@@ -184,7 +189,8 @@
     {
       "type": "heading",
       "attrs": {
-        "level": 4
+        "level": 4,
+        "textAlign": null
       },
       "content": [
         {
@@ -196,7 +202,8 @@
     {
       "type": "heading",
       "attrs": {
-        "level": 5
+        "level": 5,
+        "textAlign": null
       },
       "content": [
         {
@@ -214,7 +221,8 @@
         {
           "type": "paragraph",
           "attrs": {
-            "pinned": false
+            "pinned": false,
+            "textAlign": null
           },
           "content": [
             {
@@ -259,7 +267,8 @@
                 {
                   "type": "paragraph",
                   "attrs": {
-                    "pinned": false
+                    "pinned": false,
+                    "textAlign": null
                   },
                   "content": [
                     {
@@ -287,7 +296,8 @@
                 {
                   "type": "paragraph",
                   "attrs": {
-                    "pinned": false
+                    "pinned": false,
+                    "textAlign": null
                   },
                   "content": [
                     {
@@ -329,7 +339,8 @@
         {
           "type": "paragraph",
           "attrs": {
-            "pinned": false
+            "pinned": false,
+            "textAlign": null
           },
           "content": [
             {
@@ -350,7 +361,8 @@
         {
           "type": "paragraph",
           "attrs": {
-            "pinned": false
+            "pinned": false,
+            "textAlign": null
           },
           "content": [
             {
@@ -380,7 +392,8 @@
                 {
                   "type": "paragraph",
                   "attrs": {
-                    "pinned": false
+                    "pinned": false,
+                    "textAlign": null
                   },
                   "content": [
                     {
@@ -410,7 +423,8 @@
                 {
                   "type": "paragraph",
                   "attrs": {
-                    "pinned": false
+                    "pinned": false,
+                    "textAlign": null
                   },
                   "content": [
                     {
@@ -451,7 +465,8 @@
                 {
                   "type": "paragraph",
                   "attrs": {
-                    "pinned": false
+                    "pinned": false,
+                    "textAlign": null
                   },
                   "content": [
                     {
@@ -469,7 +484,8 @@
     {
       "type": "paragraph",
       "attrs": {
-        "pinned": false
+        "pinned": false,
+        "textAlign": null
       },
       "content": [
         {

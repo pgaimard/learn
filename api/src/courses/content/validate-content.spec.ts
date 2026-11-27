@@ -181,6 +181,26 @@ describe('validateContent', () => {
     ]);
   });
 
+  it('accepte l’alignement d’un paragraphe ou d’un titre, parmi quatre valeurs', () => {
+    const aligned = (textAlign: unknown): ContentNode => ({
+      type: 'paragraph',
+      attrs: { textAlign },
+      content: [{ type: 'text', text: 'Texte' }],
+    });
+    const heading: ContentNode = {
+      type: 'heading',
+      attrs: { level: 2, textAlign: 'center' },
+      content: [{ type: 'text', text: 'Titre' }],
+    };
+
+    expect(
+      validateContent(doc(heading, aligned('justify'), aligned(null))),
+    ).toEqual([]);
+    expect(validateContent(doc(aligned('start; color: red')))).toEqual([
+      'Valeur non autorisée pour « textAlign » sur « paragraph ».',
+    ]);
+  });
+
   describe('QCM', () => {
     const choice = (correct: boolean, text = 'oui'): ContentNode => ({
       type: 'quizChoice',

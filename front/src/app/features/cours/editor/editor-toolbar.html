@@ -72,6 +72,21 @@
   </button>
 </div>
 
+<div class="group" role="group" aria-label="Alignement">
+  @for (option of alignments; track option.value) {
+    <button
+      type="button"
+      class="tool"
+      [title]="option.label"
+      [attr.aria-label]="option.label"
+      [attr.aria-pressed]="alignment() === option.value"
+      (click)="align(option.value)"
+    >
+      <app-icon [name]="option.icon" [size]="15" />
+    </button>
+  }
+</div>
+
 <div class="group" role="group" aria-label="Blocs">
   <button
     type="button"

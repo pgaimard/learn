@@ -40,6 +40,11 @@ const isShortString: AttributeCheck = (value) =>
 const isColumnWidths: AttributeCheck = (value) =>
   Array.isArray(value) && value.every(isIntegerBetween(1, 5000));
 
+// Alignement d'un paragraphe ou d'un titre ; absent ou null, celui par défaut.
+const textAlign: Record<string, AttributeCheck> = {
+  textAlign: isNullable(isOneOf(['left', 'center', 'right', 'justify'])),
+};
+
 const SAFE_LINK = /^(https?:\/\/|mailto:|#)/i;
 
 export const isSafeLink: AttributeCheck = (value) =>
@@ -100,11 +105,11 @@ const pinned: Record<string, AttributeCheck> = {
 
 export const NODE_RULES: Record<string, NodeRule> = {
   doc: { children: [...BLOCK_TYPES, 'slideshow', 'quiz'], minChildren: 1 },
-  paragraph: { children: 'inline', attrs: pinned },
+  paragraph: { children: 'inline', attrs: { ...pinned, ...textAlign } },
   heading: {
     children: 'inline',
     // Le niveau 1 est réservé au titre du cours.
-    attrs: { level: isIntegerBetween(2, 5) },
+    attrs: { level: isIntegerBetween(2, 5), ...textAlign },
   },
   bulletList: { children: ['listItem'], minChildren: 1, attrs: pinned },
   orderedList: {

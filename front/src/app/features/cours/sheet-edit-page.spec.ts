@@ -11,8 +11,16 @@ import { SheetEditPage } from './sheet-edit-page';
 const SHEET: ContentNode = {
   type: 'doc',
   content: [
-    { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'L’essentiel' }] },
-    { type: 'paragraph', attrs: { pinned: false }, content: [{ type: 'text', text: 'fork' }] },
+    {
+      type: 'heading',
+      attrs: { level: 2, textAlign: null },
+      content: [{ type: 'text', text: 'L’essentiel' }],
+    },
+    {
+      type: 'paragraph',
+      attrs: { pinned: false, textAlign: null },
+      content: [{ type: 'text', text: 'fork' }],
+    },
   ],
 };
 
