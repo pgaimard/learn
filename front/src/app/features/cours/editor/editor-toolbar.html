@@ -136,6 +136,15 @@
   <button
     type="button"
     class="tool"
+    title="Insérer un diaporama : choisir ses images, une par étape"
+    aria-label="Diaporama"
+    (click)="slideshowRequested.emit()"
+  >
+    <app-icon name="slides" [size]="15" />
+  </button>
+  <button
+    type="button"
+    class="tool"
     title="Ligne de séparation"
     aria-label="Séparateur"
     (click)="run(insertRule)"

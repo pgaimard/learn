@@ -81,7 +81,34 @@ export class ContentEditor {
     return this.view().getContent();
   }
 
+  // Images en attente d'envoi. Elles partent une à une, pour arriver dans le cours dans
+  // l'ordre où elles ont été choisies : les étapes d'un diaporama en dépendent.
+  private readonly waiting: File[] = [];
+  private isSending = false;
+
+  protected enqueue(file: File): void {
+    this.waiting.push(file);
+    if (!this.isSending) {
+      this.sendNext();
+    }
+  }
+
+  private sendNext(): void {
+    const file = this.waiting.shift();
+    this.isSending = file !== undefined;
+    if (file) {
+      this.imageAdded.emit(file);
+    }
+  }
+
+  // À appeler par la page quand l'image qu'elle envoyait est enregistrée…
   insertFigure(src: string, alt: string): void {
     this.view().insertFigure(src, alt);
+    this.sendNext();
+  }
+
+  // … ou quand son envoi a échoué : les suivantes ne restent pas bloquées.
+  imageFailed(): void {
+    this.sendNext();
   }
 }

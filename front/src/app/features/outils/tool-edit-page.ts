@@ -189,6 +189,7 @@ export class ToolEditPage {
 
   protected refuseImage(): void {
     this.errors.set(['La fiche d’un outil ne peut pas encore contenir d’image.']);
+    this.editor()?.imageFailed();
   }
 
   protected async remove(): Promise<void> {

@@ -3,6 +3,7 @@ import { Editor } from '@tiptap/core';
 import {
   filterSlashCommands,
   IMAGE_COMMAND,
+  SLIDESHOW_COMMAND,
   runSlashCommand,
   SlashCommand,
 } from './slash-commands';
@@ -19,6 +20,8 @@ export class SlashMenuState {
     private readonly editor: () => Editor | null,
     // Ouvre le choix d'un fichier image.
     private readonly pickImage: () => void,
+    // Ouvre le choix des images d'un diaporama.
+    private readonly pickSlideshow: () => void,
   ) {}
 
   show(trigger: SlashTrigger | null): void {
@@ -56,6 +59,9 @@ export class SlashMenuState {
     runSlashCommand(editor, command, trigger);
     if (command === IMAGE_COMMAND) {
       this.pickImage();
+    }
+    if (command === SLIDESHOW_COMMAND) {
+      this.pickSlideshow();
     }
   }
 }

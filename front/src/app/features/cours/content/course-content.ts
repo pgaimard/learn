@@ -13,6 +13,8 @@ import {
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
+import { SlideshowViewerService, ViewedSlideshow } from '../../../core/ui/slideshow-viewer.service';
+import { MAX_SLIDES, selectSlideText, slideshowAtSelection } from '../slideshow/slideshow';
 import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
 import { revealPosition } from '../editor/sections/section-folding';
@@ -73,10 +75,15 @@ export class CourseContent {
   readonly slash = new SlashMenuState(
     () => this.editor(),
     () => this.pickImages(),
+    () => this.pickSlideshow(),
   );
+
+  // Les prochaines images reçues ouvrent un diaporama au lieu de s'insérer seules.
+  private slideshowPending = false;
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly imageViewer = inject(ImageViewerService);
+  private readonly slideshowViewer = inject(SlideshowViewerService);
 
   constructor() {
     afterNextRender(() => {
@@ -167,7 +174,7 @@ export class CourseContent {
   }
 
   // En lecture, un clic (ou Entrée) suit un renvoi vers une section, ouvre la définition
-  // d'un terme cité, ou ouvre en grand l'image d'une figure.
+  // d'un terme cité, ouvre un diaporama, ou ouvre en grand l'image d'une figure.
   protected activate(event: Event): void {
     const image = event.target;
     if (this.editable() || !(image instanceof Element)) {
@@ -183,6 +190,12 @@ export class CourseContent {
     if (mention) {
       event.preventDefault();
       this.termOpened.emit(Number(mention.dataset['termId']));
+      return;
+    }
+    const slideshow = image.closest<HTMLElement>('.slideshow');
+    if (slideshow) {
+      event.preventDefault();
+      this.slideshowViewer.open(readSlideshow(slideshow));
       return;
     }
     if (!(image instanceof HTMLImageElement)) {
@@ -201,6 +214,17 @@ export class CourseContent {
   // Ouvre le choix de fichiers du navigateur ; les images choisies suivent le même
   // chemin que celles collées ou déposées.
   private pickImages(): void {
+    this.slideshowPending = false;
+    this.chooseImages();
+  }
+
+  // Choix des images d'un nouveau diaporama : une par étape, dans l'ordre des fichiers.
+  pickSlideshow(): void {
+    this.slideshowPending = true;
+    this.chooseImages();
+  }
+
+  private chooseImages(): void {
     const field = document.createElement('input');
     field.type = 'file';
     field.accept = 'image/png,image/jpeg,image/svg+xml';
@@ -210,6 +234,8 @@ export class CourseContent {
         this.imageReceived.emit(file);
       }
     });
+    // Choix abandonné : les images suivantes ne doivent pas ouvrir un diaporama.
+    field.addEventListener('cancel', () => (this.slideshowPending = false));
     field.click();
   }
 
@@ -263,6 +289,9 @@ export class CourseContent {
       return;
     }
     const figure = { type: 'figure', attrs: { src, alt } };
+    if (this.insertSlide(editor, figure)) {
+      return;
+    }
     if (!editor.isActive('figure')) {
       editor.chain().focus().insertContent(figure).run();
       return;
@@ -272,6 +301,36 @@ export class CourseContent {
     const { $to, to } = editor.state.selection;
     const position = $to.parent.type.name === 'figure' ? $to.after() : to;
     editor.chain().focus().insertContentAt(position, figure).run();
+  }
+
+  // Une image reçue pendant qu'on compose un diaporama devient une étape : la première
+  // ouvre le diaporama après le bloc du curseur, les suivantes s'ajoutent après l'étape
+  // du curseur. Renvoie false quand l'image doit s'insérer comme une figure ordinaire.
+  private insertSlide(editor: Editor, figure: ContentNode): boolean {
+    const slide = { type: 'slide', content: [figure, { type: 'paragraph' }] };
+    const current = slideshowAtSelection(editor.state);
+    if (current) {
+      if (current.count >= MAX_SLIDES) {
+        return true;
+      }
+      editor.chain().focus().insertContentAt(current.afterSlide, slide).run();
+      editor.view.dispatch(selectSlideText(editor.state.tr, current.afterSlide));
+      return true;
+    }
+    if (!this.slideshowPending) {
+      return false;
+    }
+    this.slideshowPending = false;
+    const { $from } = editor.state.selection;
+    const position = $from.depth > 0 ? $from.after(1) : editor.state.doc.content.size;
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(position, { type: 'slideshow', content: [slide] })
+      .run();
+    // Le curseur entre dans l'étape : les images suivantes s'ajouteront après elle.
+    editor.view.dispatch(selectSlideText(editor.state.tr, position + 1));
+    return true;
   }
 
   // Renvoie true quand des images ont été prises en charge, pour bloquer le traitement
@@ -321,4 +380,21 @@ function imagesOf(transfer: DataTransfer | null): File[] {
 
 function hasImages(transfer: DataTransfer | null): boolean {
   return imagesOf(transfer).length > 0;
+}
+
+// Étapes d'un diaporama, lues dans la page telle que l'éditeur l'a rendue : l'image de
+// chaque étape, sa légende, et les éléments de son explication.
+function readSlideshow(element: HTMLElement): ViewedSlideshow {
+  const slides = Array.from(element.querySelectorAll<HTMLElement>('.slide-body')).map((body) => {
+    const image = body.querySelector('figure img');
+    return {
+      src: image?.getAttribute('src') ?? '',
+      alt: image?.getAttribute('alt') ?? '',
+      caption: body.querySelector('figcaption')?.textContent.trim() ?? '',
+      body: Array.from(body.children).filter(
+        (child) => child.tagName !== 'FIGURE' && (child.textContent ?? '').trim().length > 0,
+      ),
+    };
+  });
+  return { title: element.querySelector('.slideshow-title')?.textContent.trim() ?? '', slides };
 }

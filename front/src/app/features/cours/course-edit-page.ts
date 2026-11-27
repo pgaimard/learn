@@ -112,7 +112,10 @@ export class CourseEditPage {
     this.errors.set([]);
     this.courseService.uploadImage(Number(this.id()), file).subscribe({
       next: (image) => this.editor()?.insertFigure(image.src, image.altText),
-      error: (error: ApiError) => this.errors.set(error.messages),
+      error: (error: ApiError) => {
+        this.errors.set(error.messages);
+        this.editor()?.imageFailed();
+      },
     });
   }
 
