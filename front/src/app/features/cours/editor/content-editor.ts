@@ -7,6 +7,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { Editor } from '@tiptap/core';
 import { DialogService } from '../../../core/dialog/dialog.service';
 import { buildOutline } from '../content/build-outline';
 import { ContentNode } from '../content/content-node';
@@ -18,7 +19,9 @@ import { EditorToolbar } from './editor-toolbar';
 import { editLink } from './selection/edit-link';
 import { SelectionBar } from './selection/selection-bar';
 import { SlashMenu } from './slash/slash-menu';
+import { insertShapedTable, TableShape } from './tables/table-commands';
 import { TableMenu } from './tables/table-menu';
+import { TablePicker } from './tables/table-picker';
 
 // Éditeur complet : barre d'outils collante et feuille de contenu. La page qui l'utilise
 // fournit ses actions (projetées au-dessus de la barre), l'enregistrement et l'envoi des images.
@@ -33,6 +36,7 @@ import { TableMenu } from './tables/table-menu';
     SelectionBar,
     SlashMenu,
     TableMenu,
+    TablePicker,
   ],
   host: {
     // Ctrl+K est pris par la recherche : le lien se pose avec Ctrl+Maj+K.
@@ -110,5 +114,9 @@ export class ContentEditor {
   // … ou quand son envoi a échoué : les suivantes ne restent pas bloquées.
   imageFailed(): void {
     this.sendNext();
+  }
+
+  protected insertTable(editor: Editor, shape: TableShape): void {
+    insertShapedTable(editor, shape);
   }
 }

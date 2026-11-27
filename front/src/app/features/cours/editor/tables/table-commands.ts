@@ -1,6 +1,8 @@
 import { Editor } from '@tiptap/core';
-import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { EditorState, TextSelection, Transaction } from '@tiptap/pm/state';
 import {
+  addColumn,
+  addRow,
   findTable,
   isInTable,
   moveTableColumn,
@@ -20,6 +22,50 @@ export interface TableLocation {
 }
 
 export type TableAxis = 'row' | 'column';
+
+// Tableau à insérer.
+export interface TableShape {
+  rows: number;
+  columns: number;
+  hasHeaderRow: boolean;
+  hasHeaderColumn: boolean;
+}
+
+export const MAX_TABLE_ROWS = 50;
+export const MAX_TABLE_COLUMNS = 20;
+
+// Insère un tableau de cette forme à l'endroit du curseur, qui entre dans sa première cellule.
+export function insertShapedTable(editor: Editor, shape: TableShape): boolean {
+  const chain = editor
+    .chain()
+    .focus()
+    .insertTable({ rows: shape.rows, cols: shape.columns, withHeaderRow: shape.hasHeaderRow });
+  return (shape.hasHeaderColumn ? chain.toggleHeaderColumn() : chain).run();
+}
+
+// Ajoute une ligne sous la dernière, ou une colonne à droite de la dernière, au tableau
+// situé à tablePos. Renvoie null s'il n'y a pas de tableau à cet endroit.
+export function appendToTable(
+  state: EditorState,
+  tablePos: number,
+  axis: TableAxis,
+): Transaction | null {
+  const table = state.doc.nodeAt(tablePos);
+  if (table?.type.name !== 'table') {
+    return null;
+  }
+  const map = TableMap.get(table);
+  const rect = {
+    map,
+    table,
+    tableStart: tablePos + 1,
+    left: 0,
+    top: 0,
+    right: map.width,
+    bottom: map.height,
+  };
+  return axis === 'row' ? addRow(state.tr, rect, map.height) : addColumn(state.tr, rect, map.width);
+}
 
 export function tableLocation(state: EditorState): TableLocation | null {
   if (!isInTable(state)) {

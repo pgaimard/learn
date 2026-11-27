@@ -6,6 +6,7 @@ import {
   SLIDESHOW_COMMAND,
   runSlashCommand,
   SlashCommand,
+  TABLE_COMMAND,
 } from './slash-commands';
 import { SlashTrigger } from './slash-watcher';
 
@@ -22,6 +23,8 @@ export class SlashMenuState {
     private readonly pickImage: () => void,
     // Ouvre le choix des images d'un diaporama.
     private readonly pickSlideshow: () => void,
+    // Ouvre le choix d'un tableau à l'endroit du menu.
+    private readonly pickTable: (place: { top: number; left: number }) => void,
   ) {}
 
   show(trigger: SlashTrigger | null): void {
@@ -62,6 +65,9 @@ export class SlashMenuState {
     }
     if (command === SLIDESHOW_COMMAND) {
       this.pickSlideshow();
+    }
+    if (command === TABLE_COMMAND) {
+      this.pickTable({ top: trigger.top, left: trigger.left });
     }
   }
 }

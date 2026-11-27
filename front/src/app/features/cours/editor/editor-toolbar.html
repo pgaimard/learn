@@ -113,15 +113,22 @@
   >
     <app-icon name="code-block" [size]="15" />
   </button>
-  <button
-    type="button"
-    class="tool"
-    title="Insérer un tableau"
-    aria-label="Tableau"
-    (click)="insertTable()"
-  >
-    <app-icon name="table" [size]="15" />
-  </button>
+  <span class="anchor">
+    <button
+      type="button"
+      class="tool"
+      title="Insérer un tableau"
+      aria-label="Tableau"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="isPickingTable()"
+      (click)="isPickingTable.set(!isPickingTable())"
+    >
+      <app-icon name="table" [size]="15" />
+    </button>
+    @if (isPickingTable()) {
+      <app-table-picker (picked)="insertTable($event)" (closed)="isPickingTable.set(false)" />
+    }
+  </span>
   <label class="tool file" title="Insérer une image (PNG, JPEG ou SVG)">
     <app-icon name="image" [size]="15" />
     <span class="visually-hidden">Image</span>

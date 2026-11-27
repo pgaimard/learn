@@ -506,6 +506,51 @@
   cursor: grabbing;
 }
 
+/* Boutons « + » au bord du tableau survolé : une ligne sous la dernière, une colonne à
+   droite de la dernière. */
+.course-content .table-adder {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* « display: flex » l'emporterait sur l'attribut hidden. */
+.course-content .table-adder[hidden] {
+  display: none;
+}
+
+.course-content .table-adder-row {
+  height: 1rem;
+  margin-top: 2px;
+}
+
+.course-content .table-adder-column {
+  width: 1rem;
+  margin-left: 2px;
+}
+
+.course-content .table-adder:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+/* Cellules sélectionnées ensemble, en glissant de l'une à l'autre : à fusionner, par exemple. */
+.course-content.is-editable .selectedCell {
+  background: var(--color-accent-soft);
+}
+
 /* Trait qui montre où la ligne ou la colonne sera déposée. */
 .course-content .table-drop-indicator {
   position: absolute;

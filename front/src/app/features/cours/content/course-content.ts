@@ -67,6 +67,8 @@ export class CourseContent {
   readonly blockMenu = signal<{ pos: number; top: number } | null>(null);
   // Menu de tableau ouvert par un clic droit : où l'afficher, dans le même repère.
   readonly tableMenu = signal<{ top: number; left: number } | null>(null);
+  // Choix d'un tableau à insérer, appelé par le menu « / » : où l'afficher, dans le même repère.
+  readonly tablePicker = signal<{ top: number; left: number } | null>(null);
   // Barre de mise en forme de la sélection : où l'afficher, dans le même repère.
   readonly selectionBar = signal<{ top: number; left: number } | null>(null);
   // Barre du bloc de code où se trouve le curseur : le bloc et son coin haut gauche.
@@ -76,6 +78,7 @@ export class CourseContent {
     () => this.editor(),
     () => this.pickImages(),
     () => this.pickSlideshow(),
+    (place) => this.tablePicker.set(place),
   );
 
   // Les prochaines images reçues ouvrent un diaporama au lieu de s'insérer seules.

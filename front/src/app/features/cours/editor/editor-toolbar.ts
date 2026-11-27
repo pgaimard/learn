@@ -16,6 +16,8 @@ import { MenuButton } from '../../../core/ui/menu-button';
 import { shortcut } from '../../../core/ui/platform';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
 import { editLink } from './selection/edit-link';
+import { insertShapedTable, TableShape } from './tables/table-commands';
+import { TablePicker } from './tables/table-picker';
 
 type BlockStyle = 'paragraph' | 'h2' | 'h3' | 'h4' | 'h5';
 type Mark = 'bold' | 'italic' | 'underline' | 'strike' | 'code';
@@ -24,7 +26,7 @@ type Command = (chain: Chain) => Chain;
 
 @Component({
   selector: 'app-editor-toolbar',
-  imports: [Dropdown, Icon, MenuButton],
+  imports: [Dropdown, Icon, MenuButton, TablePicker],
   host: {
     role: 'toolbar',
     'aria-label': 'Mise en forme',
@@ -44,6 +46,9 @@ export class EditorToolbar {
   readonly imagePicked = output<File>();
   // Bouton « Diaporama » : la feuille ouvre le choix de ses images, une par étape.
   readonly slideshowRequested = output();
+
+  // Choix de la taille du tableau à insérer, ouvert sous son bouton.
+  protected readonly isPickingTable = signal(false);
 
   // Chaque style de titre se montre à sa taille dans la liste.
   protected readonly blockStyles: DropdownOption[] = [
@@ -156,8 +161,9 @@ export class EditorToolbar {
     }
   }
 
-  protected insertTable(): void {
-    this.editor().chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  protected insertTable(shape: TableShape): void {
+    this.isPickingTable.set(false);
+    insertShapedTable(this.editor(), shape);
   }
 
   protected run(command: Command): void {

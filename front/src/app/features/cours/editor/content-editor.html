@@ -74,6 +74,16 @@
         (picked)="view.slash.pick($event)"
       />
     }
+    @if (view.tablePicker(); as target) {
+      @if (view.editor(); as editor) {
+        <app-table-picker
+          [style.top.px]="target.top"
+          [style.left.px]="target.left"
+          (picked)="insertTable(editor, $event); view.tablePicker.set(null)"
+          (closed)="view.tablePicker.set(null); editor.commands.focus()"
+        />
+      }
+    }
     @if (view.tableMenu(); as target) {
       @if (view.editor(); as editor) {
         <app-table-menu

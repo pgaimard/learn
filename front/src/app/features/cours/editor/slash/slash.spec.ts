@@ -8,14 +8,17 @@ describe('menu « / »', () => {
   let state: SlashMenuState;
   let imagePicks: number;
   let slideshowPicks: number;
+  let tablePicks: { top: number; left: number }[];
 
   beforeEach(() => {
     imagePicks = 0;
     slideshowPicks = 0;
+    tablePicks = [];
     state = new SlashMenuState(
       () => editor,
       () => imagePicks++,
       () => slideshowPicks++,
+      (place) => tablePicks.push(place),
     );
     editor = new Editor({
       extensions: createCourseExtensions({
@@ -255,13 +258,22 @@ describe('menu « / »', () => {
     });
 
     it('insère le bloc choisi avec Entrée et retire le « /mot »', () => {
-      type('/tab');
+      type('/sép');
 
       const enter = press('Enter');
 
       expect(enter.defaultPrevented).toBe(true);
-      expect(blocks().slice(0, 2)).toEqual(['paragraph:Avant', 'table:']);
+      expect(blocks().slice(0, 2)).toEqual(['paragraph:Avant', 'horizontalRule:']);
       expect(state.trigger()).toBeNull();
+    });
+
+    it('ouvre le choix de la taille pour un tableau, à l’endroit du menu', () => {
+      type('/tab');
+
+      press('Enter');
+
+      expect(tablePicks).toHaveLength(1);
+      expect(blocks()).toEqual(['paragraph:Avant', 'paragraph:']);
     });
 
     it('transforme le paragraphe en gardant le texte déjà écrit', () => {
