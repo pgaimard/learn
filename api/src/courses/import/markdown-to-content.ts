@@ -2,6 +2,7 @@ import MarkdownIt from 'markdown-it';
 import type { Token } from 'markdown-it';
 import { ContentMark, ContentNode } from '../content/content-node.js';
 import { isSafeLink, MAX_SLIDES } from '../content/content-schema.js';
+import { quizFromBlocks } from './quiz-from-blocks.js';
 
 export interface ConvertedMarkdown {
   // Document de l'éditeur ; la source des figures est encore le chemin dans le paquet.
@@ -25,6 +26,8 @@ const CALLOUT_KINDS = [
 // l'explication d'une étape.
 const SLIDESHOW_MARKER = 'diaporama';
 const SLIDE_TEXT = ['paragraph', 'bulletList', 'orderedList'];
+// Marqueur d'un QCM, écrit lui aussi comme celui d'un encadré.
+const QUIZ_MARKER = 'qcm';
 
 export const IMAGE_PATH =
   /^images\/[A-Za-z0-9][A-Za-z0-9._-]*\.(svg|png|jpe?g)$/i;
@@ -157,6 +160,13 @@ class Converter {
     if (marker[1] === SLIDESHOW_MARKER) {
       return this.slideshow(token, content, marker[0].length);
     }
+    if (marker[1] === QUIZ_MARKER) {
+      return quizFromBlocks(
+        titleAfterMarker(content[0], marker[0].length),
+        content.slice(1),
+        (message) => this.fail(token, message),
+      );
+    }
     if (!CALLOUT_KINDS.includes(marker[1])) {
       this.fail(
         token,
@@ -178,11 +188,7 @@ class Converter {
     markerLength: number,
   ): ContentNode {
     const [first, ...blocks] = content;
-    const title = (first.content ?? [])
-      .map((inline) => inline.text ?? '')
-      .join('')
-      .slice(markerLength)
-      .trim();
+    const title = titleAfterMarker(first, markerLength);
     const slides: ContentNode[] = [];
     for (const block of blocks) {
       if (block.type === 'figure') {
@@ -358,6 +364,15 @@ function appendText(
       ? { type: 'text', text, marks: marks.map((mark) => ({ ...mark })) }
       : { type: 'text', text },
   );
+}
+
+// Titre écrit sur la ligne du marqueur d'un diaporama ou d'un QCM, après lui.
+function titleAfterMarker(first: ContentNode, markerLength: number): string {
+  return (first.content ?? [])
+    .map((inline) => inline.text ?? '')
+    .join('')
+    .slice(markerLength)
+    .trim();
 }
 
 function withContent(node: ContentNode, content: ContentNode[]): ContentNode {

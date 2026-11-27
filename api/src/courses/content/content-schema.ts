@@ -12,6 +12,8 @@ export interface NodeRule {
   maxChildren?: number;
   // Type imposé au premier enfant ; il n'est accepté qu'à cette place.
   firstChild?: string;
+  // Type imposé au dernier enfant ; il n'est accepté qu'à cette place.
+  lastChild?: string;
   attrs?: Record<string, AttributeCheck>;
 }
 
@@ -62,6 +64,11 @@ export const INLINE_TYPES = ['text', 'hardBreak'] as const;
 // dans un tableau, ni dans un autre diaporama.
 export const MAX_SLIDES = 60;
 
+// Un QCM ne se place lui aussi qu'au premier niveau du document.
+export const MAX_QUIZ_QUESTIONS = 50;
+export const MAX_QUIZ_CHOICES = 10;
+const QUIZ_TEXT = ['paragraph', 'bulletList', 'orderedList', 'codeBlock'];
+
 const cellAttrs: Record<string, AttributeCheck> = {
   colspan: isIntegerBetween(1, 50),
   rowspan: isIntegerBetween(1, 500),
@@ -75,7 +82,7 @@ const pinned: Record<string, AttributeCheck> = {
 };
 
 export const NODE_RULES: Record<string, NodeRule> = {
-  doc: { children: [...BLOCK_TYPES, 'slideshow'], minChildren: 1 },
+  doc: { children: [...BLOCK_TYPES, 'slideshow', 'quiz'], minChildren: 1 },
   paragraph: { children: 'inline', attrs: pinned },
   heading: {
     children: 'inline',
@@ -147,6 +154,31 @@ export const NODE_RULES: Record<string, NodeRule> = {
     firstChild: 'figure',
     minChildren: 1,
   },
+  // QCM : une suite de questions auxquelles on répond dans le cours. Son titre est
+  // facultatif.
+  quiz: {
+    children: ['quizQuestion'],
+    minChildren: 1,
+    maxChildren: MAX_QUIZ_QUESTIONS,
+    attrs: {
+      title: (value) => typeof value === 'string' && value.length <= 200,
+    },
+  },
+  // Question d'un QCM : son énoncé, ses choix (deux au moins), puis l'explication montrée
+  // une fois la réponse validée.
+  quizQuestion: {
+    children: ['quizChoice'],
+    firstChild: 'quizPrompt',
+    lastChild: 'quizExplanation',
+    minChildren: 4,
+    maxChildren: MAX_QUIZ_CHOICES + 2,
+  },
+  quizPrompt: { children: [...QUIZ_TEXT, 'figure'], minChildren: 1 },
+  quizChoice: {
+    children: 'inline',
+    attrs: { correct: (value) => typeof value === 'boolean' },
+  },
+  quizExplanation: { children: QUIZ_TEXT, minChildren: 1 },
   hardBreak: { children: 'none' },
 };
 

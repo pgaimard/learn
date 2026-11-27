@@ -753,3 +753,247 @@
 .course-content.is-editable .slideshow-title {
   display: none;
 }
+
+/* QCM. En lecture, on coche ses réponses puis on valide ; en édition, on rédige les
+   questions, on coche les bonnes réponses et on écrit les explications. */
+.course-content .quiz {
+  --quiz-right: var(--color-callout-astuce);
+  --quiz-right-soft: var(--color-callout-astuce-soft);
+  --quiz-wrong: var(--color-danger);
+  --quiz-wrong-soft: color-mix(in srgb, var(--color-danger) 12%, transparent);
+
+  margin: 1.25rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-raised);
+  counter-reset: quiz-question;
+}
+
+.course-content .quiz-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 0.8125rem;
+}
+
+.course-content .quiz-count {
+  flex: none;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.course-content .quiz-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.course-content .quiz-title-field {
+  flex: 1;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.course-content .quiz-questions {
+  padding: 0 0.75rem;
+}
+
+.course-content .quiz-question {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-border-soft);
+  counter-increment: quiz-question;
+}
+
+.course-content .quiz-question:first-child {
+  border-top: 0;
+}
+
+.course-content .quiz-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.course-content .quiz-number {
+  flex: none;
+}
+
+.course-content .quiz-number::before {
+  content: 'Question ' counter(quiz-question);
+}
+
+.course-content .quiz-hint {
+  font-weight: 400;
+}
+
+/* Les boutons de la question se rangent à droite de sa barre. */
+.course-content .quiz-bar .quiz-action:first-of-type {
+  margin-left: auto;
+}
+
+.course-content .quiz-action {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.course-content .quiz-action:hover {
+  background: var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.course-content .quiz-prompt > :first-child {
+  margin-top: 0;
+}
+
+.course-content .quiz-prompt > :last-child {
+  margin-bottom: 0.5rem;
+}
+
+.course-content .quiz-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.course-content .quiz-choice-box {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  /* Aligne la case sur la première ligne du texte. */
+  margin: calc((1lh - 1rem) / 2) 0 0;
+  accent-color: var(--color-accent);
+}
+
+.course-content .quiz-choice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-content .quiz-explanation-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.course-content .quiz-explanation-body {
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.625rem;
+  border-left: 3px solid var(--color-border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--color-surface);
+}
+
+.course-content .quiz-explanation-body > :first-child {
+  margin-top: 0.375rem;
+}
+
+.course-content .quiz-explanation-body > :last-child {
+  margin-bottom: 0.375rem;
+}
+
+.course-content .quiz-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.course-content .quiz-score {
+  font-weight: 600;
+}
+
+/* Lecture : ni outils d'édition, ni explication avant d'avoir validé. */
+.course-content:not(.is-editable) .quiz-title-field,
+.course-content:not(.is-editable) .quiz-action,
+.course-content:not(.is-editable) .quiz-add,
+.course-content:not(.is-editable) .quiz-explanation.is-empty,
+.course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-explanation,
+.course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-retry,
+.course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-verdict,
+.course-content:not(.is-editable) .quiz.is-checked .quiz-check,
+.course-content:not(.is-editable) .quiz.is-checked .quiz-hint {
+  display: none;
+}
+
+.course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-choice {
+  cursor: pointer;
+}
+
+.course-content:not(.is-editable) .quiz:not(.is-checked) .quiz-choice:hover {
+  border-color: var(--color-accent);
+}
+
+.course-content .quiz-question.is-right .quiz-verdict {
+  color: var(--quiz-right);
+}
+
+.course-content .quiz-question.is-wrong .quiz-verdict {
+  color: var(--quiz-wrong);
+}
+
+.course-content .quiz-choice.is-expected {
+  border-color: var(--quiz-right);
+  background: var(--quiz-right-soft);
+}
+
+.course-content .quiz-choice.is-mistake {
+  border-color: var(--quiz-wrong);
+  background: var(--quiz-wrong-soft);
+}
+
+.course-content .quiz-question.is-right .quiz-explanation-body {
+  border-left-color: var(--quiz-right);
+}
+
+.course-content .quiz-question.is-wrong .quiz-explanation-body {
+  border-left-color: var(--quiz-wrong);
+}
+
+/* Édition : le titre se saisit dans son champ ; ni validation, ni verdict. */
+.course-content.is-editable .quiz-title,
+.course-content.is-editable .quiz-check,
+.course-content.is-editable .quiz-retry,
+.course-content.is-editable .quiz-score,
+.course-content.is-editable .quiz-hint,
+.course-content.is-editable .quiz-verdict {
+  display: none;
+}
+
+.course-content.is-editable .quiz-prompt::before {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  content: 'Énoncé';
+}
