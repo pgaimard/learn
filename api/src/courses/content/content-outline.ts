@@ -4,8 +4,8 @@ import { plainText } from './inline-to-markdown.js';
 // Section d'un document : un titre du premier niveau du document et ce qui le suit,
 // jusqu'au titre suivant de même niveau ou d'un niveau au-dessus.
 export interface OutlineSection {
-  // Rang du titre parmi ceux du document, à partir de 1 : il désigne la section.
-  rank: number;
+  // Identifiant du titre : il désigne la section, et ne change pas si on la renomme.
+  id: string;
   level: number;
   title: string;
 }
@@ -19,29 +19,43 @@ function levelOf(block: ContentNode): number {
   return Number(block.attrs?.['level']);
 }
 
-function headingIndexes(document: ContentNode): number[] {
-  return (document.content ?? []).flatMap((block, index) =>
-    block.type === 'heading' ? [index] : [],
-  );
+function stringOf(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function idOf(block: ContentNode): string {
+  return stringOf(block.attrs?.['id']);
+}
+
+function describe(block: ContentNode): OutlineSection {
+  return {
+    id: idOf(block),
+    level: levelOf(block),
+    title: plainText(block).trim(),
+  };
 }
 
 export function outlineOf(document: ContentNode): OutlineSection[] {
-  const blocks = document.content ?? [];
-  return headingIndexes(document).map((index, position) => ({
-    rank: position + 1,
-    level: levelOf(blocks[index]),
-    title: plainText(blocks[index]).trim(),
-  }));
+  return (document.content ?? [])
+    .filter((block) => block.type === 'heading')
+    .map(describe);
 }
 
-// Blocs de la section de ce rang, sous-sections comprises ; null si le rang n'existe pas.
-export function sectionOf(
+// Place d'une section dans les blocs du document : son titre, et le bloc qui suit sa fin.
+export interface SectionRange {
+  start: number;
+  end: number;
+}
+
+export function sectionRange(
   document: ContentNode,
-  rank: number,
-): ContentNode[] | null {
+  id: string,
+): SectionRange | null {
   const blocks = document.content ?? [];
-  const start = headingIndexes(document)[rank - 1];
-  if (start === undefined) {
+  const start = blocks.findIndex(
+    (block) => block.type === 'heading' && id !== '' && idOf(block) === id,
+  );
+  if (start < 0) {
     return null;
   }
   const end = blocks.findIndex(
@@ -50,11 +64,16 @@ export function sectionOf(
       block.type === 'heading' &&
       levelOf(block) <= levelOf(blocks[start]),
   );
-  return blocks.slice(start, end < 0 ? blocks.length : end);
+  return { start, end: end < 0 ? blocks.length : end };
 }
 
-function stringOf(value: unknown): string {
-  return typeof value === 'string' ? value : '';
+// Blocs de la section de ce titre, sous-sections comprises ; null s'il n'existe pas.
+export function sectionOf(
+  document: ContentNode,
+  id: string,
+): ContentNode[] | null {
+  const range = sectionRange(document, id);
+  return range && (document.content ?? []).slice(range.start, range.end);
 }
 
 // Exercices d'un document, avec la clé à laquelle leurs tentatives sont rattachées.

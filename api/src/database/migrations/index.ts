@@ -28,6 +28,7 @@ import { AddCourseRevision1796100000000 } from './1796100000000-add-course-revis
 import { AddCourseEditing1796200000000 } from './1796200000000-add-course-editing.js';
 import { CreateCourseSnapshots1796300000000 } from './1796300000000-create-course-snapshots.js';
 import { CreateAiAccessTokens1796400000000 } from './1796400000000-create-ai-access-tokens.js';
+import { AddHeadingIds1796500000000 } from './1796500000000-add-heading-ids.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -60,4 +61,5 @@ export const migrations = [
   AddCourseEditing1796200000000,
   CreateCourseSnapshots1796300000000,
   CreateAiAccessTokens1796400000000,
+  AddHeadingIds1796500000000,
 ];

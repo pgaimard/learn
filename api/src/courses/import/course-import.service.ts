@@ -20,6 +20,7 @@ import {
 import { ContentNode, EMPTY_CONTENT } from '../content/content-node.js';
 import { extractPlainText } from '../content/extract-plain-text.js';
 import { EXERCISE_ONLY_TYPES } from '../content/content-schema.js';
+import { ensureHeadingIds } from '../content/heading-ids.js';
 import { ContentRules, validateContent } from '../content/validate-content.js';
 import { Course } from '../course.entity.js';
 import { CoursesService } from '../courses.service.js';
@@ -275,7 +276,7 @@ export class CourseImportService {
       }
       const content = placeImages(document, sources);
       throwIfAny(validateContent(content, rules));
-      return content;
+      return ensureHeadingIds(content);
     };
     const content = await store(analysed.document, analysed.images);
     course.title = metadata.title;

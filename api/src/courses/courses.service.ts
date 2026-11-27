@@ -19,6 +19,7 @@ import { UeService } from '../ue/ue.service.js';
 import { collectFigures, FigureReference } from './content/collect-figures.js';
 import { ContentNode, EMPTY_CONTENT } from './content/content-node.js';
 import { extractPlainText } from './content/extract-plain-text.js';
+import { ensureHeadingIds } from './content/heading-ids.js';
 import { ContentRules, validateContent } from './content/validate-content.js';
 import { Course } from './course.entity.js';
 import { CreateCourseDto } from './dto/create-course.dto.js';
@@ -383,7 +384,7 @@ function checkContent(content: unknown, rules: ContentRules = {}): ContentNode {
   if (errors.length > 0) {
     throw new BadRequestException(errors);
   }
-  return content as ContentNode;
+  return ensureHeadingIds(content as ContentNode);
 }
 
 function isUniqueViolation(error: unknown): boolean {

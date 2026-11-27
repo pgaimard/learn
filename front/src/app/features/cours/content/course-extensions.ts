@@ -13,6 +13,7 @@ import { RevisionPin } from '../revision/revision-pin';
 import { Callout } from './callout';
 import { CheckGrid } from './check-grid';
 import { Figure } from './figure';
+import { HeadingIds } from './heading-ids';
 import { CourseDocument, Slide, Slideshow } from '../slideshow/slideshow';
 import { Exercise, ExerciseSolution, ExerciseStatement } from '../exercise/exercise';
 import { Quiz, QuizChoice, QuizExplanation, QuizPrompt, QuizQuestion } from '../quiz/quiz';
@@ -52,6 +53,7 @@ export function createCourseExtensions(tools?: EditingTools): Extensions {
     Figure,
     Callout,
     TextAlign,
+    HeadingIds,
     CheckGrid,
     CourseDocument,
     Slideshow,

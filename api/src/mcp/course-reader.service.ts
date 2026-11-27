@@ -92,7 +92,7 @@ export class CourseReaderService {
   async read(
     courseId: number,
     name: CourseDocument,
-    rank?: number,
+    sectionId?: string,
   ): Promise<DocumentReading> {
     const course = await this.coursesService.findById(courseId);
     const document = documentOf(course, name);
@@ -100,16 +100,20 @@ export class CourseReaderService {
       throw new NotFoundException(MISSING[name]);
     }
     const content =
-      rank === undefined ? document.content : sectionOf(document, rank);
+      sectionId === undefined
+        ? document.content
+        : sectionOf(document, sectionId);
     if (!content) {
       throw new NotFoundException(
-        `Ce document n’a pas de section de rang ${rank} : il en compte ${outlineOf(document).length}.`,
+        `Ce document n’a pas de section « ${sectionId} ». Ses sections sont données par get_course_outline.`,
       );
     }
     return {
       course: course.id,
       document: name,
-      ...(rank === undefined ? {} : { section: outlineOf(document)[rank - 1] }),
+      ...(sectionId === undefined
+        ? {}
+        : { section: outlineOf({ type: 'doc', content })[0] }),
       revision: course.revision,
       ...contentToMarkdown({ type: 'doc', content }),
     };
