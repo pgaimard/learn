@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.intro {
+  margin: 0 0 1rem;
+}
+
+.empty {
+  color: var(--color-text-muted);
+}
+
+/* Les versions forment une liste dense, dans un même cadre. */
+.versions {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  list-style: none;
+}
+
+.versions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.versions li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.what {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.when {
+  font-weight: 500;
+}
