@@ -74,6 +74,7 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 | Entité | Champs principaux | Notes |
 |---|---|---|
 | Instantané | type d'objet (cours, terme, outil, commande), objet, état complet avant la modification, origine (IA, remplacement par un paquet, restauration), date | Pris avant toute écriture de l'IA, avant le remplacement d'un chapitre par un paquet et avant une restauration. Pour un cours : titre, contenu, fiche de révision et exercices. Une création par l'IA est inscrite sans état antérieur. Les instantanés d'un cours sont supprimés avec lui |
+| Jeton d'accès de l'IA | empreinte du jeton, date de création, date de dernière utilisation | Un seul à la fois ; en générer un nouveau révoque le précédent. Le jeton n'est affiché qu'à sa création |
 
 ## 5. Décisions fonctionnelles
 
@@ -129,7 +130,7 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - Fichiers envoyés : taille limitée, stockés hors du répertoire servi, nom de stockage généré, jamais exécutés, servis en téléchargement via l'API authentifiée.
 - En-têtes de sécurité HTTP standards.
 - Secrets dans des variables d'environnement, jamais dans le dépôt.
-- L'accès de l'IA a sa propre authentification, distincte de la session et révocable depuis l'interface. Son secret n'est ni dans le dépôt ni dans les journaux, et le nombre d'appels est limité.
+- L'accès de l'IA a sa propre authentification, distincte de la session et révocable depuis l'interface. Son secret n'est ni dans le dépôt ni dans les journaux, et le nombre d'appels est limité. Cet accès se fait par un jeton, généré depuis l'écran d'administration et envoyé dans un en-tête par le connecteur de Claude ; seule son empreinte est conservée.
 - L'export n'est accessible que par la session, jamais par l'accès de l'IA.
 
 ## 7. Exploitation

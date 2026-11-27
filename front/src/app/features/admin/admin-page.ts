@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiError } from '../../core/http/api-error';
 import { Icon } from '../../core/ui/icon';
+import { AiAccessPanel } from './ai-access-panel';
 import { ExportService } from './export.service';
 
 @Component({
   selector: 'app-admin-page',
-  imports: [Icon, ReactiveFormsModule],
+  imports: [AiAccessPanel, Icon, ReactiveFormsModule],
   templateUrl: './admin-page.html',
   styleUrl: './admin-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

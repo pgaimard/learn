@@ -100,12 +100,22 @@ restaure, images comprises ; deux enregistrements concurrents ne s'écrasent plu
   Markdown ne sait pas exprimer (cellules fusionnées, largeurs de colonnes, alignements,
   soulignement) et qu'une réécriture perdrait.
 
-Décisions à poser à Pierre avant de coder, après un essai de connexion depuis Cowork :
+Décisions prises avec Pierre :
 
-1. le mode de connexion de Cowork à un serveur MCP personnel ;
-2. l'authentification qui en découle (jeton dédié haché en base, ou OAuth), révocable depuis
-   l'écran d'administration ;
-3. la dépendance MCP à ajouter, à justifier dans la PR.
+1. Cowork se branche par un connecteur personnalisé distant : c'est le cloud d'Anthropic qui
+   appelle `https://<domaine>/api/mcp`. Le serveur doit donc être public ; une instance locale
+   ne se teste qu'avec un client MCP lancé sur le poste.
+2. Authentification par un jeton unique, envoyé dans l'en-tête `Authorization: Bearer …`,
+   créé (mot de passe redemandé) et révoqué depuis l'écran d'administration. Seule son
+   empreinte SHA-256 est en base. Procédure : `docs/connecteur-claude.md`.
+3. Dépendances : `@modelcontextprotocol/sdk` et `zod`.
+4. Le point d'entrée est sans état, répond en JSON, et n'accepte que POST ; 120 appels par
+   minute au plus.
+
+Ordre de livraison : jeton, point d'entrée et deux outils (lister les UE et les cours), puis
+mise en production pour l'essai réel ; ensuite la conversion en Markdown, les outils de lecture
+des cours, puis ceux des termes, des outils, des commandes et de la recherche. En 8.3, une
+section se désigne par son rang dans le plan.
 
 Fait quand : depuis une session Cowork, Claude lit le plan et une section d'un cours réel.
 
