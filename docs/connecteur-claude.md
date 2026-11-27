@@ -10,7 +10,10 @@ cloud d'Anthropic : il ne fonctionne qu'avec l'application en production, pas av
    passe et créer un jeton. Copier la valeur de l'en-tête affichée : elle ne le sera plus.
 2. Dans Claude : Réglages → Connecteurs → ajouter un connecteur personnalisé.
    - Adresse : celle affichée dans l'écran Administration.
-   - En-tête de requête : nom `Authorization`, valeur copiée à l'étape 1 (`Bearer learn_…`).
+   - Authentification : « Aucune connexion » (le serveur utilise une clé, pas OAuth).
+   - En-tête de requête : nom `x-api-key`, à choisir dans la liste, et valeur copiée à
+     l'étape 1 (`learn_…`). Claude n'accepte que les noms de cette liste et réserve
+     `Authorization` à OAuth.
 3. Dans une conversation où le connecteur est activé, demander « liste mes UE ».
 
 ## Révoquer l'accès

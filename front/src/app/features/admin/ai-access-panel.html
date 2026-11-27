@@ -2,8 +2,8 @@
   <h2 id="ai-access-title">Accès de l’IA</h2>
   <p class="meta">
     Claude lit les données de l’application par un connecteur personnalisé, qui présente un jeton à
-    chaque appel. Dans Claude, ajoutez un connecteur avec l’adresse ci-dessous et l’en-tête
-    <code>Authorization</code>.
+    chaque appel. Dans Claude, ajoutez un connecteur avec l’adresse ci-dessous, l’authentification «
+    Aucune connexion » et l’en-tête <code>x-api-key</code>.
   </p>
 
   <div class="value">
@@ -18,13 +18,11 @@
 
   @if (token(); as token) {
     <div class="value fresh" role="status">
-      <span class="field-label">Valeur de l’en-tête Authorization</span>
+      <span class="field-label">Valeur de l’en-tête x-api-key</span>
       <div class="copyable">
-        <code>Bearer {{ token }}</code>
-        <button type="button" class="button" (click)="copy('Bearer ' + token)">
-          <app-icon name="copy" [size]="15" />{{
-            copied() === 'Bearer ' + token ? 'Copié' : 'Copier'
-          }}
+        <code>{{ token }}</code>
+        <button type="button" class="button" (click)="copy(token)">
+          <app-icon name="copy" [size]="15" />{{ copied() === token ? 'Copié' : 'Copier' }}
         </button>
       </div>
       <p class="field-hint">

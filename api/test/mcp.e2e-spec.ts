@@ -48,12 +48,12 @@ describe('Serveur MCP', () => {
   }
 
   // Requête brute au point d'entrée, comme en envoie le connecteur.
-  function post(bearer?: string): request.Test {
+  function post(sentToken?: string): request.Test {
     const sent = request(app.getHttpServer())
       .post('/api/mcp')
       .set('Accept', 'application/json, text/event-stream');
-    if (bearer !== undefined) {
-      void sent.set('Authorization', `Bearer ${bearer}`);
+    if (sentToken !== undefined) {
+      void sent.set('X-API-Key', sentToken);
     }
     return sent.send(INITIALIZE);
   }
@@ -63,7 +63,7 @@ describe('Serveur MCP', () => {
     const mcp = new Client({ name: 'essai', version: '1.0.0' });
     await mcp.connect(
       new StreamableHTTPClientTransport(url, {
-        requestInit: { headers: { Authorization: `Bearer ${token}` } },
+        requestInit: { headers: { 'X-API-Key': token } },
       }),
     );
     try {
@@ -156,23 +156,18 @@ describe('Serveur MCP', () => {
     expect([anonymous.status, wrong.status, withSession.status]).toEqual([
       401, 401, 401,
     ]);
-    expect(anonymous.get('WWW-Authenticate')).toBe('Bearer');
     expect((await status())?.lastUsedAt).toBeNull();
   });
 
   it('ne donne au jeton aucun accès au reste de l’API', async () => {
     const server = app.getHttpServer();
-    const bearer = `Bearer ${token}`;
-
-    const ues = await request(server)
-      .get('/api/ues')
-      .set('Authorization', bearer);
+    const ues = await request(server).get('/api/ues').set('X-API-Key', token);
     const access = await request(server)
       .delete('/api/ai-access')
-      .set('Authorization', bearer);
+      .set('X-API-Key', token);
     const exported = await request(server)
       .get('/api/exports')
-      .set('Authorization', bearer);
+      .set('X-API-Key', token);
 
     expect([ues.status, access.status, exported.status]).toEqual([
       401, 401, 401,
@@ -182,7 +177,7 @@ describe('Serveur MCP', () => {
   it('n’accepte que les requêtes POST', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/mcp')
-      .set('Authorization', `Bearer ${token}`);
+      .set('X-API-Key', token);
 
     expect(response.status).toBe(405);
     expect(response.get('Allow')).toBe('POST');
