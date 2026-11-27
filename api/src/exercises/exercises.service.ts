@@ -13,6 +13,7 @@ import { ExerciseAttempt } from './exercise-attempt.entity.js';
 import {
   EXERCISE_MAX_SCORE,
   GradeAttemptDto,
+  SaveDraftDto,
   SubmitAttemptDto,
 } from './exercise.dto.js';
 
@@ -70,19 +71,38 @@ export class ExercisesService {
     return attempt;
   }
 
-  // Enregistre la réponse en cours de saisie ; elle remplace le brouillon précédent.
+  // Enregistre la réponse en cours (la rédaction d'un exercice, ou les cases cochées d'un
+  // QCM) ; elle remplace le brouillon précédent.
   async saveDraft(
     courseId: number,
     key: string,
-    answer: unknown,
+    input: SaveDraftDto,
   ): Promise<ExerciseAttempt> {
     await this.checkTarget(courseId, key);
-    const content = checkAnswer(answer);
+    if (input.answer !== undefined && input.checked !== undefined) {
+      throw new BadRequestException(
+        'Un brouillon est une réponse rédigée ou des cases cochées, pas les deux.',
+      );
+    }
+    const isQuiz = input.checked !== undefined;
     const draft =
       (await this.findDraft(courseId, key)) ??
-      this.attempts.create({ courseId, exerciseKey: key, kind: 'exercise' });
-    draft.answer = content;
+      this.attempts.create({ courseId, exerciseKey: key });
+    draft.kind = isQuiz ? 'quiz' : 'exercise';
+    draft.answer = isQuiz
+      ? { checked: checkBoxes(input.checked) }
+      : checkAnswer(input.answer);
     return this.attempts.save(draft);
+  }
+
+  // Abandonne le brouillon en cours, s'il y en a un.
+  async removeDraft(courseId: number, key: string): Promise<void> {
+    await this.checkTarget(courseId, key);
+    await this.attempts.delete({
+      courseId,
+      exerciseKey: key,
+      submittedAt: IsNull(),
+    });
   }
 
   // Valide une réponse : le brouillon d'un exercice devient une tentative ; un QCM
@@ -98,7 +118,8 @@ export class ExercisesService {
     }
     const attempt =
       (await this.findDraft(courseId, key)) ??
-      this.attempts.create({ courseId, exerciseKey: key, kind: 'exercise' });
+      this.attempts.create({ courseId, exerciseKey: key });
+    attempt.kind = 'exercise';
     attempt.answer = checkAnswer(input.answer);
     attempt.submittedAt = new Date();
     return this.attempts.save(attempt);
@@ -120,7 +141,8 @@ export class ExercisesService {
     return this.attempts.save(attempt);
   }
 
-  private submitQuiz(
+  // Le QCM validé remplace son brouillon : seul son score est gardé.
+  private async submitQuiz(
     courseId: number,
     key: string,
     input: SubmitAttemptDto,
@@ -132,17 +154,15 @@ export class ExercisesService {
         'Le score ne dépasse pas le nombre de questions.',
       );
     }
-    return this.attempts.save(
-      this.attempts.create({
-        courseId,
-        exerciseKey: key,
-        kind: 'quiz',
-        answer: null,
-        score,
-        maxScore,
-        submittedAt: new Date(),
-      }),
-    );
+    const attempt =
+      (await this.findDraft(courseId, key)) ??
+      this.attempts.create({ courseId, exerciseKey: key });
+    attempt.kind = 'quiz';
+    attempt.answer = null;
+    attempt.score = score;
+    attempt.maxScore = maxScore;
+    attempt.submittedAt = new Date();
+    return this.attempts.save(attempt);
   }
 
   private findDraft(
@@ -165,6 +185,28 @@ export class ExercisesService {
       throw new NotFoundException('Cet exercice n’existe pas.');
     }
   }
+}
+
+const MAX_QUIZ_QUESTIONS = 50;
+const MAX_QUIZ_CHOICES = 10;
+
+// Cases cochées d'un QCM : une liste par question, un booléen par choix, rien d'autre.
+function checkBoxes(checked: unknown): boolean[][] {
+  const isValid =
+    Array.isArray(checked) &&
+    checked.length <= MAX_QUIZ_QUESTIONS &&
+    checked.every(
+      (question) =>
+        Array.isArray(question) &&
+        question.length <= MAX_QUIZ_CHOICES &&
+        question.every((box) => typeof box === 'boolean'),
+    );
+  if (!isValid) {
+    throw new BadRequestException(
+      'Les cases cochées sont une liste de booléens par question.',
+    );
+  }
+  return checked as boolean[][];
 }
 
 // La réponse est un contenu comme celui d'un cours, traité comme hostile.

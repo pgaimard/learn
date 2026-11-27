@@ -14,8 +14,14 @@ export interface AttemptSummary {
   submittedAt: string;
 }
 
+// Cases cochées d'un QCM en cours : une liste par question, un booléen par choix.
+export interface QuizAnswers {
+  checked: boolean[][];
+}
+
 export interface Attempt extends Omit<AttemptSummary, 'submittedAt'> {
-  answer: ContentNode | null;
+  // Réponse rédigée d'un exercice, ou cases cochées d'un QCM en brouillon.
+  answer: ContentNode | QuizAnswers | null;
   // null : c'est le brouillon en cours.
   submittedAt: string | null;
 }
@@ -37,6 +43,14 @@ export class ExerciseAttemptsService {
 
   saveDraft(courseId: number, key: string, answer: ContentNode): Observable<Attempt> {
     return this.http.put<Attempt>(`${this.path(courseId, key)}/draft`, { answer });
+  }
+
+  saveQuizDraft(courseId: number, key: string, checked: boolean[][]): Observable<Attempt> {
+    return this.http.put<Attempt>(`${this.path(courseId, key)}/draft`, { checked });
+  }
+
+  removeDraft(courseId: number, key: string): Observable<void> {
+    return this.http.delete<void>(`${this.path(courseId, key)}/draft`);
   }
 
   submitExercise(courseId: number, key: string, answer: ContentNode): Observable<Attempt> {
@@ -65,4 +79,8 @@ export class ExerciseAttemptsService {
   private path(courseId: number, key: string): string {
     return `/api/courses/${courseId}/exercises/${encodeURIComponent(key)}`;
   }
+}
+
+export function isQuizAnswers(answer: Attempt['answer']): answer is QuizAnswers {
+  return answer !== null && 'checked' in answer;
 }

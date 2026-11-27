@@ -1,4 +1,6 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsInt,
   IsNumber,
@@ -15,9 +17,17 @@ export const EXERCISE_MAX_SCORE = 20;
 const QUIZ_MAX_SCORE = 50;
 
 export class SaveDraftDto {
-  // La structure fine du document est vérifiée par la liste blanche du service.
+  // Réponse en cours à un exercice ; la structure fine du document est vérifiée par la
+  // liste blanche du service.
+  @ValidateIf((draft: SaveDraftDto) => draft.checked === undefined)
   @IsObject({ message: 'La réponse doit être un document de l’éditeur.' })
-  answer!: Record<string, unknown>;
+  answer?: Record<string, unknown>;
+
+  // Cases cochées d'un QCM en cours : une liste par question, un booléen par choix.
+  @ValidateIf((draft: SaveDraftDto) => draft.answer === undefined)
+  @IsArray({ message: 'Les cases cochées sont une liste par question.' })
+  @ArrayMaxSize(QUIZ_MAX_SCORE, { message: 'Le QCM a trop de questions.' })
+  checked?: unknown[];
 }
 
 export class SubmitAttemptDto {

@@ -19,7 +19,12 @@ import { CourseContent } from '../content/course-content';
 import { MentionTerm } from '../content/term-mentions';
 import { ContentEditor } from '../editor/content-editor';
 import { OpenedExercise } from './exercise';
-import { Attempt, AttemptSummary, ExerciseAttemptsService } from './exercise-attempts.service';
+import {
+  Attempt,
+  AttemptSummary,
+  ExerciseAttemptsService,
+  isQuizAnswers,
+} from './exercise-attempts.service';
 
 const EMPTY_ANSWER: ContentNode = { type: 'doc', content: [{ type: 'paragraph' }] };
 // Délai sans frappe après lequel le brouillon part à l'enregistrement.
@@ -81,6 +86,9 @@ export class ExerciseWorkspace {
     inject(DestroyRef).onDestroy(() => this.cancelTimer());
   }
 
+  // Réponse rédigée de la tentative affichée.
+  protected readonly shownAnswer = computed(() => writtenAnswer(this.shownAttempt()));
+
   // Note à la française : 14,5 et non 14.5.
   protected scoreLabel(score: number): string {
     return String(score).replace('.', ',');
@@ -138,7 +146,7 @@ export class ExerciseWorkspace {
 
   // Repart de la réponse affichée pour en rédiger une nouvelle ; le corrigé se cache.
   protected retry(): void {
-    this.answer.set(this.shownAttempt()?.answer ?? EMPTY_ANSWER);
+    this.answer.set(writtenAnswer(this.shownAttempt()) ?? EMPTY_ANSWER);
     this.shownAttempt.set(null);
     this.side.set('statement');
     this.message.set('');
@@ -172,7 +180,7 @@ export class ExerciseWorkspace {
       const progress = await firstValueFrom(
         this.attemptsService.progress(this.courseId(), this.exercise().key),
       );
-      this.answer.set(progress.draft?.answer ?? EMPTY_ANSWER);
+      this.answer.set(writtenAnswer(progress.draft) ?? EMPTY_ANSWER);
       this.attempts.set(progress.attempts);
     } catch {
       this.message.set('Vos réponses précédentes n’ont pas pu être lues.');
@@ -229,6 +237,12 @@ const DRAFT_LABELS: Record<DraftState, string> = {
   saved: 'Brouillon enregistré',
   failed: 'Brouillon non enregistré',
 };
+
+// Réponse rédigée d'une tentative d'exercice ; les cases d'un QCM n'en sont pas une.
+function writtenAnswer(attempt: Attempt | null): ContentNode | null {
+  const answer = attempt?.answer ?? null;
+  return isQuizAnswers(answer) ? null : answer;
+}
 
 function isValidScore(score: number): boolean {
   return Number.isFinite(score) && score >= 0 && score <= MAX_SCORE && Number.isInteger(score * 2);

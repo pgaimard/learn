@@ -69,3 +69,28 @@ export function scoreLabel({ right, total }: QuizScore): string {
   const answers = right > 1 ? 'bonnes réponses' : 'bonne réponse';
   return `${right} ${answers} sur ${total}`;
 }
+
+// Cases cochées du QCM : une liste par question, un booléen par choix.
+export function readChecked(quiz: HTMLElement): boolean[][] {
+  return Array.from(quiz.querySelectorAll<HTMLElement>('.quiz-question')).map((question) =>
+    Array.from(question.querySelectorAll<HTMLElement>('.quiz-choice')).map(
+      (choice) => boxOf(choice)?.checked ?? false,
+    ),
+  );
+}
+
+// Recoche les cases d'un QCM repris plus tard. Les cases en trop ou en moins (le QCM a pu
+// être modifié entre-temps) sont ignorées ; un QCM déjà validé n'est pas touché.
+export function applyChecked(quiz: HTMLElement, checked: boolean[][]): void {
+  if (quiz.classList.contains('is-checked')) {
+    return;
+  }
+  quiz.querySelectorAll<HTMLElement>('.quiz-question').forEach((question, rank) => {
+    question.querySelectorAll<HTMLElement>('.quiz-choice').forEach((choice, index) => {
+      const box = boxOf(choice);
+      if (box) {
+        box.checked = checked[rank]?.[index] === true;
+      }
+    });
+  });
+}

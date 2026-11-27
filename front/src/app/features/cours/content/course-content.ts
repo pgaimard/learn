@@ -15,7 +15,7 @@ import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
 import { SlideshowViewerService, ViewedSlideshow } from '../../../core/ui/slideshow-viewer.service';
 import { OpenedExercise, openedExercise } from '../exercise/exercise';
-import { QuizScore } from '../quiz/quiz-answers';
+import { applyChecked, QuizScore } from '../quiz/quiz-answers';
 import { MAX_SLIDES, selectSlideText, slideshowAtSelection } from '../slideshow/slideshow';
 import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
@@ -27,6 +27,12 @@ import { MentionTerm, setMentionTerms } from './term-mentions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
 // en lecture et en édition, et le contenu n'est jamais injecté comme du HTML.
+// QCM dont une case vient de changer : sa clé dans le cours et ses cases cochées.
+export interface ChangedQuiz {
+  key: string;
+  checked: boolean[][];
+}
+
 // QCM validé en lecture : sa clé dans le cours et son score.
 export interface CheckedQuiz extends QuizScore {
   key: string;
@@ -42,6 +48,7 @@ export interface CheckedQuiz extends QuizScore {
     '(keydown.enter)': 'activate($event)',
     '(quizchecked)': 'onQuizChecked($event)',
     '(quizhistory)': 'onQuizHistory($event)',
+    '(quizchanged)': 'onQuizChanged($event)',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -57,6 +64,9 @@ export class CourseContent {
   // Rang du bloc (un titre) qui porte le marque-page de lecture ; null sans marque-page.
   readonly bookmarkBlock = input<number | null>(null);
 
+  // Cases cochées des QCM commencés puis quittés, par clé : elles sont remises en place.
+  readonly quizDrafts = input<Record<string, boolean[][]>>({});
+
   // Termes à rendre cliquables dans le texte, en lecture.
   readonly terms = input<MentionTerm[]>([]);
 
@@ -70,6 +80,8 @@ export class CourseContent {
   readonly termOpened = output<number>();
   // Émis en lecture quand un QCM est validé : sa clé et son score.
   readonly quizChecked = output<CheckedQuiz>();
+  // Émis en lecture à chaque case cochée ou décochée d'un QCM : sa clé et ses cases.
+  readonly quizChanged = output<ChangedQuiz>();
   // Émis en lecture quand l'historique d'un QCM est demandé : sa clé.
   readonly quizHistoryRequested = output<string>();
   // Émis en lecture par « Faire l'exercice » : son énoncé et son corrigé.
@@ -163,6 +175,18 @@ export class CourseContent {
       );
       this.focusBlock(untracked(this.startBlock));
     });
+    // Les QCM commencés retrouvent leurs cases, une fois le cours dessiné.
+    effect(() => {
+      const drafts = this.quizDrafts();
+      if (this.editor() && !this.editable()) {
+        for (const [key, checked] of Object.entries(drafts)) {
+          const quiz = this.quizElement(key);
+          if (quiz) {
+            applyChecked(quiz, checked);
+          }
+        }
+      }
+    });
     effect(() => {
       const content = this.content();
       // emitUpdate à false : charger un contenu n'est pas une modification de l'utilisateur.
@@ -197,6 +221,26 @@ export class CourseContent {
     if (key && score) {
       this.quizChecked.emit({ key, ...score });
     }
+  }
+
+  protected onQuizChanged(event: Event): void {
+    const key = this.quizKey(event.target);
+    if (key && event instanceof CustomEvent) {
+      this.quizChanged.emit({ key, checked: event.detail as boolean[][] });
+    }
+  }
+
+  // Écrit, dans le pied du QCM, où en est l'enregistrement de ses réponses en cours.
+  setQuizStatus(key: string, status: string): void {
+    const saved = this.quizElement(key)?.querySelector('.quiz-saved');
+    if (saved) {
+      saved.textContent = status;
+    }
+  }
+
+  private quizElement(key: string): HTMLElement | null {
+    const quizzes = this.host.nativeElement.querySelectorAll<HTMLElement>('.quiz');
+    return quizzes[Number(key.replace('qcm-', '')) - 1] ?? null;
   }
 
   protected onQuizHistory(event: Event): void {

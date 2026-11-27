@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   NotFoundException,
   Param,
   ParseIntPipe,
@@ -44,7 +47,16 @@ export class ExercisesController {
     @Param('key') key: string,
     @Body() input: SaveDraftDto,
   ): Promise<ExerciseAttempt> {
-    return this.exercisesService.saveDraft(id, key, input.answer);
+    return this.exercisesService.saveDraft(id, key, input);
+  }
+
+  @Delete('courses/:id/exercises/:key/draft')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeDraft(
+    @Param('id', parseCourseId) id: number,
+    @Param('key') key: string,
+  ): Promise<void> {
+    return this.exercisesService.removeDraft(id, key);
   }
 
   @Post('courses/:id/exercises/:key/attempts')

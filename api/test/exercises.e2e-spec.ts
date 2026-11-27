@@ -174,6 +174,61 @@ describe('Réponses aux exercices', () => {
     expect(regraded.status).toBe(400);
   });
 
+  it('garde les cases cochées d’un QCM commencé, puis les abandonne à la demande', async () => {
+    const checked = [
+      [true, false, false],
+      [false, true],
+    ];
+
+    const saved = await client('put', `${base}/qcm-2/draft`).send({ checked });
+
+    expect(saved.status).toBe(200);
+    const { draft, attempts } = await progress('qcm-2');
+    expect(draft).toMatchObject({ kind: 'quiz', answer: { checked } });
+    expect(attempts).toEqual([]);
+
+    const removal = await client('delete', `${base}/qcm-2/draft`);
+
+    expect(removal.status).toBe(204);
+    expect((await progress('qcm-2')).draft).toBeNull();
+  });
+
+  it('remplace le brouillon d’un QCM par son score à la validation', async () => {
+    await client('put', `${base}/qcm-2/draft`).send({ checked: [[true]] });
+
+    await client('post', `${base}/qcm-2/attempts`).send({
+      kind: 'quiz',
+      score: 1,
+      maxScore: 1,
+    });
+
+    const { draft, attempts } = await progress('qcm-2');
+    expect(draft).toBeNull();
+    expect(attempts).toEqual([
+      expect.objectContaining({ kind: 'quiz', score: 1, maxScore: 1 }),
+    ]);
+  });
+
+  it('refuse des cases cochées mal formées, ou mêlées à une réponse rédigée', async () => {
+    const path = `${base}/qcm-2/draft`;
+
+    expect(
+      (await client('put', path).send({ checked: [['oui']] })).status,
+    ).toBe(400);
+    expect((await client('put', path).send({ checked: 'tout' })).status).toBe(
+      400,
+    );
+    expect(
+      (
+        await client('put', path).send({
+          checked: [[true]],
+          answer: answer('x'),
+        })
+      ).status,
+    ).toBe(400);
+    expect((await client('put', path).send({})).status).toBe(400);
+  });
+
   it('supprime les réponses avec le cours', async () => {
     const dataSource = app.get(DataSource);
     const count = async (): Promise<number> =>
@@ -184,7 +239,7 @@ describe('Réponses aux exercices', () => {
           )
         )[0].count,
       );
-    expect(await count()).toBe(3);
+    expect(await count()).toBe(4);
 
     await client('delete', `/api/courses/${courseId}`);
 

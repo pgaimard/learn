@@ -9,6 +9,11 @@ import { ContentNode } from '../courses/content/content-node.js';
 
 export type AttemptKind = 'exercise' | 'quiz';
 
+// Cases cochées d'un QCM en cours : une liste par question, un booléen par choix.
+export interface QuizAnswers {
+  checked: boolean[][];
+}
+
 // PostgreSQL rend un numeric en texte : la note redevient un nombre.
 const numeric = {
   to: (value: number | null): number | null => value,
@@ -17,7 +22,7 @@ const numeric = {
 };
 
 // Réponse donnée à un exercice ou à un QCM d'un cours. Sans date de validation, c'est le
-// brouillon en cours de l'exercice.
+// brouillon en cours.
 @Entity('exercise_attempts')
 export class ExerciseAttempt {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
@@ -33,9 +38,10 @@ export class ExerciseAttempt {
   @Column({ type: 'text' })
   kind!: AttemptKind;
 
-  // Réponse rédigée d'un exercice ; un QCM n'en a pas.
+  // Réponse rédigée d'un exercice. Pour un QCM : ses cases cochées tant qu'il est en
+  // brouillon, rien une fois validé (seul son score est gardé).
   @Column({ type: 'jsonb', nullable: true })
-  answer!: ContentNode | null;
+  answer!: ContentNode | QuizAnswers | null;
 
   // Note donnée (exercice) ou nombre de bonnes réponses (QCM), sur maxScore.
   @Column({

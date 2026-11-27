@@ -22,6 +22,7 @@ import { AddCourseSheet1795500000000 } from './1795500000000-add-course-sheet.js
 import { TermsBelongToUe1795600000000 } from './1795600000000-terms-belong-to-ue.js';
 import { AddCourseFolders1795700000000 } from './1795700000000-add-course-folders.js';
 import { CreateExerciseAttempts1795800000000 } from './1795800000000-create-exercise-attempts.js';
+import { AllowQuizDrafts1795900000000 } from './1795900000000-allow-quiz-drafts.js';
 
 export const migrations = [
   CreateUsers1794350000000,
@@ -48,4 +49,5 @@ export const migrations = [
   TermsBelongToUe1795600000000,
   AddCourseFolders1795700000000,
   CreateExerciseAttempts1795800000000,
+  AllowQuizDrafts1795900000000,
 ];

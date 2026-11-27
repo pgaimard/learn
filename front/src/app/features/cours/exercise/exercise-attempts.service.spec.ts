@@ -49,6 +49,16 @@ describe('ExerciseAttemptsService', () => {
     expect(request.body).toEqual({ kind: 'quiz', score: 6, maxScore: 8 });
   });
 
+  it('garde les cases cochées d’un QCM en cours, ou les abandonne', () => {
+    service.saveQuizDraft(7, 'qcm-1', [[true, false]]).subscribe();
+    service.removeDraft(7, 'qcm-1').subscribe();
+
+    const [saved, removed] = http.match('/api/courses/7/exercises/qcm-1/draft');
+    expect(saved.request.method).toBe('PUT');
+    expect(saved.request.body).toEqual({ checked: [[true, false]] });
+    expect(removed.request.method).toBe('DELETE');
+  });
+
   it('lit une tentative, et la note', () => {
     service.find(4).subscribe();
     service.grade(4, 14.5).subscribe();

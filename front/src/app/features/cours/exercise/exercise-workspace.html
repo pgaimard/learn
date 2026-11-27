@@ -108,7 +108,7 @@
           <p class="form-error pane-message" role="alert">{{ message() }}</p>
         }
         <div class="pane-body">
-          @if (attempt.answer; as given) {
+          @if (shownAnswer(); as given) {
             @for (content of [given]; track content) {
               <app-course-content [content]="content" label="Ma réponse" />
             }

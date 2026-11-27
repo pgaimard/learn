@@ -60,6 +60,8 @@
           (sectionReferenced)="followReference($event)"
           (termOpened)="openTerm($event)"
           (exerciseOpened)="exercise.set($event)"
+          [quizDrafts]="quizDrafts()"
+          (quizChanged)="keepQuiz(course.id, $event)"
           (quizChecked)="recordQuiz(course.id, $event)"
           (quizHistoryRequested)="showQuizHistory(course.id, $event)"
         />
