@@ -15,6 +15,7 @@ import { Editor } from '@tiptap/core';
 import { ImageViewerService } from '../../../core/ui/image-viewer.service';
 import { SlideshowViewerService, ViewedSlideshow } from '../../../core/ui/slideshow-viewer.service';
 import { OpenedExercise, openedExercise } from '../exercise/exercise';
+import { QuizScore } from '../quiz/quiz-answers';
 import { MAX_SLIDES, selectSlideText, slideshowAtSelection } from '../slideshow/slideshow';
 import { setBookmarkBlock } from '../bookmark/bookmark-mark';
 import { ContentNode } from './content-node';
@@ -26,6 +27,11 @@ import { MentionTerm, setMentionTerms } from './term-mentions';
 
 // Affiche un contenu (cours ou définition d'un terme) avec le moteur de l'éditeur : le rendu est le même
 // en lecture et en édition, et le contenu n'est jamais injecté comme du HTML.
+// QCM validé en lecture : sa clé dans le cours et son score.
+export interface CheckedQuiz extends QuizScore {
+  key: string;
+}
+
 @Component({
   selector: 'app-course-content',
   template: '',
@@ -34,6 +40,8 @@ import { MentionTerm, setMentionTerms } from './term-mentions';
     '[class.is-editable]': 'editable()',
     '(click)': 'activate($event)',
     '(keydown.enter)': 'activate($event)',
+    '(quizchecked)': 'onQuizChecked($event)',
+    '(quizhistory)': 'onQuizHistory($event)',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,6 +68,10 @@ export class CourseContent {
   readonly sectionReferenced = output<number>();
   // Émis en lecture quand un terme cité dans le texte est choisi : son identifiant.
   readonly termOpened = output<number>();
+  // Émis en lecture quand un QCM est validé : sa clé et son score.
+  readonly quizChecked = output<CheckedQuiz>();
+  // Émis en lecture quand l'historique d'un QCM est demandé : sa clé.
+  readonly quizHistoryRequested = output<string>();
   // Émis en lecture par « Faire l'exercice » : son énoncé et son corrigé.
   readonly exerciseOpened = output<OpenedExercise>();
 
@@ -177,6 +189,28 @@ export class CourseContent {
       untracked(this.editor)?.setEditable(editable, false);
     });
     inject(DestroyRef).onDestroy(() => this.editor()?.destroy());
+  }
+
+  protected onQuizChecked(event: Event): void {
+    const key = this.quizKey(event.target);
+    const score = event instanceof CustomEvent ? (event.detail as QuizScore) : null;
+    if (key && score) {
+      this.quizChecked.emit({ key, ...score });
+    }
+  }
+
+  protected onQuizHistory(event: Event): void {
+    const key = this.quizKey(event.target);
+    if (key) {
+      this.quizHistoryRequested.emit(key);
+    }
+  }
+
+  // Un QCM est désigné par son rang parmi ceux du document : « qcm-1 », « qcm-2 »…
+  private quizKey(target: EventTarget | null): string | null {
+    const quizzes = Array.from(this.host.nativeElement.querySelectorAll('.quiz'));
+    const rank = target instanceof Element ? quizzes.indexOf(target) : -1;
+    return rank < 0 ? null : `qcm-${rank + 1}`;
   }
 
   // Retrouve dans le document l'exercice dessiné par cet élément, et le fait ouvrir.

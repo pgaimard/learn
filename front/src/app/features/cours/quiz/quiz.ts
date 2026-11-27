@@ -12,6 +12,11 @@ import {
   removeQuestion,
 } from './quiz-commands';
 
+// Événements émis par un QCM en lecture : il vient d'être validé (avec son score), ou son
+// historique est demandé.
+export const QUIZ_CHECKED = 'quizchecked';
+export const QUIZ_HISTORY = 'quizhistory';
+
 type Change = (state: EditorState, pos: number) => Transaction | null;
 
 // Numéro des choix dessinés : chaque case est nommée par le texte de son choix.
@@ -126,12 +131,21 @@ export const Quiz = Node.create({
       const score = element('span', 'quiz-score');
       score.setAttribute('role', 'status');
       const retry = button('button quiz-retry', 'Recommencer');
-      check.addEventListener('click', () => (score.textContent = scoreLabel(gradeQuiz(dom))));
+      // La page est prévenue du score : c'est elle qui l'enregistre dans l'historique.
+      check.addEventListener('click', () => {
+        const result = gradeQuiz(dom);
+        score.textContent = scoreLabel(result);
+        dom.dispatchEvent(new CustomEvent(QUIZ_CHECKED, { bubbles: true, detail: result }));
+      });
+      const history = button('button button-ghost quiz-history', 'Historique');
+      history.addEventListener('click', () =>
+        dom.dispatchEvent(new CustomEvent(QUIZ_HISTORY, { bubbles: true })),
+      );
       retry.addEventListener('click', () => {
         resetQuiz(dom);
         score.textContent = '';
       });
-      footer.append(add, check, score, retry);
+      footer.append(add, check, score, retry, history);
       dom.append(header, contentDOM, footer);
 
       const show = (shown: ProseMirrorNode): void => {

@@ -114,6 +114,25 @@ describe('QCM', () => {
     expect(host.querySelector('.quiz-score')?.textContent).toBe('');
   });
 
+  it('prévient la page du score à la validation, et de la demande d’historique', () => {
+    setup(false);
+    const events: { type: string; detail: unknown }[] = [];
+    for (const type of ['quizchecked', 'quizhistory']) {
+      host.addEventListener(type, (event) =>
+        events.push({ type, detail: (event as CustomEvent<unknown>).detail }),
+      );
+    }
+    boxes()[0].click();
+
+    click('.quiz-check');
+    click('.quiz-history');
+
+    expect(events).toEqual([
+      { type: 'quizchecked', detail: { right: 1, total: 2 } },
+      { type: 'quizhistory', detail: null },
+    ]);
+  });
+
   it('signale un choix coché à tort', () => {
     setup(false);
     boxes()[1].click();

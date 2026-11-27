@@ -28,8 +28,9 @@ import {
 } from './bookmark/bookmark';
 import { buildOutline } from './content/build-outline';
 import { OpenedExercise } from './exercise/exercise';
+import { AttemptSummary, ExerciseAttemptsService } from './exercise/exercise-attempts.service';
 import { ExerciseWorkspace } from './exercise/exercise-workspace';
-import { CourseContent } from './content/course-content';
+import { CheckedQuiz, CourseContent } from './content/course-content';
 import { CourseOutline } from './content/course-outline';
 import { CourseRemoval } from './course-removal';
 import { Course, CourseService } from './course.service';
@@ -77,6 +78,7 @@ export class CourseReadPage {
   readonly bloc = input<string>();
 
   private readonly courseService = inject(CourseService);
+  private readonly attemptsService = inject(ExerciseAttemptsService);
   private readonly courseRemoval = inject(CourseRemoval);
   private readonly termService = inject(TermService);
   private readonly commandService = inject(CommandService);
@@ -184,6 +186,8 @@ export class CourseReadPage {
   protected readonly shownTerms = computed(() => this.terms().slice(0, SHOWN_TERMS));
   // Tous les termes de l'UE : ceux que le texte cite y deviennent cliquables.
   protected readonly allTerms = signal<TermSummary[]>([]);
+  // Historique d'un QCM, affiché dans une fenêtre ; null quand elle est fermée.
+  protected readonly quizHistory = signal<AttemptSummary[] | null>(null);
   // Exercice ouvert dans sa fenêtre de travail.
   protected readonly exercise = signal<OpenedExercise | null>(null);
   // Terme dont la définition est affichée dans une fenêtre ; null quand elle est fermée.
@@ -279,6 +283,20 @@ export class CourseReadPage {
   }
 
   // Ouvre la définition complète d'un terme cité dans le texte.
+  // Garde le score du QCM qui vient d'être validé ; un échec ne gêne pas la lecture.
+  protected recordQuiz(courseId: number, quiz: CheckedQuiz): void {
+    this.attemptsService
+      .submitQuiz(courseId, quiz.key, quiz.right, quiz.total)
+      .subscribe({ error: () => undefined });
+  }
+
+  protected showQuizHistory(courseId: number, key: string): void {
+    this.attemptsService.progress(courseId, key).subscribe({
+      next: (progress) => this.quizHistory.set(progress.attempts),
+      error: () => this.quizHistory.set([]),
+    });
+  }
+
   protected openTerm(id: number): void {
     this.termService.get(id).subscribe({
       next: (term) => this.shownTerm.set(term),
