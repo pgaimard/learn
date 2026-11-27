@@ -1,0 +1,57 @@
+<nav class="breadcrumb" aria-label="Fil d’Ariane">
+  <a routerLink="/">Mes UE</a>
+  <span aria-hidden="true">/</span>
+  <a [routerLink]="['/ue', code()]">{{ code() }}</a>
+  @if (course(); as course) {
+    <span aria-hidden="true">/</span>
+    <a [routerLink]="['/ue', code(), 'cours', course.id]">{{ course.title }}</a>
+  }
+</nav>
+
+<div class="page-header">
+  <h1>Versions précédentes</h1>
+</div>
+
+<p class="meta intro">
+  Une version du cours est gardée avant son remplacement par un paquet et avant chaque restauration.
+  Les dix dernières sont conservées. Enregistrer depuis l’éditeur n’en crée pas.
+</p>
+
+<div role="alert">
+  @for (error of errors(); track error) {
+    <p class="form-error">{{ error }}</p>
+  }
+</div>
+
+@if (course()) {
+  @if (versions().length === 0) {
+    <p class="empty">Aucune version précédente pour ce cours.</p>
+  } @else {
+    <ul class="versions">
+      @for (version of versions(); track version.id) {
+        <li>
+          <div class="what">
+            <span class="when">{{ version.createdAt | date: 'dd/MM/yyyy à HH:mm' }}</span>
+            <span class="meta">{{ originLabels[version.origin] }}</span>
+            @if (version.title !== course()?.title) {
+              <span class="meta">Titre : {{ version.title }}</span>
+            }
+          </div>
+          <button
+            type="button"
+            class="button"
+            [disabled]="isRestoring()"
+            [attr.aria-label]="
+              'Restaurer la version du ' + (version.createdAt | date: 'dd/MM/yyyy à HH:mm')
+            "
+            (click)="restore(version)"
+          >
+            <app-icon name="undo" [size]="15" />Restaurer
+          </button>
+        </li>
+      }
+    </ul>
+  }
+} @else if (errors().length === 0) {
+  <p>Chargement…</p>
+}
