@@ -7,6 +7,7 @@ import { AiAccessToken } from './ai-access-token.entity.js';
 import { AiAccessController } from './ai-access.controller.js';
 import { AiAccessGuard } from './ai-access.guard.js';
 import { AiAccessService } from './ai-access.service.js';
+import { CourseReaderService } from './course-reader.service.js';
 import { McpToolsService } from './mcp-tools.service.js';
 import { McpController } from './mcp.controller.js';
 
@@ -18,6 +19,11 @@ import { McpController } from './mcp.controller.js';
     CoursesModule,
   ],
   controllers: [AiAccessController, McpController],
-  providers: [AiAccessService, AiAccessGuard, McpToolsService],
+  providers: [
+    AiAccessService,
+    AiAccessGuard,
+    CourseReaderService,
+    McpToolsService,
+  ],
 })
 export class McpModule {}

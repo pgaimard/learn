@@ -164,6 +164,16 @@ describe('contentToMarkdown', () => {
     expect(reread(document)).toEqual(document);
   });
 
+  it('laisse tels quels un titre numéroté et le début d’une cellule ou d’un choix', () => {
+    const markdown =
+      '## 1. Processus\n\n| N° | Rôle |\n| --- | --- |\n| 1. | - |\n\n' +
+      '> [!qcm]\n>\n> 1. Question\n>    - [x] 1. oui\n>    - [ ] - non\n';
+
+    expect(
+      contentToMarkdown(markdownToContent(markdown).document).markdown,
+    ).toBe(markdown);
+  });
+
   it('place les marques contre le texte, espaces dehors', () => {
     const document = doc(
       paragraph(

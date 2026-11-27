@@ -96,7 +96,11 @@ class InlineWriter {
       }
     });
     this.closeDownTo(0);
-    return this.out.split('\n').map(escapeLineStart).join('\n').trimEnd();
+    // Un texte sans retour à la ligne suit un marqueur (titre, cellule, choix) : il ne
+    // commence pas la ligne et n'y ouvre donc rien.
+    return this.allowBreaks
+      ? this.out.split('\n').map(escapeLineStart).join('\n').trimEnd()
+      : this.out.trim();
   }
 
   private writeBreak(): void {
@@ -206,15 +210,12 @@ export function inlineToMarkdown(
   return new InlineWriter(nodes, report, allowBreaks).write();
 }
 
-// Texte seul, sans mise en forme.
+// Texte seul, sans mise en forme ; les blocs d'un même parent sont séparés d'une espace.
 export function plainText(node: ContentNode): string {
   if (node.type === 'hardBreak') {
     return ' ';
   }
-  return (
-    node.text ??
-    (node.content ?? [])
-      .map(plainText)
-      .join(node.type === 'paragraph' ? '' : ' ')
-  );
+  const children = node.content ?? [];
+  const inline = children.some((child) => child.text !== undefined);
+  return node.text ?? children.map(plainText).join(inline ? '' : ' ');
 }
