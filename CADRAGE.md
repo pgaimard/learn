@@ -39,7 +39,7 @@ Seul le reverse proxy est accessible de l'extérieur ; la base n'est jamais expo
 |---|---|---|
 | Utilisateur | identifiant, hash du mot de passe | Un seul compte, créé par script d'initialisation |
 | UE | code (ex. UTC502), intitulé, description, ordre | Conteneur principal |
-| Cours | UE, titre, ordre, contenu (format structuré de l'éditeur), texte brut dérivé pour la recherche, fiche de révision (optionnelle, même format que le contenu), exercices (optionnels, même format), marque-page de lecture (optionnel), dates de création et de modification | Un cours = un chapitre |
+| Cours | UE, titre, ordre, contenu (format structuré de l'éditeur), texte brut dérivé pour la recherche, fiche de révision (optionnelle, même format que le contenu), exercices (optionnels, même format), marque-page de lecture (optionnel), dates de création et de modification, numéro de révision, augmenté à chaque enregistrement | Un cours = un chapitre |
 | Image de cours | cours, chemin de stockage, type MIME, taille, texte alternatif | Schémas (SVG, PNG) et captures d'écran ; contenu sur disque |
 | Dossier | UE, dossier parent (optionnel), nom, cours (optionnel) | Arborescence par UE ; chaque cours a son dossier, à la racine de l'UE |
 | Fichier | UE, dossier (optionnel), nom d'origine, chemin de stockage, type MIME, taille | Contenu sur disque, métadonnées en base |
@@ -69,6 +69,12 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 | Option de commande | commande, texte, description, déclinaisons concernées (aucune = toutes), ordre | |
 | Exemple de commande | commande, ligne de commande, explication, sortie (facultative), ordre | |
 
+### Accès de l'IA et protection des données (tranche 8)
+
+| Entité | Champs principaux | Notes |
+|---|---|---|
+| Instantané | type d'objet (cours, terme, outil, commande), objet, état complet avant la modification, origine (IA, remplacement par un paquet, restauration), date | Pris avant toute écriture de l'IA, avant le remplacement d'un chapitre par un paquet et avant une restauration. Pour un cours : titre, contenu, fiche de révision et exercices. Une création par l'IA est inscrite sans état antérieur. Les instantanés d'un cours sont supprimés avec lui |
+
 ## 5. Décisions fonctionnelles
 
 - **Cours — édition** : éditeur riche de type WYSIWYG, construit sur une bibliothèque d'édition existante (ne pas écrire d'éditeur maison). On édite directement la page telle qu'elle s'affiche, sans syntaxe à connaître.
@@ -84,6 +90,14 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - **Cours — tableaux** : à la création, on choisit le nombre de lignes et de colonnes (d'un geste sur une grille ou par saisie) et les en-têtes, ligne et colonne. En édition, un bouton « + » sous le tableau ajoute une ligne et un autre à sa droite ajoute une colonne ; des poignées déplacent lignes et colonnes ; le clic droit insère, supprime, bascule les en-têtes, fusionne les cellules sélectionnées en glissant de l'une à l'autre, scinde une cellule fusionnée. Dans un tableau, un menu de la barre d'outils, voisin de celui de l'alignement du texte, aligne le contenu d'une cellule en haut (par défaut), au milieu ou en bas.
 - **Cours — grille à cocher** : un tableau dont la première ligne et la première colonne sont des en-têtes et dont les autres cellules sont des cases, remplies de couleur ou vides, pour les chronogrammes et les matrices. On la crée depuis le panneau du tableau en donnant les noms des lignes et des colonnes (des libellés, ou une plage de nombres) ; en édition, un clic sur une case la remplit ou la vide ; en lecture, elle s'affiche telle quelle. Lignes et colonnes s'ajoutent comme dans tout tableau.
 - **Cours — stockage** : contenu dans le format structuré natif de l'éditeur ; une version texte brut est dérivée à chaque enregistrement pour alimenter la recherche.
+- **Données — source de vérité** : ce qui est enregistré en base fait foi. Un cours, ses termes et ses commandes se créent et se retouchent dans l'application, par l'éditeur ou par l'IA, sans régénérer ni réimporter le chapitre.
+- **Accès de l'IA** : Claude, guidé par le skill de réécriture et par les consignes de la conversation, lit et modifie les données par un serveur MCP, point d'entrée de l'API. Il peut lire les UE, les cours, les termes, les outils, les commandes et la recherche. Il peut créer un cours avec sa fiche de révision et ses exercices, modifier un cours, et créer ou modifier termes, outils et commandes. Il ne peut pas supprimer un cours, une UE, un fichier ni une tentative d'exercice, ni supprimer un exercice qui a des tentatives. Il n'a accès ni au compte, ni à la configuration, ni à l'export.
+- **Cours — sections** : une section est un titre et tout ce qui le suit jusqu'au prochain titre de niveau égal ou supérieur. C'est une vue du document, pas une entité. Chaque titre porte un identifiant stable, qui ne change pas quand on le renomme.
+- **Cours — édition par l'IA** : l'IA lit et écrit le Markdown du contrat, jamais le format de l'éditeur. Elle agit par opérations ciblées : lire le plan d'un document, lire une section, la remplacer, en insérer ou en supprimer une, ajouter un exercice ou un QCM, poser ou remplacer le corrigé d'un exercice désigné par sa clé. Les mêmes opérations valent pour la fiche de révision. Une opération ne touche que ce qu'elle vise. La lecture d'une section signale ce que le Markdown ne sait pas exprimer et qu'une réécriture perdrait. La clé d'un exercice existant ne change jamais. Toute écriture passe par la liste blanche du contenu.
+- **Cours — révision** : toute écriture d'un cours indique la révision lue. Si le cours a changé depuis, elle est refusée, celle de l'éditeur comprise.
+- **Termes, outils et commandes — édition par l'IA** : l'IA les écrit aux formats du paquet (`termes.json`, `commandes.json`), avec les mêmes règles de doublons.
+- **Instantanés** : un écran liste les instantanés d'un objet, datés, avec leur origine, et en restaure un, images comprises. Une image encore référencée par un instantané n'est pas effacée.
+- **Export** : un écran d'administration télécharge une archive de toute la donnée, soit l'export de la base et tous les fichiers envoyés, au format de la sauvegarde quotidienne. La réinjection se fait sur le serveur par la procédure de restauration, pas depuis l'interface.
 - **Import** : un cours se crée en déposant un « paquet de cours », archive .zip produite par Claude en même temps que le cours réécrit. Aucun passage par Word. Après import, le cours reste entièrement éditable.
 - **Format du paquet de cours** (contrat entre Claude et l'application, à respecter strictement des deux côtés) :
   - `cours.md` : le contenu en Markdown. En-tête de métadonnées : code de l'UE, titre du chapitre, ordre. Titres de niveau 2 à 5 pour sections et sous-sections. Encadrés notés par un marqueur de type en première ligne de citation (`retenir`, `change`, `attention`, `definition`, `savoir`, `noter`, `astuce`). Images référencées par chemin relatif, avec légende. Diaporamas notés comme un encadré de marqueur `diaporama` : chaque image y ouvre une étape, le texte qui la suit l'explique. Grille à cocher notée comme un tableau dont le corps, hors première colonne, n'est fait que de cases `[x]` ou `[ ]`.
@@ -93,7 +107,7 @@ Les rappels par e-mail ne sont pas à développer avant demande.
   - `termes.json` (optionnel) : les entrées du glossaire du chapitre (type, libellé, forme développée, définition en Markdown, dont les images sont des fichiers du dossier `images/`), importées dans les Termes de l'UE du chapitre en signalant les doublons de cette UE : ils sont laissés tels quels, ou leur définition est remplacée si l'import le demande.
   - `sources/` (optionnel) : les documents qui ont servi à rédiger le cours (supports d'origine, sujets, annexes), sans sous-dossier. L'import les range dans le dossier de fichiers du cours ; au réimport, un document de même nom est remplacé et les autres sont gardés.
   - `commandes.json` (optionnel) : les outils et les commandes appris dans le chapitre (outil avec présentation, fonctionnement en Markdown sans image, modes et déclinaisons ; commandes avec syntaxe, mode, déclinaisons, thèmes, notes, options et exemples). Les outils absents sont créés ; un outil déjà présent ne reçoit que les modes et déclinaisons qui lui manquent. Les commandes sont rattachées au chapitre importé ; les doublons sont laissés tels quels, ou remplacés si l'import le demande. Le même fichier s'importe aussi seul, depuis la page des outils.
-- **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images, de termes et de documents sources détectés) ; réimporter un chapitre existant propose de le remplacer ; une case à cocher propose de remplacer la définition des termes déjà présents ; l'aperçu annonce aussi les outils et les commandes détectés, avec une case à cocher pour remplacer les commandes déjà présentes ; un paquet invalide est refusé avec un message précis.
+- **Import — comportement** : aperçu avant validation (titre, nombre de sections, d'images, de termes et de documents sources détectés) ; réimporter un chapitre existant propose de le remplacer, et un instantané du chapitre est pris avant ; une case à cocher propose de remplacer la définition des termes déjà présents ; l'aperçu annonce aussi les outils et les commandes détectés, avec une case à cocher pour remplacer les commandes déjà présentes ; un paquet invalide est refusé avec un message précis.
 - **Import simple** : coller du Markdown seul reste possible pour un contenu sans image.
 - **Fichiers** : envoi, téléchargement, renommage, déplacement, suppression, dans une arborescence de dossiers par UE. Chaque cours a un dossier à son nom, créé avec lui : il suit son titre et ne se renomme, ne se déplace ni ne se supprime à la main. À la suppression du cours, un dossier vide disparaît avec lui ; s'il contient des fichiers, l'application demande s'il faut les supprimer ou garder le dossier comme dossier ordinaire.
 - **Termes** : dans chaque UE, liste alphabétique avec filtre instantané et création rapide depuis l'onglet Termes. Le même libellé peut exister dans deux UE. Dans un cours, seuls les termes de son UE sont reconnus dans le texte. Une définition s'édite comme un mini-cours, avec l'éditeur et les blocs des cours (code, images, tableaux, encadrés).
@@ -115,11 +129,14 @@ Les rappels par e-mail ne sont pas à développer avant demande.
 - Fichiers envoyés : taille limitée, stockés hors du répertoire servi, nom de stockage généré, jamais exécutés, servis en téléchargement via l'API authentifiée.
 - En-têtes de sécurité HTTP standards.
 - Secrets dans des variables d'environnement, jamais dans le dépôt.
+- L'accès de l'IA a sa propre authentification, distincte de la session et révocable depuis l'interface. Son secret n'est ni dans le dépôt ni dans les journaux, et le nombre d'appels est limité.
+- L'export n'est accessible que par la session, jamais par l'accès de l'IA.
 
 ## 7. Exploitation
 
 - Sauvegarde automatique quotidienne : export de la base et copie du dossier de fichiers vers un second disque, avec rotation.
 - Procédure de restauration documentée et testée une fois.
+- Export manuel de toute la donnée depuis l'interface, restaurable par la même procédure que la sauvegarde quotidienne.
 - Mise à jour : reconstruction des images puis redémarrage par Docker Compose.
 
 ## 8. Découpage en tranches
@@ -136,8 +153,9 @@ Chaque tranche est livrée de bout en bout (base, API, écran) et validée avant
 | 5 | Mise en production sur le serveur, HTTPS, sauvegardes |
 | 6 | Agenda et tâches |
 | 7 | Outils et commandes : outils avec fonctionnement, modes et déclinaisons ; commandes avec options et exemples ; liens vers les UE et les cours ; recherche ; import |
-| Plus tard | Rappels par e-mail |
+| 8 | Accès de l'IA par MCP et protection des données, en six étapes : export complet ; révision des cours et instantanés ; MCP en lecture seule ; écritures sur les cours ; écritures sur les termes, outils et commandes ; documents sources |
+| Plus tard | Rappels par e-mail ; assistant intégré à l'application, par l'API de Claude : les mêmes opérations que par MCP, question posée depuis un cours, aide à la réalisation des exercices |
 
 ## 9. Hors périmètre
 
-Multi-utilisateur, collaboration, édition simultanée, application mobile native, mode hors ligne, versions des cours, intégration d'IA.
+Multi-utilisateur, collaboration, édition simultanée, application mobile native, mode hors ligne.
