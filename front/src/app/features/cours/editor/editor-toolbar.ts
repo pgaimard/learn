@@ -15,7 +15,14 @@ import { Icon, IconName } from '../../../core/ui/icon';
 import { MenuButton } from '../../../core/ui/menu-button';
 import { shortcut } from '../../../core/ui/platform';
 import { CALLOUT_KINDS, CALLOUT_LABELS, CalloutKind } from '../content/callout';
-import { setTextAlign, TEXT_ALIGNMENTS, TextAlignment } from '../content/text-align';
+import {
+  setCellVerticalAlign,
+  setTextAlign,
+  TEXT_ALIGNMENTS,
+  TextAlignment,
+  VERTICAL_ALIGNMENTS,
+  VerticalAlignment,
+} from '../content/text-align';
 import { editLink } from './selection/edit-link';
 import { insertShapedTable, TableShape } from './tables/table-commands';
 import { TablePicker } from './tables/table-picker';
@@ -25,8 +32,8 @@ type Mark = 'bold' | 'italic' | 'underline' | 'strike' | 'code';
 type Chain = ReturnType<Editor['chain']>;
 type Command = (chain: Chain) => Chain;
 
-interface AlignmentOption {
-  value: TextAlignment;
+interface AlignmentOption<T> {
+  value: T;
   label: string;
   icon: IconName;
 }
@@ -54,11 +61,17 @@ export class EditorToolbar {
   // Bouton « Diaporama » : la feuille ouvre le choix de ses images, une par étape.
   readonly slideshowRequested = output();
 
-  protected readonly alignments: AlignmentOption[] = [
+  protected readonly alignments: AlignmentOption<TextAlignment>[] = [
     { value: 'left', label: 'Aligner à gauche', icon: 'align-left' },
     { value: 'center', label: 'Centrer', icon: 'align-center' },
     { value: 'right', label: 'Aligner à droite', icon: 'align-right' },
     { value: 'justify', label: 'Justifier', icon: 'align-justify' },
+  ];
+
+  protected readonly verticalAlignments: AlignmentOption<VerticalAlignment>[] = [
+    { value: 'top', label: 'Cellule : aligner en haut', icon: 'valign-top' },
+    { value: 'middle', label: 'Cellule : aligner au milieu', icon: 'valign-middle' },
+    { value: 'bottom', label: 'Cellule : aligner en bas', icon: 'valign-bottom' },
   ];
 
   // Choix de la taille du tableau à insérer, ouvert sous son bouton.
@@ -123,6 +136,20 @@ export class EditorToolbar {
   // L'alignement à gauche est celui par défaut : il ne s'enregistre pas.
   protected align(alignment: TextAlignment): void {
     setTextAlign(this.editor(), alignment === 'left' ? null : alignment);
+  }
+
+  protected isInTable(): boolean {
+    return this.isActive('table');
+  }
+
+  // Alignement vertical de la cellule du curseur ; en haut tant qu'aucun autre n'est choisi.
+  protected verticalAlignment(): VerticalAlignment {
+    return VERTICAL_ALIGNMENTS.find((value) => this.isActive({ verticalAlign: value })) ?? 'top';
+  }
+
+  // L'alignement en haut est celui par défaut : il ne s'enregistre pas.
+  protected alignVertically(alignment: VerticalAlignment): void {
+    setCellVerticalAlign(this.editor(), alignment === 'top' ? null : alignment);
   }
 
   protected blockStyle(): BlockStyle {

@@ -8,9 +8,8 @@
   top: var(--sticky-top);
   z-index: 2;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.25rem 0.375rem;
+  gap: 0.625rem;
   margin-bottom: 0.75rem;
   padding: 0.375rem 0.625rem;
   border: 1px solid var(--color-border);
@@ -20,13 +19,16 @@
   box-shadow: var(--shadow-bar);
 }
 
+/* Les outils occupent deux lignes à gauche ; les actions restent à droite, centrées
+   sur la hauteur de la barre. */
 app-editor-toolbar {
-  flex: 1 1 auto;
+  flex: 1;
+  min-width: 0;
 }
 
 .bar-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   gap: 0.375rem;
   margin-left: auto;

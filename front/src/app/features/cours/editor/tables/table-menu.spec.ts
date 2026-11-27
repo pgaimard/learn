@@ -177,20 +177,6 @@ describe('TableMenu', () => {
     expect([merged.attrs['colspan'], merged.attrs['rowspan']]).toEqual([2, 2]);
   });
 
-  it('aligne en hauteur la cellule du curseur et coche l’alignement en cours', () => {
-    setup('a1');
-    expect(button('Aligner en haut').getAttribute('aria-checked')).toBe('true');
-
-    button('Aligner au milieu').click();
-
-    expect(editor.state.doc.child(0).child(1).child(0).attrs['verticalAlign']).toBe('middle');
-    expect(closed).toBe(1);
-
-    button('Aligner en haut').click();
-
-    expect(editor.state.doc.child(0).child(1).child(0).attrs['verticalAlign']).toBeNull();
-  });
-
   it('se ferme avec Échap ou par un clic en dehors', () => {
     setup('a1');
 
