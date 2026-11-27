@@ -67,7 +67,7 @@ describe('AiAccessPanel', () => {
     submit('secret');
 
     expect(service.generate).toHaveBeenCalledWith('secret');
-    expect(element().querySelector('.fresh code')?.textContent).toBe(`Bearer ${TOKEN}`);
+    expect(element().querySelector('.fresh code')?.textContent).toBe(TOKEN);
     expect(element().textContent).toContain('elle ne sera plus affichée');
     expect(element().textContent).toContain('Pas encore utilisé.');
     expect((element().querySelector('#ai-access-password') as HTMLInputElement).value).toBe('');
