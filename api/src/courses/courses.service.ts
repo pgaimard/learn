@@ -195,18 +195,20 @@ export class CoursesService {
 
   // Écriture de l'IA sur un document du cours. Elle est refusée si le cours a changé
   // depuis sa lecture, s'il est ouvert dans l'éditeur, ou si elle ferait perdre des
-  // tentatives ; l'état d'avant est gardé dans un instantané.
+  // tentatives ; l'état d'avant est gardé dans un instantané. Un document que le cours
+  // n'a pas est refusé, sauf si l'écriture le crée : elle part alors d'un document vide.
   async writeDocument(
     id: number,
     name: CourseDocumentField,
     readRevision: number,
     edit: (document: ContentNode) => ContentNode,
+    missing: 'refuse' | 'create' = 'refuse',
   ): Promise<Course> {
     const course = await this.findById(id);
-    const current = course[name];
-    if (current === null) {
+    if (course[name] === null && missing === 'refuse') {
       throw new NotFoundException(MISSING_DOCUMENT[name]);
     }
+    const current = course[name] ?? EMPTY_CONTENT;
     const next = checkContent(
       edit(current),
       name === 'exercisesContent' ? { exercises: true } : {},

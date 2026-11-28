@@ -10,7 +10,10 @@ import {
   CourseReaderService,
   DocumentReading,
 } from './course-reader.service.js';
-import { CourseWriterService } from './course-writer.service.js';
+import {
+  CourseWriterService,
+  WHOLE_DOCUMENTS,
+} from './course-writer.service.js';
 import {
   MarkdownReading,
   ReferenceReaderService,
@@ -73,6 +76,17 @@ const courseId = z
   .positive()
   .describe('Identifiant du cours, donné par list_courses.');
 
+const readRevision = z
+  .number()
+  .int()
+  .positive()
+  .describe(
+    'Révision du cours lue par get_course_outline, read_course_document ou la dernière écriture.',
+  );
+
+const IMAGE_RULE =
+  'Une image existante s’écrit avec l’adresse que la lecture a donnée.';
+
 // Outils que le serveur MCP offre à Claude. Chacun appelle un service de l'application :
 // les règles (validation, liste blanche, verrous) sont celles de l'interface.
 @Injectable()
@@ -118,6 +132,7 @@ export class McpToolsService {
     this.registerToolReading(server);
     this.registerSearch(server);
     this.registerSectionWriting(server);
+    this.registerDocumentWriting(server);
     return server;
   }
 
@@ -292,13 +307,7 @@ export class McpToolsService {
       document: z
         .enum(COURSE_DOCUMENTS)
         .describe('Document à modifier : le cours, sa fiche ou ses exercices.'),
-      revision: z
-        .number()
-        .int()
-        .positive()
-        .describe(
-          'Révision du cours lue par get_course_outline, read_course_document ou la dernière écriture.',
-        ),
+      revision: readRevision,
     };
     const markdown = z
       .string()
@@ -311,7 +320,7 @@ export class McpToolsService {
       'replace_section',
       {
         title: 'Remplacer une section',
-        description: `Remplace une section d’un document (son titre et tout ce qui le suit jusqu’au titre suivant de même niveau, sous-sections comprises) par le Markdown donné. Le reste du document n’est pas touché. Le Markdown commence par un titre de même niveau que la section remplacée et ne contient pas d’autre titre de ce niveau ou au-dessus. Lire d’abord la section avec read_course_document : ce que « losses » signale sera perdu. Une image existante s’écrit avec l’adresse que la lecture a donnée. ${WRITE_RULES}`,
+        description: `Remplace une section d’un document (son titre et tout ce qui le suit jusqu’au titre suivant de même niveau, sous-sections comprises) par le Markdown donné. Le reste du document n’est pas touché. Le Markdown commence par un titre de même niveau que la section remplacée et ne contient pas d’autre titre de ce niveau ou au-dessus. Lire d’abord la section avec read_course_document : ce que « losses » signale sera perdu. ${IMAGE_RULE} ${WRITE_RULES}`,
         inputSchema: {
           ...target,
           section: z
@@ -368,6 +377,105 @@ export class McpToolsService {
       ({ section, ...where }) =>
         this.run('delete_section', () =>
           this.courseWriter.deleteSection(where, section),
+        ),
+    );
+  }
+
+  private registerDocumentWriting(server: McpServer): void {
+    const written = { course: courseId, revision: readRevision };
+    server.registerTool(
+      'create_course',
+      {
+        title: 'Créer un cours',
+        description:
+          'Crée un cours dans une UE, à la suite des cours existants, avec son texte en Markdown (facultatif). Le Markdown suit read_content_format, sans image ni QCM ni exercice : la fiche et les exercices se posent ensuite par set_course_document. Vérifier d’abord par list_courses que le cours n’existe pas déjà. La réponse donne l’identifiant du cours, sa révision et son plan.',
+        inputSchema: {
+          ue: z.string().describe('Code de l’UE, par exemple UTC502.'),
+          title: z.string().trim().min(1).max(200).describe('Titre du cours.'),
+          markdown: z
+            .string()
+            .min(1)
+            .max(500_000)
+            .optional()
+            .describe('Texte du cours en Markdown. Absent : cours vide.'),
+        },
+        annotations: ADDING,
+      },
+      ({ ue, title, markdown }) =>
+        this.run('create_course', () =>
+          this.courseWriter.createCourse(ue, title, markdown),
+        ),
+    );
+    server.registerTool(
+      'set_course_document',
+      {
+        title: 'Poser une fiche ou des exercices',
+        description: `Pose en entier la fiche de révision ou les exercices d’un cours : crée le document si le cours n’en a pas, le remplace sinon. Pour ne changer qu’une partie d’un document existant, préférer replace_section, add_exercises ou set_exercise_solution. Un exercice de même titre garde sa clé, un titre de même texte garde son identifiant. ${IMAGE_RULE} ${WRITE_RULES}`,
+        inputSchema: {
+          ...written,
+          document: z
+            .enum(WHOLE_DOCUMENTS)
+            .describe('Document à poser : la fiche ou les exercices.'),
+          markdown: z
+            .string()
+            .min(1)
+            .max(500_000)
+            .describe(
+              'Le document entier en Markdown, au format de read_content_format.',
+            ),
+        },
+        annotations: REPLACING,
+      },
+      ({ markdown, ...where }) =>
+        this.run('set_course_document', () =>
+          this.courseWriter.setDocument(where, markdown),
+        ),
+    );
+    server.registerTool(
+      'add_exercises',
+      {
+        title: 'Ajouter des QCM ou des exercices',
+        description: `Ajoute un ou plusieurs QCM (« > [!qcm] Titre ») ou exercices (« > [!exercice] Titre », avec leur corrigé « [!corrige] ») à la fin des exercices d’un cours, créés s’il n’en a pas. Les exercices déjà là ne sont pas touchés. La réponse donne la clé de chaque exercice. ${IMAGE_RULE} ${WRITE_RULES}`,
+        inputSchema: {
+          ...written,
+          markdown: z
+            .string()
+            .min(1)
+            .max(200_000)
+            .describe(
+              'Les QCM et les exercices en Markdown, au format de read_content_format, sans titre de section.',
+            ),
+        },
+        annotations: ADDING,
+      },
+      ({ markdown, ...where }) =>
+        this.run('add_exercises', () =>
+          this.courseWriter.addExercises(where, markdown),
+        ),
+    );
+    server.registerTool(
+      'set_exercise_solution',
+      {
+        title: 'Poser le corrigé d’un exercice',
+        description: `Remplace le corrigé d’un exercice, désigné par sa clé ; son énoncé et les réponses déjà enregistrées ne sont pas touchés. ${IMAGE_RULE} ${WRITE_RULES}`,
+        inputSchema: {
+          ...written,
+          exercise: z
+            .string()
+            .describe('Clé de l’exercice, donnée par get_course_outline.'),
+          markdown: z
+            .string()
+            .min(1)
+            .max(200_000)
+            .describe(
+              'Le corrigé en Markdown, sans la ligne « [!corrige] » : ni titre, ni diaporama, ni QCM, ni exercice.',
+            ),
+        },
+        annotations: REPLACING,
+      },
+      ({ exercise, markdown, ...where }) =>
+        this.run('set_exercise_solution', () =>
+          this.courseWriter.setExerciseSolution(where, exercise, markdown),
         ),
     );
   }
