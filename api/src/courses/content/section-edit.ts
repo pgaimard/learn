@@ -56,29 +56,39 @@ function assertSameShape(blocks: ContentNode[], replaced: ContentNode): void {
   }
 }
 
-// Le titre de la section garde son identifiant ; un sous-titre garde le sien s'il a
-// toujours le même texte. Les autres en recevront un à l'enregistrement.
-function keepHeadingIds(
+// Un titre garde l'identifiant d'un ancien titre de même texte, chaque ancien titre ne
+// servant qu'une fois. Les autres en recevront un à l'enregistrement.
+export function keepHeadingIds(
   blocks: ContentNode[],
-  replaced: ContentNode[],
+  previous: ContentNode[],
 ): ContentNode[] {
-  const available = replaced.slice(1).filter(isHeading);
-  return blocks.map((block, index) => {
+  const available = previous.filter(isHeading);
+  return blocks.map((block) => {
     if (!isHeading(block)) {
       return block;
     }
-    const match =
-      index === 0
-        ? replaced[0]
-        : available.find((old) => plainText(old) === plainText(block));
-    if (!match) {
+    const index = available.findIndex(
+      (old) => plainText(old) === plainText(block),
+    );
+    if (index < 0) {
       return block;
     }
-    if (index > 0) {
-      available.splice(available.indexOf(match), 1);
-    }
+    const [match] = available.splice(index, 1);
     return { ...block, attrs: { ...block.attrs, id: match.attrs?.['id'] } };
   });
+}
+
+// Le titre de la section garde son identifiant, même renommé ; ses sous-titres gardent
+// le leur s'ils ont toujours le même texte.
+function keepSectionIds(
+  blocks: ContentNode[],
+  replaced: ContentNode[],
+): ContentNode[] {
+  const [title, ...body] = blocks;
+  return [
+    { ...title, attrs: { ...title.attrs, id: replaced[0].attrs?.['id'] } },
+    ...keepHeadingIds(body, replaced.slice(1)),
+  ];
 }
 
 function exercisesIn(blocks: ContentNode[]): ContentNode[] {
@@ -96,7 +106,7 @@ function freeKey(base: string, taken: Set<string>): string {
 
 // Un exercice dont le titre n'a pas changé garde sa clé, à laquelle ses tentatives sont
 // rattachées ; un nouvel exercice en reçoit une que le reste du document n'utilise pas.
-function keepExerciseKeys(
+export function keepExerciseKeys(
   blocks: ContentNode[],
   replaced: ContentNode[],
   others: ContentNode[],
@@ -127,11 +137,23 @@ function keepExerciseKeys(
   });
 }
 
-function withBlocks(document: ContentNode, blocks: ContentNode[]): ContentNode {
+export function withBlocks(
+  document: ContentNode,
+  blocks: ContentNode[],
+): ContentNode {
   return {
     ...document,
     content: blocks.length > 0 ? blocks : EMPTY_CONTENT.content,
   };
+}
+
+// Blocs d'un document, sans le paragraphe vide d'un document vierge : il ne reste pas
+// devant ce qu'on y ajoute.
+export function writtenBlocks(document: ContentNode): ContentNode[] {
+  return (document.content ?? []).filter(
+    (block, index, list) =>
+      list.length > 1 || block.type !== 'paragraph' || block.content?.length,
+  );
 }
 
 // Remplace la section de ce titre, sous-sections comprises, par ces blocs. Le reste du
@@ -148,7 +170,7 @@ export function replaceSection(
   assertStartsWithHeading(blocks);
   assertSameShape(blocks, replaced[0]);
   const section = keepExerciseKeys(
-    keepHeadingIds(blocks, replaced),
+    keepSectionIds(blocks, replaced),
     replaced,
     others,
   );
@@ -165,11 +187,7 @@ export function insertSection(
   blocks: ContentNode[],
   afterId?: string,
 ): ContentNode {
-  const all = (document.content ?? []).filter(
-    (block, index, list) =>
-      // Le paragraphe vide d'un document vierge ne reste pas devant la section.
-      list.length > 1 || block.type !== 'paragraph' || block.content?.length,
-  );
+  const all = writtenBlocks(document);
   const at =
     afterId === undefined
       ? all.length
