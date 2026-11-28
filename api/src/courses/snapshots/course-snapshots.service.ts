@@ -6,8 +6,14 @@ import { ContentNode } from '../content/content-node.js';
 import { Course } from '../course.entity.js';
 import { CourseSnapshot, SnapshotOrigin } from './course-snapshot.entity.js';
 
-// Nombre d'instantanés gardés par cours ; les plus anciens sont supprimés.
-export const MAX_SNAPSHOTS = 10;
+// Nombre d'instantanés gardés par cours pour chaque origine ; les plus anciens sont
+// supprimés. Une série de corrections de l'IA n'efface donc jamais l'état d'avant un
+// remplacement par un paquet ou une restauration.
+export const MAX_SNAPSHOTS: Record<SnapshotOrigin, number> = {
+  ai: 30,
+  package: 10,
+  restore: 10,
+};
 
 export type SnapshotSummary = Pick<
   CourseSnapshot,
@@ -54,7 +60,7 @@ export class CourseSnapshotsService {
   }
 
   // Garde l'état du cours tel qu'il est donné, à prendre avant de le modifier, puis ne
-  // conserve que les plus récents. À appeler dans la transaction de l'écriture.
+  // conserve que les plus récents de cette origine. À appeler dans la transaction de l'écriture.
   async take(
     manager: EntityManager,
     course: Course,
@@ -74,11 +80,12 @@ export class CourseSnapshotsService {
     await manager.query(
       `DELETE FROM course_snapshots
         WHERE course_id = $1
+          AND origin = $2
           AND id NOT IN (SELECT id FROM course_snapshots
-                          WHERE course_id = $1
+                          WHERE course_id = $1 AND origin = $2
                           ORDER BY id DESC
-                          LIMIT $2)`,
-      [course.id, MAX_SNAPSHOTS],
+                          LIMIT $3)`,
+      [course.id, origin, MAX_SNAPSHOTS[origin]],
     );
   }
 

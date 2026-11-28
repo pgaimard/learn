@@ -87,7 +87,9 @@ l'identique.
   et des commandes viennent en 8.5, avec les écritures de l'IA sur ces objets.
 - Écran : liste des instantanés d'un objet, restauration.
 - Le nettoyage des images tient compte des instantanés.
-- Rotation : les dix derniers instantanés de chaque cours.
+- Rotation par origine, pour chaque cours : les dix derniers instantanés d'avant un paquet,
+  les dix derniers d'avant une restauration, les trente derniers d'avant une écriture de l'IA.
+  Une série de corrections de l'IA n'efface donc pas les autres.
 
 Fait quand : le remplacement d'un chapitre par un paquet se retrouve dans la liste et se
 restaure, images comprises ; deux enregistrements concurrents ne s'écrasent plus.

@@ -41,6 +41,16 @@ export type CourseSummary = Pick<
   'id' | 'title' | 'position' | 'updatedAt'
 > & { sectionCount: number; hasBookmark: boolean };
 
+// Les trois documents d'un cours.
+export type CourseDocumentField =
+  'content' | 'sheetContent' | 'exercisesContent';
+
+const MISSING_DOCUMENT: Record<CourseDocumentField, string> = {
+  content: 'Ce cours n’a pas de contenu.',
+  sheetContent: 'Ce cours n’a pas de fiche de révision.',
+  exercisesContent: 'Ce cours n’a pas d’exercices.',
+};
+
 @Injectable()
 export class CoursesService {
   constructor(
@@ -181,6 +191,67 @@ export class CoursesService {
     });
     await this.imagesService.removeFiles(unused);
     return this.findById(id);
+  }
+
+  // Écriture de l'IA sur un document du cours. Elle est refusée si le cours a changé
+  // depuis sa lecture, s'il est ouvert dans l'éditeur, ou si elle ferait perdre des
+  // tentatives ; l'état d'avant est gardé dans un instantané.
+  async writeDocument(
+    id: number,
+    name: CourseDocumentField,
+    readRevision: number,
+    edit: (document: ContentNode) => ContentNode,
+  ): Promise<Course> {
+    const course = await this.findById(id);
+    const current = course[name];
+    if (current === null) {
+      throw new NotFoundException(MISSING_DOCUMENT[name]);
+    }
+    const next = checkContent(
+      edit(current),
+      name === 'exercisesContent' ? { exercises: true } : {},
+    );
+    const figures = await this.checkFigures({ ...course, [name]: next });
+    const unused = await this.dataSource.transaction(async (manager) => {
+      await this.assertNotEditing(manager, id);
+      if (name === 'exercisesContent') {
+        await this.assertAttemptsKept(manager, id, current, next);
+      }
+      await this.snapshots.take(manager, course, 'ai');
+      await this.claimRevision(manager, course, readRevision);
+      course[name] = next;
+      if (name === 'content') {
+        course.plainText = extractPlainText(next);
+      }
+      await this.saveWithFolder(manager, course);
+      return this.reconcileImages(manager, id, figures);
+    });
+    await this.imagesService.removeFiles(unused);
+    return this.findById(id);
+  }
+
+  // Les tentatives tiennent à la clé d'un exercice, ou au rang d'un QCM parmi ceux du
+  // document : une écriture ne doit faire disparaître ni l'un ni l'autre.
+  private async assertAttemptsKept(
+    manager: EntityManager,
+    id: number,
+    before: ContentNode,
+    after: ContentNode,
+  ): Promise<void> {
+    const rows = await manager.query<{ key: string }[]>(
+      'SELECT DISTINCT exercise_key AS key FROM exercise_attempts WHERE course_id = $1',
+      [id],
+    );
+    const [was, kept] = [attemptKeysOf(before), attemptKeysOf(after)];
+    // Une clé garde ses tentatives si elle désigne encore le même exercice ou QCM.
+    const lost = rows
+      .map((row) => row.key)
+      .filter((key) => was.has(key) && kept.get(key) !== was.get(key));
+    if (lost.length > 0) {
+      throw new ConflictException(
+        `Cette écriture ferait perdre des réponses déjà enregistrées (${lost.join(', ')}) : un exercice garde son titre, et les QCM gardent leur nombre et leur ordre. Renommez ou retirez-les dans l’éditeur.`,
+      );
+    }
   }
 
   // Pose le marque-page de lecture, ou le retire (null). Ce n'est pas une modification
@@ -377,6 +448,25 @@ export class CoursesService {
       throw error;
     }
   }
+}
+
+// Clés sous lesquelles des tentatives sont enregistrées pour ces exercices, avec le titre
+// de ce qu'elles désignent : la clé de chaque exercice, et « qcm-<rang> » pour chaque QCM
+// (voir course-read-page.ts).
+function attemptKeysOf(exercises: ContentNode): Map<string, string> {
+  const blocks = exercises.content ?? [];
+  const titleOf = (block: ContentNode): string =>
+    String(block.attrs?.['title']);
+  const quizzes = blocks.filter((block) => block.type === 'quiz');
+  return new Map([
+    ...blocks
+      .filter((block) => block.type === 'exercise')
+      .map((block): [string, string] => [String(block.attrs?.['key']), '']),
+    ...quizzes.map((quiz, index): [string, string] => [
+      `qcm-${index + 1}`,
+      titleOf(quiz),
+    ]),
+  ]);
 }
 
 function checkContent(content: unknown, rules: ContentRules = {}): ContentNode {

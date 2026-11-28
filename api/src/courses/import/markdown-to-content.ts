@@ -40,6 +40,19 @@ const SOLUTION_MARKER = 'corrige';
 
 export const IMAGE_PATH =
   /^images\/[A-Za-z0-9][A-Za-z0-9._-]*\.(svg|png|jpe?g)$/i;
+
+// Sources d'image acceptées dans le Markdown, et ce qu'il faut écrire à la place d'une
+// source refusée.
+export interface ImageRule {
+  accepts: (source: string) => boolean;
+  expected: string;
+}
+
+// Dans un paquet de cours, une image est un fichier du dossier images/.
+export const PACKAGE_IMAGES: ImageRule = {
+  accepts: (source) => IMAGE_PATH.test(source),
+  expected: 'elle doit être un fichier du dossier images/',
+};
 const MAX_ERRORS = 10;
 
 // HTML désactivé : une balise écrite dans le Markdown reste du texte.
@@ -55,6 +68,7 @@ class Converter {
     private readonly tokens: Token[],
     private readonly lineOffset: number,
     private readonly source: string,
+    private readonly images: ImageRule,
   ) {}
 
   // Lit les blocs jusqu'au jeton de fermeture indiqué (ou la fin du document).
@@ -143,13 +157,10 @@ class Converter {
 
   private figure(image: Token, line: Token): ContentNode {
     const path = readAttribute(image, 'src');
-    if (IMAGE_PATH.test(path)) {
+    if (this.images.accepts(path)) {
       this.imagePaths.push(path);
     } else {
-      this.fail(
-        line,
-        `image « ${path} » refusée : elle doit être un fichier du dossier images/.`,
-      );
+      this.fail(line, `image « ${path} » refusée : ${this.images.expected}.`);
     }
     const caption = readAttribute(image, 'title');
     return withContent(
@@ -442,11 +453,13 @@ export function markdownToContent(
   lineOffset = 0,
   // Nom donné au contenu dans les messages d'erreur.
   source = 'cours.md',
+  images: ImageRule = PACKAGE_IMAGES,
 ): ConvertedMarkdown {
   const converter = new Converter(
     parser.parse(markdown, {}),
     lineOffset,
     source,
+    images,
   );
   const content = converter.parseBlocks(null);
   keyExercises(content);
