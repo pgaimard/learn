@@ -133,6 +133,7 @@ export class McpToolsService {
     this.registerSearch(server);
     this.registerSectionWriting(server);
     this.registerDocumentWriting(server);
+    this.registerImageUpload(server);
     return server;
   }
 
@@ -476,6 +477,45 @@ export class McpToolsService {
       ({ exercise, markdown, ...where }) =>
         this.run('set_exercise_solution', () =>
           this.courseWriter.setExerciseSolution(where, exercise, markdown),
+        ),
+    );
+  }
+
+  private registerImageUpload(server: McpServer): void {
+    server.registerTool(
+      'upload_course_image',
+      {
+        title: 'Envoyer un schéma SVG',
+        description:
+          'Enregistre un schéma SVG dans un cours et rend l’adresse à écrire dans le Markdown (« src », et la ligne « markdown » toute faite). Le SVG est assaini : scripts, gestionnaires d’événements et contenus étrangers en sont retirés. L’image n’apparaît nulle part tant qu’une écriture ne la place pas : l’utiliser dans l’écriture qui suit (replace_section, insert_section, set_course_document…), sans quoi elle est effacée au prochain enregistrement du cours. Refusé si le cours est ouvert dans l’éditeur. Ne change pas la révision du cours.',
+        inputSchema: {
+          course: courseId,
+          svg: z
+            .string()
+            .min(1)
+            .max(1_000_000)
+            .describe(
+              'Le schéma : un document SVG complet, balise <svg> comprise.',
+            ),
+          alt: z
+            .string()
+            .trim()
+            .min(1)
+            .max(500)
+            // Le texte s'écrit tel quel entre les crochets de l'image en Markdown.
+            .regex(/^[^[\]\\\n]*$/, {
+              message:
+                'Le texte alternatif ne contient ni crochet, ni barre oblique inverse, ni retour à la ligne.',
+            })
+            .describe(
+              'Texte alternatif : ce que montre le schéma, en une phrase, sans crochets.',
+            ),
+        },
+        annotations: ADDING,
+      },
+      ({ course, svg, alt }) =>
+        this.run('upload_course_image', () =>
+          this.courseWriter.uploadImage(course, svg, alt),
         ),
     );
   }

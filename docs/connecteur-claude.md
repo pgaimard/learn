@@ -41,6 +41,7 @@ confirmation avant de les appeler, et chaque écriture se défait par l'écran d
 | `set_course_document` | Pose en entier la fiche ou les exercices d'un cours : les crée, ou les remplace. |
 | `add_exercises` | Ajoute des QCM ou des exercices à la fin des exercices d'un cours, créés s'il n'en a pas. |
 | `set_exercise_solution` | Remplace le corrigé d'un exercice désigné par sa clé, sans toucher à son énoncé. |
+| `upload_course_image` | Enregistre un schéma SVG, assaini, dans un cours et rend l'adresse à écrire dans le Markdown. |
 
 Une écriture est refusée si le cours a changé depuis la révision lue, s'il est ouvert dans
 l'éditeur, ou si elle ferait perdre des réponses déjà enregistrées (exercice renommé ou retiré,
@@ -50,6 +51,11 @@ modification par l'IA » dans les versions du cours.
 Un cours créé par l'IA n'a pas d'état d'avant : il n'a pas d'instantané, et se supprime dans
 l'application. Le texte d'un cours existant ne se pose pas en entier : il se modifie section par
 section. L'IA ne peut supprimer ni cours, ni UE, ni fichier.
+
+Un schéma envoyé par l'IA passe par le même assainissement que les images de l'éditeur. Tant
+qu'aucune écriture ne le place dans un document, il est effacé au prochain enregistrement du
+cours ; l'envoi est refusé pendant que le cours est ouvert dans l'éditeur. Seul le SVG est
+accepté : les PNG et JPEG viennent avec les documents sources (8.6).
 
 ## Révoquer l'accès
 
