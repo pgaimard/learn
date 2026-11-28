@@ -218,7 +218,7 @@ describe('Serveur MCP', () => {
     expect(response.get('Allow')).toBe('POST');
   });
 
-  it('annonce ses outils à un client MCP, tous en lecture seule', async () => {
+  it('annonce ses outils à un client MCP, en distinguant lectures et écritures', async () => {
     const { tools } = await withMcp((mcp) => mcp.listTools());
 
     expect(tools.map((tool) => tool.name)).toEqual([
@@ -233,8 +233,19 @@ describe('Serveur MCP', () => {
       'read_tool',
       'read_commands',
       'search',
+      'replace_section',
+      'insert_section',
+      'delete_section',
     ]);
-    expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
+    expect(
+      tools
+        .filter((tool) => !tool.annotations?.readOnlyHint)
+        .map((tool) => [tool.name, tool.annotations?.destructiveHint]),
+    ).toEqual([
+      ['replace_section', true],
+      ['insert_section', false],
+      ['delete_section', true],
+    ]);
     expect((await status())?.lastUsedAt).toEqual(expect.any(String));
   });
 

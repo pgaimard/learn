@@ -210,17 +210,19 @@ describe('Instantanés d’un cours', () => {
     );
   });
 
-  it(`ne garde que les ${MAX_SNAPSHOTS} derniers instantanés et efface les images qui ne servent plus`, async () => {
-    for (let version = 1; version <= MAX_SNAPSHOTS + 2; version++) {
+  it(`ne garde que les ${MAX_SNAPSHOTS.package} derniers instantanés de chaque origine et efface les images qui ne servent plus`, async () => {
+    for (let version = 1; version <= MAX_SNAPSHOTS.package + 2; version++) {
       expect((await replaceBy(`n${version}`)).status).toBe(201);
     }
 
-    const kept = await list();
+    const all = await list();
+    const kept = all.filter((snapshot) => snapshot.origin === 'package');
 
-    expect(kept).toHaveLength(MAX_SNAPSHOTS);
-    expect(kept.every((snapshot) => snapshot.origin === 'package')).toBe(true);
+    expect(kept).toHaveLength(MAX_SNAPSHOTS.package);
+    // La rotation se fait par origine : les instantanés d'avant restauration restent.
+    expect(all.length - kept.length).toBeGreaterThan(0);
     // Une image pour la version en place, une par instantané gardé.
-    expect(readdirSync(storageDirectory)).toHaveLength(MAX_SNAPSHOTS + 1);
+    expect(readdirSync(storageDirectory)).toHaveLength(all.length + 1);
   });
 
   it('supprime les instantanés et leurs images avec le cours', async () => {

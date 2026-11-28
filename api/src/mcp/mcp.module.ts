@@ -11,6 +11,7 @@ import { AiAccessController } from './ai-access.controller.js';
 import { AiAccessGuard } from './ai-access.guard.js';
 import { AiAccessService } from './ai-access.service.js';
 import { CourseReaderService } from './course-reader.service.js';
+import { CourseWriterService } from './course-writer.service.js';
 import { McpToolsService } from './mcp-tools.service.js';
 import { McpController } from './mcp.controller.js';
 import { ReferenceReaderService } from './reference-reader.service.js';
@@ -30,6 +31,7 @@ import { ReferenceReaderService } from './reference-reader.service.js';
     AiAccessService,
     AiAccessGuard,
     CourseReaderService,
+    CourseWriterService,
     McpToolsService,
     ReferenceReaderService,
   ],

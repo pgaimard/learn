@@ -18,7 +18,8 @@ cloud d'Anthropic : il ne fonctionne qu'avec l'application en production, pas av
 
 ## Outils offerts
 
-Tous en lecture seule pour l'instant.
+Les outils de lecture ne modifient rien. Les trois derniers écrivent : Claude demande une
+confirmation avant de les appeler, et chaque écriture se défait par l'écran des versions du cours.
 
 | Outil | Rôle |
 |---|---|
@@ -33,6 +34,14 @@ Tous en lecture seule pour l'instant.
 | `read_tool` | Un outil aux clés de `commandes.json`, la liste de ses commandes et sa fiche en Markdown. |
 | `read_commands` | Toutes les commandes d'un outil, aux clés de `commandes.json`. |
 | `search` | La recherche de l'interface : cours, définitions, acronymes, fichiers, outils, commandes. |
+| `replace_section` | Remplace une section d'un document par du Markdown, sans toucher au reste. |
+| `insert_section` | Insère une section après une autre, ou à la fin du document. |
+| `delete_section` | Supprime une section et ses sous-sections. |
+
+Une écriture est refusée si le cours a changé depuis la révision lue, s'il est ouvert dans
+l'éditeur, ou si elle ferait perdre des réponses déjà enregistrées (exercice renommé ou retiré,
+QCM déplacé). Avant chaque écriture, l'état du cours est gardé : il se retrouve sous « Avant une
+modification par l'IA » dans les versions du cours.
 
 ## Révoquer l'accès
 

@@ -56,7 +56,7 @@ export class HttpErrorFilter implements ExceptionFilter {
   }
 }
 
-function extractMessages(exception: HttpException): string[] {
+export function extractMessages(exception: HttpException): string[] {
   const response = exception.getResponse();
   if (typeof response === 'object' && 'message' in response) {
     const { message } = response;
