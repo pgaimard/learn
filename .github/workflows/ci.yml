@@ -1,18 +1,16 @@
-# Vérifie chaque PR (lint, formatage, tests, build) et met en production chaque tag de version.
+# Vérifie chaque PR : lint, formatage, tests, build.
 name: CI
 
 on:
   pull_request:
     branches: [develop, main]
-  push:
-    tags: ["v*"]
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   api:
@@ -61,24 +59,3 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
-
-  deploy:
-    name: Mise en production
-    if: github.event_name == 'push'
-    needs: [api, front]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      # La clé ne peut lancer que deploy/deploy.sh sur le serveur, qui n'accepte qu'un numéro de version.
-      - name: Déployer le tag
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          (umask 077 && printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key)
-          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            -o ServerAliveInterval=30 "deploy@$DEPLOY_HOST" "$TAG"

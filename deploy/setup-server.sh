@@ -3,7 +3,7 @@
 # utilisateur de déploiement, fichier .env, sauvegarde quotidienne, accès SSH par clé uniquement.
 # Peut être relancé sans risque : chaque étape ne fait que ce qui manque.
 #
-# Usage : sudo ./deploy/setup-server.sh <nom-de-domaine> ['<clé publique du pipeline>']
+# Usage : sudo ./deploy/setup-server.sh <nom-de-domaine>
 set -euo pipefail
 
 readonly DEPLOY_USER=deploy
@@ -14,7 +14,6 @@ readonly BACKUP_CRON=/etc/cron.d/learn-backup
 APP_DIR=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
 readonly APP_DIR
 readonly DOMAIN=${1:-}
-readonly PIPELINE_KEY=${2:-}
 
 fail() {
   echo "Erreur : $*" >&2
@@ -25,8 +24,6 @@ check_arguments() {
   [[ $EUID -eq 0 ]] || fail "à lancer avec sudo."
   [[ $DOMAIN =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] ||
     fail "nom de domaine attendu en premier argument, par exemple learn.example.org."
-  [[ -z $PIPELINE_KEY || $PIPELINE_KEY =~ ^ssh-ed25519\ [A-Za-z0-9+/=]+(\ [A-Za-z0-9@._-]+)?$ ]] ||
-    fail "la clé du pipeline doit être une clé publique ed25519 (contenu du fichier .pub)."
 }
 
 install_packages() {
@@ -95,18 +92,6 @@ CRON
   chmod 644 "$BACKUP_CRON"
 }
 
-# La clé du pipeline ne peut lancer que le script de déploiement : ni terminal, ni tunnel.
-authorize_pipeline() {
-  if [[ -z $PIPELINE_KEY ]]; then
-    return
-  fi
-  local ssh_dir=/home/$DEPLOY_USER/.ssh
-  install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$ssh_dir"
-  echo "restrict,command=\"$APP_DIR/deploy/deploy.sh\" $PIPELINE_KEY" >"$ssh_dir/authorized_keys"
-  chmod 600 "$ssh_dir/authorized_keys"
-  chown "$DEPLOY_USER:$DEPLOY_USER" "$ssh_dir/authorized_keys"
-}
-
 # Les mots de passe ne sont coupés que si l'administrateur a déjà une clé : sinon il s'enfermerait dehors.
 harden_ssh() {
   local admin=${SUDO_USER:-root}
@@ -134,7 +119,6 @@ main() {
   create_deploy_user
   create_env_file
   schedule_backup
-  authorize_pipeline
   harden_ssh
   echo "Serveur prêt. Premier déploiement : sudo -u $DEPLOY_USER $APP_DIR/deploy/deploy.sh <tag>"
 }
