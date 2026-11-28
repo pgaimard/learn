@@ -13,7 +13,7 @@ const SHEET: ContentNode = {
   content: [
     {
       type: 'heading',
-      attrs: { level: 2, textAlign: null },
+      attrs: { level: 2, id: 'titre001', textAlign: null },
       content: [{ type: 'text', text: 'L’essentiel' }],
     },
     {

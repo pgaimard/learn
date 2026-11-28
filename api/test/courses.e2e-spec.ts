@@ -3,6 +3,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { ErrorResponse } from '../src/common/http-error.filter.js';
 import { Course } from '../src/courses/course.entity.js';
+import { AddHeadingIds1796500000000 } from '../src/database/migrations/1796500000000-add-heading-ids.js';
 import {
   AuthenticatedClient,
   createAuthenticatedClient,
@@ -16,7 +17,7 @@ const CONTENT = {
   content: [
     {
       type: 'heading',
-      attrs: { level: 2 },
+      attrs: { level: 2, id: 'titre001' },
       content: [{ type: 'text', text: '1. Processus' }],
     },
     {
@@ -532,6 +533,98 @@ describe('Cours', () => {
     expect(invalid.status).toBe(400);
     expect(unknown.status).toBe(404);
     expect(anonymous.status).toBe(401);
+  });
+
+  it('donne un identifiant au titre qui n’en a pas, et renouvelle celui d’un titre copié', async () => {
+    const heading = (attrs: object): object => ({
+      type: 'heading',
+      attrs,
+      content: [{ type: 'text', text: 'Titre' }],
+    });
+    const response = await saveCourse(client, courseId, {
+      content: {
+        type: 'doc',
+        content: [
+          heading({ level: 2, id: 'titre001' }),
+          heading({ level: 2 }),
+          heading({ level: 3, id: 'titre001' }),
+        ],
+      },
+    });
+    const ids = ((response.body as Course).content.content ?? []).map(
+      (block) => block.attrs?.['id'],
+    );
+
+    expect(response.status).toBe(200);
+    expect(ids[0]).toBe('titre001');
+    expect(ids).toEqual([
+      'titre001',
+      expect.stringMatching(/^[a-z0-9]{8}$/),
+      expect.stringMatching(/^[a-z0-9]{8}$/),
+    ]);
+    expect(new Set(ids).size).toBe(3);
+  });
+
+  it('refuse un identifiant de titre mal formé', async () => {
+    const response = await saveCourse(client, courseId, {
+      content: {
+        type: 'doc',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 2, id: '<script>' },
+            content: [{ type: 'text', text: 'Titre' }],
+          },
+        ],
+      },
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('migre les cours existants : chaque titre reçoit un identifiant, sans changer révision ni date', async () => {
+    const bare = {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: 'Ancien titre' }],
+        },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Texte.' }] },
+      ],
+    };
+    await dataSource.query(
+      'UPDATE courses SET content = $1::jsonb, sheet_content = $1::jsonb WHERE id = $2',
+      [JSON.stringify(bare), courseId],
+    );
+    const before = (await client('get', `/api/courses/${courseId}`))
+      .body as Course;
+    const migration = new AddHeadingIds1796500000000();
+    const runner = dataSource.createQueryRunner();
+
+    await migration.up(runner);
+    const migrated = (await client('get', `/api/courses/${courseId}`))
+      .body as Course;
+    await migration.down(runner);
+    const reverted = (await client('get', `/api/courses/${courseId}`))
+      .body as Course;
+    await runner.release();
+
+    expect(migrated.content.content?.[0].attrs).toEqual({
+      level: 2,
+      id: expect.stringMatching(/^[a-z0-9]{8}$/) as string,
+    });
+    expect(migrated.sheetContent?.content?.[0].attrs?.['id']).toMatch(
+      /^[a-z0-9]{8}$/,
+    );
+    expect(migrated.content.content?.[1]).toEqual(bare.content[1]);
+    expect(migrated.exercisesContent).toBe(before.exercisesContent);
+    expect([migrated.revision, migrated.updatedAt]).toEqual([
+      before.revision,
+      before.updatedAt,
+    ]);
+    expect(reverted.content).toEqual(bare);
   });
 
   it('refuse de supprimer une UE qui contient des cours', async () => {

@@ -1,7 +1,9 @@
 import { markdownToContent } from '../import/markdown-to-content.js';
 import { exercisesOf, outlineOf, sectionOf } from './content-outline.js';
+import { ensureHeadingIds } from './heading-ids.js';
 
-const { document } = markdownToContent(`Avant-propos.
+const document = ensureHeadingIds(
+  markdownToContent(`Avant-propos.
 
 ## 1. Processus
 
@@ -18,21 +20,24 @@ Détail.
 > [!exercice] Exercice 1 : tourniquet
 >
 > Énoncé.
-`);
+`).document,
+);
+const ids = outlineOf(document).map((section) => section.id);
 
 describe('plan d’un document', () => {
-  it('numérote les titres dans l’ordre, avec leur niveau et leur texte sans marque', () => {
+  it('liste les titres dans l’ordre, avec leur identifiant, leur niveau et leur texte sans marque', () => {
     expect(outlineOf(document)).toEqual([
-      { rank: 1, level: 2, title: '1. Processus' },
-      { rank: 2, level: 3, title: '1.1 États' },
-      { rank: 3, level: 3, title: '1.2 Fin' },
-      { rank: 4, level: 2, title: '2. Ordonnancement' },
+      { id: ids[0], level: 2, title: '1. Processus' },
+      { id: ids[1], level: 3, title: '1.1 États' },
+      { id: ids[2], level: 3, title: '1.2 Fin' },
+      { id: ids[3], level: 2, title: '2. Ordonnancement' },
     ]);
+    expect(new Set(ids).size).toBe(4);
   });
 
   it('rend une section avec ses sous-sections, jusqu’au titre suivant de même niveau', () => {
     const types = (rank: number): string[] | undefined =>
-      sectionOf(document, rank)?.map((block) => block.type);
+      sectionOf(document, ids[rank - 1])?.map((block) => block.type);
 
     expect(types(1)).toEqual([
       'heading',
@@ -46,9 +51,9 @@ describe('plan d’un document', () => {
     expect(types(4)).toEqual(['heading', 'exercise']);
   });
 
-  it('ne rend rien pour un rang qui n’existe pas', () => {
-    expect(sectionOf(document, 0)).toBeNull();
-    expect(sectionOf(document, 5)).toBeNull();
+  it('ne rend rien pour un identifiant inconnu ou vide', () => {
+    expect(sectionOf(document, 'inconnu0')).toBeNull();
+    expect(sectionOf(document, '')).toBeNull();
   });
 
   it('liste les exercices avec leur clé', () => {

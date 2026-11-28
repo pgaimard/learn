@@ -14,6 +14,10 @@ Ajouter un bloc à l'éditeur impose donc de l'ajouter ici, puis à la liste bla
 document où se placent les QCM et les exercices. L'API l'accepte comme exercices, et le refuse
 comme texte de cours.
 
+L'attribut `id` d'un titre (huit lettres minuscules ou chiffres) désigne sa section et ne change pas
+quand le titre est renommé. L'éditeur l'attribue à la création du titre ; l'API en donne un à tout
+titre qui n'en a pas (import d'un paquet, écriture de l'IA). Il ne s'écrit pas dans le Markdown.
+
 L'attribut `pinned` (paragraphe, listes, citation, bloc de code, tableau, image, encadré) date de
 l'ancienne fiche de révision, calculée à partir des blocs épinglés. Il n'a plus d'effet, mais reste
 accepté : les cours déjà enregistrés le portent. La fiche de révision est désormais un document

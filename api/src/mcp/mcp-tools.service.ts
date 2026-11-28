@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { extractMessages } from '../common/http-error.filter.js';
 import { z } from 'zod';
 import { CoursesService } from '../courses/courses.service.js';
 import { UeService } from '../ue/ue.service.js';
@@ -9,6 +10,7 @@ import {
   CourseReaderService,
   DocumentReading,
 } from './course-reader.service.js';
+import { CourseWriterService } from './course-writer.service.js';
 import {
   MarkdownReading,
   ReferenceReaderService,
@@ -16,6 +18,18 @@ import {
 } from './reference-reader.service.js';
 
 const READ_ONLY = { readOnlyHint: true, openWorldHint: false };
+// Une écriture se défait par l'écran des versions du cours, mais elle remplace ou retire
+// du contenu : le client doit la faire confirmer.
+const ADDING = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: false,
+};
+const REPLACING = { ...ADDING, destructiveHint: true };
+
+const WRITE_RULES =
+  'L’écriture est refusée si le cours a changé depuis la révision indiquée (relire alors le plan), s’il est ouvert dans l’éditeur de l’application, ou si elle ferait perdre des réponses déjà enregistrées. L’état d’avant est gardé dans les versions du cours. La réponse donne la nouvelle révision et le nouveau plan du document.';
 
 function asText(value: unknown): CallToolResult {
   return { content: [{ type: 'text', text: JSON.stringify(value, null, 2) }] };
@@ -70,6 +84,7 @@ export class McpToolsService {
     private readonly coursesService: CoursesService,
     private readonly courseReader: CourseReaderService,
     private readonly referenceReader: ReferenceReaderService,
+    private readonly courseWriter: CourseWriterService,
   ) {}
 
   // Un serveur par requête : le point d'entrée ne garde aucun état entre deux appels.
@@ -102,6 +117,7 @@ export class McpToolsService {
     this.registerTermReading(server);
     this.registerToolReading(server);
     this.registerSearch(server);
+    this.registerSectionWriting(server);
     return server;
   }
 
@@ -111,7 +127,7 @@ export class McpToolsService {
       {
         title: 'Plan d’un cours',
         description:
-          'Donne le plan d’un cours : sa révision et, pour chacun de ses trois documents (cours, fiche de révision, exercices), ses sections avec leur rang, leur niveau et leur titre. Un document absent vaut null. Pour les exercices, donne aussi la clé et le titre de chaque exercice. À appeler avant read_course_document pour ne lire que la section utile.',
+          'Donne le plan d’un cours : sa révision et, pour chacun de ses trois documents (cours, fiche de révision, exercices), ses sections avec leur identifiant, leur niveau et leur titre. Un document absent vaut null. Pour les exercices, donne aussi la clé et le titre de chaque exercice. À appeler avant read_course_document pour ne lire que la section utile.',
         inputSchema: { course: courseId },
         annotations: READ_ONLY,
       },
@@ -132,12 +148,10 @@ export class McpToolsService {
               'Document à lire : le cours, sa fiche de révision ou ses exercices.',
             ),
           section: z
-            .number()
-            .int()
-            .positive()
+            .string()
             .optional()
             .describe(
-              'Rang de la section, donné par get_course_outline. Absent : tout le document.',
+              'Identifiant de la section, donné par get_course_outline. Absent : tout le document.',
             ),
         },
         annotations: READ_ONLY,
@@ -272,6 +286,92 @@ export class McpToolsService {
     );
   }
 
+  private registerSectionWriting(server: McpServer): void {
+    const target = {
+      course: courseId,
+      document: z
+        .enum(COURSE_DOCUMENTS)
+        .describe('Document à modifier : le cours, sa fiche ou ses exercices.'),
+      revision: z
+        .number()
+        .int()
+        .positive()
+        .describe(
+          'Révision du cours lue par get_course_outline, read_course_document ou la dernière écriture.',
+        ),
+    };
+    const markdown = z
+      .string()
+      .min(1)
+      .max(200_000)
+      .describe(
+        'La section en Markdown, au format de read_content_format. Elle commence par son titre.',
+      );
+    server.registerTool(
+      'replace_section',
+      {
+        title: 'Remplacer une section',
+        description: `Remplace une section d’un document (son titre et tout ce qui le suit jusqu’au titre suivant de même niveau, sous-sections comprises) par le Markdown donné. Le reste du document n’est pas touché. Le Markdown commence par un titre de même niveau que la section remplacée et ne contient pas d’autre titre de ce niveau ou au-dessus. Lire d’abord la section avec read_course_document : ce que « losses » signale sera perdu. Une image existante s’écrit avec l’adresse que la lecture a donnée. ${WRITE_RULES}`,
+        inputSchema: {
+          ...target,
+          section: z
+            .string()
+            .describe(
+              'Identifiant de la section, donné par get_course_outline.',
+            ),
+          markdown,
+        },
+        annotations: REPLACING,
+      },
+      ({ section, markdown: text, ...where }) =>
+        this.run('replace_section', () =>
+          this.courseWriter.replaceSection(where, section, text),
+        ),
+    );
+    server.registerTool(
+      'insert_section',
+      {
+        title: 'Insérer une section',
+        description: `Insère une nouvelle section dans un document, après la section indiquée (et ses sous-sections) ou à la fin du document. Le Markdown commence par le titre de la nouvelle section. ${WRITE_RULES}`,
+        inputSchema: {
+          ...target,
+          markdown,
+          after: z
+            .string()
+            .optional()
+            .describe(
+              'Identifiant de la section après laquelle insérer. Absent : à la fin du document.',
+            ),
+        },
+        annotations: ADDING,
+      },
+      ({ markdown: text, after, ...where }) =>
+        this.run('insert_section', () =>
+          this.courseWriter.insertSection(where, text, after),
+        ),
+    );
+    server.registerTool(
+      'delete_section',
+      {
+        title: 'Supprimer une section',
+        description: `Supprime une section d’un document, sous-sections comprises. ${WRITE_RULES}`,
+        inputSchema: {
+          ...target,
+          section: z
+            .string()
+            .describe(
+              'Identifiant de la section, donné par get_course_outline.',
+            ),
+        },
+        annotations: REPLACING,
+      },
+      ({ section, ...where }) =>
+        this.run('delete_section', () =>
+          this.courseWriter.deleteSection(where, section),
+        ),
+    );
+  }
+
   private async listUes(): Promise<object[]> {
     const ues = await this.ueService.findAllWithCounts();
     return ues.map(({ code, title, description, counts }) => ({
@@ -307,7 +407,7 @@ export class McpToolsService {
       if (error instanceof HttpException) {
         return {
           isError: true,
-          content: [{ type: 'text', text: error.message }],
+          content: [{ type: 'text', text: extractMessages(error).join('\n') }],
         };
       }
       throw error;

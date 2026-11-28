@@ -5,6 +5,7 @@
       "type": "heading",
       "attrs": {
         "level": 2,
+        "id": "titre001",
         "textAlign": null
       },
       "content": [
@@ -123,6 +124,7 @@
       "type": "heading",
       "attrs": {
         "level": 3,
+        "id": "titre002",
         "textAlign": null
       },
       "content": [
@@ -190,6 +192,7 @@
       "type": "heading",
       "attrs": {
         "level": 4,
+        "id": "titre003",
         "textAlign": null
       },
       "content": [
@@ -203,6 +206,7 @@
       "type": "heading",
       "attrs": {
         "level": 5,
+        "id": "titre004",
         "textAlign": null
       },
       "content": [
