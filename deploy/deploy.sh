@@ -3,8 +3,6 @@
 # images, migrations, redémarrage, puis vérification que l'application répond.
 #
 # Usage, sur le serveur : ./deploy/deploy.sh v1.2.3
-# Le pipeline passe par SSH : la clé y est restreinte à ce script, qui lit alors
-# le tag demandé dans SSH_ORIGINAL_COMMAND.
 set -euo pipefail
 
 readonly LOCK_FILE=/run/lock/learn-deploy.lock
@@ -15,9 +13,9 @@ fail() {
   exit 1
 }
 
-# Le tag vient de l'extérieur : rien d'autre qu'un numéro de version n'est accepté.
+# Rien d'autre qu'un numéro de version n'est accepté.
 read_tag() {
-  local tag=${1:-${SSH_ORIGINAL_COMMAND:-}}
+  local tag=${1:-}
   [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "tag attendu au format v1.2.3."
   echo "$tag"
 }

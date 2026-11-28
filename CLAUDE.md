@@ -49,7 +49,7 @@ Procédures complètes : `docs/deploiement.md`, `docs/sauvegarde.md`, `docs/rest
 
 | Action | Commande |
 |---|---|
-| Préparer un serveur vierge | `sudo ./deploy/setup-server.sh <nom-de-domaine> ['<clé publique du pipeline>']` |
+| Préparer un serveur vierge | `sudo ./deploy/setup-server.sh <nom-de-domaine>` |
 | Mettre une version en production | `sudo -u deploy ./deploy/deploy.sh <tag>` |
 | Sauvegarder maintenant | `sudo -u deploy -H ./deploy/backup.sh` |
 | Lister les sauvegardes | `sudo -u deploy -H ./deploy/restore.sh` |
