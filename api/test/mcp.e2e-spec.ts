@@ -236,6 +236,10 @@ describe('Serveur MCP', () => {
       'replace_section',
       'insert_section',
       'delete_section',
+      'create_course',
+      'set_course_document',
+      'add_exercises',
+      'set_exercise_solution',
     ]);
     expect(
       tools
@@ -245,6 +249,10 @@ describe('Serveur MCP', () => {
       ['replace_section', true],
       ['insert_section', false],
       ['delete_section', true],
+      ['create_course', false],
+      ['set_course_document', true],
+      ['add_exercises', false],
+      ['set_exercise_solution', true],
     ]);
     expect((await status())?.lastUsedAt).toEqual(expect.any(String));
   });

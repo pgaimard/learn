@@ -37,11 +37,19 @@ confirmation avant de les appeler, et chaque écriture se défait par l'écran d
 | `replace_section` | Remplace une section d'un document par du Markdown, sans toucher au reste. |
 | `insert_section` | Insère une section après une autre, ou à la fin du document. |
 | `delete_section` | Supprime une section et ses sous-sections. |
+| `create_course` | Crée un cours dans une UE, à la suite des autres, avec son texte en Markdown. |
+| `set_course_document` | Pose en entier la fiche ou les exercices d'un cours : les crée, ou les remplace. |
+| `add_exercises` | Ajoute des QCM ou des exercices à la fin des exercices d'un cours, créés s'il n'en a pas. |
+| `set_exercise_solution` | Remplace le corrigé d'un exercice désigné par sa clé, sans toucher à son énoncé. |
 
 Une écriture est refusée si le cours a changé depuis la révision lue, s'il est ouvert dans
 l'éditeur, ou si elle ferait perdre des réponses déjà enregistrées (exercice renommé ou retiré,
 QCM déplacé). Avant chaque écriture, l'état du cours est gardé : il se retrouve sous « Avant une
 modification par l'IA » dans les versions du cours.
+
+Un cours créé par l'IA n'a pas d'état d'avant : il n'a pas d'instantané, et se supprime dans
+l'application. Le texte d'un cours existant ne se pose pas en entier : il se modifie section par
+section. L'IA ne peut supprimer ni cours, ni UE, ni fichier.
 
 ## Révoquer l'accès
 
