@@ -240,6 +240,7 @@ describe('Serveur MCP', () => {
       'set_course_document',
       'add_exercises',
       'set_exercise_solution',
+      'upload_course_image',
     ]);
     expect(
       tools
@@ -253,6 +254,7 @@ describe('Serveur MCP', () => {
       ['set_course_document', true],
       ['add_exercises', false],
       ['set_exercise_solution', true],
+      ['upload_course_image', false],
     ]);
     expect((await status())?.lastUsedAt).toEqual(expect.any(String));
   });
