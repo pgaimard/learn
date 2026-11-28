@@ -232,6 +232,19 @@ export class CoursesService {
     return this.findById(id);
   }
 
+  // Image qu'une écriture de l'IA va placer dans le cours. Tant qu'aucun document ne la
+  // montre, le prochain enregistrement du cours l'efface : elle est donc refusée pendant
+  // que l'éditeur, qui enregistre de lui-même, a le cours ouvert.
+  async addImage(
+    id: number,
+    data: Buffer,
+    altText: string,
+  ): Promise<CourseImage> {
+    await this.findById(id);
+    await this.assertNotEditing(this.dataSource.manager, id);
+    return this.imagesService.upload(id, data, altText);
+  }
+
   // Les tentatives tiennent à la clé d'un exercice, ou au rang d'un QCM parmi ceux du
   // document : une écriture ne doit faire disparaître ni l'un ni l'autre.
   private async assertAttemptsKept(

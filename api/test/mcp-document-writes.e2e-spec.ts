@@ -8,6 +8,7 @@ import { SnapshotSummary } from '../src/courses/snapshots/course-snapshots.servi
 import { GeneratedAiAccess } from '../src/mcp/ai-access.controller.js';
 import {
   CreatedCourse,
+  UploadedImage,
   WriteResult,
 } from '../src/mcp/course-writer.service.js';
 import {
@@ -258,6 +259,87 @@ describe('Serveur MCP : création d’un cours, documents entiers et exercices',
     expect(unknown.content[0].text).toContain('« inconnu »');
     expect(withTitle.isError).toBe(true);
     expect(after.revision).toBe(before.revision + 1);
+  });
+
+  it('enregistre un schéma SVG assaini, que l’écriture suivante place dans le cours', async () => {
+    const uploaded = await call('upload_course_image', {
+      course: courseId,
+      svg: '<svg viewBox="0 0 10 10"><script>alert(1)</script><rect width="10" height="10" onclick="x()"/></svg>',
+      alt: 'Un carré plein',
+    });
+    const image = JSON.parse(uploaded.content[0].text) as UploadedImage;
+    const before = await read();
+
+    const written = await call('insert_section', {
+      course: courseId,
+      document: 'cours',
+      revision: before.revision,
+      markdown: `## 2. Schéma\n\n${image.markdown}\n`,
+    });
+    const stored = await client('get', image.src).buffer(true);
+    const after = await read();
+
+    expect(uploaded.isError).toBeUndefined();
+    expect(image.src).toMatch(
+      new RegExp(`^/api/courses/${courseId}/images/\\d+$`),
+    );
+    expect(image.markdown).toBe(`![Un carré plein](${image.src})`);
+    expect(written.isError).toBeUndefined();
+    expect(JSON.stringify(after.content)).toContain(image.src);
+    expect(JSON.stringify(after.content)).toContain('"alt":"Un carré plein"');
+    expect(stored.status).toBe(200);
+    expect(String(stored.body)).toContain('<rect');
+    expect(String(stored.body)).not.toMatch(/script|onclick/);
+  });
+
+  it('efface au prochain enregistrement un schéma qu’aucune écriture n’a placé', async () => {
+    const uploaded = await call('upload_course_image', {
+      course: courseId,
+      svg: '<svg viewBox="0 0 1 1"></svg>',
+      alt: 'Inutilisé',
+    });
+    const { src } = JSON.parse(uploaded.content[0].text) as UploadedImage;
+
+    await write('insert_section', {
+      document: 'cours',
+      markdown: '## 3. Sans image\n',
+    });
+
+    expect((await client('get', src)).status).toBe(404);
+  });
+
+  it('refuse un texte qui n’est pas un SVG, un cours inconnu ou ouvert dans l’éditeur', async () => {
+    const notSvg = await call('upload_course_image', {
+      course: courseId,
+      svg: '<html><svg></svg></html>',
+      alt: 'Faux',
+    });
+    const unknown = await call('upload_course_image', {
+      course: 999_999,
+      svg: '<svg></svg>',
+      alt: 'Nulle part',
+    });
+    await client('put', `/api/courses/${courseId}/editing`);
+    const editing = await call('upload_course_image', {
+      course: courseId,
+      svg: '<svg></svg>',
+      alt: 'Pendant l’édition',
+    });
+    await client('delete', `/api/courses/${courseId}/editing`);
+
+    const brackets = await call('upload_course_image', {
+      course: courseId,
+      svg: '<svg></svg>',
+      alt: 'Un carré [plein]',
+    });
+
+    expect(notSvg.isError).toBe(true);
+    expect(notSvg.content[0].text).toContain('n’est pas un SVG');
+    expect(brackets.isError).toBe(true);
+    expect(brackets.content[0].text).toContain('ni crochet');
+    expect(unknown.content[0].text).toBe('Ce cours n’existe pas.');
+    expect(editing.isError).toBe(true);
+    expect(editing.content[0].text).toContain('ouvert dans l’éditeur');
   });
 
   it('refuse de reposer les exercices sans un exercice qui a des réponses', async () => {

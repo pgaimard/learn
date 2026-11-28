@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { isImageSource } from '../courses/content/collect-figures.js';
+import {
+  buildImageSource,
+  isImageSource,
+} from '../courses/content/collect-figures.js';
 import { ContentNode } from '../courses/content/content-node.js';
 import {
   exercisesOf,
@@ -63,6 +66,16 @@ export interface WriteResult {
 // Les documents qui se posent en entier ; le texte du cours se modifie par section.
 export const WHOLE_DOCUMENTS = ['fiche', 'exercices'] as const;
 export type WholeDocument = (typeof WHOLE_DOCUMENTS)[number];
+
+// Image envoyée : l'adresse à écrire dans le Markdown, et la ligne toute faite.
+export interface UploadedImage {
+  course: number;
+  src: string;
+  markdown: string;
+}
+
+const SVG_START =
+  /^(\s|<\?xml[^>]*\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)*<svg[\s>]/i;
 
 export interface CreatedCourse {
   course: number;
@@ -142,6 +155,26 @@ export class CourseWriterService {
       revision: created.revision,
       sections: outlineOf(created.content),
     };
+  }
+
+  // Enregistre un schéma SVG, assaini comme toute image envoyée, et rend son adresse.
+  async uploadImage(
+    course: number,
+    svg: string,
+    alt: string,
+  ): Promise<UploadedImage> {
+    if (!SVG_START.test(svg)) {
+      throw new BadRequestException(
+        'Le texte envoyé n’est pas un SVG : il doit commencer par la balise <svg>.',
+      );
+    }
+    const image = await this.coursesService.addImage(
+      course,
+      Buffer.from(svg, 'utf8'),
+      alt,
+    );
+    const src = buildImageSource('courses', course, image.id);
+    return { course, src, markdown: `![${alt}](${src})` };
   }
 
   // Pose la fiche ou les exercices en entier, que le cours en ait déjà ou non.
