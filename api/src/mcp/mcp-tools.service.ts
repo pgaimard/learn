@@ -111,7 +111,7 @@ export class McpToolsService {
       {
         title: 'Plan d’un cours',
         description:
-          'Donne le plan d’un cours : sa révision et, pour chacun de ses trois documents (cours, fiche de révision, exercices), ses sections avec leur rang, leur niveau et leur titre. Un document absent vaut null. Pour les exercices, donne aussi la clé et le titre de chaque exercice. À appeler avant read_course_document pour ne lire que la section utile.',
+          'Donne le plan d’un cours : sa révision et, pour chacun de ses trois documents (cours, fiche de révision, exercices), ses sections avec leur identifiant, leur niveau et leur titre. Un document absent vaut null. Pour les exercices, donne aussi la clé et le titre de chaque exercice. À appeler avant read_course_document pour ne lire que la section utile.',
         inputSchema: { course: courseId },
         annotations: READ_ONLY,
       },
@@ -132,12 +132,10 @@ export class McpToolsService {
               'Document à lire : le cours, sa fiche de révision ou ses exercices.',
             ),
           section: z
-            .number()
-            .int()
-            .positive()
+            .string()
             .optional()
             .describe(
-              'Rang de la section, donné par get_course_outline. Absent : tout le document.',
+              'Identifiant de la section, donné par get_course_outline. Absent : tout le document.',
             ),
         },
         annotations: READ_ONLY,

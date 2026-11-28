@@ -1,4 +1,5 @@
 import { isImageSource } from './collect-figures.js';
+import { isHeadingId } from './heading-ids.js';
 
 // Liste blanche du contenu d'un cours. Tout ce qui n'y figure pas est refusé :
 // le contenu reçu est traité comme hostile, même s'il vient de notre éditeur.
@@ -128,7 +129,12 @@ export const NODE_RULES: Record<string, NodeRule> = {
   heading: {
     children: 'inline',
     // Le niveau 1 est réservé au titre du cours.
-    attrs: { level: isIntegerBetween(2, 5), ...textAlign },
+    // L'identifiant désigne la section du titre ; il survit à son renommage.
+    attrs: {
+      level: isIntegerBetween(2, 5),
+      id: isNullable(isHeadingId),
+      ...textAlign,
+    },
   },
   bulletList: { children: ['listItem'], minChildren: 1, attrs: pinned },
   orderedList: {

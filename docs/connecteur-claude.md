@@ -25,7 +25,7 @@ Tous en lecture seule pour l'instant.
 | `list_ues` | Les UE, avec leur nombre de cours, de termes et de fichiers. |
 | `list_courses` | Les cours d'une UE, dans leur ordre. |
 | `get_course_outline` | Le plan d'un cours : révision, sections du cours, de la fiche et des exercices, clés des exercices. |
-| `read_course_document` | Un document d'un cours en Markdown, en entier ou une section désignée par son rang, avec ce qu'une réécriture perdrait. |
+| `read_course_document` | Un document d'un cours en Markdown, en entier ou une section désignée par l'identifiant de son titre, avec ce qu'une réécriture perdrait. |
 | `read_content_format` | La référence du format (`contracts/README.md`). |
 | `list_terms` | Les termes d'une UE, filtrables par cours et par type. |
 | `read_term` | Un terme aux clés de `termes.json`, et sa définition en Markdown. |

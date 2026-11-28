@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 import { markdownToContent } from '../src/courses/import/markdown-to-content.js';
 import { ErrorResponse } from '../src/common/http-error.filter.js';
 import { GeneratedAiAccess } from '../src/mcp/ai-access.controller.js';
+import { CourseOutline } from '../src/mcp/course-reader.service.js';
 import { AiAccessStatus } from '../src/mcp/ai-access.service.js';
 import {
   AuthenticatedClient,
@@ -278,14 +279,32 @@ describe('Serveur MCP', () => {
       documents: {
         cours: {
           sections: [
-            { rank: 1, level: 2, title: '1. Processus' },
-            { rank: 2, level: 3, title: '1.1 États' },
-            { rank: 3, level: 2, title: '2. Ordonnancement' },
+            {
+              id: expect.stringMatching(/^[a-z0-9]{8}$/) as string,
+              level: 2,
+              title: '1. Processus',
+            },
+            {
+              id: expect.stringMatching(/^[a-z0-9]{8}$/) as string,
+              level: 3,
+              title: '1.1 États',
+            },
+            {
+              id: expect.stringMatching(/^[a-z0-9]{8}$/) as string,
+              level: 2,
+              title: '2. Ordonnancement',
+            },
           ],
         },
         fiche: null,
         exercices: {
-          sections: [{ rank: 1, level: 2, title: '1. Exercices' }],
+          sections: [
+            {
+              id: expect.stringMatching(/^[a-z0-9]{8}$/) as string,
+              level: 2,
+              title: '1. Exercices',
+            },
+          ],
           exercises: [
             { key: 'exercice-1-tourniquet', title: 'Exercice 1 : tourniquet' },
           ],
@@ -299,10 +318,13 @@ describe('Serveur MCP', () => {
       course: courseId,
       document: 'cours',
     });
+    const outline = await call('get_course_outline', { course: courseId });
+    const firstSection = (JSON.parse(outline.content[0].text) as CourseOutline)
+      .documents.cours?.sections[0].id;
     const section = await call('read_course_document', {
       course: courseId,
       document: 'cours',
-      section: 1,
+      section: firstSection,
     });
     const exercises = await call('read_course_document', {
       course: courseId,
@@ -320,7 +342,7 @@ describe('Serveur MCP', () => {
       COURSE.slice(0, COURSE.indexOf('## 2.')).trimEnd() + '\n',
     );
     expect(JSON.parse(section.content[0].text)).toMatchObject({
-      section: { rank: 1, level: 2, title: '1. Processus' },
+      section: { id: firstSection, level: 2, title: '1. Processus' },
     });
     expect(exercises.content[1].text).toBe(EXERCISES);
   });
@@ -337,7 +359,7 @@ describe('Serveur MCP', () => {
     const section = await call('read_course_document', {
       course: courseId,
       document: 'cours',
-      section: 9,
+      section: 'inconnue',
     });
     const unknown = await call('read_course_document', {
       course: courseId,
@@ -349,7 +371,7 @@ describe('Serveur MCP', () => {
       'Ce cours n’a pas de fiche de révision.',
     );
     expect(section.content[0].text).toBe(
-      'Ce document n’a pas de section de rang 9 : il en compte 3.',
+      'Ce document n’a pas de section « inconnue ». Ses sections sont données par get_course_outline.',
     );
     expect(
       [course, sheet, section, unknown].every((result) => result.isError),
